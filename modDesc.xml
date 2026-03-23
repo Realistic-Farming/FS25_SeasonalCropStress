@@ -9,6 +9,7 @@
         <fr>Stress saisonnier des cultures &amp; gestionnaire d'irrigation</fr>
         <it>Stress stagionale delle colture &amp; Gestore dell'irrigazione</it>
         <nl>Seizoensgebonden gewassstress &amp; irrigatiebeheer</nl>
+        <cz>Seasonal Crop Stress &amp; Správce zavlažování</cz>
     </title>
 
     <description>
@@ -107,6 +108,25 @@ FUNCTIES:
 • Volledige opslag van veld- en irrigatiestatus
 • Debug-consoleopdrachten (typ csHelp in de ontwikkelaarsconsole)
         ]]></nl>
+        <cz><![CDATA[Přidává sledování vlhkosti půdy, simulaci stresu plodin a správu zavlažování do Farming Simulator 25.
+            
+Každé pole sleduje procento vlhkosti půdy (0-100%), které stoupá s deštěm a klesá evapotranspirací řízenou teplotou, ročním obdobím a typem půdy. Když vlhkost klesne pod prahové hodnoty specifické pro danou plodinu během kritických růstových oken, hromadí se stres výnosu a snižuje vaši sklizeň na konci sezóny.
+
+FUNKCE:
+• Simulace vlhkosti půdy pro každé pole řízená reálným počasím
+• Sezónně a teplotně upravená evapotranspirace
+• Modifikátory typu půdy: písčitá odvádí rychle, jílovitá drží vlhkost
+• Kritická růstová okna specifická pro plodiny (pšenice, kukuřice, ječmen, řepka a další)
+• Snížení výnosu při sklizni — až 60% ztráta při maximálním stresu
+• Překrytí HUD vlhkosti pole s 5denní předpovědí (stiskněte Shift+M pro přepnutí)
+• Umístitelné středové pivoty a kapkové zavlažování s infrastrukturou vodní pumpy
+• Dialog plánování zavlažování — nastavte aktivní dny a hodinové okno (Shift+I)
+• Dialog poradce pro plodiny s přehledem rizik a doporučeními (Shift+C)
+• Volitelná integrace s FS25_NPCFavor (Alex Chen, NPC agronom)
+• Volitelná integrace s FS25_UsedPlus (tržiště použitého vybavení)
+• Úplná persistence uložení/načtení všech stavů polí a zavlažování
+• Příkazy ladicí konzole (napište csHelp do vývojářské konzole)
+        ]]></cz>
     </description>
 
     <multiplayer supported="true"/>
