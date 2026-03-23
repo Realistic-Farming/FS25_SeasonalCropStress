@@ -148,14 +148,36 @@ function CropConsultantDialog:buildFieldList()
     local stressModifier = g_cropStressManager.stressModifier
     if soilSystem == nil or soilSystem.fieldData == nil then return end
 
+    local getLocalFarmId = g_cropStressManager.getLocalFarmId
+    local isFarmlandOwnedByFarm = g_cropStressManager.isFarmlandOwnedByFarm
+    if getLocalFarmId == nil or isFarmlandOwnedByFarm == nil then
+        print("[CropStress] CropConsultantDialog: ERROR - ownership helpers not found on manager!")
+        return
+    end
+    local localFarmId = getLocalFarmId()
+
     local riskList = {}
     for fieldId, data in pairs(soilSystem.fieldData) do
-        local stress   = stressModifier ~= nil and stressModifier:getStress(fieldId) or 0
-        local moisture = data.moisture or 0.5
-        local risk     = stress * 0.6 + (1 - moisture) * 0.4
-        table.insert(riskList, { fieldId = fieldId, moisture = moisture, stress = stress, risk = risk })
+        if isFarmlandOwnedByFarm(fieldId, localFarmId) then
+            local stress   = stressModifier ~= nil and stressModifier:getStress(fieldId) or 0
+            local moisture = data.moisture or 0.5
+            local risk     = stress * 0.6 + (1 - moisture) * 0.4
+            table.insert(riskList, { fieldId = fieldId, moisture = moisture, stress = stress, risk = risk })
+        end
     end
     table.sort(riskList, function(a, b) return a.risk > b.risk end)
+
+    -- If no owned fields, show all as a fallback so the dialog is never blank
+    if #riskList == 0 and next(soilSystem.fieldData) ~= nil then
+        print("[CropStress] CropConsultantDialog: No owned fields found, showing all tracked fields as a fallback.")
+        for fieldId, data in pairs(soilSystem.fieldData) do
+            local stress   = stressModifier ~= nil and stressModifier:getStress(fieldId) or 0
+            local moisture = data.moisture or 0.5
+            local risk     = stress * 0.6 + (1 - moisture) * 0.4
+            table.insert(riskList, { fieldId = fieldId, moisture = moisture, stress = stress, risk = risk })
+        end
+        table.sort(riskList, function(a, b) return a.risk > b.risk end)
+    end
 
     local function addRow(text, yPos)
         local label = TextElement.new()

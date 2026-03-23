@@ -988,20 +988,30 @@ function HUDOverlay:rebuildDisplayRows()
     -- — silently wrong on custom maps, renumbered fields, or non-sequential farmlands.
     local fieldById = (self.manager ~= nil) and self.manager.fieldById or {}
 
-    -- Determine the local player's farmId for ownership filtering.
-    -- SP is always farm 1; MP uses g_currentMission.player.farmId.
-    local localFarmId = nil
-    if g_currentMission ~= nil then
-        if not g_currentMission.missionDynamicInfo.isMultiplayer then
-            localFarmId = 1
-        elseif g_currentMission.player ~= nil then
-            localFarmId = g_currentMission.player.farmId
+    -- Get ownership helpers from the manager
+    local getLocalFarmId = self.manager.getLocalFarmId
+    local isFarmlandOwnedByFarm = self.manager.isFarmlandOwnedByFarm
+    if getLocalFarmId == nil or isFarmlandOwnedByFarm == nil then
+        csLog("HUDOverlay: ERROR - ownership helpers not found on manager!")
+        return
+    end
+    local localFarmId = getLocalFarmId()
+
+    -- Filter and collect all valid fields
+    local ownedFields = {}
+    for _, entry in ipairs(sortedFields) do
+        if isFarmlandOwnedByFarm(entry.fieldId, localFarmId) then
+            table.insert(ownedFields, entry)
         end
     end
 
-    -- Filter and collect all valid fields
-    local allValidFields = {}
-    for _, entry in ipairs(sortedFields) do
+    -- If no owned fields found, fall back to showing all tracked fields
+    local fieldsToDisplay = #ownedFields > 0 and ownedFields or sortedFields
+    if #ownedFields == 0 and #sortedFields > 0 then
+        csLog("HUDOverlay: No owned fields found, showing all tracked fields as a fallback.")
+    end
+
+    for _, entry in ipairs(fieldsToDisplay) do
         local stress      = 0
         local cropName    = nil
         local growthStage = nil
@@ -1012,17 +1022,11 @@ function HUDOverlay:rebuildDisplayRows()
 
         local field = fieldById[entry.fieldId]
         if field ~= nil then
-            -- Ownership filter: only show fields belonging to the local player's farm
-            local fl = field.farmland
-            if localFarmId ~= nil and (fl == nil or fl.farmId ~= localFarmId) then
-                -- skip unowned / other-farm fields
-            else
-                -- FS25-native crop resolution: getFieldState() → fruitTypeIndex
-                cropName = self:resolveCropName(field)
+            -- FS25-native crop resolution: getFieldState() → fruitTypeIndex
+            cropName = self:resolveCropName(field)
 
-                -- Growth stage (FS25: field.fieldState.growthState — confirmed from rtmnet/sdk)
-                growthStage = field.fieldState and field.fieldState.growthState
-            end
+            -- Growth stage (FS25: field.fieldState.growthState — confirmed from rtmnet/sdk)
+            growthStage = field.fieldState and field.fieldState.growthState
         end
 
         -- Only show crops tracked for stress (fallow, greenhouse, carrots etc. = irrelevant noise)

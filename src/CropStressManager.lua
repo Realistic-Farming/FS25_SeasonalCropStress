@@ -22,6 +22,41 @@ local function csLog(msg)
 end
 
 -- ============================================================
+-- OWNERSHIP HELPERS
+-- ============================================================
+
+--- Returns the farmId of the local player.
+local function getLocalFarmId()
+    if g_currentMission == nil then return 1 end
+
+    -- Multiplayer: use the local player's farmId
+    if g_currentMission.player ~= nil then
+        local id = g_currentMission.player.farmId
+        if id ~= nil and id > 0 then return id end
+    end
+
+    -- Fallback: lookup via userManager for early join state
+    if g_currentMission.userManager ~= nil and g_currentMission.playerUserId ~= nil then
+        local user = g_currentMission.userManager:getUserByUserId(g_currentMission.playerUserId)
+        if user ~= nil and user.farmId ~= nil and user.farmId > 0 then
+            return user.farmId
+        end
+    end
+
+    -- Singleplayer (or early MP): default to farm 1
+    return 1
+end
+
+--- Returns true if the farmland is owned by the given farmId.
+-- Uses g_farmlandManager.farmlandMapping — the authoritative FS25 ownership table.
+local function isFarmlandOwnedByFarm(farmlandId, farmId)
+    if g_farmlandManager == nil or g_farmlandManager.farmlandMapping == nil then
+        return false
+    end
+    return g_farmlandManager.farmlandMapping[farmlandId] == farmId
+end
+
+-- ============================================================
 -- CROP EVENT BUS
 -- Simple publish/subscribe for mod-internal events.
 -- Subscribers receive (context, data) where context is the
@@ -66,6 +101,10 @@ function CropStressManager.new()
     local self = setmetatable({}, CropStressManager)
 
     self.eventBus = CropEventBus
+
+    -- Ownership helpers (exposed for other modules)
+    self.getLocalFarmId          = getLocalFarmId
+    self.isFarmlandOwnedByFarm   = isFarmlandOwnedByFarm
 
     -- State
     self.isInitialized = false
@@ -391,6 +430,7 @@ function CropStressManager:onHourlyTick()
     local today = env and env.currentDay or 0
     if today ~= (self.lastFieldMapDay or -1) then
         self.lastFieldMapDay = today
+        self.soilSystem:enumerateFields()
         self:buildFieldMap()
     end
 
