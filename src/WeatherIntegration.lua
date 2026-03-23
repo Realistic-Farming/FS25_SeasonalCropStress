@@ -136,6 +136,13 @@ function WeatherIntegration:update()
     -- Base: 0.012 moisture fraction per hour at rainScale=1.0
     -- Heavy rain (scale ~1.5) gives 0.018/hr; drizzle (0.3) gives 0.0036/hr
     self.hourlyRainAmount = self.isRaining and (0.012 * self.rainScale) or 0.0
+
+    if self.manager ~= nil and self.manager.debugMode then
+        csLog(string.format(
+            "WeatherUpdate: Rain=%s Scale=%.3f Amount=%.4f",
+            tostring(self.isRaining), self.rainScale, self.hourlyRainAmount
+        ))
+    end
 end
 
 -- ============================================================
@@ -143,8 +150,6 @@ end
 -- ============================================================
 function WeatherIntegration:getTemperatureFromWeather()
     -- Try RealisticWeather first if active.
-    -- Use an explicit boolean rather than comparing against a sentinel value
-    -- (15.0°C is a valid real temperature and would incorrectly trigger fallback).
     if self.realisticWeatherActive then
         local rw = g_realisticWeather or g_weatherSystem
         if rw ~= nil then
@@ -164,11 +169,25 @@ function WeatherIntegration:getTemperatureFromWeather()
 
     -- Fall back to vanilla FS25 weather
     local env = g_currentMission.environment
-    if env ~= nil and env.weather ~= nil then
-        if env.weather.temperature ~= nil then
-            return env.weather.temperature
-        elseif type(env.weather.getCurrentTemperature) == "function" then
-            return env.weather:getCurrentTemperature() or 15.0
+    if env ~= nil then
+        -- FS25 primary weather system
+        if env.weatherSystem ~= nil then
+            if type(env.weatherSystem.getTemperature) == "function" then
+                return env.weatherSystem:getTemperature()
+            elseif type(env.weatherSystem.getCurrentTemperature) == "function" then
+                return env.weatherSystem:getCurrentTemperature()
+            elseif env.weatherSystem.temperature ~= nil then
+                return env.weatherSystem.temperature
+            end
+        end
+
+        -- Legacy or alternative access (FS22 style)
+        if env.weather ~= nil then
+            if env.weather.temperature ~= nil then
+                return env.weather.temperature
+            elseif type(env.weather.getCurrentTemperature) == "function" then
+                return env.weather:getCurrentTemperature() or 15.0
+            end
         end
     end
 
@@ -177,7 +196,6 @@ end
 
 function WeatherIntegration:getHumidity()
     -- Try RealisticWeather first if active.
-    -- Use an explicit boolean rather than a sentinel value (0.5 is valid humidity).
     if self.realisticWeatherActive then
         local rw = g_realisticWeather or g_weatherSystem
         if rw ~= nil then
@@ -195,8 +213,22 @@ function WeatherIntegration:getHumidity()
 
     -- Fall back to vanilla
     local env = g_currentMission.environment
-    if env ~= nil and env.weather ~= nil and env.weather.relativeHumidity ~= nil then
-        return env.weather.relativeHumidity
+    if env ~= nil then
+        -- FS25 primary weather system
+        if env.weatherSystem ~= nil then
+            if type(env.weatherSystem.getHumidity) == "function" then
+                return env.weatherSystem:getHumidity()
+            elseif env.weatherSystem.relativeHumidity ~= nil then
+                return env.weatherSystem.relativeHumidity
+            elseif env.weatherSystem.humidity ~= nil then
+                return env.weatherSystem.humidity
+            end
+        end
+
+        -- Legacy access
+        if env.weather ~= nil and env.weather.relativeHumidity ~= nil then
+            return env.weather.relativeHumidity
+        end
     end
 
     return 0.5
@@ -231,11 +263,25 @@ function WeatherIntegration:getRainFromWeather()
 
     -- Fall back to vanilla FS25 weather
     local env = g_currentMission.environment
-    if env ~= nil and env.weather ~= nil then
-        if env.weather.rainScale ~= nil then
-            rainScale = env.weather.rainScale or 0.0
-        elseif type(env.weather.getRainFallScale) == "function" then
-            rainScale = env.weather:getRainFallScale() or 0.0
+    if env ~= nil then
+        -- FS25 primary weather system
+        if env.weatherSystem ~= nil then
+            if type(env.weatherSystem.getRainFallScale) == "function" then
+                rainScale = env.weatherSystem:getRainFallScale() or 0.0
+            elseif type(env.weatherSystem.getRainScale) == "function" then
+                rainScale = env.weatherSystem:getRainScale() or 0.0
+            elseif env.weatherSystem.rainScale ~= nil then
+                rainScale = env.weatherSystem.rainScale or 0.0
+            end
+        end
+
+        -- Legacy or alternative access
+        if rainScale <= 0.01 and env.weather ~= nil then
+            if env.weather.rainScale ~= nil then
+                rainScale = env.weather.rainScale or 0.0
+            elseif type(env.weather.getRainFallScale) == "function" then
+                rainScale = env.weather:getRainFallScale() or 0.0
+            end
         end
     end
     isRaining = rainScale > 0.01
@@ -253,7 +299,14 @@ function WeatherIntegration:getHourlyEvapMultiplier()
     local seasonMods = { [0]=0.80, [1]=1.40, [2]=0.90, [3]=0.20 }
     local seasonMod  = seasonMods[self.currentSeason] or 1.0
 
-    return tempMod * seasonMod
+    local multiplier = tempMod * seasonMod
+
+    -- Significant reduction during rain (90% lower evaporation)
+    if self.isRaining then
+        multiplier = multiplier * 0.10
+    end
+
+    return multiplier
 end
 
 -- Returns the moisture gain per hour from current rainfall.
