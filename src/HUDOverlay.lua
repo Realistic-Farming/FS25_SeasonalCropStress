@@ -1011,6 +1011,7 @@ function HUDOverlay:rebuildDisplayRows()
         csLog("HUDOverlay: No owned fields found, showing all tracked fields as a fallback.")
     end
 
+    local allValidFields = {}
     for _, entry in ipairs(fieldsToDisplay) do
         local stress      = 0
         local cropName    = nil
