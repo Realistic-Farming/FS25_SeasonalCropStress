@@ -171,6 +171,9 @@ local g_csManager = nil
 Mission00.load = Utils.appendedFunction(Mission00.load, function(self, ...)
     g_csManager = CropStressManager.new()
     getfenv(0)["g_cropStressManager"] = g_csManager
+    -- Cross-mod bridge: g_currentMission is a shared C++ object visible to all mods.
+    -- getfenv(0) is per-mod scoped in FS25; use mission property for reliable cross-mod detection.
+    self.cropStressManager = g_csManager
     print("[CropStress] CropStressManager created (v1.0.5.0)")
 end)
 
@@ -226,6 +229,7 @@ FSBaseMission.delete = Utils.appendedFunction(FSBaseMission.delete, function(sel
         g_csManager:delete()
         g_csManager = nil
         getfenv(0)["g_cropStressManager"] = nil
+        if g_currentMission then g_currentMission.cropStressManager = nil end
         if removeConsoleCommand ~= nil then
             removeConsoleCommand("csHelp")
             removeConsoleCommand("csStatus")
