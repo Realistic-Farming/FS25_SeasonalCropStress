@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<l10n>
+    <texts>
+    <!-- ========== HUD OVERLAY ========== -->
+    <text name="cs_hud_title"         text="ВОЛОГІСТЬ ҐРУНТУ"/>
+    <text name="cs_hud_healthy"       text="Здорові"/>
+    <text name="cs_hud_warning"       text="Посухова напруга"/>
+    <text name="cs_hud_critical"      text="КРИТИЧНО — Поливайте зараз!"/>
+    <text name="cs_hud_no_crop"       text="Немає культури"/>
+    <text name="cs_hud_forecast"      text="Прогноз на 5 днів"/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 завантажено. Натисніть Shift+M, щоб відкрити HUD вологості. Вперше? Відкрийте меню Довідки (ESC → Довідка) і знайдіть Seasonal Crop Stress."/>
+    <text name="cs_hud_click_forecast" text="Натисніть рядок для прогнозу на 5 днів"/>
+    <text name="cs_hud_vehicle_disabled" text="Накладка вимкнена в транспортному засобі"/>
+
+    <!-- ========== FIELD STATUS ========== -->
+    <text name="cs_field_moisture"        text="Вологість"/>
+    <text name="cs_field_soil_type"       text="Тип ґрунту"/>
+    <text name="cs_field_stress"          text="Накопичена напруга"/>
+    <text name="cs_field_yield_impact"    text="Орієнтовний вплив на врожай"/>
+    <text name="cs_field_critical_window" text="Критичний період: ЗАРАЗ"/>
+    <text name="cs_field_nearest_water"   text="Найближча вода"/>
+
+    <!-- ========== SOIL TYPES ========== -->
+    <text name="cs_soil_sandy"  text="Піщаний"/>
+    <text name="cs_soil_loamy"  text="Суглинок"/>
+    <text name="cs_soil_clay"   text="Глинистий"/>
+
+    <!-- ========== ALERTS ========== -->
+    <text name="cs_alert_info"     text="Поле %d: вологість %s знижується — стежте за умовами."/>
+    <text name="cs_alert_warning"  text="Поле %d: вологість %s низька — рекомендується зрошення."/>
+    <text name="cs_alert_critical" text="Поле %d: %s на порозі посухової напруги — зрошуйте ЗАРАЗ!"/>
+
+    <!-- ========== IRRIGATION ========== -->
+    <text name="cs_irr_title"          text="Система зрошення — %s"/>
+    <text name="cs_irr_water_source"   text="Джерело води"/>
+    <text name="cs_irr_connected"      text="Підключено"/>
+    <text name="cs_irr_disconnected"   text="Відключено"/>
+    <text name="cs_irr_schedule"       text="Розклад"/>
+    <text name="cs_irr_flow_rate"      text="Витрата води"/>
+    <text name="cs_irr_efficiency"     text="Ефективність"/>
+    <text name="cs_irr_cost"           text="Орієнтовна вартість"/>
+    <text name="cs_irr_wear"           text="Рівень зносу"/>
+    <text name="cs_irr_covered_fields" text="Охоплені поля"/>
+    <text name="cs_irr_irrigate_now"   text="Полити зараз"/>
+    <text name="cs_irr_save_schedule"  text="Зберегти розклад"/>
+    <text name="cs_irr_pivot"          text="Центральний зрошувач"/>
+    <text name="cs_irr_drip"           text="Крапельна лінія"/>
+    <text name="cs_irr_pump"           text="Водяний насос"/>
+    <text name="cs_irr_start_time"     text="Час початку"/>
+    <text name="cs_irr_end_time"       text="Час завершення"/>
+    <text name="cs_irr_performance"    text="Продуктивність"/>
+    <text name="cs_irr_started"        text="Зрошення розпочато."/>
+    <text name="cs_irr_open_schedule"  text="Відкрити розклад зрошення"/>
+    <text name="cs_schedule_saved"     text="Розклад збережено."/>
+
+    <!-- ========== DAY LABELS ========== -->
+    <text name="cs_day_mon" text="П"/>
+    <text name="cs_day_tue" text="В"/>
+    <text name="cs_day_wed" text="С"/>
+    <text name="cs_day_thu" text="Ч"/>
+    <text name="cs_day_fri" text="П"/>
+    <text name="cs_day_sat" text="С"/>
+    <text name="cs_day_sun" text="Н"/>
+
+    <!-- ========== CONSULTANT ========== -->
+    <text name="cs_consultant_name"            text="Олексій Чен, Агроном"/>
+    <text name="cs_consultant_subtitle"        text="Стан полів та рекомендації"/>
+    <text name="cs_consultant_relationship"    text="Стосунки з Олексієм:"/>
+    <text name="cs_consultant_field_status"    text="Зведення ризиків по полях (Топ 5)"/>
+    <text name="cs_consultant_recommendation"  text="Рекомендації"/>
+    <text name="cs_consultant_open_irrigation" text="Відкрити менеджер зрошення"/>
+    <text name="cs_consultant_no_data"         text="Немає даних по полях."/>
+
+    <!-- ========== NPC FAVOR QUESTS ========== -->
+    <text name="cs_favor_soil_sample"     text="Взяти зразок ґрунту з поля %d"/>
+    <text name="cs_favor_irr_check"       text="Перевірити систему зрошення поблизу поля %d"/>
+    <text name="cs_favor_emergency_water" text="Полити поле %d до заходу сонця!"/>
+    <text name="cs_favor_seasonal_plan"   text="Переглянути сезонний план зрошення"/>
+
+    <!-- ========== PLACEABLES ========== -->
+    <text name="cs_pivot_name"     text="Центральний зрошувач"/>
+    <text name="cs_pump_name"      text="Водяний насос"/>
+    <text name="cs_drip_name"      text="Крапельна зрошувальна лінія"/>
+    <text name="cs_pivot_function" text="Великий круговий зрошувач. Охоплює кругові ділянки полів. Потребує водяного насоса."/>
+    <text name="cs_pump_function"  text="Живить центральний та крапельний зрошувачі. Розташуйте поблизу джерела води."/>
+    <text name="cs_drip_function"  text="Точне низьковитратне зрошення вздовж рядків поля. Потребує водяного насоса."/>
+
+    <!-- ========== IRRIGATION PERFORMANCE VALUES (dynamic, format strings) ========== -->
+    <text name="cs_irr_flow_rate_value"   text="Витрата: %.3f/год"/>
+    <text name="cs_irr_efficiency_value"  text="Ефективність: %d%%"/>
+    <text name="cs_irr_cost_value"        text="Орієнт. вартість: $%d/год"/>
+    <text name="cs_irr_wear_value"        text="Рівень зносу: %d%%"/>
+    <text name="cs_irr_already_active"    text="Система зрошення вже працює."/>
+    <text name="cs_irr_no_covered_fields" text="Немає полів під покриттям цієї системи."/>
+
+    <!-- ========== CONSULTANT RECOMMENDATIONS (dynamic, format strings) ========== -->
+    <text name="cs_rec_urgent"          text="ТЕРМІНОВО: Поле %d — вологість %.0f%% — поливайте негайно!"/>
+    <text name="cs_rec_warning"         text="Поле %d — вологість %.0f%% — рекомендується полив протягом 24 год."/>
+    <text name="cs_rec_ok"              text="Всі поля мають прийнятний рівень вологості."/>
+    <text name="cs_rec_forecast"        text="Прогноз: Д+1 %.0f%%  Д+2 %.0f%%  Д+3 %.0f%%"/>
+    <text name="cs_rec_systems_running" text="%d система(и) зрошення наразі працює(ють)."/>
+    <text name="cs_rec_no_systems"      text="Жодна система зрошення не активна."/>
+    <text name="cs_rec_all_healthy"     text="Всі поля виглядають здоровими."/>
+
+    <!-- ========== SHARED ========== -->
+    <text name="cs_close"                 text="Закрити"/>
+    <text name="cs_no_irrigation_systems" text="Системи зрошення ще не розміщені"/>
+
+    <!-- ========== INPUT ACTION DESCRIPTIONS ========== -->
+    <text name="input_CS_TOGGLE_HUD"      text="Перемкнути HUD вологості"/>
+    <text name="input_CS_OPEN_IRRIGATION" text="Відкрити менеджер зрошення"/>
+    <text name="input_CS_OPEN_CONSULTANT" text="Відкрити агрономічного консультанта"/>
+    <text name="input_CS_EDIT_HUD"        text="Редагувати/переміщати HUD вологості"/>
+
+    <!-- ========== PRECISION FARMING DLC ========== -->
+    <text name="cs_pf_moisture_overlay"      text="Вологість ґрунту"/>
+    <text name="cs_pf_moisture_overlay_desc" text="Відображає поточний рівень вологості ґрунту на ваших полях. Червоний — сухий ґрунт, зелений — оптимальна вологість, синій — перезволожений ґрунт."/>
+
+    <!-- ========== SETTINGS ========== -->
+    <text name="cs_settings_section"           text="Сезонна напруга культур"/>
+    <text name="cs_settings_enabled_short"     text="Увімкнути мод"/>
+    <text name="cs_settings_enabled_long"      text="Увімкнути або вимкнути всю систему сезонної напруги культур"/>
+    <text name="cs_settings_difficulty_short"  text="Складність"/>
+    <text name="cs_settings_difficulty_long"   text="Налаштувати швидкість накопичення напруги та евапотранспірацію"/>
+    <text name="cs_settings_diff_easy"         text="Легко"/>
+    <text name="cs_settings_diff_normal"       text="Нормально"/>
+    <text name="cs_settings_diff_hard"         text="Важко"/>
+    <text name="cs_settings_hud_short"         text="HUD видимий"/>
+    <text name="cs_settings_hud_long"          text="Показати або приховати накладку вологості в списку полів"/>
+    <text name="cs_settings_evap_short"        text="Евапотранспірація"/>
+    <text name="cs_settings_evap_long"         text="Базова швидкість втрати вологи з ґрунту"/>
+    <text name="cs_settings_evap_slow"         text="Повільна"/>
+    <text name="cs_settings_evap_normal"       text="Нормальна"/>
+    <text name="cs_settings_evap_fast"         text="Швидка"/>
+    <text name="cs_settings_yield_loss_short"  text="Макс. втрата врожаю"/>
+    <text name="cs_settings_yield_loss_long"   text="Максимальний відсоток втрати врожаю через посухову напругу"/>
+    <text name="cs_settings_threshold_short"   text="Критичний поріг"/>
+    <text name="cs_settings_threshold_long"    text="Рівень вологості, нижче якого накопичується напруга"/>
+    <text name="cs_settings_irr_costs_short"   text="Витрати на зрошення"/>
+    <text name="cs_settings_irr_costs_long"    text="Увімкнути або вимкнути фінансові витрати на роботу систем зрошення"/>
+    <text name="cs_settings_alerts_short"      text="Сповіщення увімкнені"/>
+    <text name="cs_settings_alerts_long"       text="Показувати попередження, коли полям потрібна вода"/>
+    <text name="cs_settings_cooldown_short"    text="Затримка сповіщень"/>
+    <text name="cs_settings_cooldown_long"     text="Мінімальна кількість годин між сповіщеннями для одного поля"/>
+    <text name="cs_settings_debug_short"       text="Режим налагодження"/>
+    <text name="cs_settings_debug_long"        text="Увімкнути детальне логування для усунення несправностей"/>
+
+    <!-- ========== HELP LINES ========== -->
+    <text name="helpLine_cs_category"          text="Сезонна напруга культур"/>
+    <text name="helpLine_cs_cat_overview"      text="Загальне"/>
+    <text name="helpLine_cs_cat_settings"      text="Налаштування"/>
+    <text name="helpLine_cs_cat_tips"          text="Поради та підказки"/>
+    <text name="helpLine_cs_cat_info"          text="Інформація про мод"/>
+
+    <text name="helpLine_cs_p1_title"          text="Огляд"/>
+    <text name="helpLine_cs_p1_intro_title"    text="Що додає цей мод"/>
+    <text name="helpLine_cs_p1_intro_text"     text="Seasonal Crop Stress додає симуляцію вологості ґрунту для кожного поля. Культурам потрібна вода під час ключових фаз росту. Якщо її не вистачає — врожай буде меншим. Системи зрошення дозволяють контролювати водопостачання полів."/>
+    <text name="helpLine_cs_p1_start_title"    text="Початок роботи"/>
+    <text name="helpLine_cs_p1_start_text"     text="Натисніть Shift+M, щоб відкрити HUD вологості і побачити всі поля одразу. Поля, виділені червоним, терміново потребують води. Зелені поля в гарному стані. Натисніть Shift+C, щоб відкрити агрономічного консультанта з детальними порадами."/>
+
+    <text name="helpLine_cs_p2_title"          text="Вологість ґрунту"/>
+    <text name="helpLine_cs_p2_how_title"      text="Як працює вологість"/>
+    <text name="helpLine_cs_p2_how_text"       text="Дощ наповнює ґрунт, а спека його висушує. Кожне поле відстежує власний рівень вологості від 0% (абсолютно сухий) до 100% (насичений). Швидкість висихання залежить від погоди, сезону і типу ґрунту."/>
+    <text name="helpLine_cs_p2_soil_title"     text="Типи ґрунту"/>
+    <text name="helpLine_cs_p2_soil_text"      text="Піщаний ґрунт швидко висихає і потребує частого поливу. Глинистий ґрунт довше утримує воду, але може перезволожуватися. Суглинок — середній варіант і найпростіший в управлінні. Тип ґрунту вашого поля відображається в HUD та консультанті."/>
+
+    <text name="helpLine_cs_p3_title"          text="Напруга культур та врожай"/>
+    <text name="helpLine_cs_p3_window_title"   text="Критичні вікна росту"/>
+    <text name="helpLine_cs_p3_window_text"    text="Кожна культура має період у своєму циклі росту, коли найбільше потребує води. Пшениця найбільш вразлива навесні, кукурудза страждає під час літньої спеки, ріпак чутливий восени. Низька вологість в цей період накопичує напругу на полі."/>
+    <text name="helpLine_cs_p3_yield_title"    text="Зниження врожаю під час збирання"/>
+    <text name="helpLine_cs_p3_yield_text"     text="Накопичена напруга зменшує врожай. Невелика напруга — невелика втрата врожаю. Сильна посуха може скоротити врожай до 60%. Консультант показує поточний ризик втрати врожаю по кожному полю, щоб ви могли розставити пріоритети."/>
+
+    <text name="helpLine_cs_p5_title"          text="Зрошення"/>
+    <text name="helpLine_cs_p5_types_title"    text="Типи зрошення"/>
+    <text name="helpLine_cs_p5_types_text"     text="У меню будівництва доступні три типи зрошення. Центральний зрошувач охоплює велику кругову площу. Крапельна лінія забезпечує точне покриття вздовж рядка поля. Водяний насос живить ваші системи зрошення і має бути розміщений поблизу джерела води."/>
+    <text name="helpLine_cs_p5_schedule_title" text="Розклад та запуск"/>
+    <text name="helpLine_cs_p5_schedule_text"  text="Виберіть систему зрошення і натисніть Shift+I, щоб відкрити її розклад. Виберіть дні тижня для поливу та встановіть час початку і завершення. Ви також можете натиснути 'Полити зараз' у діалозі, щоб одразу полити охоплені поля без очікування."/>
+
+    <text name="helpLine_cs_p6_title"          text="Агрономічний консультант"/>
+    <text name="helpLine_cs_p6_what_title"     text="Що показує консультант"/>
+    <text name="helpLine_cs_p6_what_text"      text="Натисніть Shift+C, щоб відкрити консультанта. Він показує 5 полів з найвищим ризиком, ранжованих за вологістю та рівнем напруги, разом з рекомендацією на 24 години і прогнозом вологості на 3 дні."/>
+    <text name="helpLine_cs_p6_act_title"      text="Дії за порадами"/>
+    <text name="helpLine_cs_p6_act_text"       text="Поля з позначкою КРИТИЧНО потребують поливу сьогодні, щоб запобігти втраті врожаю. Поля з позначкою УВАГА слід полити протягом одного-двох днів. Використовуйте кнопку 'Відкрити менеджер зрошення' всередині консультанта."/>
+    <text name="helpLine_cs_p6_npc_title"      text="Необов'язкові інтеграції"/>
+    <text name="helpLine_cs_p6_npc_text"       text="Кілька необов'язкових модів розширюють систему. FS25_NPCFavor: Олексій Чен з'являється як NPC-агроном. FS25_SoilFertilizer: pH ґрунту та вміст органіки змінюють евапотранспірацію. Precision Farming DLC: дані вологості ґрунту відображаються в накладці карти."/>
+
+    <text name="helpLine_cs_s1_title"          text="Загальні налаштування"/>
+    <text name="helpLine_cs_s1_gen_title"      text="Увімкнення моду"/>
+    <text name="helpLine_cs_s1_gen_text"       text="Відкрийте налаштування гри (ESC → Налаштування → Seasonal Crop Stress). Використовуйте 'Увімкнути мод', щоб увімкнути або вимкнути всю систему. Параметр 'Складність' контролює швидкість накопичення напруги — Легко прощає помилки, Важко вимагає проактивного поливу."/>
+    <text name="helpLine_cs_s1_evap_title"     text="Швидкість евапотранспірації"/>
+    <text name="helpLine_cs_s1_evap_text"      text="Евапотранспірація контролює, наскільки швидко висихає ґрунт між дощами. Повільна означає, що поля довго утримують вологу. Швидка означає, що поля можуть висохнути за один ігровий день під час спеки — активне управління зрошенням стає необхідним."/>
+
+    <text name="helpLine_cs_s2_title"          text="Розширені налаштування"/>
+    <text name="helpLine_cs_s2_yield_title"    text="Втрата врожаю та поріг напруги"/>
+    <text name="helpLine_cs_s2_yield_text"     text="Макс. втрата врожаю обмежує відсоток урожаю, який може знизити напруга від посухи. За замовчуванням 60% — повністю напружене поле все одно дасть 40% від нормального врожаю. Критичний поріг — рівень вологості, нижче якого починає накопичуватися напруга."/>
+    <text name="helpLine_cs_s2_alerts_title"   text="Витрати на зрошення та сповіщення"/>
+    <text name="helpLine_cs_s2_alerts_text"    text="'Витрати на зрошення' стягує погодинну плату за роботу систем. Вимкніть для простішого досвіду. 'Сповіщення увімкнені' показує попередження, коли полям потрібна вода. 'Затримка сповіщень' встановлює мінімальний час між повторними сповіщеннями для одного поля."/>
+
+    <text name="helpLine_cs_p4_title"          text="HUD та керування"/>
+    <text name="helpLine_cs_p4_hud_title"      text="Накладка HUD вологості"/>
+    <text name="helpLine_cs_p4_hud_text"       text="Натисніть Shift+M, щоб переключити HUD вологості. Він перераховує всі поля з рівнем вологості, типом культури та статусом напруги. Прогноз на 5 днів показує, чи зростає або знижується вологість."/>
+    <text name="helpLine_cs_p4_reading_title"  text="Читання рядка поля"/>
+    <text name="helpLine_cs_p4_reading_text"   text="Кожен рядок показує: номер поля (П1), назву культури (Пшениця), поточну фазу росту (Фаза 3), кольоровий індикатор вологості та відсоток вологості. Якщо рядок закінчується знаком оклику (!), це поле вже накопичує напругу — поливайте негайно."/>
+    <text name="helpLine_cs_p4_status_title"   text="Кольори статусу"/>
+    <text name="helpLine_cs_p4_status_text"    text="Зелений — поле здорове, дій не потрібно. Жовтий — попередження: вологість знижується, рекомендується полив. Червоний — критично: культура під напругою від посухи і вже втрачає врожай — поливайте негайно."/>
+    <text name="helpLine_cs_p4_keys_title"     text="Гарячі клавіші"/>
+    <text name="helpLine_cs_p4_keys_text"      text="Shift+M — перемикає HUD вологості. Shift+I — відкриває менеджер зрошення для обраної системи. Shift+C — відкриває консультанта з зведенням ризиків і рекомендаціями."/>
+
+    <text name="helpLine_cs_t2_title"          text="Стратегії фермерства"/>
+    <text name="helpLine_cs_t2_sandy_title"    text="Пріоритет піщаним полям"/>
+    <text name="helpLine_cs_t2_sandy_text"     text="Піщаний ґрунт висихає вдвічі швидше за суглинок. Якщо у вас різні типи ґрунту, розміщуйте зрошення на піщаних полях насамперед. Центральний зрошувач на великій піщаній ділянці часто вигідніший за крапельну лінію на невеликому глинистому полі."/>
+    <text name="helpLine_cs_t2_forecast_title" text="Використовуйте прогноз"/>
+    <text name="helpLine_cs_t2_forecast_text"  text="Прогноз на 5 днів у HUD показує, чи зростає або знижується вологість. Якщо дощ очікується через день-два і поля лише в зоні попередження — зачекайте дощу, заощадите кошти та зменшите знос обладнання. Дійте завчасно, якщо прогноз показує кілька сухих днів під час критичного вікна росту."/>
+
+    <text name="helpLine_cs_i1_title"           text="Про цей мод"/>
+    <text name="helpLine_cs_i1_about_title"     text="Seasonal Crop Stress v1.0.5.0"/>
+    <text name="helpLine_cs_i1_about_text"      text="Автор: TisonK. Додає реалістичну симуляцію вологості ґрунту, сезонне накопичення стресу культур та управління зрошувальною інфраструктурою у Farming Simulator 25."/>
+    <text name="helpLine_cs_i1_community_title" text="Спільнота та підтримка"/>
+    <text name="helpLine_cs_i1_community_text"  text="Знайдіть цей мод на Github та KingMods. Для питань, звітів про помилки та оновлень відвідайте репозиторій на github."/>
+
+    <text name="helpLine_cs_i2_title"          text="Необов'язкові інтеграції"/>
+    <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor та FS25_SoilFertilizer"/>
+    <text name="helpLine_cs_i2_npc_text"       text="З встановленим FS25_NPCFavor Олексій Чен з'являється як NPC-агроном на вашій фермі. Виконання завдань для Олексія розвиває стосунки та розблоковує ранні попередження про посуху. З FS25_SoilFertilizer pH ґрунту та вміст органіки кожного поля коригують евапотранспірацію."/>
+    <text name="helpLine_cs_i2_vehicle_title"  text="CoursePlay, AutoDrive та Precision Farming"/>
+    <text name="helpLine_cs_i2_vehicle_text"   text="Коли активний CoursePlay, кількість автономних транспортних засобів, що працюють на напруженому полі, відображається в сповіщенні. При виявленні AutoDrive критичні сповіщення про посуху включають кількість доступних водних пунктів призначення. З Precision Farming DLC дані вологості ґрунту відображаються прямо в накладці карти."/>
+
+    <text name="helpLine_cs_t3_title"          text="Обприскувачі та полив"/>
+    <text name="helpLine_cs_t3_sprayer_title"  text="Використання обприскувачів для зрошення"/>
+    <text name="helpLine_cs_t3_sprayer_text"   text="Звичайні обприскувачі можна використовувати як ручну альтернативу постійним системам зрошення. Якщо наповнити обприскувач ВОДОЮ, будь-яка оброблена ділянка отримає негайний приріст вологості. Корисно для невеликих полів або як тимчасовий захід до встановлення постійного зрошення."/>
+
+    <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->
+    <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d транспортний засіб працює на цьому полі"/>
+    <text name="cs_cp_vehicles_on_field" text="CoursePlay: %d транспортних засоби працюють на цьому полі"/>
+    <text name="cs_ad_water_hint"    text="AutoDrive: %d водний пункт(и) призначення доступний — розгляньте маршрут доставки"/>
+    <text name="cs_ad_destinations"  text="AutoDrive: %d пункт(и) призначення налаштовано"/>
+
+    </texts>
+</l10n>
