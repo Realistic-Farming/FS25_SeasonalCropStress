@@ -164,13 +164,23 @@
   "2026-04-04": [
     {
       "referrer": "github.com",
-      "count": 318,
-      "uniques": 75
+      "count": 321,
+      "uniques": 73
+    },
+    {
+      "referrer": "DuckDuckGo",
+      "count": 4,
+      "uniques": 1
     },
     {
       "referrer": "Google",
       "count": 3,
       "uniques": 3
+    },
+    {
+      "referrer": "Bing",
+      "count": 3,
+      "uniques": 1
     },
     {
       "referrer": "kingmods.net",
@@ -179,11 +189,6 @@
     },
     {
       "referrer": "amail.centrum.cz",
-      "count": 2,
-      "uniques": 1
-    },
-    {
-      "referrer": "Bing",
       "count": 1,
       "uniques": 1
     }

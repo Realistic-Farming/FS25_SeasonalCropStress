@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-04-04T12:40:41Z
-**Days tracked:** 7 | **Download snapshots:** 28 (hourly)
+**Last updated:** 2026-04-04T18:33:46Z
+**Days tracked:** 7 | **Download snapshots:** 30 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 575 | 107 |
-| Git Clones | 288 | 113 |
+| Page Views | 591 | 109 |
+| Git Clones | 332 | 134 |
 
-> **Engagement:** 5.3 pages per visitor (14-day avg)
+> **Engagement:** 5.4 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 239 of 107 visitors cloned or downloaded (**223.3%**)
+> **14-day conversion:** 261 of 109 visitors cloned or downloaded (**239.4%**)
 >
-> Unique cloners: 113 | Release downloads: 126
+> Unique cloners: 134 | Release downloads: 127
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 126 |
-| Git Clones (14-day) | 288 |
-| **Total Acquisitions** | **414** |
+| Zip Downloads | 127 |
+| Git Clones (14-day) | 332 |
+| **Total Acquisitions** | **459** |
 
 ---
 
@@ -54,11 +54,12 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 318 | 75 |
+| github.com | 321 | 73 |
+| DuckDuckGo | 4 | 1 |
 | Google | 3 | 3 |
+| Bing | 3 | 1 |
 | kingmods.net | 2 | 2 |
-| amail.centrum.cz | 2 | 1 |
-| Bing | 1 | 1 |
+| amail.centrum.cz | 1 | 1 |
 
 ---
 
@@ -78,16 +79,16 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/TheCodingDad-TisonK/FS25_SeasonalCropStress` | 311 | 88 |
-| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues` | 37 | 17 |
-| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.0.9.0` | 30 | 19 |
+| `/TheCodingDad-TisonK/FS25_SeasonalCropStress` | 325 | 88 |
+| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.0.9.0` | 37 | 22 |
+| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues` | 33 | 17 |
+| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases` | 23 | 13 |
 | `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.0.8.1` | 22 | 13 |
-| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases` | 19 | 13 |
-| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.0.6.0` | 10 | 7 |
 | `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.0.8.0` | 9 | 7 |
 | `/TheCodingDad-TisonK/FS25_SeasonalCropStress/pulls` | 9 | 5 |
 | `/TheCodingDad-TisonK/FS25_SeasonalCropStress/pull/63` | 7 | 3 |
 | `/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues/65` | 6 | 6 |
+| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.0.6.0` | 6 | 5 |
 
 ---
 
