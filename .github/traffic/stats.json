@@ -3631,26 +3631,26 @@
     "watchers": 4
   },
   {
-    "timestamp": "2026-04-15T06:51:42Z",
+    "timestamp": "2026-04-15T18:03:24Z",
     "date": "2026-04-15",
     "views": {
-      "count": 389,
+      "count": 420,
       "uniques": 107
     },
     "clones": {
-      "count": 635,
-      "uniques": 221
+      "count": 643,
+      "uniques": 220
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 227,
-        "uniques": 70
+        "count": 256,
+        "uniques": 69
       },
       {
         "referrer": "Google",
-        "count": 24,
-        "uniques": 12
+        "count": 33,
+        "uniques": 15
       },
       {
         "referrer": "kingmods.net",
@@ -3672,26 +3672,38 @@
       {
         "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress",
         "title": "Overview",
-        "count": 274,
-        "uniques": 94
+        "count": 288,
+        "uniques": 95
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.0.9.0",
         "title": "/releases/tag/v1.0.9.0",
-        "count": 36,
-        "uniques": 22
+        "count": 35,
+        "uniques": 23
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases",
         "title": "/releases",
-        "count": 21,
-        "uniques": 15
+        "count": 30,
+        "uniques": 16
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues",
         "title": "/issues",
-        "count": 13,
-        "uniques": 10
+        "count": 20,
+        "uniques": 12
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/branches",
+        "title": "/branches",
+        "count": 4,
+        "uniques": 3
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/tree/main/translations",
+        "title": "/tree/main/translations",
+        "count": 4,
+        "uniques": 3
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues/48",
@@ -3712,20 +3724,8 @@
         "uniques": 3
       },
       {
-        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/pulls",
-        "title": "/pulls",
-        "count": 3,
-        "uniques": 3
-      },
-      {
         "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/blob/main/README.md",
         "title": "/blob/main/README.md",
-        "count": 3,
-        "uniques": 2
-      },
-      {
-        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/branches",
-        "title": "/branches",
         "count": 3,
         "uniques": 2
       }
@@ -3734,7 +3734,7 @@
       {
         "assets": [
           {
-            "downloads": 51,
+            "downloads": 52,
             "name": "FS25_SeasonalCropStress.zip"
           }
         ],
