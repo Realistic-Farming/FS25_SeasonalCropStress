@@ -97,7 +97,7 @@
     <text name="cs_rec_urgent"          text="URGENT : Champ %d à %.0f%% d'humidité — irriguer immédiatement !"/>
     <text name="cs_rec_warning"         text="Champ %d à %.0f%% d'humidité — irrigation recommandée sous 24h."/>
     <text name="cs_rec_ok"              text="Toutes les parcelles dans une plage d'humidité acceptable."/>
-    <text name="cs_rec_forecast"        text="Prévision : J+1 %.0f%%  J+2 %.0f%%  J+3 %.0f%%"/>
+    <text name="cs_rec_forecast"        text="Prévision : ~ J+1 %.0f%%  J+2 %.0f%%  J+3 %.0f%%"/>
     <text name="cs_rec_systems_running" text="%d système(s) d'irrigation en cours."/>
     <text name="cs_rec_no_systems"      text="Aucun système d'irrigation actif."/>
     <text name="cs_rec_all_healthy"     text="Toutes les parcelles semblent saines."/>

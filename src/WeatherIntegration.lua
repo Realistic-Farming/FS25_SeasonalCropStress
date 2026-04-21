@@ -327,18 +327,45 @@ function WeatherIntegration:delete()
     self.isInitialized = false
 end
 -- ============================================================
+-- FORECAST API INVESTIGATION RESULT (Issue #69)
+-- ============================================================
+-- No FS25 weather forecast Lua API exists.
+--
+-- Investigation performed against FS25-Community-LUADOC and FS25-lua-scripting
+-- reference packages (confirmed 2025). Specifically checked:
+--   • env.weatherSystem — exposes current temp/rain/humidity only; no future states
+--   • env.cloudUpdater  — exposes getCloudCoverage() only; no forecast queue
+--   • Weather.getForecast() / weather:getForecast() — method does not exist
+--   • XML savegame <forecast> block — no confirmed Lua accessor
+--   • FS25_RealisticWeather (g_realisticWeather / g_weatherSystem) — enhanced
+--     current-state data only; no getForecast() or equivalent method found
+--
+-- CONCLUSION: All projections below are APPROXIMATIONS based on:
+--   Day 1-2 : cloud coverage signal + current rain state + rain duration heuristic
+--   Day 3+  : season-based mean rain probability only
+--   All days: season-typical daily mean temperature for evap (not snapshot)
+--
+-- isForecastApproximate() always returns true. HUD must show visual indicator.
+-- ============================================================
+
+-- Season-typical DAILY MEAN temperatures used for projected evap calculations.
+-- Using daily means avoids snapshot bias (e.g. midday reads skewing all-day projection).
+-- 0=spring, 1=summer, 2=autumn, 3=winter
+WeatherIntegration.SEASON_MEAN_TEMP = { [0]=12.0, [1]=22.0, [2]=10.0, [3]=2.0 }
+
+-- Seasonal baseline rain probability (fraction of hours with rain, season average).
+-- 0=spring(moderate), 1=summer(dry), 2=autumn(moderate), 3=winter(wet)
+WeatherIntegration.SEASON_RAIN_PROB = { [0]=0.30, [1]=0.12, [2]=0.28, [3]=0.35 }
+
+-- Returns true always: no FS25 forecast API exists, all projections are approximate.
+function WeatherIntegration:isForecastApproximate()
+    return true
+end
+
+-- ============================================================
 -- 5-DAY MOISTURE FORECAST
 -- Projects moisture for a field over the next N in-game days.
---
--- No FS25 weather forecast Lua API exists (confirmed: weather:getForecast()
--- is not in the public API as of FS25 v1.x). The XML savegame stores a
--- <forecast> block but there is no confirmed Lua accessor for it.
---
--- Strategy used here:
---   Day 1-2 : weight rain probability by env.cloudUpdater:getCloudCoverage()
---             (a real, confirmed FS25 API) combined with current rain state.
---   Day 3-5 : fall back to season-based average rain probability.
---   All days: irrigation contribution is assumed to continue unchanged.
+-- ALL RESULTS ARE APPROXIMATE — see API investigation note above.
 -- ============================================================
 function WeatherIntegration:getMoistureForecast(fieldId, days)
     days = days or 5
@@ -359,7 +386,7 @@ function WeatherIntegration:getMoistureForecast(fieldId, days)
     local soilParams = SoilMoistureSystem.SOIL_PARAMS[soilType]
         or SoilMoistureSystem.SOIL_PARAMS.loamy
 
-    -- Cloud coverage query (confirmed FS25 API: env.cloudUpdater:getCloudCoverage() → 0.0-1.0)
+    -- Cloud coverage (confirmed FS25 API: env.cloudUpdater:getCloudCoverage() → 0.0-1.0)
     local cloudCoverage = 0.0
     local env = g_currentMission and g_currentMission.environment
     if env ~= nil and env.cloudUpdater ~= nil
@@ -368,12 +395,10 @@ function WeatherIntegration:getMoistureForecast(fieldId, days)
         if ok and val ~= nil then cloudCoverage = val end
     end
 
-    -- Seasonal baseline: fraction of hours that have rain on average per season.
-    -- 0=spring(moderate), 1=summer(dry), 2=autumn(moderate), 3=winter(wet)
-    local SEASON_RAIN_PROB = { [0]=0.30, [1]=0.12, [2]=0.28, [3]=0.35 }
-    local baseRainProb = SEASON_RAIN_PROB[self.currentSeason] or 0.25
+    local season      = self.currentSeason
+    local baseRainProb = WeatherIntegration.SEASON_RAIN_PROB[season] or 0.25
 
-    -- Typical rain amount per raining hour (moderate rain, soil-independent)
+    -- Typical moderate-rain moisture gain per raining hour (soil-independent)
     local typicalRainPerHour = 0.010
 
     -- Irrigation contribution (assumes currently active systems keep running)
@@ -382,27 +407,55 @@ function WeatherIntegration:getMoistureForecast(fieldId, days)
         irrigPerHour = self.manager.irrigationManager:getIrrigationRateForField(fieldId)
     end
 
+    -- ── Projected evaporation uses season daily-mean temperature, not a snapshot.
+    -- Snapshot temp (e.g. captured at 6am or 2pm) causes systematic bias across
+    -- all projected days. Season mean gives a stable, representative daily value.
+    local meanTemp       = WeatherIntegration.SEASON_MEAN_TEMP[season] or 15.0
+    local tempModMean    = 1.0 + math.max(0.0, (meanTemp - 15.0) * 0.03)
+    local seasonMods     = { [0]=0.80, [1]=1.40, [2]=0.90, [3]=0.20 }
+    local seasonEvapMod  = seasonMods[season] or 1.0
+    local projEvapMult   = tempModMean * seasonEvapMod  -- no rain reduction: projection spans whole day
+
     local evapPerHour = SoilMoistureSystem.BASE_EVAP_RATE
-        * self:getHourlyEvapMultiplier()
+        * projEvapMult
         * soilParams.evapMod
+
+    -- ── Rain duration heuristic for near-term signal (day 1-2).
+    -- If it has been raining for a while AND cloud coverage is high, persistence
+    -- is more likely than immediate clearing. This is a heuristic only.
+    -- rainDurationBoost: 0.0 if dry, up to +0.15 if raining + heavy cloud.
+    local rainDurationBoost = 0.0
+    if self.isRaining then
+        rainDurationBoost = cloudCoverage * 0.15
+    end
 
     local projections = {}
     local moisture    = current
 
     for day = 1, days do
         local rainPerHour
+
         if day <= 2 then
-            -- Near-term: cloud coverage predicts rain continuation / arrival.
-            -- If currently raining: cloud coverage sustains probability.
-            -- If currently dry: partial cloud coverage suggests rain may arrive.
-            local nearRainProb = self.isRaining
-                and math.max(0.2, cloudCoverage)
-                or  (cloudCoverage * 0.40)
+            -- Near-term: combine cloud coverage + rain persistence heuristic.
+            -- isRaining=true  → cloud coverage sustains rain probability (+ duration boost)
+            -- isRaining=false → partial cloud coverage suggests rain may arrive (40% weight)
+            local nearRainProb
+            if self.isRaining then
+                nearRainProb = math.max(0.20, cloudCoverage) + rainDurationBoost
+                nearRainProb = math.min(nearRainProb, 0.80)    -- cap: we can't know for certain
+            else
+                nearRainProb = cloudCoverage * 0.40
+            end
+            -- Decay rain persistence signal on day 2 (uncertainty grows)
+            if day == 2 then
+                nearRainProb = nearRainProb * 0.65 + baseRainProb * 0.35
+            end
             local sourceRate = (self.hourlyRainAmount > 0) and self.hourlyRainAmount
                                                             or typicalRainPerHour
             rainPerHour = sourceRate * nearRainProb
+
         else
-            -- Far-term (day 3+): seasonal probability only.
+            -- Medium/far-term (day 3+): seasonal probability baseline only.
             rainPerHour = typicalRainPerHour * baseRainProb
         end
 

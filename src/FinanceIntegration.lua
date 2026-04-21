@@ -62,11 +62,9 @@ end
 function FinanceIntegration:deductFundsVanilla(cost)
     if g_currentMission == nil then return end
     local moneyType = (MoneyType ~= nil and MoneyType.OTHER) or 0
-    -- AccessHandler.EVERYBODY may be nil on some builds/platforms; fall back to
-    -- farm 0 (spectator/server farm — effectively "all farms").
-    local everybody = (AccessHandler ~= nil and AccessHandler.EVERYBODY) or 0
-    local farmId = (g_currentMission.player ~= nil and g_currentMission.player:getOwnerFarmId())
-        or everybody
+    local farmId = g_currentMission.player ~= nil and g_currentMission.player:getOwnerFarmId()
+    -- Farm 0 is the spectator farm — addMoney rejects it. Skip if no valid farm.
+    if not farmId or farmId == 0 then return end
     g_currentMission:addMoney(-cost, farmId, moneyType, true)
 end
 

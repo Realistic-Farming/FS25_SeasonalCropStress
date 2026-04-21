@@ -97,7 +97,7 @@
     <text name="cs_rec_urgent"          text="PILNE: Pole %d na %.0f%% wilgotności — nawadniaj natychmiast!"/>
     <text name="cs_rec_warning"         text="Pole %d na %.0f%% wilgotności — zalecane nawadnianie w ciągu 24h."/>
     <text name="cs_rec_ok"              text="Wszystkie pola w akceptowalnym zakresie wilgotności."/>
-    <text name="cs_rec_forecast"        text="Prognoza: D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
+    <text name="cs_rec_forecast"        text="Prognoza: ~ D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
     <text name="cs_rec_systems_running" text="%d system(ów) nawadniania aktywnych."/>
     <text name="cs_rec_no_systems"      text="Brak aktywnych systemów nawadniania."/>
     <text name="cs_rec_all_healthy"     text="Wszystkie pola wyglądają zdrowo."/>

@@ -97,7 +97,7 @@
     <text name="cs_rec_urgent"          text="NALÉHAVÉ: Pole %d na %.0f%% vlhkosti — zavlažte okamžitě!"/>
     <text name="cs_rec_warning"         text="Pole %d na %.0f%% vlhkosti — doporučeno zavlažování do 24h."/>
     <text name="cs_rec_ok"              text="Všechna pole v přijatelném rozsahu vlhkosti."/>
-    <text name="cs_rec_forecast"        text="Předpověď: D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
+    <text name="cs_rec_forecast"        text="Předpověď: ~ D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
     <text name="cs_rec_systems_running" text="%d zavlažovací systém(y) aktuálně běží."/>
     <text name="cs_rec_no_systems"      text="Žádné zavlažovací systémy momentálně neběží."/>
     <text name="cs_rec_all_healthy"     text="Všechna pole vypadají zdravě."/>
