@@ -97,7 +97,7 @@
     <text name="cs_rec_urgent"          text="DRINGEND: Feld %d bei %.0f%% Feuchte — sofort bewässern!"/>
     <text name="cs_rec_warning"         text="Feld %d bei %.0f%% Feuchte — Bewässerung innerhalb von 24h empfohlen."/>
     <text name="cs_rec_ok"              text="Alle Felder im akzeptablen Feuchtebereich."/>
-    <text name="cs_rec_forecast"        text="Prognose: T+1 %.0f%%  T+2 %.0f%%  T+3 %.0f%%"/>
+    <text name="cs_rec_forecast"        text="Prognose: ~ T+1 %.0f%%  T+2 %.0f%%  T+3 %.0f%%"/>
     <text name="cs_rec_systems_running" text="%d Bewässerungssystem(e) aktiv."/>
     <text name="cs_rec_no_systems"      text="Keine Bewässerungssysteme aktiv."/>
     <text name="cs_rec_all_healthy"     text="Alle Felder erscheinen gesund."/>

@@ -97,7 +97,7 @@
     <text name="cs_rec_urgent"          text="DRINGEND: Veld %d op %.0f%% vochtigheid — onmiddellijk irrigeren!"/>
     <text name="cs_rec_warning"         text="Veld %d op %.0f%% vochtigheid — irrigatie aanbevolen binnen 24u."/>
     <text name="cs_rec_ok"              text="Alle velden binnen aanvaardbaar vochtigheidsbereik."/>
-    <text name="cs_rec_forecast"        text="Prognose: D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
+    <text name="cs_rec_forecast"        text="Prognose: ~ D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
     <text name="cs_rec_systems_running" text="%d irrigatiesysteem/systemen actief."/>
     <text name="cs_rec_no_systems"      text="Geen irrigatiesystemen actief."/>
     <text name="cs_rec_all_healthy"     text="Alle velden zien er gezond uit."/>

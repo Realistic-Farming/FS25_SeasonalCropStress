@@ -108,6 +108,7 @@ function HUDOverlay.new(manager)
     -- Scrolling support
     self.scrollOffset      = 0     -- index of first visible field (0-based)
     self.maxVisibleFields  = HUDOverlay.MAX_FIELDS
+    self.totalValidFields  = 0     -- cached by rebuildDisplayRows(); used by scroll() and drawScrollIndicator()
 
     -- Auto-show / auto-hide state
     self.autoShowActive = false
@@ -278,7 +279,11 @@ function HUDOverlay:isPlayerInVehicle()
     -- Check 2: Input binding context name.
     -- FS25 switches the active input context to a vehicle-specific name when driving.
     -- On foot the context is "PLAYER" or "ALL". Driving uses "VEHICLE", "COMBINE", etc.
-    if g_inputBinding ~= nil then
+    --
+    -- IMPORTANT: Context name alone is NOT reliable — sibling mods (e.g. FS25_SoilFertilizer)
+    -- may push custom input contexts (e.g. "SOIL_TOOL") while the player is still on foot.
+    -- Guard with g_localPlayer: if a player pawn exists, we are on foot regardless of context.
+    if g_localPlayer == nil and g_inputBinding ~= nil then
         local ok, ctx = pcall(function()
             if type(g_inputBinding.getContextName) == "function" then
                 return g_inputBinding:getContextName()
@@ -458,37 +463,23 @@ end
 -- SCROLLING
 -- ============================================================
 function HUDOverlay:scroll(delta)
-    if #self.displayRows == 0 then return end
-    
-    -- Get total field count from manager
-    local totalFields = 0
-    if self.manager ~= nil and self.manager.soilSystem ~= nil then
-        local sortedFields = self.manager.soilSystem:getFieldsSortedByMoisture()
-        if sortedFields ~= nil then
-            -- Count valid fields (same logic as rebuildDisplayRows)
-            local fieldById = (self.manager ~= nil) and self.manager.fieldById or {}
-            for _, entry in ipairs(sortedFields) do
-                local field = fieldById[entry.fieldId]
-                if field ~= nil then
-                    local cropName = self:resolveCropName(field)
-                    if cropName ~= nil and CropStressModifier.CROP_WINDOWS[cropName:lower()] ~= nil then
-                        totalFields = totalFields + 1
-                    end
-                end
-            end
-        end
-    end
-    
+    if #self.displayRows == 0 and self.totalValidFields == 0 then return end
+
+    -- Use the count cached by rebuildDisplayRows() — avoids a redundant full
+    -- re-enumeration and guarantees both paths use identical field-counting logic.
+    local totalFields = self.totalValidFields
+
     if totalFields <= self.maxVisibleFields then return end
-    
+
     -- Apply scroll delta (negative delta = scroll up, positive = scroll down)
     self.scrollOffset = self.scrollOffset - delta
-    
+
     -- Clamp scroll offset
     local maxOffset = math.max(0, totalFields - self.maxVisibleFields)
     self.scrollOffset = math.max(0, math.min(maxOffset, self.scrollOffset))
-    
-    -- Rebuild display rows to show new visible fields
+
+    -- Rebuild display rows to show the new visible slice, and mark forecast dirty
+    self.forecastDirty = true
     self:rebuildDisplayRows()
 end
 
@@ -509,12 +500,15 @@ end
 function HUDOverlay:onMouseEvent(posX, posY, isDown, isUp, button)
     if not self.isVisible then return end
 
-    -- ── Mouse wheel: scroll field list (always, no edit mode needed) ──
+    -- ── Mouse wheel: scroll field list (always, no edit mode or cursor needed) ──
+    -- NOTE: posX/posY from wheel events are unreliable when the cursor is hidden
+    -- (no-edit-mode). We intentionally skip isPointerOverHUD here — if the HUD is
+    -- visible and the player scrolls, we scroll. Simple and reliable.
     if button == 4 then
-        if self:isPointerOverHUD(posX, posY) then self:scroll(-1) end
+        self:scroll(-1)
         return
     elseif button == 5 then
-        if self:isPointerOverHUD(posX, posY) then self:scroll(1) end
+        self:scroll(1)
         return
     end
 
@@ -653,9 +647,18 @@ function HUDOverlay:rebuildForecast()
     local projections = self.manager.weatherIntegration:getMoistureForecast(
         self.selectedFieldId, HUDOverlay.FORECAST_COLS - 1)
 
+    -- All forecasts are approximate (no FS25 forecast API exists — Issue #69).
+    -- Query WeatherIntegration for the flag so HUD can show visual indicator.
+    local isApprox = true
+    if self.manager.weatherIntegration ~= nil
+    and type(self.manager.weatherIntegration.isForecastApproximate) == "function" then
+        isApprox = self.manager.weatherIntegration:isForecastApproximate()
+    end
+
     self.forecastCache = {
-        fieldId     = self.selectedFieldId,
-        projections = projections,
+        fieldId       = self.selectedFieldId,
+        projections   = projections,
+        isApproximate = isApprox,
     }
 end
 
@@ -894,12 +897,13 @@ function HUDOverlay:drawForecastStrip(px, py)
     renderOverlay(self.fillOverlay, px + panelW - bwN, py,        bwN, fH)
 
     -- Header text (top section, clearly separated from column labels)
+    -- ~ suffix indicates all projected values are approximations (no FS25 forecast API)
     setTextColor(unpack(HUDOverlay.COLOR_HEADER_TEXT))
     setTextBold(true)
+    local forecastLabel = (g_i18n ~= nil and g_i18n:getText("cs_hud_forecast")) or "5-Day Forecast"
+    if isApprox then forecastLabel = forecastLabel .. " ~" end
     renderText(px + pad, py + fH - HUDOverlay.FORECAST_HEADER_H * s + pad, textSz,
-        string.format("%s — F%d",
-            (g_i18n ~= nil and g_i18n:getText("cs_hud_forecast")) or "5-Day Forecast",
-            fieldId))
+        string.format("%s — F%d", forecastLabel, fieldId))
     setTextBold(false)
 
     -- Explicit section anchors (bottom → top): pct | bars | labels | header
@@ -908,7 +912,8 @@ function HUDOverlay:drawForecastStrip(px, py)
     local barAreaH = HUDOverlay.FORECAST_BAR_AREA * s
     local labelY   = barBaseY + barAreaH + pad
 
-    local colLabels = {"Now", "D+1", "D+2", "D+3", "D+4"}
+    local colLabels  = {"Now", "D+1", "D+2", "D+3", "D+4"}
+    local isApprox   = self.forecastCache.isApproximate ~= false  -- default true
     local currentMoisture = 0
     if self.manager ~= nil and self.manager.soilSystem ~= nil then
         currentMoisture = self.manager.soilSystem:getMoisture(fieldId) or 0
@@ -928,7 +933,14 @@ function HUDOverlay:drawForecastStrip(px, py)
         local cx  = colStartX + (i - 1) * colGap + pad
         local bw  = HUDOverlay.FORECAST_COL_W * s - pad
 
-        setTextColor(unpack(HUDOverlay.COLOR_DIM_TEXT))
+        -- Day label: "Now" uses normal color; projected days (i>1) use a dimmer
+        -- tone when forecast is approximate, signalling reduced certainty.
+        local isProjected = (i > 1) and isApprox
+        if isProjected then
+            setTextColor(0.55, 0.65, 0.75, 0.80)    -- desaturated blue-grey
+        else
+            setTextColor(unpack(HUDOverlay.COLOR_DIM_TEXT))
+        end
         renderText(cx, labelY, textSz, colLabels[i] or "?")
 
         setOverlayColor(self.fillOverlay, unpack(HUDOverlay.COLOR_BAR_BG))
@@ -937,8 +949,12 @@ function HUDOverlay:drawForecastStrip(px, py)
         setOverlayColor(self.fillOverlay, unpack(self:getMoistureColor(val)))
         renderOverlay(self.fillOverlay, cx, barBaseY, bw, barAreaH * val)
 
+        -- Percentage text: prefix "~" on projected columns to signal approximation.
         setTextColor(unpack(HUDOverlay.COLOR_TEXT))
-        renderText(cx, pctBaseY, textSz, string.format("%d%%", math.floor(val * 100 + 0.5)))
+        local pctStr = isProjected
+            and string.format("~%d%%", math.floor(val * 100 + 0.5))
+            or  string.format("%d%%",  math.floor(val * 100 + 0.5))
+        renderText(cx, pctBaseY, textSz, pctStr)
     end
 end
 
@@ -1011,7 +1027,10 @@ function HUDOverlay:rebuildDisplayRows()
         csLog("HUDOverlay: No owned fields found, showing all tracked fields as a fallback.")
     end
 
+    -- BUG FIX: allValidFields was never declared — table.insert into nil silently
+    -- errored and fields were lost, causing the HUD to show fewer rows than expected.
     local allValidFields = {}
+
     for _, entry in ipairs(fieldsToDisplay) do
         local stress      = 0
         local cropName    = nil
@@ -1045,6 +1064,7 @@ function HUDOverlay:rebuildDisplayRows()
 
     -- Apply scrolling: show only visible fields based on scroll offset
     local totalFields = #allValidFields
+    self.totalValidFields = totalFields   -- cache for scroll() and drawScrollIndicator()
     local maxVisible = self.maxVisibleFields
     
     -- Ensure scroll offset is valid
@@ -1177,9 +1197,17 @@ end
 
 -- ============================================================
 -- EVENT: CS_MOISTURE_UPDATED
--- Marks forecast dirty so it gets recalculated next frame.
+-- Forces a row rebuild so moisture bars update immediately, and marks the
+-- forecast dirty when the selected field is affected.
+-- BUG FIX: Previously only marked forecastDirty for the selected field —
+-- this meant bar values in all other rows only refreshed via the 1s rebuildTimer,
+-- and crop/stage changes after harvest/replanting were not reflected promptly.
 -- ============================================================
 function HUDOverlay:onMoistureUpdated(data)
+    -- Always force a row rebuild so bar values reflect the latest moisture data.
+    self.rebuildTimer = 1.0  -- force rebuild on next update() tick
+
+    -- Also refresh the forecast when the selected field's moisture changed.
     if data ~= nil and data.fieldId == self.selectedFieldId then
         self.forecastDirty = true
     end
@@ -1190,25 +1218,9 @@ end
 -- Shows when there are more fields than can be displayed
 -- ============================================================
 function HUDOverlay:drawScrollIndicator(px, py, s)
-    -- Get total field count from manager
-    local totalFields = 0
-    if self.manager ~= nil and self.manager.soilSystem ~= nil then
-        local sortedFields = self.manager.soilSystem:getFieldsSortedByMoisture()
-        if sortedFields ~= nil then
-            -- Count valid fields (same logic as rebuildDisplayRows)
-            local fieldById = (self.manager ~= nil) and self.manager.fieldById or {}
-            for _, entry in ipairs(sortedFields) do
-                local field = fieldById[entry.fieldId]
-                if field ~= nil then
-                    local cropName = self:resolveCropName(field)
-                    if cropName ~= nil and CropStressModifier.CROP_WINDOWS[cropName:lower()] ~= nil then
-                        totalFields = totalFields + 1
-                    end
-                end
-            end
-        end
-    end
-    
+    -- Use the count cached by rebuildDisplayRows() — same source of truth as scroll().
+    local totalFields = self.totalValidFields
+
     -- Only show scroll indicator if there are more fields than visible
     if totalFields <= self.maxVisibleFields then return end
     

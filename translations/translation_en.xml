@@ -97,7 +97,7 @@
     <text name="cs_rec_urgent"          text="URGENT: Field %d at %.0f%% moisture — irrigate immediately!"/>
     <text name="cs_rec_warning"         text="Field %d at %.0f%% moisture — irrigation recommended within 24h."/>
     <text name="cs_rec_ok"              text="All fields within acceptable moisture range."/>
-    <text name="cs_rec_forecast"        text="Forecast: D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
+    <text name="cs_rec_forecast"        text="Forecast: ~ D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
     <text name="cs_rec_systems_running" text="%d irrigation system(s) currently running."/>
     <text name="cs_rec_no_systems"      text="No irrigation systems are currently active."/>
     <text name="cs_rec_all_healthy"     text="All fields appear healthy."/>

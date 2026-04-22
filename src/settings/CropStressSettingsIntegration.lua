@@ -49,10 +49,13 @@ CropStressSettingsIntegration.alertCooldownTexts  = { "4h", "8h", "12h", "24h" }
 -- 'self' is the InGameMenuSettingsFrame instance (appended fn)
 -- ============================================================
 function CropStressSettingsIntegration:onFrameOpen()
-    -- Guard: inject only once per frame instance.
+    -- Guard: inject only once per frame instance, but ALWAYS refresh values on open.
     -- cropstress_initDone is stored ON the frame, so a new session's
     -- new frame instance automatically starts without it.
     if self.cropstress_initDone then
+        -- BUG FIX: previously returned here without refreshing — controls showed
+        -- stale/default values every time the settings page was reopened.
+        CropStressSettingsIntegration:updateSettingsUI(self)
         return
     end
 
@@ -89,11 +92,17 @@ function CropStressSettingsIntegration:onFrameOpen()
             self:updateGeneralSettings(self.gameSettingsLayout)
         end
 
-        -- Populate controls with current settings
+        -- Populate controls with current settings.
+        -- BUG FIX: cropstress_initDone must be set TRUE before calling updateSettingsUI,
+        -- because updateSettingsUI guards on `if not frame.cropstress_initDone then return end`.
+        -- Previously it was set AFTER the pcall, so updateSettingsUI always returned early
+        -- on the first open — elements were built but never populated, making all settings
+        -- appear as off/default.
+        self.cropstress_initDone = true
         CropStressSettingsIntegration:updateSettingsUI(self)
     end)
 
-    -- Mark done regardless — prevent retry loops even on crash
+    -- Mark done if not already set inside pcall (e.g. pcall errored before reaching it)
     self.cropstress_initDone = true
 
     if not ok then
