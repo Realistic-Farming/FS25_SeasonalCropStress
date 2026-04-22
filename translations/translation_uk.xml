@@ -97,7 +97,7 @@
     <text name="cs_rec_urgent"          text="ТЕРМІНОВО: Поле %d — вологість %.0f%% — поливайте негайно!"/>
     <text name="cs_rec_warning"         text="Поле %d — вологість %.0f%% — рекомендується полив протягом 24 год."/>
     <text name="cs_rec_ok"              text="Всі поля мають прийнятний рівень вологості."/>
-    <text name="cs_rec_forecast"        text="Прогноз: ~ Д+1 %.0f%%  Д+2 %.0f%%  Д+3 %.0f%%"/>
+    <text name="cs_rec_forecast"        text="Прогноз: Д+1 %.0f%%  Д+2 %.0f%%  Д+3 %.0f%%"/>
     <text name="cs_rec_systems_running" text="%d система(и) зрошення наразі працює(ють)."/>
     <text name="cs_rec_no_systems"      text="Жодна система зрошення не активна."/>
     <text name="cs_rec_all_healthy"     text="Всі поля виглядають здоровими."/>
