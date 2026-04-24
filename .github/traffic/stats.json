@@ -4965,5 +4965,240 @@
     "stars": 10,
     "forks": 1,
     "watchers": 4
+  },
+  {
+    "timestamp": "2026-04-24T18:41:07Z",
+    "date": "2026-04-24",
+    "views": {
+      "count": 437,
+      "uniques": 89
+    },
+    "clones": {
+      "count": 864,
+      "uniques": 276
+    },
+    "referrers": [
+      {
+        "referrer": "github.com",
+        "count": 246,
+        "uniques": 59
+      },
+      {
+        "referrer": "Google",
+        "count": 48,
+        "uniques": 12
+      },
+      {
+        "referrer": "search.brave.com",
+        "count": 8,
+        "uniques": 1
+      },
+      {
+        "referrer": "Bing",
+        "count": 4,
+        "uniques": 3
+      },
+      {
+        "referrer": "kingmods.net",
+        "count": 4,
+        "uniques": 2
+      }
+    ],
+    "popular_paths": [
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress",
+        "title": "Overview",
+        "count": 265,
+        "uniques": 82
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.0.9.0",
+        "title": "/releases/tag/v1.0.9.0",
+        "count": 32,
+        "uniques": 20
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases",
+        "title": "/releases",
+        "count": 27,
+        "uniques": 13
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues",
+        "title": "/issues",
+        "count": 26,
+        "uniques": 9
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.0.9.1",
+        "title": "/releases/tag/v1.0.9.1",
+        "count": 22,
+        "uniques": 17
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues/69",
+        "title": "/issues/69",
+        "count": 12,
+        "uniques": 5
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/pulls",
+        "title": "/pulls",
+        "count": 6,
+        "uniques": 2
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/tree/main/translations",
+        "title": "/tree/main/translations",
+        "count": 5,
+        "uniques": 5
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/pull/70",
+        "title": "/pull/70",
+        "count": 4,
+        "uniques": 1
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/blob/main/modDesc.xml",
+        "title": "/blob/main/modDesc.xml",
+        "count": 3,
+        "uniques": 3
+      }
+    ],
+    "releases": [
+      {
+        "assets": [
+          {
+            "downloads": 27,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.9.1"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 65,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.9.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 13,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.8.1"
+      },
+      {
+        "assets": [],
+        "tag": "v1.0.8.0"
+      },
+      {
+        "assets": [],
+        "tag": "v1.0.7.1"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 7,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.7.0"
+      },
+      {
+        "assets": [],
+        "tag": "v1.0.6.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 6,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.5.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 13,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.4.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 16,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.3.3"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 1,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.3.2"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 13,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.3.1"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 10,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.3.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 10,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.2.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 5,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.1.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 3,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.0.0.0"
+      }
+    ],
+    "stars": 10,
+    "forks": 1,
+    "watchers": 4
   }
 ]

@@ -226,5 +226,17 @@
     "views_unique": 9,
     "clones_total": 19,
     "clones_unique": 5
+  },
+  "2026-04-22": {
+    "views_total": 87,
+    "views_unique": 19,
+    "clones_total": 197,
+    "clones_unique": 77
+  },
+  "2026-04-23": {
+    "views_total": 41,
+    "views_unique": 12,
+    "clones_total": 150,
+    "clones_unique": 49
   }
 }
