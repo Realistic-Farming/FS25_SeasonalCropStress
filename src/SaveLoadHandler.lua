@@ -23,6 +23,7 @@
 --               activeDays="1,1,1,1,1,0,0"/>
 --       ...
 --     </irrigation>
+--     <npc relationship="35"/>
 --   </cropStress>
 -- ============================================================
 
@@ -127,6 +128,15 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
             end
             setString(key .. "#activeDays", table.concat(dayStrs, ","))
             i = i + 1
+        end
+    end
+
+    -- NPC relationship (Alex Chen / Agronomist)
+    local npcInt = self.manager.npcIntegration
+    if npcInt ~= nil and npcInt.npcFavorActive then
+        local rel = npcInt:getRelationshipLevel()
+        if rel > 0 then
+            setInt(root .. ".npc#relationship", rel)
         end
     end
 
@@ -256,6 +266,16 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
             i = i + 1
         end
         csLog(string.format("SaveLoadHandler: restored schedules for %d/%d irrigation systems", restored, i))
+    end
+
+    -- NPC relationship (Alex Chen / Agronomist)
+    -- Applied via applyLoadedState() which stores it until NPCFavor finishes init.
+    local npcInt = self.manager.npcIntegration
+    if npcInt ~= nil then
+        local rel = getInt(root .. ".npc#relationship", 0)
+        if rel > 0 then
+            npcInt:applyLoadedState(rel)
+        end
     end
 end
 
