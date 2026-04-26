@@ -836,7 +836,7 @@ function HUDOverlay:drawFieldRow(row, px, rowY, s)
     local cropLabel = row.cropName or "?"
     local stageStr  = row.growthStage and (" S" .. tostring(row.growthStage)) or ""
     local label     = string.format("F%d · %s%s", row.fieldId, cropLabel, stageStr)
-    local stressStr = stress > 0.15 and " !" or ""
+    local stressStr = (row.inStressWindow and stress > 0.15) and " !" or ""
 
     setTextColor(unpack(HUDOverlay.COLOR_TEXT))
     renderText(px + pad + HUDOverlay.SELECTED_BORDER_W * s, rowY + pad,
@@ -853,6 +853,27 @@ function HUDOverlay:drawFieldRow(row, px, rowY, s)
     setTextColor(unpack(HUDOverlay.COLOR_TEXT))
     renderText(barX + barW + pad, rowY + pad, HUDOverlay.TEXT_SIZE * s,
         string.format("%d%%", math.floor(moisture * 100 + 0.5)))
+
+    -- SoilFertilizer enrichment: render a compact pressure/needs strip
+    -- below the moisture bar when SF data is available for this field.
+    -- Indicators: W=weed pressure, P=pest pressure, D=disease pressure, F=needs fertilizer
+    -- Each is only shown when the value is above a meaningful threshold (>0.15).
+    if row.sfInfo ~= nil then
+        local sf      = row.sfInfo
+        local icons   = {}
+        if (sf.weedPressure    or 0) > 0.15 then table.insert(icons, "W") end
+        if (sf.pestPressure    or 0) > 0.15 then table.insert(icons, "P") end
+        if (sf.diseasePressure or 0) > 0.15 then table.insert(icons, "D") end
+        if sf.needsFertilization           then table.insert(icons, "F") end
+        if #icons > 0 then
+            -- Dim orange tint so it's visible but subordinate to moisture bar
+            setTextColor(0.90, 0.60, 0.20, 0.85)
+            local sfLabel = table.concat(icons, " ")
+            renderText(px + pad + HUDOverlay.SELECTED_BORDER_W * s,
+                rowY + rowH - HUDOverlay.TEXT_SIZE * s * 1.1,
+                HUDOverlay.TEXT_SIZE * s * 0.80, sfLabel)
+        end
+    end
 end
 
 -- ============================================================
@@ -1049,17 +1070,45 @@ function HUDOverlay:rebuildDisplayRows()
             growthStage = field.fieldState and field.fieldState.growthState
         end
 
-        -- Only show crops tracked for stress (fallow, greenhouse, carrots etc. = irrelevant noise)
-        -- cropName is title-cased for display ("Wheat"); CROP_WINDOWS keys are lowercase
-        if cropName ~= nil and CropStressModifier.CROP_WINDOWS[cropName:lower()] ~= nil then
-            table.insert(allValidFields, {
-                fieldId     = entry.fieldId,
-                moisture    = entry.moisture,
-                stress      = stress,
-                cropName    = cropName,
-                growthStage = growthStage,
-            })
+        -- BUG FIX: Previously this block filtered out any field whose crop wasn't in
+        -- CROP_WINDOWS (fallow, harvested, or unrecognised crops all return "Fallow" from
+        -- resolveCropName and were silently dropped). With 10+ fields that caused the HUD
+        -- to show only the small handful currently in a tracked growth stage.
+        --
+        -- Fix: show ALL owned fields that have moisture data. The CROP_WINDOWS lookup now
+        -- only drives the "!" stress-window indicator — it no longer gates row visibility.
+        local inStressWindow = false
+        if cropName ~= nil then
+            local win = CropStressModifier.CROP_WINDOWS[cropName:lower()]
+            if win ~= nil and growthStage ~= nil then
+                for _, s in ipairs(win.stages) do
+                    if growthStage == s then inStressWindow = true; break end
+                end
+            end
         end
+
+        -- Collect SoilFertilizer per-field data if the integration is active.
+        -- Reads from the SF mod's soilSystem directly (pcall-wrapped — zero cost when absent).
+        local sfInfo = nil
+        if self.manager ~= nil
+        and self.manager.soilFertilizerIntegration ~= nil
+        and self.manager.soilFertilizerIntegration:isActive() then
+            local sfSys = g_SoilFertilityManager and g_SoilFertilityManager.soilSystem
+            if sfSys ~= nil then
+                local ok, info = pcall(function() return sfSys:getFieldInfo(entry.fieldId) end)
+                if ok and info ~= nil then sfInfo = info end
+            end
+        end
+
+        table.insert(allValidFields, {
+            fieldId        = entry.fieldId,
+            moisture       = entry.moisture,
+            stress         = stress,
+            cropName       = cropName or "Fallow",
+            growthStage    = growthStage,
+            inStressWindow = inStressWindow,
+            sfInfo         = sfInfo,   -- nil when SoilFertilizer is absent
+        })
     end
 
     -- Apply scrolling: show only visible fields based on scroll offset
@@ -1128,20 +1177,32 @@ function HUDOverlay:toggle()
             for fid, field in pairs(fieldById) do
                 if count >= HUDOverlay.MAX_FIELDS then break end
                 local cn = self:resolveCropName(field)
-                if cn ~= nil and CropStressModifier.CROP_WINDOWS[cn:lower()] ~= nil then
-                    local stress = 0
-                    if self.manager ~= nil and self.manager.stressModifier ~= nil then
-                        stress = self.manager.stressModifier:getStress(fid) or 0
-                    end
-                    table.insert(self.displayRows, {
-                        fieldId     = fid,
-                        moisture    = 0,
-                        stress      = stress,
-                        cropName    = cn,
-                        growthStage = field.fieldState and field.fieldState.growthState,
-                    })
-                    count = count + 1
+                -- BUG FIX: removed CROP_WINDOWS gate — show all fields in the stub fallback,
+                -- same as the main rebuildDisplayRows path (fallow fields are now visible).
+                local stress = 0
+                if self.manager ~= nil and self.manager.stressModifier ~= nil then
+                    stress = self.manager.stressModifier:getStress(fid) or 0
                 end
+                local gs = field.fieldState and field.fieldState.growthState
+                local inSW = false
+                if cn ~= nil then
+                    local win = CropStressModifier.CROP_WINDOWS[cn:lower()]
+                    if win ~= nil and gs ~= nil then
+                        for _, s in ipairs(win.stages) do
+                            if gs == s then inSW = true; break end
+                        end
+                    end
+                end
+                table.insert(self.displayRows, {
+                    fieldId        = fid,
+                    moisture       = 0,
+                    stress         = stress,
+                    cropName       = cn or "Fallow",
+                    growthStage    = gs,
+                    inStressWindow = inSW,
+                    sfInfo         = nil,
+                })
+                count = count + 1
             end
         end
         

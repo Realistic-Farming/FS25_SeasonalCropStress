@@ -146,6 +146,7 @@ FUNKCE:
         <action name="CS_OPEN_IRRIGATION"/>
         <action name="CS_OPEN_CONSULTANT"/>
         <action name="CS_EDIT_HUD"/>
+        <action name="CS_OPEN_SETTINGS"/>
     </actions>
 
     <inputBinding>
@@ -160,6 +161,9 @@ FUNKCE:
         </actionBinding>
         <actionBinding action="CS_EDIT_HUD">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_h"/>
+        </actionBinding>
+        <actionBinding action="CS_OPEN_SETTINGS">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_s"/>
         </actionBinding>
     </inputBinding>
 
