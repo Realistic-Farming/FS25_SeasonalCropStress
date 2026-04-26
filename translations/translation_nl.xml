@@ -110,6 +110,7 @@
     <text name="input_CS_TOGGLE_HUD"      text="HUD vochtigheid in-/uitschakelen"/>
     <text name="input_CS_OPEN_IRRIGATION" text="Irrigatiebeheer openen"/>
     <text name="input_CS_OPEN_CONSULTANT" text="Gewasadviseur openen"/>
+    <text name="input_CS_OPEN_SETTINGS"   text="Gewasstresinstellingen openen"/>
     <text name="input_CS_EDIT_HUD"        text="HUD vochtigheid verplaatsen/schalen"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
