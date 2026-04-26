@@ -200,6 +200,11 @@ function CropStressManager.new()
 
     self.saveLoad           = SaveLoadHandler.new(self)
 
+    -- Settings panel (custom-rendered overlay, opened with Shift+S)
+    self.settingsPanel = CropStressSettingsPanel ~= nil
+        and CropStressSettingsPanel.new(self)
+        or nil
+
     return self
 end
 
@@ -231,6 +236,11 @@ function CropStressManager:initialize()
 
     -- Persistence handler
     self.saveLoad:initialize()
+
+    -- Settings panel
+    if self.settingsPanel ~= nil then
+        self.settingsPanel:initialize()
+    end
 
     -- Capture first hour key so hourly tick fires correctly from the start.
     -- env.currentHour is a direct property — not a method call.
@@ -419,6 +429,11 @@ function CropStressManager:update(dt)
 
     -- HUD frame update (handles auto-show, input response)
     self.hudOverlay:update(dt)
+
+    -- Settings panel update (camera freeze, cursor, auto-close)
+    if self.settingsPanel ~= nil then
+        self.settingsPanel:update(dt)
+    end
 end
 
 function CropStressManager:onHourlyTick()
@@ -471,6 +486,10 @@ end
 -- ============================================================
 function CropStressManager:draw()
     if not self.isInitialized then return end
+    -- Settings panel draws regardless of mod enabled state (user needs to be able to re-enable)
+    if self.settingsPanel ~= nil then
+        self.settingsPanel:draw()
+    end
     if not self.settings.enabled then return end
     self.hudOverlay:draw()
 end
@@ -536,8 +555,10 @@ function CropStressManager:detectOptionalMods()
     end
 
     -- FS25_SoilFertilizer (sibling mod by same author)
-    -- Global: g_SoilFertilityManager (confirmed from SoilFertilizer main.lua)
-    if g_SoilFertilityManager ~= nil then
+    -- Bridge: mission.soilFertilityManager is set by SoilFertilizer in its Mission00.load hook.
+    -- g_SoilFertilityManager is per-mod scoped (getfenv(0)) and NOT cross-mod accessible.
+    local sfm = g_currentMission and g_currentMission.soilFertilityManager
+    if sfm ~= nil then
         csLog("FS25_SoilFertilizer detected — soil pH and organic matter will affect moisture simulation")
         self.soilFertilizerIntegration:enableSoilFertilizerMode()
     end
@@ -597,6 +618,15 @@ function CropStressManager:onToggleHUD()
     end
 end
 
+-- ============================================================
+-- INPUT EVENT — SETTINGS PANEL TOGGLE
+-- ============================================================
+function CropStressManager:onToggleSettings()
+    if self.settingsPanel ~= nil then
+        self.settingsPanel:toggle()
+    end
+end
+
 function CropStressManager:onOpenIrrigationDialog()
     local irrMgr = self.irrigationManager
     if irrMgr == nil then return end
@@ -644,6 +674,10 @@ function CropStressManager:delete()
     self.soilSystem:delete()
     self.weatherIntegration:delete()
     self.saveLoad:delete()
+
+    if self.settingsPanel ~= nil then
+        self.settingsPanel:delete()
+    end
 
     self.isInitialized = false
     csLog("CropStressManager deleted")

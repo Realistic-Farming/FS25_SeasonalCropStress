@@ -101,12 +101,12 @@ end
 function SoilFertilizerIntegration:hourlyRefresh()
     -- Late detection: SoilFertilizer may finish initializing after our detectOptionalMods() runs.
     -- On the first hourly tick it will always be ready, so we retry here if still inactive.
-    if not self.sfActive and g_SoilFertilityManager ~= nil then
+    if not self.sfActive and g_currentMission ~= nil and g_currentMission.soilFertilityManager ~= nil then
         self:enableSoilFertilizerMode()
         csLog("SoilFertilizerIntegration: late-detected FS25_SoilFertilizer — soil chemistry now active")
     end
     if not self:isActive() then return end
-    if g_SoilFertilityManager == nil then return end
+    if g_currentMission == nil or g_currentMission.soilFertilityManager == nil then return end
 
     local env     = g_currentMission and g_currentMission.environment
     local hourKey = 0
@@ -114,11 +114,11 @@ function SoilFertilizerIntegration:hourlyRefresh()
         hourKey = (env.currentMonotonicDay or 0) * 24 + (env.currentHour or 0)
     end
 
-    -- Refresh stale cache entries for all tracked fields
-    local soilSystem = self.manager and self.manager.soilSystem
-    if soilSystem == nil or soilSystem.fieldData == nil then return end
+    -- Iterate CropStress-tracked fields and query SoilFertilizer for each
+    local csSystem = self.manager and self.manager.soilSystem
+    if csSystem == nil or csSystem.fieldData == nil then return end
 
-    for fieldId, _ in pairs(soilSystem.fieldData) do
+    for fieldId, _ in pairs(csSystem.fieldData) do
         local cached = self.fieldCache[fieldId]
         if cached == nil or (hourKey - (cached.lastHourKey or 0)) >= SoilFertilizerIntegration.CACHE_TTL_HOURS then
             self:refreshField(fieldId, hourKey)
@@ -132,8 +132,10 @@ end
 -- ============================================================
 function SoilFertilizerIntegration:refreshField(fieldId, hourKey)
     -- getFieldInfo is the confirmed public method on SoilFertilitySystem
-    local sfSystem = g_SoilFertilityManager
-        and g_SoilFertilityManager.soilSystem
+    -- Use mission bridge — g_SoilFertilityManager is per-mod scoped, not cross-mod accessible
+    local sfSystem = g_currentMission
+        and g_currentMission.soilFertilityManager
+        and g_currentMission.soilFertilityManager.soilSystem
     if sfSystem == nil then
         self.fieldCache[fieldId] = { evapMod = 1.0, stressMod = 0.0, lastHourKey = hourKey or 0 }
         return

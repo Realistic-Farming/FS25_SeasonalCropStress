@@ -27,6 +27,7 @@ source(modDir .. "src/IrrigationManager.lua")
 
 -- Settings
 source(modDir .. "src/settings/CropStressSettings.lua")
+source(modDir .. "src/settings/CropStressSettingsPanel.lua")
 source(modDir .. "src/settings/CropStressSettingsIntegration.lua")
 
 -- Player-facing systems
@@ -94,6 +95,11 @@ local function csEditHUDCallback(_, _, inputValue)
     end
 end
 
+local function csOpenSettingsCallback(_, _, inputValue)
+    if (inputValue or 0) <= 0 then return end
+    if g_cropStressManager ~= nil then g_cropStressManager:onToggleSettings() end
+end
+
 do
     if PlayerInputComponent ~= nil and PlayerInputComponent.registerActionEvents ~= nil then
         local origFn = PlayerInputComponent.registerActionEvents
@@ -120,6 +126,7 @@ do
                 reg(InputAction.CS_OPEN_IRRIGATION, csOpenIrrigationCallback, "input_CS_OPEN_IRRIGATION", "Open Irrigation Manager")
                 reg(InputAction.CS_OPEN_CONSULTANT, csOpenConsultantCallback, "input_CS_OPEN_CONSULTANT", "Open Crop Consultant")
                 reg(InputAction.CS_EDIT_HUD,        csEditHUDCallback,        "input_CS_EDIT_HUD",        "Edit/Move Moisture HUD")
+                reg(InputAction.CS_OPEN_SETTINGS,   csOpenSettingsCallback,   "input_CS_OPEN_SETTINGS",   "Open Crop Stress Settings")
 
                 g_inputBinding:endActionEventsModification()
             end
@@ -152,8 +159,9 @@ do
                     )
                 end
 
-                regV(InputAction.CS_TOGGLE_HUD, csToggleHUDCallback)
-                regV(InputAction.CS_EDIT_HUD,   csEditHUDCallback)
+                regV(InputAction.CS_TOGGLE_HUD,    csToggleHUDCallback)
+                regV(InputAction.CS_EDIT_HUD,      csEditHUDCallback)
+                regV(InputAction.CS_OPEN_SETTINGS, csOpenSettingsCallback)
             end
         )
         print("[CropStress] Vehicle action hook installed for in-vehicle HUD keys")
@@ -329,11 +337,13 @@ addModEventListener({
     keyEvent = function(self, unicode, sym, modifier, isDown) end,
     mouseEvent = function(self, posX, posY, isDown, isUp, button)
         if g_csManager == nil then return end
-        if g_csManager.hudOverlay == nil then return end
-        -- Guard: don't intercept while a GUI/dialog is open.
-        -- getIsGuiVisible() returns true for both menus and dialogs in FS25 —
-        -- getIsDialogVisible() does not exist in all builds, so we don't call it.
         if g_gui ~= nil and g_gui:getIsGuiVisible() then return end
+        -- Settings panel gets full mouse priority when open
+        if g_csManager.settingsPanel ~= nil and g_csManager.settingsPanel:isOpen() then
+            g_csManager.settingsPanel:onMouseEvent(posX, posY, isDown, isUp, button)
+            return
+        end
+        if g_csManager.hudOverlay == nil then return end
         g_csManager.hudOverlay:onMouseEvent(posX, posY, isDown, isUp, button)
     end
 })
