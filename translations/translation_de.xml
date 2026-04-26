@@ -110,6 +110,7 @@
     <text name="input_CS_TOGGLE_HUD"      text="Feuchte-HUD umschalten"/>
     <text name="input_CS_OPEN_IRRIGATION" text="Bewässerungsmanager öffnen"/>
     <text name="input_CS_OPEN_CONSULTANT" text="Pflanzenberater öffnen"/>
+    <text name="input_CS_OPEN_SETTINGS"   text="Feldstress-Einstellungen öffnen"/>
     <text name="input_CS_EDIT_HUD"        text="Feuchte-HUD verschieben/skalieren"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->

@@ -110,6 +110,7 @@
     <text name="input_CS_TOGGLE_HUD"      text="Toggle Moisture HUD"/>
     <text name="input_CS_OPEN_IRRIGATION" text="Open Irrigation Manager"/>
     <text name="input_CS_OPEN_CONSULTANT" text="Open Crop Consultant"/>
+    <text name="input_CS_OPEN_SETTINGS"   text="Open Crop Stress Settings"/>
     <text name="input_CS_EDIT_HUD"        text="Edit/Move Moisture HUD"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->

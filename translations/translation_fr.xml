@@ -110,6 +110,7 @@
     <text name="input_CS_TOGGLE_HUD"      text="Afficher/masquer HUD humidité"/>
     <text name="input_CS_OPEN_IRRIGATION" text="Ouvrir gestionnaire d'irrigation"/>
     <text name="input_CS_OPEN_CONSULTANT" text="Ouvrir conseiller cultural"/>
+    <text name="input_CS_OPEN_SETTINGS"   text="Ouvrir paramètres stress cultural"/>
     <text name="input_CS_EDIT_HUD"        text="Déplacer/redimensionner HUD humidité"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
