@@ -402,20 +402,27 @@ function IrrigationScheduleDialog:onIrrigateNow()
     local system = self:getCurrentSystem()
     if system == nil then self:close(); return end
 
-    if system.isActive then
+    if system.waterSourceId == nil then
         if g_currentMission ~= nil then
             g_currentMission:showBlinkingWarning(
-                (g_i18n ~= nil and g_i18n:getText("cs_irr_already_active")) or "Already active.", 3000)
+                (g_i18n ~= nil and g_i18n:getText("cs_irr_no_water_source")) or "No water source connected.", 3000)
         end
         return
     end
 
+    local ok = false
     if g_cropStressManager ~= nil and g_cropStressManager.irrigationManager ~= nil then
-        g_cropStressManager.irrigationManager:activateSystem(self.systemId)
+        ok = g_cropStressManager.irrigationManager:applyOneTimeIrrigation(self.systemId)
     end
+
     if g_currentMission ~= nil then
-        g_currentMission:showBlinkingWarning(
-            (g_i18n ~= nil and g_i18n:getText("cs_irr_started")) or "Irrigation started.", 3000)
+        local msg
+        if ok then
+            msg = (g_i18n ~= nil and g_i18n:getText("cs_irr_started")) or "Irrigation applied."
+        else
+            msg = (g_i18n ~= nil and g_i18n:getText("cs_irr_no_covered_fields")) or "No fields covered by this system."
+        end
+        g_currentMission:showBlinkingWarning(msg, 3000)
     end
     self:close()
 end

@@ -75,6 +75,10 @@ function NPCIntegration.new(manager)
     -- Queue of alerts received before NPC is registered (replayed on registration)
     self.pendingAlerts   = {}
 
+    -- Relationship value loaded from save — applied in registerConsultantNPC()
+    -- after NPCFavor finishes init. Nil means no saved state.
+    self.pendingSavedRelationship = nil
+
     return self
 end
 
@@ -113,6 +117,19 @@ function NPCIntegration:tryDeferredRegistration()
 end
 
 -- ============================================================
+-- APPLY LOADED STATE
+-- Called by SaveLoadHandler after reading cropStressData.xml.
+-- Stores the saved relationship value for application once the NPC
+-- is registered (NPCFavor's init may not have fired yet at load time).
+-- ============================================================
+function NPCIntegration:applyLoadedState(relationship)
+    if type(relationship) == "number" and relationship > 0 then
+        self.pendingSavedRelationship = relationship
+        csLog(string.format("NPCIntegration: saved relationship loaded (%d) — will apply after NPC init", relationship))
+    end
+end
+
+-- ============================================================
 -- REGISTER CONSULTANT NPC
 -- Uses NPCFavor's real API: createNPCAtLocation + initializeNPCData.
 -- First checks if Alex Chen was already restored from a saved game.
@@ -131,7 +148,9 @@ function NPCIntegration:registerConsultantNPC()
         if existing.name == consultantName then
             self.consultantNPCId = existing.id
             self.isRegistered    = true
-            csLog(string.format("NPCIntegration: Alex Chen adopted from save (id=%s)", tostring(existing.id)))
+            self:applySavedRelationship(existing)
+            csLog(string.format("NPCIntegration: Alex Chen adopted from save (id=%s, relationship=%d)",
+                tostring(existing.id), existing.relationship or 0))
             self:replayPendingAlerts()
             return
         end
@@ -177,11 +196,25 @@ function NPCIntegration:registerConsultantNPC()
     if ok2 then
         self.consultantNPCId = npc.id
         self.isRegistered    = true
-        csLog(string.format("NPCIntegration: Alex Chen created (id=%s)", tostring(npc.id)))
+        self:applySavedRelationship(npc)
+        csLog(string.format("NPCIntegration: Alex Chen created (id=%s, relationship=%d)",
+            tostring(npc.id), npc.relationship or 0))
         self:replayPendingAlerts()
     else
         csLog(string.format("NPCIntegration: NPC insert failed — %s", tostring(err)))
     end
+end
+
+-- ============================================================
+-- APPLY SAVED RELATIONSHIP
+-- Takes the higher of the NPC's current relationship and our saved
+-- value — handles both cases where NPCFavor did/didn't persist the NPC.
+-- ============================================================
+function NPCIntegration:applySavedRelationship(npc)
+    if npc == nil then return end
+    if self.pendingSavedRelationship == nil then return end
+    npc.relationship = math.max(npc.relationship or 0, self.pendingSavedRelationship)
+    self.pendingSavedRelationship = nil
 end
 
 -- ============================================================

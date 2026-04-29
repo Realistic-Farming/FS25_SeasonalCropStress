@@ -144,6 +144,13 @@ function IrrigationManager:registerIrrigationSystem(placeable)
         waterSourceId ~= nil and tostring(waterSourceId) or "none",
         distance or 0, (pressureMultiplier or 0) * 100
     ))
+    if #coveredFields == 0 then
+        csLog(string.format(
+            "WARNING: system %d covers 0 fields — pivot at (%.1f, %.1f) radius=%.0f. " ..
+            "Check pivot placement relative to field boundaries.",
+            placeable.id, x, z, placeable.radius or 200
+        ))
+    end
 end
 
 function IrrigationManager:deregisterIrrigationSystem(placeableId)
@@ -159,11 +166,13 @@ end
 function IrrigationManager:detectCoveredFields(placeable, cx, cz)
     local covered = {}
 
+    -- Use g_fieldManager.fields directly — same source as SoilMoistureSystem and buildFieldMap.
+    -- g_currentMission.fieldManager:getFields() returns empty at placeable placement time.
+    if g_fieldManager == nil or g_fieldManager.fields == nil then return covered end
+    local fields = g_fieldManager.fields
+
     if placeable.irrigationType == "pivot" then
         local radius = placeable.radius or 200
-        if g_currentMission == nil or g_currentMission.fieldManager == nil then return covered end
-
-        local fields = g_currentMission.fieldManager:getFields()
         for _, field in pairs(fields) do
             if self:fieldIntersectsCircle(field, cx, cz, radius) then
                 local fid = field.farmland and field.farmland.id
@@ -171,14 +180,9 @@ function IrrigationManager:detectCoveredFields(placeable, cx, cz)
             end
         end
     elseif placeable.irrigationType == "drip" then
-        -- Drip line coverage: linear field intersection
-        if g_currentMission == nil or g_currentMission.fieldManager == nil then return covered end
-
         local startX, _, startZ = placeable.startX or cx, 0, placeable.startZ or cz
         local endX, _, endZ = placeable.endX or (cx + 100), 0, placeable.endZ or cz
         local spacing = placeable.lineSpacing or 0.8
-
-        local fields = g_currentMission.fieldManager:getFields()
         for _, field in pairs(fields) do
             if self:fieldIntersectsDripLine(field, startX, startZ, endX, endZ, spacing) then
                 local fid = field.farmland and field.farmland.id
@@ -196,8 +200,11 @@ function IrrigationManager:fieldIntersectsCircle(field, cx, cz, radius)
     if field.minX ~= nil then
         minX, maxX, minZ, maxZ = field.minX, field.maxX, field.minZ, field.maxZ
     else
-        local fx = field.posX or (field.startX and (field.startX + (field.widthX  or 0) * 0.5)) or cx
-        local fz = field.posZ or (field.startZ and (field.startZ + (field.heightZ or 0) * 0.5)) or cz
+        -- field.posX/posZ are confirmed FS25 field properties (polygon centroid).
+        -- If absent, skip this field — don't fall back to pivot position (produces false positives).
+        local fx = field.posX or (field.startX and (field.startX + (field.widthX or 0) * 0.5))
+        local fz = field.posZ or (field.startZ and (field.startZ + (field.heightZ or 0) * 0.5))
+        if fx == nil or fz == nil then return false end
         local fr = field.fieldRadius or 50
         minX, maxX = fx - fr, fx + fr
         minZ, maxZ = fz - fr, fz + fr
@@ -216,8 +223,9 @@ function IrrigationManager:fieldIntersectsDripLine(field, startX, startZ, endX, 
     if field.minX ~= nil then
         minX, maxX, minZ, maxZ = field.minX, field.maxX, field.minZ, field.maxZ
     else
-        local fx = field.posX or (field.startX and (field.startX + (field.widthX  or 0) * 0.5)) or startX
-        local fz = field.posZ or (field.startZ and (field.startZ + (field.heightZ or 0) * 0.5)) or startZ
+        local fx = field.posX or (field.startX and (field.startX + (field.widthX or 0) * 0.5))
+        local fz = field.posZ or (field.startZ and (field.startZ + (field.heightZ or 0) * 0.5))
+        if fx == nil or fz == nil then return false end
         local fr = field.fieldRadius or 50
         minX, maxX = fx - fr, fx + fr
         minZ, maxZ = fz - fr, fz + fr
@@ -374,6 +382,48 @@ function IrrigationManager:getIrrigationRateForField(fieldId)
         end
     end
     return total
+end
+
+-- ============================================================
+-- One-Shot Manual Irrigation
+-- Bypasses the schedule and immediately applies one hour's worth
+-- of irrigation gain directly to soil moisture. Used by the
+-- "Irrigate Now" button so the effect is instant and not subject
+-- to the hourly-tick scheduling cycle.
+-- Returns true if moisture was applied to at least one field.
+-- ============================================================
+function IrrigationManager:applyOneTimeIrrigation(systemId)
+    local system = self.systems[systemId]
+    if system == nil then return false end
+    if system.waterSourceId == nil or system.pressureMultiplier <= 0 then
+        csLog(string.format("applyOneTimeIrrigation: system %s has no water source", tostring(systemId)))
+        return false
+    end
+    if #system.coveredFields == 0 then
+        csLog(string.format("applyOneTimeIrrigation: system %s covers 0 fields", tostring(systemId)))
+        return false
+    end
+
+    local wearFactor    = 1.0 - system.wearLevel * 0.3
+    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier * wearFactor
+
+    local soilSystem = self.manager and self.manager.soilSystem
+    if soilSystem == nil then return false end
+
+    local applied = 0
+    for _, fieldId in ipairs(system.coveredFields) do
+        local d = soilSystem.fieldData[fieldId]
+        if d ~= nil then
+            d.moisture = math.max(0.0, math.min(1.0, d.moisture + effectiveRate))
+            applied = applied + 1
+        end
+    end
+
+    csLog(string.format(
+        "One-time irrigation: system %s applied rate=%.4f to %d/%d fields",
+        tostring(systemId), effectiveRate, applied, #system.coveredFields
+    ))
+    return applied > 0
 end
 
 -- ============================================================
