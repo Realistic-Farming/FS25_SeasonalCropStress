@@ -457,13 +457,17 @@ function CropStressManager:onHourlyTick()
     self.coursePlayIntegration:hourlyRefresh()        -- CP vehicle positions
     self.autoDriveIntegration:hourlyRefresh()         -- AutoDrive destination count
 
-    -- 2b. Advance soil moisture simulation (reads SoilFertilizer cache internally)
+    -- 2b. Activate/deactivate irrigation systems for the current hour BEFORE the
+    -- moisture update so that gains set by activateSystem() are included in this
+    -- tick's hourlyUpdate() calculation (not deferred to the next hour).
+    self.irrigationManager:hourlyScheduleCheck()
+
+    -- 2c. Advance soil moisture simulation (reads SoilFertilizer cache + irrigationGains)
     self.soilSystem:hourlyUpdate(self.weatherIntegration)
 
     -- 3. Accumulate crop stress where moisture is critical
     self.stressModifier:hourlyUpdate()
 
-    self.irrigationManager:hourlyScheduleCheck()
     self.financeIntegration:chargeHourlyCosts()
 
     -- Phase 3: Consultant alert evaluation
