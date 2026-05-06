@@ -41,9 +41,13 @@
             <Text profile="cs_colHeader" text="$l10n_cs_pda_col_status"   position="298px 0px" size="112px 24px"/>
           </GuiElement>
 
-          <!-- SmoothList: 72px from top (40+24+8px gap) -->
-          <GuiElement profile="fs25_subCategoryListContainer" id="fieldListContainer"
-                      position="0px -72px" width="420px" height="600px">
+          <!-- SmoothList: 72px from top (40+24+8px gap).
+               cs_listWrapper uses anchorTopLeft so negative Y = down from top,
+               matching the section header and column header coordinate system.
+               fs25_subCategoryListContainer has a different internal anchor that
+               ignores the position attribute and docks to the container bottom. -->
+          <GuiElement profile="cs_listWrapper" id="fieldListContainer"
+                      position="0px -72px" width="420px" height="540px">
             <SmoothList id="fieldList" profile="cs_smoothList"
                         startClipperElementName="sideListStart"
                         endClipperElementName="sideListEnd">
@@ -296,6 +300,11 @@
       <textColor value="$preset_colorWhite_50"/>
       <textAlignment value="left"/>
     </Profile>
+
+    <!-- anchorTopLeft wrapper for sidebar SmoothList — forces top-based Y coordinate
+         so position="0px -Npx" = N pixels below the top (not fs25_subCategoryListContainer
+         which uses its own internal anchor and ignores the position attribute) -->
+    <Profile name="cs_listWrapper" extends="emptyPanel" with="anchorTopLeft"/>
 
     <Profile name="cs_smoothList" extends="emptyPanel" with="anchorStretchingYLeft pivotTopLeft"/>
 

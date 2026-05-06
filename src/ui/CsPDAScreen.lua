@@ -236,32 +236,28 @@ end
 
 function CsPDAScreen.toggle()
     if g_gui == nil then return end
+    -- Don't interrupt other dialogs (MDM pattern)
+    local curName = g_gui.currentGuiName
+    if curName ~= nil and curName ~= "" and curName ~= "InGameMenu" then return end
+
     local inGameMenu = g_gui.screenControllers[InGameMenu] or g_inGameMenu
     if inGameMenu == nil then return end
 
-    if g_gui:getIsGuiVisible() then
-        -- If PDA is already on our page, close it; otherwise navigate to our page
-        local screen = inGameMenu[CsPDAScreen.MENU_PAGE_NAME]
-        if screen ~= nil and type(inGameMenu.showPage) == "function" then
-            inGameMenu:showPage(screen)
-        end
-    else
-        if type(g_gui.showGui) == "function" then
-            g_gui:showGui("InGameMenu")
-        elseif type(inGameMenu.setOpen) == "function" then
-            inGameMenu:setOpen(true)
-        end
-        local function navigateAfterOpen()
-            local screen = inGameMenu[CsPDAScreen.MENU_PAGE_NAME]
-            if screen ~= nil and type(inGameMenu.showPage) == "function" then
-                inGameMenu:showPage(screen)
-            end
-        end
-        -- Defer one frame to let InGameMenu finish opening
-        local screen = inGameMenu[CsPDAScreen.MENU_PAGE_NAME]
-        if screen ~= nil and type(inGameMenu.showPage) == "function" then
-            pcall(navigateAfterOpen)
-        end
+    local screen = inGameMenu[CsPDAScreen.MENU_PAGE_NAME]
+    if screen == nil then return end
+
+    -- If already on our page, close the menu
+    if curName == "InGameMenu" and inGameMenu.currentPage == screen then
+        g_gui:changeScreen(nil)
+        return
+    end
+
+    -- Navigate to our page — works from map view and gameplay (MDM: goToPage pattern)
+    g_gui:showGui("InGameMenu")
+    if type(inGameMenu.goToPage) == "function" then
+        inGameMenu:goToPage(screen)
+    elseif type(inGameMenu.showPage) == "function" then
+        inGameMenu:showPage(screen)
     end
 end
 
