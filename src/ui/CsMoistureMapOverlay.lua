@@ -228,11 +228,10 @@ function CsMoistureMapOverlay:onDrawHud(frame)
     -- Section title
     local _, titleSz = getNormalizedScreenValues(0, 15)
     setTextBold(true)
-    setTextUpperCase(true)
     setTextAlignment(RenderText.ALIGN_LEFT)
     setTextColor(CsMoistureMapOverlay.C_ACCENT[1], CsMoistureMapOverlay.C_ACCENT[2], CsMoistureMapOverlay.C_ACCENT[3], 1.0)
-    renderText(panelX + padX, topY - rowH, titleSz, tr("cs_map_sidebar_title", "MOISTURE LEGEND"))
-    setTextUpperCase(false)
+    local titleText = tr("cs_map_sidebar_title", "MOISTURE LEGEND")
+    renderText(panelX + padX, topY - rowH, titleSz, titleText:upper())
     setTextBold(false)
 
     local currentY = topY - rowH * 2 - gap
