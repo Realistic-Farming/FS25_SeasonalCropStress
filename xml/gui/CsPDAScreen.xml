@@ -41,9 +41,9 @@
               <ListItem profile="cs_listRow" onClick="onClickFieldRow">
                 <Bitmap profile="cs_rowBg" name="alternating"/>
                 <Text profile="cs_cellLeft"  name="fieldRowId"       size="55px  28px"/>
-                <Text profile="cs_cellLeft"  name="fieldRowCrop"     position="70px  0" size="140px 28px"/>
-                <Text profile="cs_cellRight" name="fieldRowMoisture" position="214px 0" size="80px  28px"/>
-                <Text profile="cs_cellRight" name="fieldRowStatus"   position="298px 0" size="112px 28px"/>
+                <Text profile="cs_cellLeft"  name="fieldRowCrop"     position="70px  0px" size="140px 28px"/>
+                <Text profile="cs_cellRight" name="fieldRowMoisture" position="214px 0px" size="80px  28px"/>
+                <Text profile="cs_cellRight" name="fieldRowStatus"   position="298px 0px" size="112px 28px"/>
               </ListItem>
             </SmoothList>
             <Bitmap profile="fs25_secondaryMenuStartClipper" name="sideListStart"/>
@@ -186,10 +186,10 @@
             <ListItem profile="cs_listRow" onClick="onClickIrrigationRow">
               <Bitmap profile="cs_rowBg" name="alternating"/>
               <Text profile="cs_cellLeft"  name="irrRowId"        size="60px  28px"/>
-              <Text profile="cs_cellLeft"  name="irrRowCrop"      position="72px  0" size="200px 28px"/>
-              <Text profile="cs_cellRight" name="irrRowMoisture"  position="276px 0" size="80px  28px"/>
-              <Text profile="cs_cellRight" name="irrRowStress"    position="360px 0" size="80px  28px"/>
-              <Text profile="cs_cellRight" name="irrRowIrrigated" position="444px 0" size="100px 28px"/>
+              <Text profile="cs_cellLeft"  name="irrRowCrop"      position="72px  0px" size="200px 28px"/>
+              <Text profile="cs_cellRight" name="irrRowMoisture"  position="276px 0px" size="80px  28px"/>
+              <Text profile="cs_cellRight" name="irrRowStress"    position="360px 0px" size="80px  28px"/>
+              <Text profile="cs_cellRight" name="irrRowIrrigated" position="444px 0px" size="100px 28px"/>
             </ListItem>
           </SmoothList>
           <Bitmap profile="fs25_secondaryMenuStartClipper" name="irrListStart"/>
@@ -276,7 +276,7 @@
     </Profile>
 
     <Profile name="cs_cellLeft" extends="fs25_textDefault" with="anchorStretchingYLeft">
-      <position value="8px 0"/>
+      <position value="8px 0px"/>
       <textSize value="13px"/>
       <textAlignment value="left"/>
       <textColor value="$preset_fs25_colorMainLight"/>
