@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<!--
+    CsPDAScreen.xml
+    InGameMenu page — Controller: CsPDAScreen (src/ui/CsPDAScreen.lua)
+
+    Layout:
+      LEFT  (460px) — field list sidebar: F# | Crop | Moisture | Status
+      RIGHT (1000px) — tabbed content:
+          Tab 1 Overview   → farm-wide moisture & stress stats
+          Tab 2 Irrigation → field triage sorted by moisture (driest first)
+-->
+<GUI name="menuCropStress">
+  <GuiElement profile="fs25_menuContainer">
+
+    <!-- ── Header ──────────────────────────────────────────── -->
+    <GuiElement profile="fs25_menuHeaderPanel" position="-200px 90px" width="800px">
+      <Text profile="fs25_menuHeaderTitle" id="categoryHeaderText"
+            text="$l10n_cs_pda_screen_title"/>
+    </GuiElement>
+
+    <!-- ══════════════════════════════════════════════════════
+         LEFT COLUMN — 460px, field list sidebar
+         ══════════════════════════════════════════════════════ -->
+    <ThreePartBitmap width="460px" height="700px" position="0px 100px">
+      <GuiElement profile="fs25_subCategoryContainer" width="420px">
+
+        <GuiElement id="sidebarFields" position="0px 0px" width="420px" height="640px">
+          <Text profile="cs_sectionHeader" text="$l10n_cs_pda_tab_fields" position="10px -10px"/>
+
+          <!-- Column headers -->
+          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_field"    position="10px  -50px" size="55px  24px"/>
+          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_crop"     position="70px  -50px" size="140px 24px"/>
+          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_moisture" position="214px -50px" size="80px  24px"/>
+          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_status"   position="298px -50px" size="112px 24px"/>
+
+          <!-- Scrollable field list -->
+          <GuiElement position="0px -78px" width="420px" height="552px">
+            <SmoothList id="fieldList" profile="cs_smoothList"
+                        startClipperElementName="sideListStart"
+                        endClipperElementName="sideListEnd">
+              <ListItem profile="cs_listRow" onClick="onClickFieldRow">
+                <Bitmap profile="cs_rowBg" name="alternating"/>
+                <Text profile="cs_cellLeft"  name="fieldRowId"       size="55px  28px"/>
+                <Text profile="cs_cellLeft"  name="fieldRowCrop"     position="70px  0" size="140px 28px"/>
+                <Text profile="cs_cellRight" name="fieldRowMoisture" position="214px 0" size="80px  28px"/>
+                <Text profile="cs_cellRight" name="fieldRowStatus"   position="298px 0" size="112px 28px"/>
+              </ListItem>
+            </SmoothList>
+            <Bitmap profile="fs25_secondaryMenuStartClipper" name="sideListStart"/>
+            <Bitmap profile="fs25_secondaryMenuStopClipper"  name="sideListEnd"/>
+          </GuiElement>
+        </GuiElement>
+
+      </GuiElement>
+    </ThreePartBitmap>
+
+    <!-- ══════════════════════════════════════════════════════
+         RIGHT COLUMN — 1000px, tabbed content
+         ══════════════════════════════════════════════════════ -->
+    <GuiElement id="rightPanel" position="500px 100px" width="1000px" height="700px">
+
+      <!-- Tab bar -->
+      <GuiElement position="0px 654px" width="1000px" height="40px">
+        <Text profile="cs_tabLabel" id="tabLabelOverview"
+              text="$l10n_cs_pda_tab_overview"
+              position="0px 0px" size="490px 40px"
+              onClick="onClickTabOverview"/>
+        <Text profile="cs_tabLabel" id="tabLabelIrrigation"
+              text="$l10n_cs_pda_tab_irrigation"
+              position="510px 0px" size="490px 40px"
+              onClick="onClickTabIrrigation"/>
+        <Bitmap profile="cs_tabUnderline" id="tabUnderlineOverview"
+                position="0px -3px" size="490px 3px"/>
+        <Bitmap profile="cs_tabUnderline" id="tabUnderlineIrrigation"
+                position="510px -3px" size="490px 3px" visible="false"/>
+      </GuiElement>
+
+      <Bitmap profile="cs_tabDivider" position="0px 650px" size="1000px 2px"/>
+
+      <!-- ── TAB 1: OVERVIEW ─────────────────────────────── -->
+      <GuiElement id="overviewContent" position="0px 0px" width="1000px" height="642px">
+
+        <Text profile="cs_sectionHeader"
+              text="$l10n_cs_pda_section_farm_overview"
+              position="0px 620px"/>
+
+        <ThreePartBitmap width="960px" height="580px" position="0px 30px">
+          <GuiElement profile="fs25_subCategoryContainer" width="920px">
+
+            <!-- Fields row -->
+            <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_tracked"
+                  position="10px -30px" size="300px 24px"/>
+            <Text profile="cs_statValue" id="statsFieldsTracked" text="0"
+                  position="320px -30px"/>
+
+            <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_owned"
+                  position="10px -60px" size="300px 24px"/>
+            <Text profile="cs_statValue" id="statsFieldsOwned" text="0"
+                  position="320px -60px"/>
+
+            <!-- Moisture breakdown -->
+            <Text profile="cs_subHeader" text="$l10n_cs_pda_section_moisture"
+                  position="10px -110px"/>
+
+            <Text profile="cs_statLabel" text="$l10n_cs_pda_avg_moisture"
+                  position="10px -140px" size="300px 24px"/>
+            <Text profile="cs_statValue" id="statsAvgMoisture" text="—"
+                  position="320px -140px"/>
+
+            <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_healthy"
+                  position="10px -170px" size="300px 24px"/>
+            <Text profile="cs_statValue" id="statsHealthy" text="0"
+                  position="320px -170px"/>
+
+            <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_warning"
+                  position="10px -200px" size="300px 24px"/>
+            <Text profile="cs_statValue" id="statsWarning" text="0"
+                  position="320px -200px"/>
+
+            <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_critical"
+                  position="10px -230px" size="300px 24px"/>
+            <Text profile="cs_statValue" id="statsCritical" text="0"
+                  position="320px -230px"/>
+
+            <!-- Stress & yield -->
+            <Text profile="cs_subHeader" text="$l10n_cs_pda_section_stress"
+                  position="10px -282px"/>
+
+            <Text profile="cs_statLabel" text="$l10n_cs_pda_avg_stress"
+                  position="10px -312px" size="300px 24px"/>
+            <Text profile="cs_statValue" id="statsAvgStress" text="—"
+                  position="320px -312px"/>
+
+            <Text profile="cs_statLabel" text="$l10n_cs_pda_est_yield_loss"
+                  position="10px -342px" size="300px 24px"/>
+            <Text profile="cs_statValue" id="statsYieldLoss" text="—"
+                  position="320px -342px"/>
+
+            <!-- Irrigation -->
+            <Text profile="cs_subHeader" text="$l10n_cs_pda_section_irrigation"
+                  position="10px -394px"/>
+
+            <Text profile="cs_statLabel" text="$l10n_cs_pda_irrigated_fields"
+                  position="10px -424px" size="300px 24px"/>
+            <Text profile="cs_statValue" id="statsIrrigated" text="0"
+                  position="320px -424px"/>
+
+            <Text profile="cs_statLabel" text="$l10n_cs_pda_irrigation_systems"
+                  position="10px -454px" size="300px 24px"/>
+            <Text profile="cs_statValue" id="statsIrrSystems" text="0"
+                  position="320px -454px"/>
+
+          </GuiElement>
+        </ThreePartBitmap>
+
+        <Text profile="cs_emptyHint" id="overviewEmptyHint"
+              text="$l10n_cs_pda_no_fields"
+              position="480px 320px" visible="false"/>
+
+      </GuiElement><!-- /overviewContent -->
+
+      <!-- ── TAB 2: IRRIGATION ───────────────────────────── -->
+      <GuiElement id="irrigationContent" position="0px 0px" width="1000px" height="642px" visible="false">
+
+        <Text profile="cs_sectionHeader"
+              text="$l10n_cs_pda_section_irrigation_plan"
+              position="0px 620px"/>
+
+        <!-- Column headers -->
+        <Text profile="cs_colHeader" text="$l10n_cs_pda_col_field"
+              position="8px  590px" size="60px 24px"/>
+        <Text profile="cs_colHeader" text="$l10n_cs_pda_col_crop"
+              position="72px 590px" size="200px 24px"/>
+        <Text profile="cs_colHeader" text="$l10n_cs_pda_col_moisture"
+              position="276px 590px" size="80px 24px"/>
+        <Text profile="cs_colHeader" text="$l10n_cs_pda_col_stress"
+              position="360px 590px" size="80px 24px"/>
+        <Text profile="cs_colHeader" text="$l10n_cs_pda_col_irrigated"
+              position="444px 590px" size="100px 24px"/>
+
+        <!-- Irrigation triage list -->
+        <GuiElement position="0px 80px" width="960px" height="498px">
+          <SmoothList id="irrigationList" profile="cs_smoothList"
+                      startClipperElementName="irrListStart"
+                      endClipperElementName="irrListEnd">
+            <ListItem profile="cs_listRow" onClick="onClickIrrigationRow">
+              <Bitmap profile="cs_rowBg" name="alternating"/>
+              <Text profile="cs_cellLeft"  name="irrRowId"        size="60px  28px"/>
+              <Text profile="cs_cellLeft"  name="irrRowCrop"      position="72px  0" size="200px 28px"/>
+              <Text profile="cs_cellRight" name="irrRowMoisture"  position="276px 0" size="80px  28px"/>
+              <Text profile="cs_cellRight" name="irrRowStress"    position="360px 0" size="80px  28px"/>
+              <Text profile="cs_cellRight" name="irrRowIrrigated" position="444px 0" size="100px 28px"/>
+            </ListItem>
+          </SmoothList>
+          <Bitmap profile="fs25_secondaryMenuStartClipper" name="irrListStart"/>
+          <Bitmap profile="fs25_secondaryMenuStopClipper"  name="irrListEnd"/>
+        </GuiElement>
+
+        <Text profile="cs_emptyHint" id="irrigationEmptyHint"
+              text="$l10n_cs_pda_no_fields"
+              position="480px 320px" visible="false"/>
+
+      </GuiElement><!-- /irrigationContent -->
+
+    </GuiElement><!-- /rightPanel -->
+
+  </GuiElement><!-- /menuContainer -->
+
+  <!-- ── Inline profile definitions ──────────────────────── -->
+  <GUIProfiles>
+
+    <Profile name="cs_tabLabel" extends="fs25_textDefault" with="anchorTopLeft">
+      <isFocusable value="true"/>
+      <textSize value="14px"/>
+      <textBold value="true"/>
+      <textUpperCase value="true"/>
+      <textAlignment value="center"/>
+      <textColor value="$preset_colorWhite_50"/>
+    </Profile>
+
+    <Profile name="cs_tabUnderline" extends="baseReference" with="anchorBottomLeft">
+      <imageColor value="0.20 0.65 0.85 1.0"/>
+    </Profile>
+
+    <Profile name="cs_tabDivider" extends="baseReference" with="anchorTopLeft">
+      <imageColor value="1.0 1.0 1.0 0.12"/>
+    </Profile>
+
+    <Profile name="cs_sectionHeader" extends="fs25_textDefault" with="anchorTopLeft">
+      <textSize value="18px"/>
+      <textBold value="true"/>
+      <textUpperCase value="true"/>
+      <textColor value="0.20 0.65 0.85 1.0"/>
+    </Profile>
+
+    <Profile name="cs_subHeader" extends="fs25_textDefault" with="anchorTopLeft">
+      <textSize value="13px"/>
+      <textBold value="true"/>
+      <textUpperCase value="true"/>
+      <textColor value="$preset_colorWhite_50"/>
+    </Profile>
+
+    <Profile name="cs_statLabel" extends="fs25_textDefault" with="anchorTopLeft">
+      <textSize value="14px"/>
+      <textColor value="$preset_colorWhite_50"/>
+      <textAlignment value="left"/>
+      <size value="200px 24px"/>
+    </Profile>
+
+    <Profile name="cs_statValue" extends="fs25_textDefault" with="anchorTopLeft">
+      <textSize value="14px"/>
+      <textBold value="true"/>
+      <textColor value="$preset_colorWhite"/>
+      <textAlignment value="right"/>
+      <size value="180px 24px"/>
+    </Profile>
+
+    <Profile name="cs_colHeader" extends="fs25_textDefault" with="anchorTopLeft">
+      <textSize value="13px"/>
+      <textBold value="true"/>
+      <textUpperCase value="true"/>
+      <textColor value="$preset_colorWhite_50"/>
+      <textAlignment value="left"/>
+    </Profile>
+
+    <Profile name="cs_smoothList" extends="emptyPanel" with="anchorStretchingYLeft pivotTopLeft"/>
+
+    <Profile name="cs_listRow" extends="emptyPanel" with="anchorTopStretchingX pivotTopLeft">
+      <height value="28px"/>
+    </Profile>
+
+    <Profile name="cs_rowBg" extends="baseReference" with="anchorStretchingYStretchingX">
+      <imageColor value="$preset_fs25_colorGrey"/>
+      <imageSelectedColor value="0.10 0.35 0.55 0.85"/>
+      <alternateBackgroundColor value="$preset_fs25_colorGreyDark_50"/>
+    </Profile>
+
+    <Profile name="cs_cellLeft" extends="fs25_textDefault" with="anchorStretchingYLeft">
+      <position value="8px 0"/>
+      <textSize value="13px"/>
+      <textAlignment value="left"/>
+      <textColor value="$preset_fs25_colorMainLight"/>
+      <textSelectedColor value="$preset_fs25_colorMainDark"/>
+    </Profile>
+
+    <Profile name="cs_cellRight" extends="cs_cellLeft">
+      <textAlignment value="right"/>
+    </Profile>
+
+    <Profile name="cs_emptyHint" extends="fs25_textDefault" with="anchorTopLeft">
+      <textSize value="14px"/>
+      <textAlignment value="center"/>
+      <textColor value="$preset_colorWhite_50"/>
+    </Profile>
+
+  </GUIProfiles>
+
+</GUI>
