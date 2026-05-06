@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    CsHelpDialog.xml
+    Static reference dialog — two-column layout.
+    Pattern: CropConsultantDialog (confirmed FS25 v1.16, MessageDialog base).
+
+    Coordinate system inside fs25_dialogContentContainer:
+      X = offset from container CENTER  (negative = left, positive = right)
+      Y = offset from container TOP     (negative = down)
+      anchorTopLeft: position is TOP-LEFT corner of the element.
+
+    Two columns:
+      Left  (x=-420, width=380px): How It Works + Moisture Levels
+      Right (x=20,   width=380px): Crop Stress + Irrigation + Shortcuts
+      Vertical divider at x=-10, spanning the full content height.
+-->
+<GUI onOpen="onOpen" onCreate="onCreate" onClose="onClose">
+    <GuiElement profile="newLayer"/>
+    <Bitmap profile="dialogFullscreenBg" id="dialogBg"/>
+
+    <GuiElement profile="dialogBg" id="dialogElement" size="900px 640px">
+        <ThreePartBitmap profile="fs25_dialogBgMiddle"/>
+        <ThreePartBitmap profile="fs25_dialogBgTop"/>
+        <ThreePartBitmap profile="fs25_dialogBgBottom"/>
+
+        <GuiElement profile="fs25_dialogContentContainer" id="content">
+
+            <!-- ── Dialog title ─────────────────────────────── -->
+            <Text profile="fs25_dialogTitle"
+                  position="0px 0px"
+                  text="$l10n_cs_help_title"/>
+
+            <!-- Full-width divider below title -->
+            <Bitmap profile="cs_helpDividerFull" position="-420px -42px" size="840px 1px"/>
+
+            <!-- ══ VERTICAL COLUMN DIVIDER ══════════════════════
+                 Spans the full content area between the two columns.
+                 Width=1px, height covers all content rows. -->
+            <Bitmap profile="cs_helpDividerV" position="-10px -50px" size="1px 260px"/>
+
+            <!-- ══════════════════════════════════════════════════
+                 LEFT COLUMN  (x=-420, width=380px)
+                 Sections: How It Works | Moisture Levels
+                 ══════════════════════════════════════════════════ -->
+
+            <!-- ── Section: How It Works ── -->
+            <Text profile="cs_helpSectionHdr"
+                  position="-420px -55px" size="380px 20px"
+                  text="$l10n_cs_help_ov_hdr"/>
+
+            <Text profile="cs_helpBody"
+                  position="-410px -78px" size="370px 18px"
+                  text="$l10n_cs_help_ov_1"/>
+            <Text profile="cs_helpBody"
+                  position="-410px -96px" size="370px 18px"
+                  text="$l10n_cs_help_ov_2"/>
+            <Text profile="cs_helpBody"
+                  position="-410px -114px" size="370px 18px"
+                  text="$l10n_cs_help_ov_3"/>
+
+            <!-- Sub-divider before Moisture Levels -->
+            <Bitmap profile="cs_helpDividerH" position="-420px -134px" size="380px 1px"/>
+
+            <!-- ── Section: Moisture Levels ── -->
+            <Text profile="cs_helpSectionHdr"
+                  position="-420px -138px" size="380px 20px"
+                  text="$l10n_cs_help_status_hdr"/>
+
+            <Text profile="cs_helpBodyGreen"
+                  position="-410px -161px" size="370px 18px"
+                  text="$l10n_cs_help_status_1"/>
+            <Text profile="cs_helpBodyYellow"
+                  position="-410px -179px" size="370px 18px"
+                  text="$l10n_cs_help_status_2"/>
+            <Text profile="cs_helpBodyRed"
+                  position="-410px -197px" size="370px 18px"
+                  text="$l10n_cs_help_status_3"/>
+
+
+            <!-- ══════════════════════════════════════════════════
+                 RIGHT COLUMN  (x=20, width=380px)
+                 Sections: Crop Stress | Irrigation | Shortcuts
+                 ══════════════════════════════════════════════════ -->
+
+            <!-- ── Section: Crop Stress ── -->
+            <Text profile="cs_helpSectionHdr"
+                  position="20px -55px" size="380px 20px"
+                  text="$l10n_cs_help_stress_hdr"/>
+
+            <Text profile="cs_helpBody"
+                  position="30px -78px" size="370px 18px"
+                  text="$l10n_cs_help_stress_1"/>
+            <Text profile="cs_helpBody"
+                  position="30px -96px" size="370px 18px"
+                  text="$l10n_cs_help_stress_2"/>
+
+            <!-- Sub-divider before Irrigation -->
+            <Bitmap profile="cs_helpDividerH" position="20px -116px" size="380px 1px"/>
+
+            <!-- ── Section: Irrigation ── -->
+            <Text profile="cs_helpSectionHdr"
+                  position="20px -120px" size="380px 20px"
+                  text="$l10n_cs_help_irr_hdr"/>
+
+            <Text profile="cs_helpBody"
+                  position="30px -143px" size="370px 18px"
+                  text="$l10n_cs_help_irr_1"/>
+            <Text profile="cs_helpBody"
+                  position="30px -161px" size="370px 18px"
+                  text="$l10n_cs_help_irr_2"/>
+
+            <!-- Sub-divider before Shortcuts -->
+            <Bitmap profile="cs_helpDividerH" position="20px -181px" size="380px 1px"/>
+
+            <!-- ── Section: Keyboard Shortcuts ── -->
+            <Text profile="cs_helpSectionHdr"
+                  position="20px -185px" size="380px 20px"
+                  text="$l10n_cs_help_keys_hdr"/>
+
+            <Text profile="cs_helpBodyKey"
+                  position="30px -208px" size="370px 18px"
+                  text="$l10n_cs_help_keys_1"/>
+            <Text profile="cs_helpBodyKey"
+                  position="30px -226px" size="370px 18px"
+                  text="$l10n_cs_help_keys_2"/>
+            <Text profile="cs_helpBodyKey"
+                  position="30px -244px" size="370px 18px"
+                  text="$l10n_cs_help_keys_3"/>
+
+        </GuiElement><!-- /fs25_dialogContentContainer -->
+
+        <!-- ── OK / Close button ── -->
+        <BoxLayout profile="fs25_dialogButtonBox">
+            <Button profile="buttonOK" onClick="onClickOk"/>
+        </BoxLayout>
+
+    </GuiElement><!-- /dialogBg -->
+
+    <!-- ── Inline profile definitions ──────────────────────── -->
+    <GUIProfiles>
+
+        <!-- Full-width rule below the title -->
+        <Profile name="cs_helpDividerFull" extends="baseReference" with="anchorTopLeft">
+            <imageColor value="1.0 1.0 1.0 0.15"/>
+        </Profile>
+
+        <!-- Vertical column separator -->
+        <Profile name="cs_helpDividerV" extends="baseReference" with="anchorTopLeft">
+            <imageColor value="1.0 1.0 1.0 0.12"/>
+        </Profile>
+
+        <!-- Horizontal sub-divider within a column (between sections) -->
+        <Profile name="cs_helpDividerH" extends="baseReference" with="anchorTopLeft">
+            <imageColor value="1.0 1.0 1.0 0.08"/>
+        </Profile>
+
+        <!-- Section header: small-caps teal, bold -->
+        <Profile name="cs_helpSectionHdr" extends="fs25_textDefault" with="anchorTopLeft">
+            <textSize value="13px"/>
+            <textBold value="true"/>
+            <textUpperCase value="true"/>
+            <textColor value="0.20 0.65 0.85 1.0"/>
+            <textAlignment value="left"/>
+        </Profile>
+
+        <!-- Standard body text: light, readable -->
+        <Profile name="cs_helpBody" extends="fs25_textDefault" with="anchorTopLeft">
+            <textSize value="13px"/>
+            <textColor value="0.85 0.85 0.85 1.0"/>
+            <textAlignment value="left"/>
+        </Profile>
+
+        <!-- Body variants: moisture status colors -->
+        <Profile name="cs_helpBodyGreen" extends="cs_helpBody">
+            <textColor value="0.25 0.85 0.40 1.0"/>
+        </Profile>
+
+        <Profile name="cs_helpBodyYellow" extends="cs_helpBody">
+            <textColor value="0.90 0.82 0.18 1.0"/>
+        </Profile>
+
+        <Profile name="cs_helpBodyRed" extends="cs_helpBody">
+            <textColor value="0.88 0.25 0.25 1.0"/>
+        </Profile>
+
+        <!-- Keyboard shortcut body: monospace-feel via bold -->
+        <Profile name="cs_helpBodyKey" extends="cs_helpBody">
+            <textBold value="false"/>
+            <textColor value="0.75 0.75 0.75 1.0"/>
+        </Profile>
+
+    </GUIProfiles>
+
+</GUI>

@@ -54,6 +54,7 @@ source(modDir .. "src/SaveLoadHandler.lua")
 source(modDir .. "src/ui/CsMoistureMapOverlay.lua")
 source(modDir .. "src/ui/CsMapHooks.lua")
 source(modDir .. "src/ui/CsPDAScreen.lua")
+source(modDir .. "src/ui/CsHelpDialog.lua")
 
 -- GUI dialog loader (must precede dialog scripts)
 source(modDir .. "src/gui/CsDialogLoader.lua")
@@ -210,6 +211,7 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
     CsDialogLoader.init(modDir)
     CsDialogLoader.register("IrrigationScheduleDialog", IrrigationScheduleDialog, "gui/IrrigationScheduleDialog.xml")
     CsDialogLoader.register("CropConsultantDialog",     CropConsultantDialog,     "gui/CropConsultantDialog.xml")
+    CsDialogLoader.register("CsHelpDialog",             CsHelpDialog,             "xml/gui/CsHelpDialog.xml")
 
     -- Register PDA screen with InGameMenu
     if CsPDAScreen ~= nil then

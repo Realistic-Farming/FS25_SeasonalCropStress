@@ -24,6 +24,7 @@ local CS_PDA_MOD_NAME = g_currentModName
 CsPDAScreen.CONTROLS = {
     -- Field list (left sidebar)
     "fieldList",
+    "filterToggleBtn",
     -- Stats panel (right, overview tab)
     "overviewContent",
     "statsFieldsTracked", "statsFieldsOwned",
@@ -108,6 +109,7 @@ function CsPDAScreen.new()
     self.activeTab        = TAB_OVERVIEW
     self.fieldData        = {}  -- sorted list: {fieldId, cropName, moisture, stress, irrigated}
     self.irrigationData   = {}  -- subset sorted by moisture asc
+    self.showOwnedOnly    = false  -- ownership filter state
 
     self.refreshTimer     = 0
     self.returnScreenName = ""
@@ -120,9 +122,30 @@ end
 function CsPDAScreen:initialize()
     CsPDAScreen:superClass().initialize(self)
     self.menuButtonInfo = {
+        {inputAction = "MENU_EXTRA_1",
+         text     = tr("cs_pda_btn_irrigation", "Irrigation Schedule"),
+         callback = function() self:onClickIrrigationSchedule() end},
+        {inputAction = "MENU_EXTRA_2",
+         text     = tr("cs_pda_btn_consultant", "Crop Consultant"),
+         callback = function() self:onClickCropConsultant() end},
+        {inputAction = "MENU_EXTRA_3",
+         text     = tr("cs_pda_btn_help", "Help"),
+         callback = function() self:onClickHelp() end},
         {inputAction = "MENU_BACK"},
     }
     self:setMenuButtonInfo(self.menuButtonInfo)
+end
+
+function CsPDAScreen:onClickIrrigationSchedule()
+    CsDialogLoader.show("IrrigationScheduleDialog")
+end
+
+function CsPDAScreen:onClickCropConsultant()
+    CsDialogLoader.show("CropConsultantDialog")
+end
+
+function CsPDAScreen:onClickHelp()
+    CsDialogLoader.show("CsHelpDialog")
 end
 
 -- Wire SmoothList datasource/delegate (MDM pattern — must be done after loadGui)
@@ -261,6 +284,29 @@ function CsPDAScreen.toggle()
     end
 end
 
+-- ── Filter toggle ────────────────────────────────────────
+
+function CsPDAScreen:onClickFilterToggle()
+    self.showOwnedOnly = not self.showOwnedOnly
+    self:_updateFilterButton()
+    self:_rebuildData()
+    self:_reloadLists()
+    if self.activeTab == TAB_OVERVIEW then
+        self:_rebuildStats()
+    end
+end
+
+function CsPDAScreen:_updateFilterButton()
+    if not self.filterToggleBtn then return end
+    if self.showOwnedOnly then
+        self.filterToggleBtn:setText(tr("cs_pda_filter_owned", "MY FIELDS"))
+        self.filterToggleBtn:setTextColor(0.20, 0.65, 0.85, 1.0)
+    else
+        self.filterToggleBtn:setText(tr("cs_pda_filter_all", "ALL FIELDS"))
+        self.filterToggleBtn:setTextColor(0.65, 0.65, 0.65, 1.0)
+    end
+end
+
 -- ── Data rebuild ──────────────────────────────────────────
 
 function CsPDAScreen:_rebuildData()
@@ -290,22 +336,38 @@ function CsPDAScreen:_rebuildData()
         end
     end
 
+    -- Resolve local farm ID once for ownership filter
+    local localFarmId = nil
+    if self.showOwnedOnly then
+        localFarmId = g_currentMission and g_currentMission.player and g_currentMission.player.farmId
+    end
+
     local rows = {}
     for fid, entry in pairs(soilSystem.fieldData) do
-        local field      = fieldById[fid]
-        local ftiIndex   = field and field.fieldState and field.fieldState.fruitTypeIndex or 0
-        local cropName   = getCropName(ftiIndex)
-        local moisture   = entry.moisture or 0
-        local stress     = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
-        local irrigated  = coveredFields[fid] == true
+        local field = fieldById[fid]
 
-        table.insert(rows, {
-            fieldId   = fid,
-            cropName  = cropName,
-            moisture  = moisture,
-            stress    = stress,
-            irrigated = irrigated,
-        })
+        -- Ownership filter: skip fields not owned by the player's farm
+        local include = true
+        if self.showOwnedOnly then
+            local fl = field and field.farmland
+            include = localFarmId ~= nil and fl ~= nil and fl.ownerFarmId == localFarmId
+        end
+
+        if include then
+            local ftiIndex   = field and field.fieldState and field.fieldState.fruitTypeIndex or 0
+            local cropName   = getCropName(ftiIndex)
+            local moisture   = entry.moisture or 0
+            local stress     = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
+            local irrigated  = coveredFields[fid] == true
+
+            table.insert(rows, {
+                fieldId   = fid,
+                cropName  = cropName,
+                moisture  = moisture,
+                stress    = stress,
+                irrigated = irrigated,
+            })
+        end
     end
 
     -- Sort field list: alphabetical crop, then by moisture asc within crop
@@ -465,7 +527,7 @@ function CsPDAScreen:_populateFieldCell(index, cell)
     local moistEl  = cell:getDescendantByName("fieldRowMoisture")
     local statusEl = cell:getDescendantByName("fieldRowStatus")
 
-    if idEl     then idEl:setText(tostring(row.fieldId)) end
+    if idEl     then idEl:setText("F" .. tostring(row.fieldId)) end
     if cropEl   then cropEl:setText(row.cropName) end
 
     if moistEl  then
@@ -488,7 +550,7 @@ function CsPDAScreen:_populateIrrigationCell(index, cell)
     local strEl   = cell:getDescendantByName("irrRowStress")
     local irrEl   = cell:getDescendantByName("irrRowIrrigated")
 
-    if idEl   then idEl:setText(tostring(row.fieldId)) end
+    if idEl   then idEl:setText("F" .. tostring(row.fieldId)) end
     if cropEl then cropEl:setText(row.cropName) end
 
     if moistEl then
@@ -502,10 +564,10 @@ function CsPDAScreen:_populateIrrigationCell(index, cell)
     end
     if irrEl then
         if row.irrigated then
-            irrEl:setText(tr("cs_pda_irrigated_yes", "Yes"))
+            irrEl:setText(tr("cs_pda_irrigated_yes", "Active"))
             irrEl:setTextColor(unpack(COLOR_HEALTHY))
         else
-            irrEl:setText(tr("cs_pda_irrigated_no", "No"))
+            irrEl:setText("--")
             irrEl:setTextColor(unpack(COLOR_DIM))
         end
     end
@@ -560,17 +622,32 @@ function CsPDAScreen:_setTab(tabIndex)
     local isOverview   = (tabIndex == TAB_OVERVIEW)
     local isIrrigation = (tabIndex == TAB_IRRIGATION)
 
-    if self.overviewContent   then self.overviewContent:setVisible(isOverview)   end
-    if self.irrigationContent then self.irrigationContent:setVisible(isIrrigation) end
+    -- MDM pattern: updateAbsolutePosition() on the newly-visible container
+    -- before reloadData() so the SmoothList knows its bounds.
+    if self.overviewContent then
+        self.overviewContent:setVisible(isOverview)
+        if isOverview and type(self.overviewContent.updateAbsolutePosition) == "function" then
+            self.overviewContent:updateAbsolutePosition()
+        end
+    end
+    if self.irrigationContent then
+        self.irrigationContent:setVisible(isIrrigation)
+        if isIrrigation and type(self.irrigationContent.updateAbsolutePosition) == "function" then
+            self.irrigationContent:updateAbsolutePosition()
+        end
+    end
 
     if self.tabUnderlineOverview   then self.tabUnderlineOverview:setVisible(isOverview)   end
     if self.tabUnderlineIrrigation then self.tabUnderlineIrrigation:setVisible(isIrrigation) end
 
+    -- Active tab: full white. Inactive tab: clearly dim (0.38) so both states are obvious.
     if self.tabLabelOverview then
-        self.tabLabelOverview:setTextColor(isOverview and 1 or 0.6, isOverview and 1 or 0.6, isOverview and 1 or 0.6, 1)
+        local v = isOverview and 1.0 or 0.38
+        self.tabLabelOverview:setTextColor(v, v, v, 1)
     end
     if self.tabLabelIrrigation then
-        self.tabLabelIrrigation:setTextColor(isIrrigation and 1 or 0.6, isIrrigation and 1 or 0.6, isIrrigation and 1 or 0.6, 1)
+        local v = isIrrigation and 1.0 or 0.38
+        self.tabLabelIrrigation:setTextColor(v, v, v, 1)
     end
 
     self:_reloadLists()
@@ -591,7 +668,18 @@ end
 function CsPDAScreen:onOpen()
     CsPDAScreen:superClass().onOpen(self)
     self.refreshTimer = 0
+    self:_updateFilterButton()
     self:_rebuildData()
+    -- Force layout finalization before first list populate (MDM pattern).
+    -- Without this the SmoothList doesn't know its bounds on cold open.
+    if self.fieldList and type(self.fieldList.updateAbsolutePosition) == "function" then
+        self.fieldList:updateAbsolutePosition()
+    end
+    if self.irrigationList and type(self.irrigationList.updateAbsolutePosition) == "function" then
+        self.irrigationList:updateAbsolutePosition()
+    end
+    self:_reloadLists()
+    self:_rebuildStats()
     self:_setTab(TAB_OVERVIEW)
 end
 
