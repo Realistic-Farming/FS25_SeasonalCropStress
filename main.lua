@@ -50,6 +50,11 @@ source(modDir .. "src/events/CropStressSettingsSyncEvent.lua")
 -- Persistence
 source(modDir .. "src/SaveLoadHandler.lua")
 
+-- Map overlay & PDA screen (load before CropStressManager so hooks install in time)
+source(modDir .. "src/ui/CsMoistureMapOverlay.lua")
+source(modDir .. "src/ui/CsMapHooks.lua")
+source(modDir .. "src/ui/CsPDAScreen.lua")
+
 -- GUI dialog loader (must precede dialog scripts)
 source(modDir .. "src/gui/CsDialogLoader.lua")
 
@@ -182,7 +187,7 @@ Mission00.load = Utils.appendedFunction(Mission00.load, function(self, ...)
     -- Cross-mod bridge: g_currentMission is a shared C++ object visible to all mods.
     -- getfenv(0) is per-mod scoped in FS25; use mission property for reliable cross-mod detection.
     self.cropStressManager = g_csManager
-    print("[CropStress] CropStressManager created (v1.0.5.0)")
+    print("[CropStress] CropStressManager created (v1.2.0.0)")
 end)
 
 -- 2. Mission fully loaded: initialize all systems
@@ -206,6 +211,11 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
     CsDialogLoader.register("IrrigationScheduleDialog", IrrigationScheduleDialog, "gui/IrrigationScheduleDialog.xml")
     CsDialogLoader.register("CropConsultantDialog",     CropConsultantDialog,     "gui/CropConsultantDialog.xml")
 
+    -- Register PDA screen with InGameMenu
+    if CsPDAScreen ~= nil then
+        CsPDAScreen.register(modDir)
+    end
+
     -- Register console debug commands
     if addConsoleCommand ~= nil then
         addConsoleCommand("csHelp",        "List all CropStress debug commands",                           "consoleHelp",        g_csManager)
@@ -221,6 +231,8 @@ end)
 -- 3. Per-frame update
 FSBaseMission.update = Utils.appendedFunction(FSBaseMission.update, function(self, dt)
     if g_csManager ~= nil then g_csManager:update(dt) end
+    -- Retry PDA registration each frame until InGameMenu is ready
+    if CsPDAScreen ~= nil then CsPDAScreen._attemptDeferredRegister(dt) end
 end)
 
 -- 4. Draw hook (HUD rendering)

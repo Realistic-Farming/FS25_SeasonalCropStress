@@ -243,6 +243,46 @@
     <text name="helpLine_cs_t3_sprayer_title"  text="Feldspritzen zur Bewässerung nutzen"/>
     <text name="helpLine_cs_t3_sprayer_text"   text="Standard-Feldspritzen können als manuelle Alternative zu fest installierten Bewässerungssystemen verwendet werden. Wenn Sie eine Spritze mit WASSER füllen, erhält jeder Bereich, den Sie besprühen, einen sofortigen Feuchtigkeitsschub. Dies ist nützlich für kleine Felder oder als Übergangsmaßnahme, bis Sie sich eine Kreis- oder Tröpfchenbewässerung leisten können."/>
 
+    <!-- ========== PDA SCREEN ========== -->
+    <text name="cs_pda_screen_title"           text="Crop Moisture Monitor"/>
+    <text name="cs_pda_tab_fields"             text="Fields"/>
+    <text name="cs_pda_tab_overview"           text="Overview"/>
+    <text name="cs_pda_tab_irrigation"         text="Irrigation"/>
+    <text name="cs_pda_col_field"              text="Field"/>
+    <text name="cs_pda_col_crop"               text="Crop"/>
+    <text name="cs_pda_col_moisture"           text="Moisture"/>
+    <text name="cs_pda_col_status"             text="Status"/>
+    <text name="cs_pda_col_stress"             text="Stress"/>
+    <text name="cs_pda_col_irrigated"          text="Irrigated"/>
+    <text name="cs_pda_section_farm_overview"  text="Farm Overview"/>
+    <text name="cs_pda_section_moisture"       text="Moisture Status"/>
+    <text name="cs_pda_section_stress"         text="Crop Stress"/>
+    <text name="cs_pda_section_irrigation"     text="Irrigation"/>
+    <text name="cs_pda_section_irrigation_plan" text="Irrigation Priority"/>
+    <text name="cs_pda_fields_tracked"         text="Fields Tracked"/>
+    <text name="cs_pda_fields_owned"           text="Fields Owned"/>
+    <text name="cs_pda_avg_moisture"           text="Average Moisture"/>
+    <text name="cs_pda_fields_healthy"         text="Healthy (<!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->gt;=40%)"/>
+    <text name="cs_pda_fields_warning"         text="Warning (25-40%)"/>
+    <text name="cs_pda_fields_critical"        text="Critical (<!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->lt;25%)"/>
+    <text name="cs_pda_avg_stress"             text="Average Stress"/>
+    <text name="cs_pda_est_yield_loss"         text="Est. Yield Loss"/>
+    <text name="cs_pda_irrigated_fields"       text="Irrigated Fields"/>
+    <text name="cs_pda_irrigation_systems"     text="Active Systems"/>
+    <text name="cs_pda_status_healthy"         text="Healthy"/>
+    <text name="cs_pda_status_warning"         text="Warning"/>
+    <text name="cs_pda_status_critical"        text="Critical"/>
+    <text name="cs_pda_irrigated_yes"          text="Yes"/>
+    <text name="cs_pda_irrigated_no"           text="No"/>
+    <text name="cs_pda_no_fields"             text="No field data yet."/>
+    <!-- ========== MAP OVERLAY ========== -->
+    <text name="cs_map_page_title"            text="Crop Moisture"/>
+    <text name="cs_map_sidebar_title"         text="MOISTURE LEGEND"/>
+    <text name="cs_map_legend_healthy"        text="Healthy  <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->gt;=40%"/>
+    <text name="cs_map_legend_warning"        text="Warning  25-40%"/>
+    <text name="cs_map_legend_critical"       text="Critical  <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->lt;25%"/>
+    <text name="cs_map_btn_open_pda"          text="Open Crop PDA"/>
+
     <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->
 
     <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d Fahrzeug arbeitet auf diesem Feld"/>

@@ -137,6 +137,7 @@ function CropStressManager.new()
     self.irrigationManager  = IrrigationManager.new(self)       -- Phase 2 stub
     self.hudOverlay         = HUDOverlay.new(self)
     self.consultant         = CropConsultant.new(self)
+    self.moistureMapOverlay = CsMoistureMapOverlay ~= nil and CsMoistureMapOverlay.new(self) or nil
     self.npcIntegration     = NPCIntegration.new(self)
     self.financeIntegration = FinanceIntegration.new(self)      -- Phase 4 stub
 
@@ -222,6 +223,7 @@ function CropStressManager:initialize()
     self.irrigationManager:initialize()
     self.hudOverlay:initialize()
     self.consultant:initialize()
+    if self.moistureMapOverlay ~= nil then self.moistureMapOverlay:initialize() end
 
     -- Optional mod bridges — each checks for their mod's global at runtime
     self:detectOptionalMods()
@@ -673,6 +675,7 @@ function CropStressManager:delete()
     self.npcIntegration:delete()
     self.consultant:delete()
     self.hudOverlay:delete()
+    if self.moistureMapOverlay ~= nil then self.moistureMapOverlay:delete() end
     self.irrigationManager:delete()
     self.stressModifier:delete()
     self.soilSystem:delete()

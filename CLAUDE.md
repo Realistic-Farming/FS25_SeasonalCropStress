@@ -114,7 +114,7 @@ At these stages, Claude and Samantha MUST have explicit dialog:
 
 ## Project Overview
 
-**FS25_SeasonalCropStress** adds a soil moisture layer and crop stress simulation to Farming Simulator 25. Every field has a moisture percentage driven by rain, evapotranspiration (temperature + season + soil type), and irrigation. Moisture deficits during critical growth windows accumulate stress that reduces final yield. Players can place center-pivot or drip irrigation infrastructure to protect crops, managed via a scheduling dialog and monitored through a HUD overlay and a Crop Consultant alert system. Optional integration with `FS25_NPCFavor` (Crop Consultant as a named NPC) and `FS25_UsedPlus` (irrigation costs + equipment wear). Current version: **1.0.5.0**.
+**FS25_SeasonalCropStress** adds a soil moisture layer and crop stress simulation to Farming Simulator 25. Every field has a moisture percentage driven by rain, evapotranspiration (temperature + season + soil type), and irrigation. Moisture deficits during critical growth windows accumulate stress that reduces final yield. Players can place center-pivot or drip irrigation infrastructure to protect crops, managed via a scheduling dialog and monitored through a HUD overlay and a Crop Consultant alert system. Optional integration with `FS25_NPCFavor` (Crop Consultant as a named NPC) and `FS25_UsedPlus` (irrigation costs + equipment wear). Current version: **1.1.0.1**.
 
 Full implementation blueprint is in `FS25_SeasonalCropStress_ModPlan.md` at the repo root.
 
