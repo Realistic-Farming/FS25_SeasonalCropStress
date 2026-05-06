@@ -2,6 +2,7 @@
 <!--
     CsPDAScreen.xml
     InGameMenu page — Controller: CsPDAScreen (src/ui/CsPDAScreen.lua)
+    Pattern: mirrors FS25_MarketDynamics MarketScreen.xml exactly.
 
     Layout:
       LEFT  (460px) — field list sidebar: F# | Crop | Moisture | Status
@@ -18,23 +19,31 @@
             text="$l10n_cs_pda_screen_title"/>
     </GuiElement>
 
-    <!-- ══════════════════════════════════════════════════════
-         LEFT COLUMN — 460px, field list sidebar
-         ══════════════════════════════════════════════════════ -->
-    <ThreePartBitmap width="460px" height="700px" position="0px 100px">
-      <GuiElement profile="fs25_subCategoryContainer" width="420px">
+    <!-- Two-column layout container (MDM: fs25_subCategorySelectorTabbedContainer) -->
+    <GuiElement profile="fs25_subCategorySelectorTabbedContainer" position="0px 0px">
 
-        <GuiElement id="sidebarFields" position="0px 0px" width="420px" height="640px">
+      <!-- ══════════════════════════════════════════════════════
+           LEFT COLUMN — 460px field list sidebar
+           Content placed directly in fs25_subCategoryContainer (MDM pattern).
+           Coordinate system: Y=0 at TOP of container, negative Y goes down.
+           ══════════════════════════════════════════════════════ -->
+      <ThreePartBitmap width="460px" height="700px" position="0px 100px">
+        <GuiElement profile="fs25_subCategoryContainer" width="420px">
+
+          <!-- Section title: 10px from top -->
           <Text profile="cs_sectionHeader" text="$l10n_cs_pda_tab_fields" position="10px -10px"/>
 
-          <!-- Column headers -->
-          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_field"    position="10px  -50px" size="55px  24px"/>
-          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_crop"     position="70px  -50px" size="140px 24px"/>
-          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_moisture" position="214px -50px" size="80px  24px"/>
-          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_status"   position="298px -50px" size="112px 24px"/>
+          <!-- Column headers row: 40px from top, 24px tall -->
+          <GuiElement profile="cs_listHeaderRow" position="0px -40px">
+            <Text profile="cs_colHeader" text="$l10n_cs_pda_col_field"    position="10px 0px"  size="55px  24px"/>
+            <Text profile="cs_colHeader" text="$l10n_cs_pda_col_crop"     position="70px 0px"  size="140px 24px"/>
+            <Text profile="cs_colHeader" text="$l10n_cs_pda_col_moisture" position="214px 0px" size="80px  24px"/>
+            <Text profile="cs_colHeader" text="$l10n_cs_pda_col_status"   position="298px 0px" size="112px 24px"/>
+          </GuiElement>
 
-          <!-- Scrollable field list -->
-          <GuiElement position="0px -78px" width="420px" height="552px">
+          <!-- SmoothList: 72px from top (40+24+8px gap) -->
+          <GuiElement profile="fs25_subCategoryListContainer" id="fieldListContainer"
+                      position="0px -72px" width="420px" height="600px">
             <SmoothList id="fieldList" profile="cs_smoothList"
                         startClipperElementName="sideListStart"
                         endClipperElementName="sideListEnd">
@@ -49,165 +58,185 @@
             <Bitmap profile="fs25_secondaryMenuStartClipper" name="sideListStart"/>
             <Bitmap profile="fs25_secondaryMenuStopClipper"  name="sideListEnd"/>
           </GuiElement>
+
         </GuiElement>
+      </ThreePartBitmap>
 
-      </GuiElement>
-    </ThreePartBitmap>
+      <!-- ══════════════════════════════════════════════════════
+           RIGHT COLUMN — 1000px tabbed content
+           Y-UP: position 0px 0px fills rightPanel from bottom (Y=0) to Y=700.
+           Content panels use anchorTopLeft: Y = containerHeight - pixelsFromTop.
+           ══════════════════════════════════════════════════════ -->
+      <GuiElement id="rightPanel" position="500px 100px" width="1000px" height="700px">
 
-    <!-- ══════════════════════════════════════════════════════
-         RIGHT COLUMN — 1000px, tabbed content
-         ══════════════════════════════════════════════════════ -->
-    <GuiElement id="rightPanel" position="500px 100px" width="1000px" height="700px">
+        <!-- ── TAB 1: OVERVIEW ───────────────────────────────
+             Height 660px. anchorTopLeft items use Y = 660 - pixelsFromTop.
+             Section header 10px from top → Y=650. Stats rows every 30px. -->
+        <GuiElement id="overviewContent" position="0px 0px" width="1000px" height="660px">
 
-      <!-- Tab bar -->
-      <GuiElement position="0px 654px" width="1000px" height="40px">
-        <Text profile="cs_tabLabel" id="tabLabelOverview"
-              text="$l10n_cs_pda_tab_overview"
-              position="0px 0px" size="490px 40px"
-              onClick="onClickTabOverview"/>
-        <Text profile="cs_tabLabel" id="tabLabelIrrigation"
-              text="$l10n_cs_pda_tab_irrigation"
-              position="510px 0px" size="490px 40px"
-              onClick="onClickTabIrrigation"/>
-        <Bitmap profile="cs_tabUnderline" id="tabUnderlineOverview"
-                position="0px -3px" size="490px 3px"/>
-        <Bitmap profile="cs_tabUnderline" id="tabUnderlineIrrigation"
-                position="510px -3px" size="490px 3px" visible="false"/>
-      </GuiElement>
+          <Text profile="cs_sectionHeader"
+                text="$l10n_cs_pda_section_farm_overview"
+                position="0px 650px"/>
 
-      <Bitmap profile="cs_tabDivider" position="0px 650px" size="1000px 2px"/>
+          <ThreePartBitmap width="960px" height="590px" position="0px 30px">
+            <GuiElement profile="fs25_subCategoryContainer" width="920px">
 
-      <!-- ── TAB 1: OVERVIEW ─────────────────────────────── -->
-      <GuiElement id="overviewContent" position="0px 0px" width="1000px" height="642px">
+              <!-- Fields -->
+              <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_tracked"
+                    position="10px -30px" size="300px 24px"/>
+              <Text profile="cs_statValue" id="statsFieldsTracked" text="0"
+                    position="320px -30px"/>
 
-        <Text profile="cs_sectionHeader"
-              text="$l10n_cs_pda_section_farm_overview"
-              position="0px 620px"/>
+              <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_owned"
+                    position="10px -60px" size="300px 24px"/>
+              <Text profile="cs_statValue" id="statsFieldsOwned" text="0"
+                    position="320px -60px"/>
 
-        <ThreePartBitmap width="960px" height="580px" position="0px 30px">
-          <GuiElement profile="fs25_subCategoryContainer" width="920px">
+              <!-- Moisture -->
+              <Text profile="cs_subHeader" text="$l10n_cs_pda_section_moisture"
+                    position="10px -110px"/>
 
-            <!-- Fields row -->
-            <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_tracked"
-                  position="10px -30px" size="300px 24px"/>
-            <Text profile="cs_statValue" id="statsFieldsTracked" text="0"
-                  position="320px -30px"/>
+              <Text profile="cs_statLabel" text="$l10n_cs_pda_avg_moisture"
+                    position="10px -140px" size="300px 24px"/>
+              <Text profile="cs_statValue" id="statsAvgMoisture" text="—"
+                    position="320px -140px"/>
 
-            <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_owned"
-                  position="10px -60px" size="300px 24px"/>
-            <Text profile="cs_statValue" id="statsFieldsOwned" text="0"
-                  position="320px -60px"/>
+              <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_healthy"
+                    position="10px -170px" size="300px 24px"/>
+              <Text profile="cs_statValue" id="statsHealthy" text="0"
+                    position="320px -170px"/>
 
-            <!-- Moisture breakdown -->
-            <Text profile="cs_subHeader" text="$l10n_cs_pda_section_moisture"
-                  position="10px -110px"/>
+              <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_warning"
+                    position="10px -200px" size="300px 24px"/>
+              <Text profile="cs_statValue" id="statsWarning" text="0"
+                    position="320px -200px"/>
 
-            <Text profile="cs_statLabel" text="$l10n_cs_pda_avg_moisture"
-                  position="10px -140px" size="300px 24px"/>
-            <Text profile="cs_statValue" id="statsAvgMoisture" text="—"
-                  position="320px -140px"/>
+              <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_critical"
+                    position="10px -230px" size="300px 24px"/>
+              <Text profile="cs_statValue" id="statsCritical" text="0"
+                    position="320px -230px"/>
 
-            <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_healthy"
-                  position="10px -170px" size="300px 24px"/>
-            <Text profile="cs_statValue" id="statsHealthy" text="0"
-                  position="320px -170px"/>
+              <!-- Stress & yield -->
+              <Text profile="cs_subHeader" text="$l10n_cs_pda_section_stress"
+                    position="10px -282px"/>
 
-            <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_warning"
-                  position="10px -200px" size="300px 24px"/>
-            <Text profile="cs_statValue" id="statsWarning" text="0"
-                  position="320px -200px"/>
+              <Text profile="cs_statLabel" text="$l10n_cs_pda_avg_stress"
+                    position="10px -312px" size="300px 24px"/>
+              <Text profile="cs_statValue" id="statsAvgStress" text="—"
+                    position="320px -312px"/>
 
-            <Text profile="cs_statLabel" text="$l10n_cs_pda_fields_critical"
-                  position="10px -230px" size="300px 24px"/>
-            <Text profile="cs_statValue" id="statsCritical" text="0"
-                  position="320px -230px"/>
+              <Text profile="cs_statLabel" text="$l10n_cs_pda_est_yield_loss"
+                    position="10px -342px" size="300px 24px"/>
+              <Text profile="cs_statValue" id="statsYieldLoss" text="—"
+                    position="320px -342px"/>
 
-            <!-- Stress & yield -->
-            <Text profile="cs_subHeader" text="$l10n_cs_pda_section_stress"
-                  position="10px -282px"/>
+              <!-- Irrigation -->
+              <Text profile="cs_subHeader" text="$l10n_cs_pda_section_irrigation"
+                    position="10px -394px"/>
 
-            <Text profile="cs_statLabel" text="$l10n_cs_pda_avg_stress"
-                  position="10px -312px" size="300px 24px"/>
-            <Text profile="cs_statValue" id="statsAvgStress" text="—"
-                  position="320px -312px"/>
+              <Text profile="cs_statLabel" text="$l10n_cs_pda_irrigated_fields"
+                    position="10px -424px" size="300px 24px"/>
+              <Text profile="cs_statValue" id="statsIrrigated" text="0"
+                    position="320px -424px"/>
 
-            <Text profile="cs_statLabel" text="$l10n_cs_pda_est_yield_loss"
-                  position="10px -342px" size="300px 24px"/>
-            <Text profile="cs_statValue" id="statsYieldLoss" text="—"
-                  position="320px -342px"/>
+              <Text profile="cs_statLabel" text="$l10n_cs_pda_irrigation_systems"
+                    position="10px -454px" size="300px 24px"/>
+              <Text profile="cs_statValue" id="statsIrrSystems" text="0"
+                    position="320px -454px"/>
 
-            <!-- Irrigation -->
-            <Text profile="cs_subHeader" text="$l10n_cs_pda_section_irrigation"
-                  position="10px -394px"/>
+            </GuiElement>
+          </ThreePartBitmap>
 
-            <Text profile="cs_statLabel" text="$l10n_cs_pda_irrigated_fields"
-                  position="10px -424px" size="300px 24px"/>
-            <Text profile="cs_statValue" id="statsIrrigated" text="0"
-                  position="320px -424px"/>
+          <Text profile="cs_emptyHint" id="overviewEmptyHint"
+                text="$l10n_cs_pda_no_fields"
+                position="480px 320px" visible="false"/>
 
-            <Text profile="cs_statLabel" text="$l10n_cs_pda_irrigation_systems"
-                  position="10px -454px" size="300px 24px"/>
-            <Text profile="cs_statValue" id="statsIrrSystems" text="0"
-                  position="320px -454px"/>
+        </GuiElement><!-- /overviewContent -->
 
+        <!-- ── TAB 2: IRRIGATION ─────────────────────────────
+             Hidden by default. Same 660px container. -->
+        <GuiElement id="irrigationContent" position="0px 0px" width="1000px" height="660px" visible="false">
+
+          <Text profile="cs_sectionHeader"
+                text="$l10n_cs_pda_section_irrigation_plan"
+                position="0px 650px"/>
+
+          <!-- Column headers at 650-30=620 from bottom -->
+          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_field"
+                position="8px  618px" size="60px 24px"/>
+          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_crop"
+                position="72px 618px" size="200px 24px"/>
+          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_moisture"
+                position="276px 618px" size="80px 24px"/>
+          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_stress"
+                position="360px 618px" size="80px 24px"/>
+          <Text profile="cs_colHeader" text="$l10n_cs_pda_col_irrigated"
+                position="444px 618px" size="100px 24px"/>
+
+          <!-- Irrigation triage list (MDM: position="0px 83px") -->
+          <GuiElement id="irrigationListContainer" position="0px 80px" width="960px" height="520px">
+            <SmoothList id="irrigationList" profile="cs_smoothList"
+                        startClipperElementName="irrListStart"
+                        endClipperElementName="irrListEnd">
+              <ListItem profile="cs_listRow" onClick="onClickIrrigationRow">
+                <Bitmap profile="cs_rowBg" name="alternating"/>
+                <Text profile="cs_cellLeft"  name="irrRowId"        size="60px  28px"/>
+                <Text profile="cs_cellLeft"  name="irrRowCrop"      position="72px  0px" size="200px 28px"/>
+                <Text profile="cs_cellRight" name="irrRowMoisture"  position="276px 0px" size="80px  28px"/>
+                <Text profile="cs_cellRight" name="irrRowStress"    position="360px 0px" size="80px  28px"/>
+                <Text profile="cs_cellRight" name="irrRowIrrigated" position="444px 0px" size="100px 28px"/>
+              </ListItem>
+            </SmoothList>
+            <Bitmap profile="fs25_secondaryMenuStartClipper" name="irrListStart"/>
+            <Bitmap profile="fs25_secondaryMenuStopClipper"  name="irrListEnd"/>
           </GuiElement>
-        </ThreePartBitmap>
 
-        <Text profile="cs_emptyHint" id="overviewEmptyHint"
-              text="$l10n_cs_pda_no_fields"
-              position="480px 320px" visible="false"/>
+          <Text profile="cs_emptyHint" id="irrigationEmptyHint"
+                text="$l10n_cs_pda_no_fields"
+                position="480px 320px" visible="false"/>
 
-      </GuiElement><!-- /overviewContent -->
+        </GuiElement><!-- /irrigationContent -->
 
-      <!-- ── TAB 2: IRRIGATION ───────────────────────────── -->
-      <GuiElement id="irrigationContent" position="0px 0px" width="1000px" height="642px" visible="false">
-
-        <Text profile="cs_sectionHeader"
-              text="$l10n_cs_pda_section_irrigation_plan"
-              position="0px 620px"/>
-
-        <!-- Column headers -->
-        <Text profile="cs_colHeader" text="$l10n_cs_pda_col_field"
-              position="8px  590px" size="60px 24px"/>
-        <Text profile="cs_colHeader" text="$l10n_cs_pda_col_crop"
-              position="72px 590px" size="200px 24px"/>
-        <Text profile="cs_colHeader" text="$l10n_cs_pda_col_moisture"
-              position="276px 590px" size="80px 24px"/>
-        <Text profile="cs_colHeader" text="$l10n_cs_pda_col_stress"
-              position="360px 590px" size="80px 24px"/>
-        <Text profile="cs_colHeader" text="$l10n_cs_pda_col_irrigated"
-              position="444px 590px" size="100px 24px"/>
-
-        <!-- Irrigation triage list -->
-        <GuiElement position="0px 80px" width="960px" height="498px">
-          <SmoothList id="irrigationList" profile="cs_smoothList"
-                      startClipperElementName="irrListStart"
-                      endClipperElementName="irrListEnd">
-            <ListItem profile="cs_listRow" onClick="onClickIrrigationRow">
-              <Bitmap profile="cs_rowBg" name="alternating"/>
-              <Text profile="cs_cellLeft"  name="irrRowId"        size="60px  28px"/>
-              <Text profile="cs_cellLeft"  name="irrRowCrop"      position="72px  0px" size="200px 28px"/>
-              <Text profile="cs_cellRight" name="irrRowMoisture"  position="276px 0px" size="80px  28px"/>
-              <Text profile="cs_cellRight" name="irrRowStress"    position="360px 0px" size="80px  28px"/>
-              <Text profile="cs_cellRight" name="irrRowIrrigated" position="444px 0px" size="100px 28px"/>
-            </ListItem>
-          </SmoothList>
-          <Bitmap profile="fs25_secondaryMenuStartClipper" name="irrListStart"/>
-          <Bitmap profile="fs25_secondaryMenuStopClipper"  name="irrListEnd"/>
+        <!-- ── Tab bar — LAST for mouse event priority (MDM pattern) ──
+             FS25 processes mouse events in reverse XML order.
+             Tab bar must be last so it gets click priority over content panels. -->
+        <GuiElement id="tabBar" profile="emptyPanel" position="0px 660px" width="1000px" height="30px">
+          <!-- Invisible hit areas (MDM: mdm_tabBtnHit pattern) -->
+          <Button profile="cs_tabBtnHit" onClick="onClickTabOverview"
+                  position="0px 0px" size="490px 28px"/>
+          <Button profile="cs_tabBtnHit" onClick="onClickTabIrrigation"
+                  position="510px 0px" size="490px 28px"/>
+          <!-- Visible labels -->
+          <Text profile="cs_tabLabel" id="tabLabelOverview"
+                text="$l10n_cs_pda_tab_overview"
+                position="0px 28px" size="490px 28px"
+                onClick="onClickTabOverview"/>
+          <Text profile="cs_tabLabel" id="tabLabelIrrigation"
+                text="$l10n_cs_pda_tab_irrigation"
+                position="510px 28px" size="490px 28px"
+                onClick="onClickTabIrrigation"/>
+          <!-- Underlines -->
+          <Bitmap profile="cs_tabUnderline" id="tabUnderlineOverview"
+                  position="0px 0px" size="490px 2px"/>
+          <Bitmap profile="cs_tabUnderline" id="tabUnderlineIrrigation"
+                  position="510px 0px" size="490px 2px" visible="false"/>
         </GuiElement>
 
-        <Text profile="cs_emptyHint" id="irrigationEmptyHint"
-              text="$l10n_cs_pda_no_fields"
-              position="480px 320px" visible="false"/>
+        <Bitmap profile="cs_tabDivider" position="0px 658px" size="1000px 2px"/>
 
-      </GuiElement><!-- /irrigationContent -->
+      </GuiElement><!-- /rightPanel -->
 
-    </GuiElement><!-- /rightPanel -->
+    </GuiElement><!-- /subCategorySelectorTabbedContainer -->
 
   </GuiElement><!-- /menuContainer -->
 
   <!-- ── Inline profile definitions ──────────────────────── -->
   <GUIProfiles>
+
+    <!-- Invisible tab hit area (MDM: mdm_tabBtnHit) -->
+    <Profile name="cs_tabBtnHit" extends="emptyPanel">
+      <isFocusable value="true"/>
+    </Profile>
 
     <Profile name="cs_tabLabel" extends="fs25_textDefault" with="anchorTopLeft">
       <isFocusable value="true"/>
@@ -253,6 +282,11 @@
       <textColor value="$preset_colorWhite"/>
       <textAlignment value="right"/>
       <size value="180px 24px"/>
+    </Profile>
+
+    <!-- List header row (MDM: mdm_listHeaderRow) -->
+    <Profile name="cs_listHeaderRow" extends="emptyPanel" with="anchorTopStretchingX">
+      <height value="24px"/>
     </Profile>
 
     <Profile name="cs_colHeader" extends="fs25_textDefault" with="anchorTopLeft">

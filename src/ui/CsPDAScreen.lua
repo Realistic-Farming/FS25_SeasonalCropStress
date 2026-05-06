@@ -125,6 +125,20 @@ function CsPDAScreen:initialize()
     self:setMenuButtonInfo(self.menuButtonInfo)
 end
 
+-- Wire SmoothList datasource/delegate (MDM pattern — must be done after loadGui)
+function CsPDAScreen:onGuiSetupFinished()
+    CsPDAScreen:superClass().onGuiSetupFinished(self)
+
+    if self.fieldList then
+        self.fieldList.dataSource = self
+        self.fieldList.delegate   = self
+    end
+    if self.irrigationList then
+        self.irrigationList.dataSource = self
+        self.irrigationList.delegate   = self
+    end
+end
+
 -- ── Registration ──────────────────────────────────────────
 
 function CsPDAScreen.register(modDir)
@@ -438,7 +452,7 @@ function CsPDAScreen:getNumberOfItemsInSection(list, section)
     return 0
 end
 
-function CsPDAScreen:populateCellForItemInSection(list, cell, index, section)
+function CsPDAScreen:populateCellForItemInSection(list, section, index, cell)
     if list == self.fieldList then
         self:_populateFieldCell(index, cell)
     elseif list == self.irrigationList then
@@ -509,6 +523,30 @@ end
 
 function CsPDAScreen:onClickIrrigationRow(item)
     -- Reserved for future field detail dialog
+end
+
+-- ── Mouse event — tab hit testing (MDM pattern) ──────────
+
+function CsPDAScreen:mouseEvent(posX, posY, isDown, isUp, button, eventUsed)
+    if isDown and button == Input.MOUSE_BUTTON_LEFT then
+        local tabs = {
+            { el = self.tabLabelOverview,   cb = CsPDAScreen.onClickTabOverview   },
+            { el = self.tabLabelIrrigation, cb = CsPDAScreen.onClickTabIrrigation },
+        }
+        for _, t in ipairs(tabs) do
+            if t.el then
+                local ap = t.el.absPosition
+                local as = t.el.absSize
+                if ap and as and
+                   posX >= ap[1] and posX <= ap[1] + as[1] and
+                   posY >= ap[2] and posY <= ap[2] + as[2] then
+                    t.cb(self)
+                    return true
+                end
+            end
+        end
+    end
+    return CsPDAScreen:superClass().mouseEvent(self, posX, posY, isDown, isUp, button, eventUsed)
 end
 
 -- ── Tab switching ─────────────────────────────────────────
