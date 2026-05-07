@@ -325,13 +325,15 @@ function CsPDAScreen:_rebuildData()
 
     if soilSystem == nil then return end
 
-    -- Build covered fields set from irrigation manager
-    local coveredFields = {}
+    -- Build covered fields map: fieldId -> systemId (first system found wins)
+    local coveredFields = {}  -- fieldId -> systemId
     if irrMgr and irrMgr.systems then
-        for _, sys in pairs(irrMgr.systems) do
+        for sysId, sys in pairs(irrMgr.systems) do
             if sys.coveredFields then
                 for fid, _ in pairs(sys.coveredFields) do
-                    coveredFields[fid] = true
+                    if coveredFields[fid] == nil then
+                        coveredFields[fid] = sysId
+                    end
                 end
             end
         end
@@ -354,7 +356,8 @@ function CsPDAScreen:_rebuildData()
             local cropName   = getCropName(ftiIndex)
             local moisture   = entry.moisture or 0
             local stress     = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
-            local irrigated  = coveredFields[fid] == true
+            local systemId   = coveredFields[fid]  -- nil if not irrigated
+            local irrigated  = systemId ~= nil
 
             table.insert(rows, {
                 fieldId   = fid,
@@ -362,6 +365,7 @@ function CsPDAScreen:_rebuildData()
                 moisture  = moisture,
                 stress    = stress,
                 irrigated = irrigated,
+                systemId  = systemId,
             })
         end
     end
@@ -565,6 +569,9 @@ function CsPDAScreen:_populateIrrigationCell(index, cell)
             irrEl:setTextColor(unpack(COLOR_DIM))
         end
     end
+
+    -- stamp systemId so onClickIrrigationRow can open the right schedule dialog
+    cell.csSystemId = row.systemId
 end
 
 -- ── Row click handlers ────────────────────────────────────
@@ -574,7 +581,12 @@ function CsPDAScreen:onClickFieldRow(item)
 end
 
 function CsPDAScreen:onClickIrrigationRow(item)
-    -- Reserved for future field detail dialog
+    local sysId = item and item.csSystemId
+    if sysId then
+        CsDialogLoader.show("IrrigationScheduleDialog", "setSystemId", sysId)
+    else
+        InfoDialog.show(tr("cs_pda_no_system_msg", "No irrigation system is connected to this field. Place a center pivot or drip line to manage irrigation."))
+    end
 end
 
 -- ── Mouse event — tab hit testing (MDM pattern) ──────────

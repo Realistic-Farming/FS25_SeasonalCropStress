@@ -273,6 +273,7 @@
     <text name="cs_pda_status_warning"         text="Warning"/>
     <text name="cs_pda_status_critical"        text="Critical"/>
     <text name="cs_pda_irrigated_yes"          text="Active"/>
+    <text name="cs_pda_no_system_msg"          text="No irrigation system is connected to this field. Place a center pivot or drip line to manage irrigation."/>
     <text name="cs_pda_btn_irrigation"         text="Irrigation Schedule"/>
     <text name="cs_pda_btn_consultant"         text="Crop Consultant"/>
     <text name="cs_pda_btn_help"               text="Help"/>
