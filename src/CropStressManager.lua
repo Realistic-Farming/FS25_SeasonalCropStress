@@ -135,7 +135,12 @@ function CropStressManager.new()
     self.soilSystem         = SoilMoistureSystem.new(self)
     self.stressModifier     = CropStressModifier.new(self)
     self.irrigationManager  = IrrigationManager.new(self)       -- Phase 2 stub
-    self.hudOverlay         = HUDOverlay.new(self)
+    -- HUD removed: monitoring moved to the PDA screen (CsPDAScreen).
+    self.hudOverlay = {
+        initialize=function()end, update=function()end, draw=function()end,
+        delete=function()end, toggle=function()end, onMouseEvent=function()end,
+        isVisible=false, panelX=0, panelY=0,
+    }
     self.consultant         = CropConsultant.new(self)
     self.moistureMapOverlay = CsMoistureMapOverlay ~= nil and CsMoistureMapOverlay.new(self) or nil
     self.npcIntegration     = NPCIntegration.new(self)

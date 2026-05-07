@@ -32,3 +32,7 @@ end
 function CsHelpDialog:onClose()
     CsHelpDialog:superClass().onClose(self)
 end
+
+function CsHelpDialog:onCloseClicked()
+    self:close()
+end

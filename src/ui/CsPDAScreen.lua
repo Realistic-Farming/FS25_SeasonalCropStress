@@ -24,7 +24,6 @@ local CS_PDA_MOD_NAME = g_currentModName
 CsPDAScreen.CONTROLS = {
     -- Field list (left sidebar)
     "fieldList",
-    "filterToggleBtn",
     -- Stats panel (right, overview tab)
     "overviewContent",
     "statsFieldsTracked", "statsFieldsOwned",
@@ -121,17 +120,20 @@ end
 
 function CsPDAScreen:initialize()
     CsPDAScreen:superClass().initialize(self)
+    -- SoilFertilizer pattern: MENU_BACK + MENU_ACCEPT (filter) + MENU_EXTRA_1/2 for actions.
+    -- MENU_EXTRA_3 does not render; Help is an inline button in the XML sidebar.
+    -- Store the filter entry so _updateFilterButton can update its text in-place.
+    self.filterButtonEntry = {
+        inputAction = "MENU_EXTRA_1",
+        text        = tr("cs_pda_filter_all", "ALL FIELDS"),
+        callback    = function() self:onClickFilterToggle() end,
+    }
     self.menuButtonInfo = {
-        {inputAction = "MENU_EXTRA_1",
-         text     = tr("cs_pda_btn_irrigation", "Irrigation Schedule"),
-         callback = function() self:onClickIrrigationSchedule() end},
+        {inputAction = "MENU_BACK"},
         {inputAction = "MENU_EXTRA_2",
-         text     = tr("cs_pda_btn_consultant", "Crop Consultant"),
-         callback = function() self:onClickCropConsultant() end},
-        {inputAction = "MENU_EXTRA_3",
          text     = tr("cs_pda_btn_help", "Help"),
          callback = function() self:onClickHelp() end},
-        {inputAction = "MENU_BACK"},
+        self.filterButtonEntry,
     }
     self:setMenuButtonInfo(self.menuButtonInfo)
 end
@@ -297,13 +299,12 @@ function CsPDAScreen:onClickFilterToggle()
 end
 
 function CsPDAScreen:_updateFilterButton()
-    if not self.filterToggleBtn then return end
-    if self.showOwnedOnly then
-        self.filterToggleBtn:setText(tr("cs_pda_filter_owned", "MY FIELDS"))
-        self.filterToggleBtn:setTextColor(0.20, 0.65, 0.85, 1.0)
-    else
-        self.filterToggleBtn:setText(tr("cs_pda_filter_all", "ALL FIELDS"))
-        self.filterToggleBtn:setTextColor(0.65, 0.65, 0.65, 1.0)
+    local label = self.showOwnedOnly
+        and tr("cs_pda_filter_owned", "MY FIELDS")
+        or  tr("cs_pda_filter_all",   "ALL FIELDS")
+    if self.filterButtonEntry then
+        self.filterButtonEntry.text = label
+        self:setMenuButtonInfo(self.menuButtonInfo)
     end
 end
 
@@ -336,21 +337,16 @@ function CsPDAScreen:_rebuildData()
         end
     end
 
-    -- Resolve local farm ID once for ownership filter
-    local localFarmId = nil
-    if self.showOwnedOnly then
-        localFarmId = g_currentMission and g_currentMission.player and g_currentMission.player.farmId
-    end
+    local localFarmId = self.showOwnedOnly and mgr.getLocalFarmId() or nil
 
     local rows = {}
     for fid, entry in pairs(soilSystem.fieldData) do
         local field = fieldById[fid]
 
-        -- Ownership filter: skip fields not owned by the player's farm
         local include = true
         if self.showOwnedOnly then
             local fl = field and field.farmland
-            include = localFarmId ~= nil and fl ~= nil and fl.ownerFarmId == localFarmId
+            include = fl ~= nil and mgr.isFarmlandOwnedByFarm(fl.id, localFarmId)
         end
 
         if include then
@@ -399,8 +395,7 @@ function CsPDAScreen:_rebuildStats()
 
     if soilSystem == nil then return end
 
-    -- Ownership
-    local localFarmId = mgr.getLocalFarmId and mgr.getLocalFarmId() or 1
+    local localFarmId = mgr.getLocalFarmId()
     local totalTracked = 0
     local totalOwned   = 0
     local sumMoisture  = 0
@@ -436,8 +431,7 @@ function CsPDAScreen:_rebuildStats()
         if coveredFields[fid] then irrigatedCount = irrigatedCount + 1 end
 
         local field = fieldById[fid]
-        if field and field.farmland and mgr.isFarmlandOwnedByFarm and
-           mgr.isFarmlandOwnedByFarm(field.farmland.id, localFarmId) then
+        if field and field.farmland and field.farmland.ownerFarmId == localFarmId then
             totalOwned = totalOwned + 1
         end
     end
@@ -667,7 +661,10 @@ end
 
 function CsPDAScreen:onOpen()
     CsPDAScreen:superClass().onOpen(self)
+    -- Re-register footer buttons each open — FS25 clears them on page switch.
+    self:setMenuButtonInfo(self.menuButtonInfo)
     self.refreshTimer = 0
+    self._deferredReload = true  -- second-frame reload for dedi clients (issue #83)
     self:_updateFilterButton()
     self:_rebuildData()
     -- Force layout finalization before first list populate (MDM pattern).
@@ -692,6 +689,19 @@ function CsPDAScreen:onFrameUpdate(dt)
 
     if _pendingRegistration then
         CsPDAScreen._attemptDeferredRegister(dt)
+    end
+
+    -- Second-frame reload: catches dedi clients whose field data arrived after onOpen().
+    -- Also re-pushes menu buttons so our labels win over any other mod that injects on open.
+    if self._deferredReload then
+        self._deferredReload = false
+        self:setMenuButtonInfo(self.menuButtonInfo)
+        self:_rebuildData()
+        self:_reloadLists()
+        if self.activeTab == TAB_OVERVIEW then
+            self:_rebuildStats()
+        end
+        return
     end
 
     self.refreshTimer = (self.refreshTimer or 0) + dt

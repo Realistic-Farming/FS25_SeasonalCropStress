@@ -29,12 +29,8 @@
       <ThreePartBitmap width="460px" height="700px" position="0px 100px">
         <GuiElement profile="fs25_subCategoryContainer" width="420px">
 
-          <!-- Section title + ownership filter toggle (right side) -->
+          <!-- Section title -->
           <Text profile="cs_sectionHeader" text="$l10n_cs_pda_tab_fields" position="10px -10px"/>
-          <Text profile="cs_filterBtn" id="filterToggleBtn"
-                text="$l10n_cs_pda_filter_all"
-                position="240px -12px" size="170px 18px"
-                onClick="onClickFilterToggle"/>
 
           <!-- Column headers row -->
           <GuiElement profile="cs_listHeaderRow" position="0px -40px">
@@ -79,6 +75,8 @@
           <Text profile="cs_sectionHeader"
                 text="$l10n_cs_pda_section_farm_overview"
                 position="0px 650px"/>
+          <Text profile="cs_helpLinkBtn" onClick="onClickCropConsultant"
+                position="730px 648px" size="230px 24px" text="CROP CONSULTANT"/>
 
           <ThreePartBitmap width="960px" height="590px" position="0px 30px">
             <GuiElement profile="fs25_subCategoryContainer" width="920px">
@@ -171,6 +169,8 @@
           <Text profile="cs_sectionHeader"
                 text="$l10n_cs_pda_section_irrigation_plan"
                 position="0px 650px"/>
+          <Text profile="cs_helpLinkBtn" onClick="onClickCropConsultant"
+                position="730px 648px" size="230px 24px" text="CROP CONSULTANT"/>
 
           <!-- Column headers -->
           <Text profile="cs_colHeader" text="$l10n_cs_pda_col_field"
@@ -363,14 +363,24 @@
       <textAlignment value="right"/>
     </Profile>
 
-    <!-- Ownership filter toggle button (sidebar header, right side) -->
+    <!-- Ownership filter toggle (sidebar header, right side) — teal so it's clearly visible -->
     <Profile name="cs_filterBtn" extends="fs25_textDefault" with="anchorTopLeft">
       <isFocusable value="true"/>
-      <textSize value="11px"/>
+      <textSize value="13px"/>
       <textBold value="true"/>
       <textUpperCase value="true"/>
       <textAlignment value="right"/>
-      <textColor value="$preset_colorWhite_50"/>
+      <textColor value="0.20 0.65 0.85 1.0"/>
+    </Profile>
+
+    <!-- Inline Help link (top-right of right panel) -->
+    <Profile name="cs_helpLinkBtn" extends="fs25_textDefault" with="anchorTopLeft">
+      <isFocusable value="true"/>
+      <textSize value="12px"/>
+      <textBold value="true"/>
+      <textUpperCase value="true"/>
+      <textAlignment value="right"/>
+      <textColor value="0.20 0.65 0.85 0.75"/>
     </Profile>
 
     <Profile name="cs_emptyHint" extends="fs25_textDefault" with="anchorTopLeft">

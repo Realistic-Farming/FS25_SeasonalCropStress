@@ -296,7 +296,7 @@
     <text name="cs_help_irr_1"       text="Place Center Pivots or Drip Lines from the build menu."/>
     <text name="cs_help_irr_2"       text="Use Irrigation Schedule to set automatic run windows."/>
     <text name="cs_help_keys_hdr"    text="Keyboard Shortcuts"/>
-    <text name="cs_help_keys_1"      text="Shift+M  --  Toggle HUD moisture overlay"/>
+    <text name="cs_help_keys_1"      text="ESC → Farm Tablet  --  Open Crop Moisture Monitor"/>
     <text name="cs_help_keys_2"      text="Shift+I  --  Open Irrigation Schedule"/>
     <text name="cs_help_keys_3"      text="Shift+C  --  Open Crop Consultant"/>
     <text name="cs_pda_irrigated_no"           text="No"/>
