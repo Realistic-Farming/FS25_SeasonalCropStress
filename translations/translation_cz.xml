@@ -291,5 +291,33 @@
     <text name="cs_ad_water_hint"    text="AutoDrive: %d vodní cíl(e) k dispozici — zvažte dopravní trasu"/>
     <text name="cs_ad_destinations"  text="AutoDrive: %d cíl(ů) nakonfigurováno"/>
 
+    
+    <!-- ========== HELP DIALOG ========== -->
+    <text name="cs_help_title"       text="Crop Moisture Monitor -- Help"/>
+    <text name="cs_help_ov_hdr"      text="How It Works"/>
+    <text name="cs_help_ov_1"        text="Tracks soil moisture for every field in the game."/>
+    <text name="cs_help_ov_2"        text="Rainfall raises moisture; heat and time reduce it."/>
+    <text name="cs_help_ov_3"        text="Use the filter button to focus on your own fields."/>
+    <text name="cs_help_status_hdr"  text="Moisture Levels"/>
+    <text name="cs_help_status_1"    text="Healthy  &gt;=40%   No action needed."/>
+    <text name="cs_help_status_2"    text="Warning  25-40%  Irrigate soon."/>
+    <text name="cs_help_status_3"    text="Critical &lt;25%   Irrigate now!"/>
+    <text name="cs_help_stress_hdr"  text="Crop Stress"/>
+    <text name="cs_help_stress_1"    text="Builds each hour moisture stays below 40% during growth."/>
+    <text name="cs_help_stress_2"    text="Up to 60% yield loss at max stress. Cannot be reversed."/>
+    <text name="cs_help_irr_hdr"     text="Irrigation"/>
+    <text name="cs_help_irr_1"       text="Place Center Pivots or Drip Lines from the build menu."/>
+    <text name="cs_help_irr_2"       text="Use Irrigation Schedule to set automatic run windows."/>
+    <text name="cs_help_keys_hdr"    text="Monitor Information"/>
+    <text name="cs_help_keys_1"      text="ESC (Pause Menu) -&gt; Crop Moisture Monitor"/>
+    <text name="cs_help_keys_2"      text="Tab 1 (Overview) -&gt;  Overall field status"/>
+    <text name="cs_help_keys_3"      text="Tab 2 (Irrigation) -&gt;  Irrigation management"/>
+    <!-- ========== PDA SCREEN ========== -->
+    <text name="cs_pda_btn_irrigation"         text="Irrigation Schedule"/>
+    <text name="cs_pda_btn_consultant"         text="Crop Consultant"/>
+    <text name="cs_pda_btn_help"               text="Help"/>
+    <text name="cs_pda_filter_all"             text="ALL FIELDS"/>
+    <text name="cs_pda_filter_owned"           text="MY FIELDS"/>
+    <text name="cs_pda_no_system_msg"          text="No irrigation system is connected to this field. Place a center pivot or drip line to manage irrigation."/>
     </texts>
 </l10n>

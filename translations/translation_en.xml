@@ -296,10 +296,10 @@
     <text name="cs_help_irr_hdr"     text="Irrigation"/>
     <text name="cs_help_irr_1"       text="Place Center Pivots or Drip Lines from the build menu."/>
     <text name="cs_help_irr_2"       text="Use Irrigation Schedule to set automatic run windows."/>
-    <text name="cs_help_keys_hdr"    text="Keyboard Shortcuts"/>
-    <text name="cs_help_keys_1"      text="ESC → Farm Tablet  --  Open Crop Moisture Monitor"/>
-    <text name="cs_help_keys_2"      text="Shift+I  --  Open Irrigation Schedule"/>
-    <text name="cs_help_keys_3"      text="Shift+C  --  Open Crop Consultant"/>
+    <text name="cs_help_keys_hdr"    text="Monitor Information"/>
+    <text name="cs_help_keys_1"      text="ESC (Pause Menu) → Crop Moisture Monitor"/>
+    <text name="cs_help_keys_2"      text="Tab 1 (Overview) →  Overall field status"/>
+    <text name="cs_help_keys_3"      text="Tab 2 (Irrigation) →  Irrigation management"/>
     <text name="cs_pda_irrigated_no"           text="No"/>
     <text name="cs_pda_no_fields"             text="No field data yet. Fields appear once the simulation has run for one in-game hour."/>
 
