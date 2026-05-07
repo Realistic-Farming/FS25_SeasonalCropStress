@@ -96,6 +96,19 @@ end
 CropStressManager = {}
 CropStressManager.__index = CropStressManager
 
+-- RWE event id → stress rate multiplier applied during that event.
+-- Values > 1.0 accelerate stress; < 1.0 suppress it.
+CropStressManager.RWE_STRESS_MULTIPLIERS = {
+    crop_yield_penalty  = 1.40,
+    seed_growth_penalty = 1.30,
+    harvest_penalty     = 1.20,
+    fertilizer_penalty  = 1.20,
+    crop_yield_bonus    = 0.80,
+    fertilizer_bonus    = 0.85,
+    harvest_bonus       = 0.85,
+    seed_growth_bonus   = 0.85,
+}
+
 
 function CropStressManager.new()
     local self = setmetatable({}, CropStressManager)
@@ -133,6 +146,7 @@ function CropStressManager.new()
     -- Subsystems (constructed here, initialized in :initialize() when g_currentMission is ready)
     self.weatherIntegration = WeatherIntegration.new(self)
     self.soilSystem         = SoilMoistureSystem.new(self)
+    self.soilMoistureSystem = self.soilSystem   -- FarmTablet compatibility alias
     self.stressModifier     = CropStressModifier.new(self)
     self.irrigationManager  = IrrigationManager.new(self)       -- Phase 2 stub
     -- HUD removed: monitoring moved to the PDA screen (CsPDAScreen).
@@ -472,7 +486,13 @@ function CropStressManager:onHourlyTick()
     -- 2c. Advance soil moisture simulation (reads SoilFertilizer cache + irrigationGains)
     self.soilSystem:hourlyUpdate(self.weatherIntegration)
 
-    -- 3. Accumulate crop stress where moisture is critical
+    -- 3. Apply RWE world-event stress multiplier (no-op when RWE not loaded)
+    if self.rweManager then
+        local activeEvent = self.rweManager.EVENT_STATE and self.rweManager.EVENT_STATE.activeEvent
+        self.stressModifier:setRWEMultiplier(CropStressManager.RWE_STRESS_MULTIPLIERS[activeEvent] or 1.0)
+    end
+
+    -- 4. Accumulate crop stress where moisture is critical
     self.stressModifier:hourlyUpdate()
 
     self.financeIntegration:chargeHourlyCosts()
@@ -606,6 +626,14 @@ function CropStressManager:detectOptionalMods()
         csLog("FS25_MoistureSystem (Ozz) detected — WARNING: Keybind conflict detected (Shift+M). You may need to rebind your keys in the options menu.")
         -- If it also provides a moisture system, we should ideally sync with it,
         -- but since we don't have its API yet, we at least warn the user.
+    end
+
+    -- FS25_RandomWorldEvents (via mission bridge set in RWE's Mission00.load hook)
+    -- Field events (crop_yield_penalty, harvest_penalty, etc.) scale the stress rate multiplier.
+    local rwe = g_currentMission and g_currentMission.randomWorldEvents
+    if rwe ~= nil then
+        csLog("FS25_RandomWorldEvents detected — field events will modulate stress accumulation rate")
+        self.rweManager = rwe
     end
 end
 

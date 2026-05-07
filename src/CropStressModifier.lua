@@ -103,6 +103,10 @@ function CropStressModifier.new(manager)
     -- to avoid stacking. Stress still accumulates for HUD display.
     self.rwModeActive = false
 
+    -- External multiplier applied on top of settings rateMultiplier.
+    -- Set by CropStressManager when FS25_RandomWorldEvents is active.
+    self.rweMultiplier = 1.0
+
     self.isInitialized = false
     return self
 end
@@ -197,7 +201,7 @@ function CropStressModifier:processFieldStress(field, fieldId, moisture)
     if moisture < window.criticalMoisture then
         local deficit      = window.criticalMoisture - moisture
         local deficitRatio = deficit / window.criticalMoisture
-        local rateMultiplier = self.rateMultiplier or 1.0
+        local rateMultiplier = (self.rateMultiplier or 1.0) * (self.rweMultiplier or 1.0)
         local stressIncrease = window.stressRatePerHour * deficitRatio * rateMultiplier
 
         local prev = self.fieldStress[fieldId] or 0.0
@@ -346,6 +350,12 @@ end
 -- Set stress rate multiplier from settings
 function CropStressModifier:setRateMultiplier(multiplier)
     self.rateMultiplier = multiplier or 1.0
+end
+
+-- Set external multiplier from FS25_RandomWorldEvents active events.
+-- Layered on top of rateMultiplier; reset to 1.0 when no event is active.
+function CropStressModifier:setRWEMultiplier(multiplier)
+    self.rweMultiplier = multiplier or 1.0
 end
 
 -- Set maximum yield loss from settings
