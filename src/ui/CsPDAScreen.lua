@@ -321,9 +321,17 @@ function CsPDAScreen:_rebuildData()
     local soilSystem  = mgr.soilSystem
     local stressMod   = mgr.stressModifier
     local irrMgr      = mgr.irrigationManager
-    local fieldById   = mgr.fieldById or {}
 
     if soilSystem == nil then return end
+
+    -- On dedi clients the field-ready updater may not have fired yet.
+    -- Enumerate directly so the first open is not blank.
+    if next(soilSystem.fieldData) == nil then
+        soilSystem:enumerateFields()
+        mgr:buildFieldMap()
+    end
+
+    local fieldById   = mgr.fieldById or {}
 
     -- Build covered fields map: fieldId -> systemId (first system found wins)
     local coveredFields = {}  -- fieldId -> systemId
@@ -676,7 +684,9 @@ function CsPDAScreen:onOpen()
     -- Re-register footer buttons each open — FS25 clears them on page switch.
     self:setMenuButtonInfo(self.menuButtonInfo)
     self.refreshTimer = 0
-    self._deferredReload = true  -- second-frame reload for dedi clients (issue #83)
+    self._deferredReload        = true  -- retry until field data arrives (issue #83)
+    self._deferredLoadTimer     = 0
+    self._deferredReloadAttempts = 0
     self:_updateFilterButton()
     self:_rebuildData()
     -- Force layout finalization before first list populate (MDM pattern).
@@ -703,15 +713,27 @@ function CsPDAScreen:onFrameUpdate(dt)
         CsPDAScreen._attemptDeferredRegister(dt)
     end
 
-    -- Second-frame reload: catches dedi clients whose field data arrived after onOpen().
+    -- Retry loop for dedi clients: keep rebuilding every 500 ms until field data
+    -- appears (enumerateFields fires in installFieldReadyUpdater, which waits for
+    -- isMissionStarted — on dedi this can take several seconds after onOpen).
     -- Also re-pushes menu buttons so our labels win over any other mod that injects on open.
+    -- Stops after 30 attempts (~15 s) to avoid spinning forever if something is broken.
     if self._deferredReload then
-        self._deferredReload = false
-        self:setMenuButtonInfo(self.menuButtonInfo)
-        self:_rebuildData()
-        self:_reloadLists()
-        if self.activeTab == TAB_OVERVIEW then
-            self:_rebuildStats()
+        self._deferredLoadTimer = (self._deferredLoadTimer or 0) + dt
+        if self._deferredLoadTimer >= 500 then
+            self._deferredLoadTimer = 0
+            self._deferredReloadAttempts = (self._deferredReloadAttempts or 0) + 1
+            self:setMenuButtonInfo(self.menuButtonInfo)
+            self:_rebuildData()
+            self:_reloadLists()
+            if self.activeTab == TAB_OVERVIEW then
+                self:_rebuildStats()
+            end
+            local mgr = getMgr()
+            local hasData = mgr and mgr.soilSystem and next(mgr.soilSystem.fieldData) ~= nil
+            if hasData or self._deferredReloadAttempts >= 30 then
+                self._deferredReload = false
+            end
         end
         return
     end

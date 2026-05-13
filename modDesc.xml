@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="105">
     <author>TisonK</author>
-    <version>1.2.2.0</version>
+    <version>1.2.3.0</version>
 
     <title>
         <en>Seasonal Crop Stress &amp; Irrigation Manager</en>
@@ -10,6 +10,7 @@
         <it>Stress stagionale delle colture &amp; Gestore dell'irrigazione</it>
         <nl>Seizoensgebonden gewassstress &amp; irrigatiebeheer</nl>
         <cz>Seasonal Crop Stress &amp; Správce zavlažování</cz>
+        <da>Sæsonbetinget afgrødestress &amp; vandingsstyring</da>
     </title>
 
     <description>
@@ -127,6 +128,25 @@ FUNKCE:
 • Úplná persistence uložení/načtení všech stavů polí a zavlažování
 • Příkazy ladicí konzole (napište csHelp do vývojářské konzole)
         ]]></cz>
+        <da><![CDATA[Tilføjer overvågning af jordfugtighed, simulering af afgrødestress og styring af vanding til Farming Simulator 25.
+
+Hvert felt overvåger procentdelen af jordfugtighed (0–100%), som stiger med regn og falder gennem evapotranspiration, der styres af temperatur, årstid og jordtype. Når fugtigheden falder under afgrødespecifikke tærskelværdier i kritiske vækstperioder, opbygges udbyttestress, som reducerer din høst ved sæsonens afslutning.
+
+FUNKTIONER:
+• Simulering af jordfugtighed for hvert felt baseret på realt vejr
+• Sæson- og temperaturjusteret evapotranspiration
+• Jordtype-modifikatorer: sandjord dræner hurtigt, lerjord holder på fugt
+• Kritiske vækstperioder specifikke for afgrøder (hvede, majs, byg, raps og flere)
+• Udbyttereduktion ved høst — op til 60% tab ved maksimal stress
+• HUD-overlay for markfugtighed med 5-dages vejrudsigt (tryk Shift+M for at skifte)
+• Placerbare center pivot- og drypvandingssystemer med vandpumpeinfrastruktur
+• Dialog til planlægning af vanding — angiv aktive dage og tidsvindue (Shift+I)
+• Afgrøderådgiver-dialog med risikovurdering og anbefalinger (Shift+C)
+• Valgfri integration med FS25_NPCFavor (Alex Chen, NPC agronom)
+• Valgfri integration med FS25_UsedPlus (marked for brugt udstyr)
+• Fuld persistens ved gem/indlæs af alle mark- og vandingsstatusser
+• Debug-konsolkommandoer (skriv csHelp i udviklerkonsollen)
+        ]]></da>
     </description>
 
     <multiplayer supported="true"/>
