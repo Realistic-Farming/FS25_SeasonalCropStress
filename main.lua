@@ -46,6 +46,7 @@ source(modDir .. "src/SprayerIntegration.lua")
 
 -- Event bus
 source(modDir .. "src/events/CropStressSettingsSyncEvent.lua")
+source(modDir .. "src/events/CropStressMoistureInitEvent.lua")
 
 -- Persistence
 source(modDir .. "src/SaveLoadHandler.lua")

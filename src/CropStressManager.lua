@@ -478,26 +478,35 @@ function CropStressManager:onHourlyTick()
     self.coursePlayIntegration:hourlyRefresh()        -- CP vehicle positions
     self.autoDriveIntegration:hourlyRefresh()         -- AutoDrive destination count
 
-    -- 2b. Activate/deactivate irrigation systems for the current hour BEFORE the
-    -- moisture update so that gains set by activateSystem() are included in this
-    -- tick's hourlyUpdate() calculation (not deferred to the next hour).
-    self.irrigationManager:hourlyScheduleCheck()
+    -- Simulation runs on the server (or single-player host) only.
+    -- Clients receive updated values via CropStressMoistureInitEvent broadcast.
+    if g_server ~= nil then
+        -- 2b. Activate/deactivate irrigation systems BEFORE moisture update so
+        --     gains set by activateSystem() are included in this tick.
+        self.irrigationManager:hourlyScheduleCheck()
 
-    -- 2c. Advance soil moisture simulation (reads SoilFertilizer cache + irrigationGains)
-    self.soilSystem:hourlyUpdate(self.weatherIntegration)
+        -- 2c. Advance soil moisture simulation
+        self.soilSystem:hourlyUpdate(self.weatherIntegration)
 
-    -- 3. Apply RWE world-event stress multiplier (no-op when RWE not loaded)
-    if self.rweManager then
-        local activeEvent = self.rweManager.EVENT_STATE and self.rweManager.EVENT_STATE.activeEvent
-        self.stressModifier:setRWEMultiplier(CropStressManager.RWE_STRESS_MULTIPLIERS[activeEvent] or 1.0)
+        -- 3. Apply RWE world-event stress multiplier (no-op when RWE not loaded)
+        if self.rweManager then
+            local activeEvent = self.rweManager.EVENT_STATE and self.rweManager.EVENT_STATE.activeEvent
+            self.stressModifier:setRWEMultiplier(CropStressManager.RWE_STRESS_MULTIPLIERS[activeEvent] or 1.0)
+        end
+
+        -- 4. Accumulate crop stress where moisture is critical
+        self.stressModifier:hourlyUpdate()
+
+        self.financeIntegration:chargeHourlyCosts()
+
+        -- Broadcast updated moisture/stress to all connected clients
+        g_server:broadcastEvent(CropStressMoistureInitEvent.new(
+            self.soilSystem.fieldData,
+            self.stressModifier.fieldStress
+        ), false)
     end
 
-    -- 4. Accumulate crop stress where moisture is critical
-    self.stressModifier:hourlyUpdate()
-
-    self.financeIntegration:chargeHourlyCosts()
-
-    -- Phase 3: Consultant alert evaluation
+    -- Consultant alert evaluation runs everywhere (reads synced field data)
     self.consultant:hourlyEvaluate()
 
     if self.debugMode then
@@ -545,11 +554,20 @@ function CropStressManager:sendInitialClientState(connection)
     if not self.isInitialized then return end
     if g_server == nil then return end  -- only server sends
 
-    -- Push current settings to the joining client so they stay in sync
-    -- with the host's configuration.  Field moisture/stress sync is Phase 2
-    -- (requires NetworkNode events — raw connection:getStream() is not available).
+    -- 1. Push settings so the client stays in sync with host configuration
     CropStressSettingsSyncEvent.sendAllToConnection(connection)
-    csLog("MP: sent current settings to new client")
+
+    -- 2. Push full field moisture + stress snapshot so the client HUD is
+    --    populated immediately on join rather than showing an empty screen
+    local moistureEvent = CropStressMoistureInitEvent.new(
+        self.soilSystem.fieldData,
+        self.stressModifier.fieldStress
+    )
+    connection:sendEvent(moistureEvent)
+
+    local fieldCount = 0
+    for _ in pairs(self.soilSystem.fieldData) do fieldCount = fieldCount + 1 end
+    csLog(string.format("MP: sent settings + moisture snapshot (%d fields) to new client", fieldCount))
 end
 
 -- ============================================================
