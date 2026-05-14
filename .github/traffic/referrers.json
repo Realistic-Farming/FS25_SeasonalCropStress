@@ -1053,12 +1053,12 @@
   "2026-05-14": [
     {
       "referrer": "github.com",
-      "count": 457,
+      "count": 451,
       "uniques": 87
     },
     {
       "referrer": "Google",
-      "count": 45,
+      "count": 46,
       "uniques": 23
     },
     {
@@ -1072,14 +1072,9 @@
       "uniques": 2
     },
     {
-      "referrer": "DuckDuckGo",
-      "count": 2,
-      "uniques": 1
-    },
-    {
       "referrer": "Bing",
-      "count": 1,
-      "uniques": 1
+      "count": 2,
+      "uniques": 2
     }
   ]
 }
