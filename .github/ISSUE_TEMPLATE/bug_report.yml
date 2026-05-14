@@ -38,6 +38,7 @@ body:
         - Singleplayer
         - Multiplayer (host)
         - Multiplayer (client)
+        - Dedicated Server
     validations:
       required: true
 
@@ -46,7 +47,7 @@ body:
     attributes:
       label: What happened?
       description: Describe the bug clearly. What did you see? What did you expect to see?
-      placeholder: "The HUD moisture percentage shows 0% for all fields even after rain."
+      placeholder: "Wheat stress indicator stays at maximum even during optimal spring conditions. Stress never decreases regardless of soil moisture or temperature."
     validations:
       required: true
 
@@ -54,12 +55,12 @@ body:
     id: steps
     attributes:
       label: Steps to Reproduce
-      description: Exact steps that trigger the bug. If you cannot reproduce it reliably, say so.
+      description: Exact steps that trigger the bug. Note the current season and in-game day if relevant.
       placeholder: |
         1. Start a new game on Elmcreek
-        2. Wait until it rains
-        3. Open the moisture HUD (Shift+M)
-        4. All fields show 0%
+        2. Plant wheat in spring (day 5)
+        3. Wait for day 15 — moderate rainfall, mild temperatures
+        4. Stress indicator shows red despite good conditions
     validations:
       required: true
 
@@ -72,8 +73,8 @@ body:
         If there are errors (lines containing "Error" or "attempt to"), include the full stack trace.
       render: text
       placeholder: |
-        [CropStress] CropStressManager initialized. Fields tracked: 12
-        [CropStress] WeatherIntegration initialized. Season=Summer Temp=24.3°C Rain=false
+        [CropStress] Initialized. Season: SPRING, Day: 5
+        [CropStress] Wheat stress update: field=3, stress=0.95, temp=18.2, moisture=0.61
         ...
     validations:
       required: true
@@ -83,7 +84,7 @@ body:
     attributes:
       label: Other Mods Loaded
       description: List any other mods active in this save. You can paste the mod list from the game's mod manager.
-      placeholder: "FS25_NPCFavor, FS25_RealisticWeather, Courseplay, AutoDrive, ..."
+      placeholder: "FS25_SoilFertilizer, Courseplay, AutoDrive, ..."
     validations:
       required: true
 

@@ -11,34 +11,7 @@ jobs:
       issues: write
 
     steps:
-      - name: Create waiting-on-author label if missing
-        uses: actions/github-script@v7
-        with:
-          script: |
-            try {
-              await github.rest.issues.createLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: 'waiting-on-author',
-                color: 'e4e669',
-                description: 'Waiting for the issue author to provide more information'
-              });
-            } catch (e) {
-              // Label already exists — that's fine
-            }
-            try {
-              await github.rest.issues.createLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: 'in-progress',
-                color: '0075ca',
-                description: 'Being actively investigated'
-              });
-            } catch (e) {
-              // Label already exists — that's fine
-            }
-
-      - name: Add waiting-on-author label
+      - name: Apply user-replied label
         uses: actions/github-script@v7
         with:
           script: |
@@ -46,7 +19,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              labels: ['waiting-on-author']
+              labels: ['user-replied']
             });
 
       - name: Post welcome comment
@@ -54,25 +27,23 @@ jobs:
         with:
           script: |
             const author = context.payload.issue.user.login;
-            const issueTitle = context.payload.issue.title;
+            const repoName = context.repo.repo;
 
             const body = [
-              `Hey @${author}, thanks for opening this issue! 👋`,
+              `Hey @${author}, the field station has received your report. 🌱`,
               ``,
-              `@TheCodingDad-TisonK has been notified and will take a look.`,
+              `@TheCodingDad-TisonK has been notified and will review your findings as soon as possible.`,
               ``,
-              `**While you wait, please double-check the following:**`,
+              `**Before the agronomist arrives, please confirm:**`,
               ``,
-              `- [ ] You are running **v1.0.0.0** of Seasonal Crop Stress (visible in the mod manager)`,
+              `- [ ] You are running the latest version of Seasonal Crop Stress (visible in the mod manager)`,
               `- [ ] Your issue includes the relevant \`[CropStress]\` lines from \`log.txt\``,
               `  - Log location: \`Documents/My Games/FarmingSimulator2025/log.txt\``,
-              `  - Search for \`[CropStress]\` — paste the relevant section in your issue`,
-              `- [ ] You have checked the in-game help (ESC → Help → Seasonal Crop Stress)`,
-              `- [ ] You have searched [existing issues](https://github.com/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues) for a similar report`,
+              `  - Search for \`[CropStress]\` and paste the relevant section here`,
+              `- [ ] If this involves a specific crop or season, note which one and what the current in-game season/day is`,
+              `- [ ] You have searched [existing issues](https://github.com/${context.repo.owner}/${repoName}/issues) for a similar report`,
               ``,
-              `> **Important:** If this issue is missing a log snippet, it may be closed without investigation. A log is almost always required to reproduce bugs.`,
-              ``,
-              `This issue is currently marked **waiting-on-author** — if any of the above information is missing, please add it and the label will be updated. If there is no response within **24 hours**, this issue will be closed automatically. You can always reopen it with the missing details.`,
+              `> **Note:** Issues without a log snippet are difficult to diagnose and may be closed. Seasonal timing and stress values are often key to reproducing bugs.`,
             ].join('\n');
 
             await github.rest.issues.createComment({
