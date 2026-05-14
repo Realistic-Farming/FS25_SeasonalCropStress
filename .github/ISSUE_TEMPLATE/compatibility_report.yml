@@ -12,7 +12,7 @@ body:
   - type: input
     id: mod_version
     attributes:
-      label: SeasonalCropStress Version
+      label: Seasonal Crop Stress Version
       placeholder: "e.g. 1.0.0.0"
     validations:
       required: true
@@ -30,7 +30,7 @@ body:
     attributes:
       label: Conflicting Mod Name
       description: Exact name as shown in the mod manager or modDesc.xml.
-      placeholder: "e.g. FS25_RealisticWeather"
+      placeholder: "e.g. FS25_SoilFertilizer"
     validations:
       required: true
 
@@ -38,7 +38,7 @@ body:
     id: other_mod_version
     attributes:
       label: Conflicting Mod Version
-      placeholder: "e.g. 1.2.1.0"
+      placeholder: "e.g. 2.1.0.0"
     validations:
       required: true
 
@@ -55,8 +55,8 @@ body:
     id: description
     attributes:
       label: What is the conflict?
-      description: Describe exactly what goes wrong. Wrong values? Crash? Features from one mod disabling the other? Be specific.
-      placeholder: "When FS25_RealisticWeather is loaded, the moisture HUD shows 0% for all fields instead of the values from RealisticWeather's simulation."
+      description: Describe exactly what goes wrong. Wrong stress values? Season transitions breaking? Crops ignoring stress? Be specific.
+      placeholder: "When FS25_SoilFertilizer is loaded, crop stress values reset to 0 every time fertilizer is applied, regardless of current season conditions."
     validations:
       required: true
 
@@ -67,9 +67,9 @@ body:
       description: How to trigger the conflict reliably.
       placeholder: |
         1. Load both mods
-        2. Start a new game
-        3. Open moisture HUD (Shift+M)
-        4. All fields show 0%
+        2. Plant wheat in spring
+        3. Apply fertilizer during a summer drought
+        4. Crop stress resets to 0 instead of persisting
     validations:
       required: true
 
@@ -78,7 +78,7 @@ body:
     attributes:
       label: Isolation Test
       description: Did you confirm the issue disappears when the conflicting mod is removed? This is important — without this step we cannot tell which mod is the source.
-      placeholder: "Yes — removing FS25_RealisticWeather makes the HUD work correctly."
+      placeholder: "Yes — removing FS25_SoilFertilizer makes stress values persist correctly."
     validations:
       required: true
 

@@ -8,14 +8,14 @@ body:
         **Before opening this request:**
         - Check the roadmap in the README — your idea may already be planned.
         - Check open issues to avoid duplicates.
-        - Keep requests scoped and specific. "Improve irrigation" will be closed. "Allow drip line coverage radius to be adjusted after placement" is actionable.
+        - Keep requests scoped and specific. "More realism" will be closed. "Add a drought stress modifier that increases when there has been no rain for 7+ consecutive in-game days" is actionable.
 
   - type: textarea
     id: problem
     attributes:
       label: What problem does this solve?
       description: Describe the situation or frustration this would address. Focus on the problem, not the solution.
-      placeholder: "When I have 20+ fields, the HUD list gets too long to read at a glance. I can't quickly see which fields need attention."
+      placeholder: "I cannot tell how stressed my canola crop is during a dry summer without checking the HUD every day. There is no early warning system."
     validations:
       required: true
 
@@ -24,7 +24,7 @@ body:
     attributes:
       label: Proposed Solution
       description: Describe what you want to happen. Be specific about the behavior, not just the concept.
-      placeholder: "Add a filter to the HUD that shows only fields below the critical moisture threshold, so the list stays short when most fields are fine."
+      placeholder: "Add a configurable notification that fires when any planted crop's stress level crosses a threshold (e.g. 70%), similar to the FS25 field state notifications."
     validations:
       required: true
 
@@ -37,18 +37,14 @@ body:
       required: false
 
   - type: dropdown
-    id: phase
+    id: area
     attributes:
       label: Which part of the mod does this relate to?
       options:
-        - Soil Moisture Simulation
-        - Irrigation Infrastructure (pivots, pumps, drip lines)
-        - Crop Stress & Yield
-        - HUD Overlay
-        - Crop Consultant / Alerts
-        - Irrigation Schedule Dialog
-        - Settings / Difficulty
-        - Multiplayer
+        - Seasonal Effects
+        - Crop Stress Simulation
+        - HUD / Indicators
+        - Difficulty
         - Mod Compatibility
         - Other
     validations:
