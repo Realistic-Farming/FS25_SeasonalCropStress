@@ -52,6 +52,8 @@
         defaultStartHour="6"
         defaultEndHour="10"
         defaultActiveDays="1,1,1,1,1,0,0"
+        armMinPerRev="30"
+        wheelRadius="0.5"
     />
 
 </placeable>
