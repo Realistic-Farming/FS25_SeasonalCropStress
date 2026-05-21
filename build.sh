@@ -42,6 +42,7 @@ if command -v zip &>/dev/null; then
         --exclude "./__MACOSX/*" \
         --exclude "./*.DS_Store" \
         --exclude "./*.zip"
+        --exclude "./tools/*" 
     echo "  Built via zip"
 else
     # Python fallback — try python3 first, then Windows launcher (py)
