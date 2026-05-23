@@ -170,21 +170,11 @@ FUNKTIONER:
     </actions>
 
     <inputBinding>
-        <actionBinding action="CS_TOGGLE_HUD">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_m"/>
-        </actionBinding>
-        <actionBinding action="CS_OPEN_IRRIGATION">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_i"/>
-        </actionBinding>
-        <actionBinding action="CS_OPEN_CONSULTANT">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_c"/>
-        </actionBinding>
-        <actionBinding action="CS_EDIT_HUD">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_h"/>
-        </actionBinding>
-        <actionBinding action="CS_OPEN_SETTINGS">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_s"/>
-        </actionBinding>
+        <actionBinding action="CS_TOGGLE_HUD" />
+        <actionBinding action="CS_OPEN_IRRIGATION" />
+        <actionBinding action="CS_OPEN_CONSULTANT" />
+        <actionBinding action="CS_EDIT_HUD" />
+        <actionBinding action="CS_OPEN_SETTINGS" />
     </inputBinding>
 
     <!--
