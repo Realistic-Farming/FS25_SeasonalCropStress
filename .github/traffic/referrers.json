@@ -1456,5 +1456,22 @@
       "count": 2,
       "uniques": 2
     }
+  ],
+  "2026-06-03": [
+    {
+      "referrer": "github.com",
+      "count": 337,
+      "uniques": 95
+    },
+    {
+      "referrer": "Google",
+      "count": 57,
+      "uniques": 29
+    },
+    {
+      "referrer": "DuckDuckGo",
+      "count": 4,
+      "uniques": 2
+    }
   ]
 }
