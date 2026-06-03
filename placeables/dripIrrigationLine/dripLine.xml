@@ -39,6 +39,15 @@
         </testAreas>
     </placement>
 
+    <!--
+        These sections are optional in FS25 but their absence generates log warnings.
+        Providing empty entries suppresses them cleanly for a thin linear placeable.
+    -->
+    <clearAreas/>
+    <indoorAreas/>
+    <aiUpdateAreas/>
+    <levelingAreas/>
+
     <i3dMappings>
         <i3dMapping id="testAreaStart01" node="0>1|0" />
         <i3dMapping id="testAreaEnd01"   node="0>1|0|0" />
