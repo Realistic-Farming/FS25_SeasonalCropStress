@@ -1657,5 +1657,32 @@
       "count": 1,
       "uniques": 1
     }
+  ],
+  "2026-06-17": [
+    {
+      "referrer": "github.com",
+      "count": 219,
+      "uniques": 79
+    },
+    {
+      "referrer": "Google",
+      "count": 29,
+      "uniques": 14
+    },
+    {
+      "referrer": "Bing",
+      "count": 4,
+      "uniques": 2
+    },
+    {
+      "referrer": "yandex.ru",
+      "count": 3,
+      "uniques": 2
+    },
+    {
+      "referrer": "DuckDuckGo",
+      "count": 1,
+      "uniques": 1
+    }
   ]
 }
