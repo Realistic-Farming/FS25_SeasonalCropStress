@@ -1809,5 +1809,27 @@
       "count": 2,
       "uniques": 1
     }
+  ],
+  "2026-06-26": [
+    {
+      "referrer": "github.com",
+      "count": 228,
+      "uniques": 83
+    },
+    {
+      "referrer": "Google",
+      "count": 19,
+      "uniques": 11
+    },
+    {
+      "referrer": "Bing",
+      "count": 7,
+      "uniques": 2
+    },
+    {
+      "referrer": "yandex.ru",
+      "count": 3,
+      "uniques": 2
+    }
   ]
 }
