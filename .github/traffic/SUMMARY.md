@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-06-27T06:48:48Z
-**Days tracked:** 70 | **Download snapshots:** 420 (hourly)
+**Last updated:** 2026-06-28T06:58:23Z
+**Days tracked:** 71 | **Download snapshots:** 427 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 414 | 118 |
-| Git Clones | 1271 | 383 |
+| Page Views | 369 | 108 |
+| Git Clones | 1241 | 368 |
 
-> **Engagement:** 3.5 pages per visitor (14-day avg)
+> **Engagement:** 3.4 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 1084 of 118 visitors cloned or downloaded (**918.6%**)
+> **14-day conversion:** 1080 of 108 visitors cloned or downloaded (**1000.0%**)
 >
-> Unique cloners: 383 | Release downloads: 701
+> Unique cloners: 368 | Release downloads: 712
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 701 |
-| Git Clones (14-day) | 1271 |
-| **Total Acquisitions** | **1972** |
+| Zip Downloads | 712 |
+| Git Clones (14-day) | 1241 |
+| **Total Acquisitions** | **1953** |
 
 ---
 
@@ -54,10 +54,11 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 228 | 83 |
-| Google | 19 | 11 |
-| Bing | 7 | 2 |
-| yandex.ru | 3 | 2 |
+| github.com | 202 | 74 |
+| Google | 21 | 12 |
+| yandex.ru | 4 | 2 |
+| Bing | 4 | 1 |
+| kingmods.net | 1 | 1 |
 
 ---
 
@@ -77,15 +78,15 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/TheCodingDad-TisonK/FS25_SeasonalCropStress` | 161 | 74 |
-| `/Realistic-Farming/FS25_SeasonalCropStress` | 80 | 49 |
-| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.2.3.3` | 34 | 28 |
-| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases` | 29 | 17 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.3.3` | 18 | 14 |
-| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues` | 18 | 10 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/issues` | 14 | 6 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/issues/97` | 10 | 8 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases` | 5 | 5 |
+| `/Realistic-Farming/FS25_SeasonalCropStress` | 115 | 69 |
+| `/TheCodingDad-TisonK/FS25_SeasonalCropStress` | 107 | 53 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.3.3` | 30 | 26 |
+| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases` | 20 | 12 |
+| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.2.3.3` | 17 | 15 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/issues` | 15 | 7 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/issues/97` | 13 | 9 |
+| `/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues` | 12 | 5 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases` | 6 | 6 |
 | `/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues/97` | 5 | 3 |
 
 ---
