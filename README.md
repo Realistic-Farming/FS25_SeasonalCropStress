@@ -129,7 +129,6 @@ All integrations are detected at runtime and fail gracefully if the mod is not i
 | **FS25_NPCFavor** | Alex Chen appears as an Agronomist NPC with favor quests: soil samples, irrigation checks, emergency water calls. |
 | **FS25_SoilFertilizer** | Soil pH and organic matter adjust evapotranspiration per field. |
 | **CoursePlay / AutoDrive** | Vehicle positions used for irrigation coverage refinement. |
-| **Precision Farming DLC** | Moisture overlay layer visible on the PF soil analysis map. |
 | **UsedPlus** | Irrigation costs tracked in UsedPlus finance manager. Equipment wear degrades pump output. |
 
 ---

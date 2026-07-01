@@ -168,14 +168,7 @@ function CropStressManager.new()
         self.usedEquipmentMarketplace = { initialize=function()end, delete=function()end, enableUsedPlusMode=function()end }
     end
 
-    if PrecisionFarmingOverlay ~= nil then
-        self.precisionFarmingOverlay = PrecisionFarmingOverlay.new(self)
-    else
-        csLog("WARNING: PrecisionFarmingOverlay class not loaded — check main.lua source() order")
-        self.precisionFarmingOverlay = { initialize=function()end, delete=function()end, enablePrecisionFarmingMode=function()end }
-    end
-
-    -- New optional mod bridges (loaded in main.lua after PrecisionFarmingOverlay)
+    -- New optional mod bridges (loaded in main.lua)
     local function makeNoop(methods)
         local stub = {}
         for _, m in ipairs(methods) do
@@ -249,7 +242,6 @@ function CropStressManager:initialize()
     self.npcIntegration:initialize()
     self.financeIntegration:initialize()
     self.usedEquipmentMarketplace:initialize()
-    self.precisionFarmingOverlay:initialize()
     self.soilFertilizerIntegration:initialize()
     self.coursePlayIntegration:initialize()
     self.autoDriveIntegration:initialize()
@@ -598,11 +590,6 @@ function CropStressManager:detectOptionalMods()
         self.usedEquipmentMarketplace:enableUsedPlusMode()
     end
 
-    if g_precisionFarming ~= nil then
-        csLog("Precision Farming DLC detected — enabling PF compat (Phase 4)")
-        self.precisionFarmingOverlay:enablePrecisionFarmingMode()
-    end
-
     -- FS25_SoilFertilizer (sibling mod by same author)
     -- Bridge: mission.soilFertilityManager is set by SoilFertilizer in its Mission00.load hook.
     -- g_SoilFertilityManager is per-mod scoped (getfenv(0)) and NOT cross-mod accessible.
@@ -720,7 +707,6 @@ function CropStressManager:delete()
     self.autoDriveIntegration:delete()
     self.coursePlayIntegration:delete()
     self.soilFertilizerIntegration:delete()
-    self.precisionFarmingOverlay:delete()
     self.usedEquipmentMarketplace:delete()
     self.financeIntegration:delete()
     self.npcIntegration:delete()
@@ -773,7 +759,6 @@ function CropStressManager:consoleStatus()
     print("  Optional integrations:")
     print(string.format("    NPCFavor:       %s", tostring(self.npcIntegration and self.npcIntegration.npcFavorActive or false)))
     print(string.format("    UsedPlus:       %s", tostring(self.financeIntegration and self.financeIntegration.usedPlusActive or false)))
-    print(string.format("    PrecisionFarm:  %s", tostring(self.precisionFarmingOverlay and self.precisionFarmingOverlay.pfActive or false)))
     print(string.format("    SoilFertilizer: %s", tostring(self.soilFertilizerIntegration and self.soilFertilizerIntegration.sfActive or false)))
     print(string.format("    CoursePlay:     %s (vehicles active: %d)",
         tostring(self.coursePlayIntegration and self.coursePlayIntegration.cpActive or false),

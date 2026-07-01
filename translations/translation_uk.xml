@@ -114,8 +114,6 @@
     <text name="input_CS_EDIT_HUD"        text="Редагувати/переміщати HUD вологості"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
-    <text name="cs_pf_moisture_overlay"      text="Вологість ґрунту"/>
-    <text name="cs_pf_moisture_overlay_desc" text="Відображає поточний рівень вологості ґрунту на ваших полях. Червоний — сухий ґрунт, зелений — оптимальна вологість, синій — перезволожений ґрунт."/>
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Сезонна напруга культур"/>

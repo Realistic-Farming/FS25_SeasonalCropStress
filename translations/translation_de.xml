@@ -114,8 +114,6 @@
     <text name="input_CS_EDIT_HUD"        text="Feuchte-HUD verschieben/skalieren"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
-    <text name="cs_pf_moisture_overlay"      text="Bodenfeuchte"/>
-    <text name="cs_pf_moisture_overlay_desc" text="Zeigt die aktuelle Bodenfeuchte auf Ihren Feldern an. Rot zeigt trockenen Boden, Grün optimale Feuchte und Blau gesättigten Boden an."/>
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Seasonal Crop Stress"/>

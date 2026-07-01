@@ -233,7 +233,6 @@ Always detect at runtime — never hard-code a dependency:
 ```lua
 if g_npcFavorSystem ~= nil then   -- NPCFavor present
 if g_usedPlusManager ~= nil then  -- UsedPlus present
-if g_precisionFarming ~= nil then -- PF DLC present
 ```
 
 ---
@@ -358,7 +357,7 @@ Profile MUST have `imageSliceId value="noSlice"` and extend `baseReference`.
 - **Hourly tick:** Register via `addUpdateable`; track elapsed time against `g_currentMission.environment:getHour()`.
 - **Field enumeration:** `g_currentMission.fieldManager:getFields()` — call once, cache. Refresh on field buy/sell events.
 - **Harvest hook:** `HarvestingMachine.doGroundWorkArea` via `appendedFunction` — intercept fill amount to apply stress multiplier.
-- **Optional mod detection:** Runtime global check (`g_npcFavorSystem`, `g_usedPlusManager`, `g_precisionFarming`).
+- **Optional mod detection:** Runtime global check (`g_npcFavorSystem`, `g_usedPlusManager`).
 
 ---
 

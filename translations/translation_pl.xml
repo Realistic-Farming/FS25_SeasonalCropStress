@@ -114,8 +114,6 @@
     <text name="input_CS_EDIT_HUD"        text="Przesuń/skaluj HUD wilgotności"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
-    <text name="cs_pf_moisture_overlay"      text="Wilgotność gleby"/>
-    <text name="cs_pf_moisture_overlay_desc" text="Wyświetla aktualny poziom wilgotności gleby na twoich polach. Czerwony oznacza suchą glebę, zielony optymalną wilgotność, a niebieski glebę nasyconą."/>
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Sezonowy stres upraw"/>
