@@ -20032,31 +20032,31 @@
     "watchers": 6
   },
   {
-    "timestamp": "2026-07-01T00:01:20Z",
+    "timestamp": "2026-07-01T12:29:13Z",
     "date": "2026-07-01",
     "views": {
-      "count": 358,
-      "uniques": 117
+      "count": 360,
+      "uniques": 124
     },
     "clones": {
-      "count": 1182,
-      "uniques": 347
+      "count": 1167,
+      "uniques": 341
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 208,
-        "uniques": 80
+        "count": 211,
+        "uniques": 85
       },
       {
         "referrer": "Google",
-        "count": 20,
+        "count": 17,
         "uniques": 12
       },
       {
         "referrer": "yandex.ru",
-        "count": 8,
-        "uniques": 2
+        "count": 10,
+        "uniques": 3
       },
       {
         "referrer": "Bing",
@@ -20065,8 +20065,8 @@
       },
       {
         "referrer": "kingmods.net",
-        "count": 2,
-        "uniques": 2
+        "count": 3,
+        "uniques": 3
       },
       {
         "referrer": "chatgpt.com",
@@ -20078,20 +20078,20 @@
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress",
         "title": "Overview",
-        "count": 151,
-        "uniques": 86
+        "count": 161,
+        "uniques": 92
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress",
         "title": "Overview",
-        "count": 71,
-        "uniques": 41
+        "count": 63,
+        "uniques": 40
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.3.3",
         "title": "/releases/tag/v1.2.3.3",
-        "count": 37,
-        "uniques": 31
+        "count": 39,
+        "uniques": 33
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/issues",
@@ -20102,7 +20102,7 @@
       {
         "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases",
         "title": "/releases",
-        "count": 15,
+        "count": 14,
         "uniques": 10
       },
       {
@@ -20114,14 +20114,14 @@
       {
         "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/releases/tag/v1.2.3.3",
         "title": "/releases/tag/v1.2.3.3",
-        "count": 12,
-        "uniques": 11
+        "count": 10,
+        "uniques": 9
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/releases",
         "title": "/releases",
-        "count": 8,
-        "uniques": 7
+        "count": 9,
+        "uniques": 8
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_SeasonalCropStress/issues/97",
@@ -20140,7 +20140,7 @@
       {
         "assets": [
           {
-            "downloads": 156,
+            "downloads": 159,
             "name": "FS25_SeasonalCropStress.zip"
           }
         ],
@@ -20352,7 +20352,7 @@
         "tag": "v1.0.0.0"
       }
     ],
-    "stars": 20,
+    "stars": 21,
     "forks": 2,
     "watchers": 6
   }
