@@ -29,6 +29,7 @@ source(modDir .. "src/IrrigationManager.lua")
 source(modDir .. "src/settings/CropStressSettings.lua")
 source(modDir .. "src/settings/CropStressSettingsPanel.lua")
 source(modDir .. "src/settings/CropStressSettingsIntegration.lua")
+source(modDir .. "src/settings/SettingsHubBridge.lua")
 
 -- Player-facing systems
 source(modDir .. "src/HUDOverlay.lua")
@@ -196,6 +197,10 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
     if g_csManager == nil then return end
 
     g_csManager:initialize()
+
+    -- Register with SettingsHub (if installed) so FarmTablet's System Settings
+    -- app can list Seasonal Crop Stress' settings. No-ops safely if absent.
+    SeasonalSettingsHubBridge.register(g_csManager)
 
     -- Install field-ready updater immediately after initialize (NPCFavor pattern).
     -- The updater polls g_currentMission.isMissionStarted + g_fieldManager.fields
