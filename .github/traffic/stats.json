@@ -20682,7 +20682,7 @@
     "watchers": 6
   },
   {
-    "timestamp": "2026-07-03T06:56:20Z",
+    "timestamp": "2026-07-03T12:04:26Z",
     "date": "2026-07-03",
     "views": {
       "count": 354,
@@ -20787,6 +20787,15 @@
       }
     ],
     "releases": [
+      {
+        "assets": [
+          {
+            "downloads": 0,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.2.3.4"
+      },
       {
         "assets": [
           {
