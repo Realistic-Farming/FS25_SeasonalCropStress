@@ -2008,5 +2008,37 @@
       "count": 2,
       "uniques": 1
     }
+  ],
+  "2026-07-03": [
+    {
+      "referrer": "github.com",
+      "count": 205,
+      "uniques": 85
+    },
+    {
+      "referrer": "Google",
+      "count": 19,
+      "uniques": 14
+    },
+    {
+      "referrer": "yandex.ru",
+      "count": 12,
+      "uniques": 3
+    },
+    {
+      "referrer": "Bing",
+      "count": 6,
+      "uniques": 2
+    },
+    {
+      "referrer": "kingmods.net",
+      "count": 3,
+      "uniques": 3
+    },
+    {
+      "referrer": "chatgpt.com",
+      "count": 2,
+      "uniques": 1
+    }
   ]
 }
