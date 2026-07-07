@@ -22028,25 +22028,25 @@
     "watchers": 6
   },
   {
-    "timestamp": "2026-07-07T06:39:25Z",
+    "timestamp": "2026-07-07T18:56:53Z",
     "date": "2026-07-07",
     "views": {
-      "count": 425,
-      "uniques": 162
+      "count": 436,
+      "uniques": 158
     },
     "clones": {
-      "count": 873,
-      "uniques": 249
+      "count": 746,
+      "uniques": 216
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 271,
-        "uniques": 115
+        "count": 273,
+        "uniques": 113
       },
       {
         "referrer": "yandex.ru",
-        "count": 20,
+        "count": 22,
         "uniques": 4
       },
       {
@@ -22079,32 +22079,32 @@
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress",
         "title": "Overview",
-        "count": 281,
-        "uniques": 141
+        "count": 286,
+        "uniques": 139
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.3.3",
         "title": "/releases/tag/v1.2.3.3",
-        "count": 56,
-        "uniques": 48
+        "count": 57,
+        "uniques": 47
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/releases",
         "title": "/releases",
-        "count": 23,
-        "uniques": 17
+        "count": 27,
+        "uniques": 21
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/issues",
         "title": "/issues",
-        "count": 18,
+        "count": 19,
         "uniques": 11
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/issues/97",
         "title": "/issues/97",
-        "count": 9,
-        "uniques": 6
+        "count": 6,
+        "uniques": 4
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.3.4",
@@ -22141,7 +22141,7 @@
       {
         "assets": [
           {
-            "downloads": 12,
+            "downloads": 13,
             "name": "FS25_SeasonalCropStress.zip"
           }
         ],
@@ -22150,7 +22150,7 @@
       {
         "assets": [
           {
-            "downloads": 208,
+            "downloads": 212,
             "name": "FS25_SeasonalCropStress.zip"
           }
         ],
