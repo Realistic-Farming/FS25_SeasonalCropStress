@@ -37,6 +37,39 @@ local function getPlaceablePosition(placeable)
     return placeable.posX or 0, 0, placeable.posZ or 0
 end
 
+-- ============================================================
+-- GEOMETRY HELPERS
+-- ============================================================
+-- Squared distance from point (px,pz) to segment (ax,az)-(bx,bz).
+local function pointSegDistSq(px, pz, ax, az, bx, bz)
+    local dx, dz = bx - ax, bz - az
+    local len2 = dx * dx + dz * dz
+    local t = 0.0
+    if len2 > 0.0 then
+        t = ((px - ax) * dx + (pz - az) * dz) / len2
+        if t < 0.0 then t = 0.0 elseif t > 1.0 then t = 1.0 end
+    end
+    local qx, qz = ax + t * dx, az + t * dz
+    local ex, ez = px - qx, pz - qz
+    return ex * ex + ez * ez
+end
+
+-- Even-odd (ray-cast) point-in-polygon test. vx/vz are 1..n vertex arrays.
+-- The (vz[i] > pz) ~= (vz[j] > pz) guard means vz[j]-vz[i] is never 0 in the
+-- division below, so horizontal edges can't divide by zero.
+local function pointInPolygon(px, pz, vx, vz, n)
+    local inside = false
+    local j = n
+    for i = 1, n do
+        if ((vz[i] > pz) ~= (vz[j] > pz)) and
+           (px < (vx[j] - vx[i]) * (pz - vz[i]) / (vz[j] - vz[i]) + vx[i]) then
+            inside = not inside
+        end
+        j = i
+    end
+    return inside
+end
+
 function IrrigationManager.new(manager)
     local self = setmetatable({}, IrrigationManager)
     self.manager = manager
@@ -194,52 +227,92 @@ function IrrigationManager:detectCoveredFields(placeable, cx, cz)
     return covered
 end
 
--- Circle vs. field polygon intersection (simplified AABB check)
-function IrrigationManager:fieldIntersectsCircle(field, cx, cz, radius)
-    local minX, maxX, minZ, maxZ
-    if field.minX ~= nil then
-        minX, maxX, minZ, maxZ = field.minX, field.maxX, field.minZ, field.maxZ
-    else
-        -- field.posX/posZ are confirmed FS25 field properties (polygon centroid).
-        -- If absent, skip this field — don't fall back to pivot position (produces false positives).
-        local fx = field.posX or (field.startX and (field.startX + (field.widthX or 0) * 0.5))
-        local fz = field.posZ or (field.startZ and (field.startZ + (field.heightZ or 0) * 0.5))
-        if fx == nil or fz == nil then return false end
-        local fr = field.fieldRadius or 50
-        minX, maxX = fx - fr, fx + fr
-        minZ, maxZ = fz - fr, fz + fr
+-- ============================================================
+-- Field polygon (world space)
+-- FS25 Field.polygonPoints holds scene-node ids, not coordinates — each
+-- vertex world position comes from getWorldTranslation(node). Returns
+-- vx, vz, n, or nil when the field has no usable polygon.
+-- ============================================================
+function IrrigationManager:getFieldPolygonWorld(field)
+    local pts = field.polygonPoints
+    if pts == nil then return nil end
+    local n = #pts
+    if n < 3 then return nil end
+    local vx, vz = {}, {}
+    for i = 1, n do
+        local node = pts[i]
+        if node == nil or node == 0 then return nil end
+        local wx, _, wz = getWorldTranslation(node)
+        vx[i] = wx
+        vz[i] = wz
     end
-
-    local closestX = math.max(minX, math.min(cx, maxX))
-    local closestZ = math.max(minZ, math.min(cz, maxZ))
-    local dx = cx - closestX
-    local dz = cz - closestZ
-    return (dx * dx + dz * dz) <= (radius * radius)
+    return vx, vz, n
 end
 
--- Drip line vs. field intersection (simplified AABB check)
-function IrrigationManager:fieldIntersectsDripLine(field, startX, startZ, endX, endZ, spacing)
-    local minX, maxX, minZ, maxZ
-    if field.minX ~= nil then
-        minX, maxX, minZ, maxZ = field.minX, field.maxX, field.minZ, field.maxZ
-    else
-        local fx = field.posX or (field.startX and (field.startX + (field.widthX or 0) * 0.5))
-        local fz = field.posZ or (field.startZ and (field.startZ + (field.heightZ or 0) * 0.5))
+-- Circle vs. field polygon intersection.
+-- True when the pivot circle overlaps the field's actual boundary: the pivot
+-- centre lies inside the polygon (large field enclosing the whole circle), or
+-- the circle reaches any polygon edge. Falls back to an area-derived radius
+-- around the label point if the field has no polygon nodes (not expected on
+-- stock maps, but keeps a degenerate field from silently vanishing).
+function IrrigationManager:fieldIntersectsCircle(field, cx, cz, radius)
+    local vx, vz, n = self:getFieldPolygonWorld(field)
+    if vx == nil then
+        local fx, fz = field.posX, field.posZ
         if fx == nil or fz == nil then return false end
-        local fr = field.fieldRadius or 50
-        minX, maxX = fx - fr, fx + fr
-        minZ, maxZ = fz - fr, fz + fr
+        local fr = math.sqrt(math.max(field.areaHa or 1, 0.01) * 10000 / math.pi)
+        local dx, dz = cx - fx, cz - fz
+        local reach = radius + fr
+        return (dx * dx + dz * dz) <= (reach * reach)
     end
 
-    -- Calculate drip line bounding box with spacing
-    local lineMinX = math.min(startX, endX) - spacing * 0.5
-    local lineMaxX = math.max(startX, endX) + spacing * 0.5
-    local lineMinZ = math.min(startZ, endZ) - spacing * 0.5
-    local lineMaxZ = math.max(startZ, endZ) + spacing * 0.5
+    local r2 = radius * radius
+    if pointInPolygon(cx, cz, vx, vz, n) then return true end
+    -- Circle reaches any field edge (also covers "a vertex is inside the circle").
+    local j = n
+    for i = 1, n do
+        if pointSegDistSq(cx, cz, vx[i], vz[i], vx[j], vz[j]) <= r2 then
+            return true
+        end
+        j = i
+    end
+    return false
+end
 
-    -- Check AABB intersection
-    return (minX <= lineMaxX and maxX >= lineMinX and
-            minZ <= lineMaxZ and maxZ >= lineMinZ)
+-- Drip line vs. field polygon intersection.
+-- True when either drip endpoint is inside the field, when a field vertex is
+-- within half the row spacing of the line, or when either endpoint is that
+-- close to a field edge. Spacing is tiny relative to a field, so an endpoint
+-- landing inside the polygon is the dominant case.
+function IrrigationManager:fieldIntersectsDripLine(field, startX, startZ, endX, endZ, spacing)
+    local half = (spacing or 0) * 0.5
+    local vx, vz, n = self:getFieldPolygonWorld(field)
+    if vx == nil then
+        local fx, fz = field.posX, field.posZ
+        if fx == nil or fz == nil then return false end
+        local fr = math.sqrt(math.max(field.areaHa or 1, 0.01) * 10000 / math.pi)
+        local reach = fr + half
+        return pointSegDistSq(fx, fz, startX, startZ, endX, endZ) <= (reach * reach)
+    end
+
+    if pointInPolygon(startX, startZ, vx, vz, n) then return true end
+    if pointInPolygon(endX,   endZ,   vx, vz, n) then return true end
+
+    local reach2 = half * half
+    local j = n
+    for i = 1, n do
+        -- field vertex close to the drip line
+        if pointSegDistSq(vx[i], vz[i], startX, startZ, endX, endZ) <= reach2 then
+            return true
+        end
+        -- drip endpoints close to a field edge
+        if pointSegDistSq(startX, startZ, vx[i], vz[i], vx[j], vz[j]) <= reach2 or
+           pointSegDistSq(endX,   endZ,   vx[i], vz[i], vx[j], vz[j]) <= reach2 then
+            return true
+        end
+        j = i
+    end
+    return false
 end
 
 -- ============================================================

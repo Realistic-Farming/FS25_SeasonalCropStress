@@ -338,7 +338,8 @@ function CsPDAScreen:_rebuildData()
     if irrMgr and irrMgr.systems then
         for sysId, sys in pairs(irrMgr.systems) do
             if sys.coveredFields then
-                for fid, _ in pairs(sys.coveredFields) do
+                -- coveredFields is an array of farmland ids — iterate values, not keys.
+                for _, fid in ipairs(sys.coveredFields) do
                     if coveredFields[fid] == nil then
                         coveredFields[fid] = sysId
                     end
@@ -422,7 +423,8 @@ function CsPDAScreen:_rebuildStats()
     if irrMgr and irrMgr.systems then
         for _, sys in pairs(irrMgr.systems) do
             if sys.coveredFields then
-                for fid, _ in pairs(sys.coveredFields) do
+                -- coveredFields is an array of farmland ids — iterate values, not keys.
+                for _, fid in ipairs(sys.coveredFields) do
                     coveredFields[fid] = true
                 end
             end
