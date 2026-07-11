@@ -16,7 +16,7 @@
 - [ ] Bedrock migration per Point 1-4 (coordinate with the ongoing rebuild, issue #89).
 
 ## Cross-mod integration
-- [ ] StateLedger / NetworkSync / MasterHUD / SettingsHub migration.
+- [!] StateLedger / NetworkSync / MasterHUD / SettingsHub migration - **DEFERRED until the #89 rebuild lands.** The current source is target-spec (describes the pending rebuild, not as-built), so do NOT bridge it yet; bridge after #89 against the reference pattern (SoilFertilizer). Flagged in the 2026-07-10 bridging wave: SeasonalCropStress was intentionally skipped for this reason.
 - [ ] Reads RandomWorldEvents (`randomWorldEvents`); optional external FS25_MoistureSystem.
 - [ ] Read by CropDisease (moisture), RandomWorldEvents (stress), MarketDynamics, FarmTablet.
 
