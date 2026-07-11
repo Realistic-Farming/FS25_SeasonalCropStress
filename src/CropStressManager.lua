@@ -671,15 +671,23 @@ function CropStressManager:onToggleSettings()
     end
 end
 
-function CropStressManager:onOpenIrrigationDialog()
+function CropStressManager:onOpenIrrigationDialog(systemId)
     local irrMgr = self.irrigationManager
     if irrMgr == nil then return end
 
-    -- Find first registered system to open (Phase 2 simplified approach)
-    local firstId = nil
-    for id, _ in pairs(irrMgr.systems) do
-        firstId = id
-        break
+    -- Cross-mod entry point. Callers in OTHER mods (e.g. a Reinke pivot reached
+    -- via g_currentMission.cropStressManager) can pass their own system id so the
+    -- dialog opens for THAT pivot. A bare CsDialogLoader global is only visible
+    -- inside this mod's environment, so external mods must route through here.
+    -- When systemId is nil/unknown, fall back to the first registered system
+    -- (existing in-mod callers pass nothing, so their behaviour is unchanged).
+    local firstId = systemId
+    if firstId == nil or irrMgr.systems[firstId] == nil then
+        firstId = nil
+        for id, _ in pairs(irrMgr.systems) do
+            firstId = id
+            break
+        end
     end
 
     if firstId ~= nil then
