@@ -563,6 +563,27 @@ function CropStressManager:sendInitialClientState(connection)
 end
 
 -- ============================================================
+-- COMPANION READ API
+-- The single, stable read path for a field's moisture / stress. External
+-- companions (CropDisease, RandomWorldEvents, MarketDynamics, FarmTablet)
+-- and the bedrock bridges call these on g_cropStressManager rather than
+-- reaching into the subsystems, so the internal wiring can change without
+-- breaking readers. Mirrors SoilFertilizer's getFieldInfo read contract.
+-- ============================================================
+
+-- Moisture (0.0-1.0) for a field, or nil if the field is not tracked.
+function CropStressManager:getMoisture(fieldId)
+    if self.soilSystem == nil then return nil end
+    return self.soilSystem:getMoisture(fieldId)
+end
+
+-- Stress (0.0-1.0) for a field; 0.0 if the field is not tracked.
+function CropStressManager:getStress(fieldId)
+    if self.stressModifier == nil then return 0.0 end
+    return self.stressModifier:getStress(fieldId)
+end
+
+-- ============================================================
 -- OPTIONAL MOD DETECTION
 -- ============================================================
 function CropStressManager:detectOptionalMods()
@@ -781,7 +802,7 @@ function CropStressManager:consoleStatus()
     print("  Driest fields:")
     for i = 1, math.min(5, #sorted) do
         local f = sorted[i]
-        local stress = self.stressModifier:getStress(f.fieldId)
+        local stress = self:getStress(f.fieldId)
         print(string.format("    Field %d: %.1f%% moisture, stress %.2f",
             f.fieldId, f.moisture * 100, stress))
     end

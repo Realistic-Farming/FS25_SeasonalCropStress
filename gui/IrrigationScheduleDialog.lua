@@ -383,8 +383,8 @@ function IrrigationScheduleDialog:updateCoveredFields(system)
         local moisture = 0
         local stress   = 0
         if g_cropStressManager ~= nil then
-            if g_cropStressManager.soilSystem    ~= nil then moisture = g_cropStressManager.soilSystem:getMoisture(fieldId) or 0 end
-            if g_cropStressManager.stressModifier ~= nil then stress  = g_cropStressManager.stressModifier:getStress(fieldId) or 0 end
+            if g_cropStressManager.soilSystem    ~= nil then moisture = g_cropStressManager:getMoisture(fieldId) or 0 end
+            if g_cropStressManager.stressModifier ~= nil then stress  = g_cropStressManager:getStress(fieldId) or 0 end
         end
         local cropName = self:getCropName(fieldId)
         local labelStr = string.format("Field %d · %s  %d%%", fieldId, cropName, math.floor(moisture * 100))

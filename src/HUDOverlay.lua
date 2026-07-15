@@ -937,7 +937,7 @@ function HUDOverlay:drawForecastStrip(px, py)
     local isApprox   = self.forecastCache.isApproximate ~= false  -- default true
     local currentMoisture = 0
     if self.manager ~= nil and self.manager.soilSystem ~= nil then
-        currentMoisture = self.manager.soilSystem:getMoisture(fieldId) or 0
+        currentMoisture = self.manager:getMoisture(fieldId) or 0
     end
     local displayVals = {
         currentMoisture,
@@ -1058,7 +1058,7 @@ function HUDOverlay:rebuildDisplayRows()
         local growthStage = nil
 
         if self.manager.stressModifier ~= nil then
-            stress = self.manager.stressModifier:getStress(entry.fieldId)
+            stress = self.manager:getStress(entry.fieldId)
         end
 
         local field = fieldById[entry.fieldId]
@@ -1181,7 +1181,7 @@ function HUDOverlay:toggle()
                 -- same as the main rebuildDisplayRows path (fallow fields are now visible).
                 local stress = 0
                 if self.manager ~= nil and self.manager.stressModifier ~= nil then
-                    stress = self.manager.stressModifier:getStress(fid) or 0
+                    stress = self.manager:getStress(fid) or 0
                 end
                 local gs = field.fieldState and field.fieldState.growthState
                 local inSW = false
