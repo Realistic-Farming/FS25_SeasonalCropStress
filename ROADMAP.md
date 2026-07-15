@@ -15,13 +15,13 @@
 - Baseline date: 2026-06-30
 
 ## Near-term (next release cycle)
-- [ ] Strip the Precision Farming overlay to a stand-down stub (PrecisionFarmingOverlay.lua currently activates integration mode on detection). Critical, house rule.
-- [ ] Remove the FSBaseMission.draw hook that calls the no-op HUD stub; monitoring stays on the PDA screen (CsPDAScreen).
-- [ ] Add the companion read API on `cropStressManager` (getMoisture / getStress) for CropDisease and RandomWorldEvents.
+- [x] Strip the Precision Farming overlay: DONE. Removed wholesale in 77b3064; zero PF refs remain in any .lua (verified 2026-07-15).
+- [x] "Remove the FSBaseMission.draw hook": closed as wrong premise - the draw hook drives the real moisture HUD, not a no-op stub. Kept.
+- [ ] Add the companion read API façade on `cropStressManager` (getMoisture / getStress) for CropDisease and RandomWorldEvents (B3.2). The subsystem-level getters already exist; this is the formal façade.
 
 ## Mid-term (this season)
-- [ ] StateLedger, NetworkSync, MasterHUD, SettingsHub migration (Point 1-4), coordinated with the rebuild.
-- [ ] Remove the internal `soilMoistureSystem = soilSystem` alias in favour of the formal companion API.
+- [~] StateLedger, NetworkSync, MasterHUD migration (Point 1-4), folded into the #89 rebuild (GO 2026-07-15). SettingsHub already built. Gated on locking the SF module ids with Claude(A) (B3.4).
+- [ ] Remove the internal `soilMoistureSystem = soilSystem` alias in favour of the formal companion API, after confirming FarmTablet's read path (B3.3).
 
 ## Long-term / aspirational
 - [ ] Deeper stress model (crop-specific tolerances, recovery curves) as part of the rebuild with the new assets.
