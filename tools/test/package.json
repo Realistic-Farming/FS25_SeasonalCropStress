@@ -1,0 +1,16 @@
+{
+  "name": "fs25-seasonalcropstress-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-test harness for FS25_SeasonalCropStress (excluded from the mod zip). Lua 5.1 syntax check + offline round-trip logic tests for the bedrock bridges.",
+  "scripts": {
+    "syntax": "node syntax-check.mjs",
+    "test": "node run-tests.mjs",
+    "all": "node syntax-check.mjs && node run-tests.mjs"
+  },
+  "devDependencies": {
+    "fengari": "^0.1.4",
+    "luaparse": "^0.3.1"
+  }
+}

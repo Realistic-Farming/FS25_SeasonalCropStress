@@ -279,6 +279,124 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
     end
 end
 
+-- ============================================================
+-- TABLE SERIALIZE / APPLY (StateLedger bridge path)
+-- These mirror the XML save/load above field-for-field, but as a plain Lua
+-- table instead of XML keys. The StateLedger bridge uses them so the master
+-- save file carries the same state careerSavegame.xml does. If you add a field
+-- to the XML path above, add it here too (and vice versa) or the two save
+-- surfaces drift.
+-- ============================================================
+function SaveLoadHandler:buildStateTable()
+    local out = { fields = {}, irrigation = {} }
+
+    -- Field moisture & stress
+    local soilSystem     = self.manager.soilSystem
+    local stressModifier = self.manager.stressModifier
+    if soilSystem ~= nil then
+        for fieldId, data in pairs(soilSystem.fieldData) do
+            out.fields[fieldId] = {
+                moisture = data.moisture,
+                stress   = (stressModifier ~= nil) and stressModifier:getStress(fieldId) or 0.0,
+                soilType = data.soilType or "loamy",
+            }
+        end
+    end
+
+    -- HUD state
+    local hud = self.manager.hudOverlay
+    if hud ~= nil then
+        out.hud = { visible = hud.isVisible or false, firstRunShown = hud.firstRunShown or false }
+    end
+
+    -- Irrigation schedules
+    local irrMgr = self.manager.irrigationManager
+    if irrMgr ~= nil then
+        for sysId, system in pairs(irrMgr.systems) do
+            local days = {}
+            for _, v in ipairs(system.schedule.activeDays) do days[#days + 1] = v and 1 or 0 end
+            out.irrigation[sysId] = {
+                startHour  = system.schedule.startHour,
+                endHour    = system.schedule.endHour,
+                isActive   = system.isActive or false,
+                activeDays = days,
+            }
+        end
+    end
+
+    -- NPC relationship (only when NPCFavor is active, same guard as the XML path)
+    local npcInt = self.manager.npcIntegration
+    if npcInt ~= nil and npcInt.npcFavorActive then
+        local rel = npcInt:getRelationshipLevel()
+        if rel ~= nil and rel > 0 then out.npcRelationship = rel end
+    end
+
+    return out
+end
+
+-- Apply a table produced by buildStateTable back into the live subsystems.
+-- Same clamps and field-existence guards as loadFromXMLFile. Returns true when
+-- a real table was applied.
+function SaveLoadHandler:applyStateTable(data)
+    if type(data) ~= "table" then return false end
+    self._saveDataLoaded = true
+
+    -- Field moisture & stress
+    local soilSystem     = self.manager.soilSystem
+    local stressModifier = self.manager.stressModifier
+    if soilSystem ~= nil and type(data.fields) == "table" then
+        local n = 0
+        for fieldId, f in pairs(data.fields) do
+            if soilSystem.fieldData[fieldId] ~= nil then
+                soilSystem.fieldData[fieldId].moisture = math.max(0.0, math.min(1.0, f.moisture or 0.50))
+                if stressModifier ~= nil then
+                    stressModifier.fieldStress[fieldId] = math.max(0.0, math.min(1.0, f.stress or 0.0))
+                end
+                if f.soilType ~= nil and SoilMoistureSystem.SOIL_PARAMS[f.soilType] ~= nil then
+                    soilSystem.fieldData[fieldId].soilType = f.soilType
+                end
+                n = n + 1
+            end
+        end
+        csLog(string.format("SaveLoadHandler: applied ledger moisture/stress for %d fields", n))
+    end
+
+    -- HUD state
+    local hud = self.manager.hudOverlay
+    if hud ~= nil and type(data.hud) == "table" then
+        hud.isVisible     = data.hud.visible or false
+        hud.firstRunShown = data.hud.firstRunShown or false
+    end
+
+    -- Irrigation schedules
+    local irrMgr = self.manager.irrigationManager
+    if irrMgr ~= nil and type(data.irrigation) == "table" then
+        for sysId, s in pairs(data.irrigation) do
+            local system = irrMgr.systems[sysId]
+            if system ~= nil then
+                system.schedule.startHour = s.startHour or system.schedule.startHour
+                system.schedule.endHour   = s.endHour   or system.schedule.endHour
+                if type(s.activeDays) == "table" and #s.activeDays == 7 then
+                    local days = {}
+                    for _, v in ipairs(s.activeDays) do days[#days + 1] = (tonumber(v) ~= 0) end
+                    system.schedule.activeDays = days
+                end
+                if s.isActive and not system.isActive then
+                    irrMgr:activateSystem(sysId)
+                end
+            end
+        end
+    end
+
+    -- NPC relationship
+    local npcInt = self.manager.npcIntegration
+    if npcInt ~= nil and data.npcRelationship ~= nil and data.npcRelationship > 0 then
+        npcInt:applyLoadedState(data.npcRelationship)
+    end
+
+    return true
+end
+
 function SaveLoadHandler:delete()
     self.isInitialized = false
 end

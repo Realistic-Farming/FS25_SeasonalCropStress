@@ -491,11 +491,17 @@ function CropStressManager:onHourlyTick()
 
         self.financeIntegration:chargeHourlyCosts()
 
-        -- Broadcast updated moisture/stress to all connected clients
-        g_server:broadcastEvent(CropStressMoistureInitEvent.new(
-            self.soilSystem.fieldData,
-            self.stressModifier.fieldStress
-        ), false)
+        -- Push updated moisture/stress to all connected clients. When the
+        -- NetworkSync bridge is active the whole field map batches through its 1Hz
+        -- tick (markFieldDirty); otherwise broadcast the moisture event directly.
+        if CropStressNetworkSyncBridge ~= nil and CropStressNetworkSyncBridge.active then
+            CropStressNetworkSyncBridge.markFieldDirty()
+        else
+            g_server:broadcastEvent(CropStressMoistureInitEvent.new(
+                self.soilSystem.fieldData,
+                self.stressModifier.fieldStress
+            ), false)
+        end
     end
 
     -- Consultant alert evaluation runs everywhere (reads synced field data)
@@ -536,7 +542,15 @@ end
 
 function CropStressManager:loadFromXMLFile()
     if not self.isInitialized then return end
-    self.saveLoad:loadFromXMLFile()
+    -- StateLedger is the load source of truth when present and it delivered a
+    -- block; careerSavegame.xml is the fallback (new save, or ledger absent).
+    -- Composed here so both load sites (onStartMission and the field-ready
+    -- updater) get the ledger choice.
+    if CropStressStateLedgerBridge ~= nil and CropStressStateLedgerBridge.hasLedgerState() then
+        CropStressStateLedgerBridge.applyState(self)
+    else
+        self.saveLoad:loadFromXMLFile()
+    end
 end
 
 -- ============================================================
