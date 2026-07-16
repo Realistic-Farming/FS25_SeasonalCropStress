@@ -273,11 +273,10 @@ function CropConsultant:showAlert(fieldId, moisture, severity, cropName)
         end
     end
 
-    -- AutoDrive context: for CRITICAL alerts, suggest setting up a water hauling route
-    if severity == "CRITICAL"
-    and self.manager ~= nil
-    and self.manager.autoDriveIntegration ~= nil then
-        local adHint = self.manager.autoDriveIntegration:getCriticalAlertHint()
+    -- AutoDrive context: for CRITICAL alerts, suggest setting up a water hauling route.
+    -- Read through the manager facade (getCriticalAlertHint) rather than the subsystem.
+    if severity == "CRITICAL" and self.manager ~= nil then
+        local adHint = self.manager:getCriticalAlertHint()
         if adHint ~= nil then
             g_currentMission:showBlinkingWarning(adHint, 5000)
         end

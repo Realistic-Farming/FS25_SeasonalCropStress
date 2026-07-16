@@ -21,7 +21,9 @@
 
 CropStressMasterHUDBridge = {}
 
-CropStressMasterHUDBridge.HUD_ID = "SCS_StressOverlay"
+-- Full-token id per the ecosystem NAMING-CONVENTION (client-local, re-registered
+-- each session, not a save/wire lock key). Confirmed with Claude(A) 2026-07-16.
+CropStressMasterHUDBridge.HUD_ID = "SeasonalCropStress_StressOverlay"
 CropStressMasterHUDBridge.active = false   -- MasterHUD present and we registered
 
 -- The full SCS HUD draw. Delegates to the manager's own draw() (settings panel +
