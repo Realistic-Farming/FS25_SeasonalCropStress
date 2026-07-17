@@ -124,3 +124,15 @@ do
   T.near("heatwave: temperature exposed", m:getTemperature(), 40.0)
   T.near("heatwave: evap demand exposed", m:getEvaporativeDemand(), 2.4)
 end
+
+-- 4. getIrrigationCostsEnabled: mirrors FinanceIntegration's "enabled unless false" ─
+do
+  T.eq("no irrigation mgr -> costs enabled (neutral true)",
+       newManager({}):getIrrigationCostsEnabled(), true)
+  T.eq("costsEnabled nil -> enabled",
+       newManager({ irrigationManager = {} }):getIrrigationCostsEnabled(), true)
+  T.eq("costsEnabled true -> enabled",
+       newManager({ irrigationManager = { costsEnabled = true } }):getIrrigationCostsEnabled(), true)
+  T.eq("costsEnabled false -> disabled",
+       newManager({ irrigationManager = { costsEnabled = false } }):getIrrigationCostsEnabled(), false)
+end

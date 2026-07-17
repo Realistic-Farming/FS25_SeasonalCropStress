@@ -728,6 +728,16 @@ function CropStressManager:getEvaporativeDemand()
     return self.weatherIntegration:getHourlyEvapMultiplier() or 1.0
 end
 
+-- True when SCS is charging irrigation operating costs (the player has not disabled
+-- them). Mirrors FinanceIntegration's own gate: enabled unless costsEnabled is
+-- explicitly false. Lets a cost-mirroring consumer (e.g. TaxMod's irrigation expense
+-- line) avoid reporting a charge the player is not actually paying. Neutral true when
+-- no irrigation manager is present (no systems means nothing is charged anyway).
+function CropStressManager:getIrrigationCostsEnabled()
+    if self.irrigationManager == nil then return true end
+    return self.irrigationManager.costsEnabled ~= false
+end
+
 -- ============================================================
 -- OPTIONAL MOD DETECTION
 -- ============================================================
