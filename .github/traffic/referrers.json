@@ -2580,5 +2580,37 @@
       "count": 1,
       "uniques": 1
     }
+  ],
+  "2026-07-24": [
+    {
+      "referrer": "github.com",
+      "count": 200,
+      "uniques": 94
+    },
+    {
+      "referrer": "Google",
+      "count": 28,
+      "uniques": 16
+    },
+    {
+      "referrer": "kingmods.net",
+      "count": 8,
+      "uniques": 5
+    },
+    {
+      "referrer": "yandex.ru",
+      "count": 2,
+      "uniques": 2
+    },
+    {
+      "referrer": "Bing",
+      "count": 2,
+      "uniques": 1
+    },
+    {
+      "referrer": "chatgpt.com",
+      "count": 1,
+      "uniques": 1
+    }
   ]
 }
