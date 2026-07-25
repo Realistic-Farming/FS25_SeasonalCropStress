@@ -9,11 +9,13 @@
 - [x] "Remove the FSBaseMission.draw hook that calls the no-op HUD stub": closed as WRONG PREMISE. main.lua:246 `FSBaseMission.draw` drives the REAL moisture HUD (`CropStressManager:draw` -> `HUDOverlay`), not a no-op stub. Keep the hook.
 - [x] Façade WIDENING (B3.2b): DONE. Read-only, nil/neutral-safe getters for the irrigation-ops + economy consumers: `getIrrigationRate`, `isFieldIrrigated`, `getIrrigationSystems` (mutation-safe snapshot, keeps the coveredFields ipairs contract), `getIrrigationSchedule` (active systems only), `getFieldPolygonWorld`, `getCriticalAlertHint`, `getTemperature`, `getEvaporativeDemand`. All delegate to existing subsystem methods; CropConsultant migrated onto the alert-hint getter. Heat-fold SETTLED: `getStress` is moisture-only, SCS-010/013 read the heat pair. Test: `tools/test/facade_readapi_test.lua` (35 assertions).
 - [x] Companion read API façade (B3.2): DONE. Formal `CropStressManager:getMoisture`/`:getStress` added + readers migrated (83aef10). B3.3 (remove the `soilMoistureSystem = soilSystem` alias) is BLOCKED, see Blocked section: FarmTablet still reads the alias as its primary moisture source, so it stays until FarmTablet migrates to the facade.
+- [x] `getIrrigationCostsEnabled` getter (212ceaa): a nil-safe read of the irrigation-costs-enabled flag, added to the facade for TaxMod's SCS-011 deductible-expense mirror (the first B3.2b consumer, in-game verified).
 
 ## Bugs
 - [x] CRITICAL (house rule): PF integration mode active on detection - RESOLVED. No PF code path remains after 77b3064; nothing left to stand down.
 
 ## Features / enhancements
+- [x] Short-month weather tune (e6a4fce): `SEASON_RAIN_PROB` reshaped to match SoilFertilizer's Normal climate shape, so SCS moisture and SF's #740 short-month rain fill agree on wet/dry seasonality. Shape-matched, not a raw copy (a day-vs-hour unit gap remains for a later retune with Arissani).
 - [x] Bedrock migration per Point 1-4: all four now BUILT. SettingsHub was already live; StateLedger + NetworkSync + MasterHUD (B3.4) were built this session against the SoilFertilizer reference, delegate-when-present. Not shipped until the SCS module-ids are locked with Claude(A) + a single-host in-game smoke passes.
 
 ## Cross-mod integration
