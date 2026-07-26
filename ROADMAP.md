@@ -28,6 +28,7 @@
 
 ## Long-term / aspirational
 - [ ] Deeper stress model (crop-specific tolerances, recovery curves) as part of the rebuild with the new assets.
+- [ ] Irrigation help dialog (issue #89): in-game guidance for irrigation setup once Antler22's 3D assets ship. Design decision needed: dedicated help dialog vs existing documentation. See ecosystem ledger 2026-07-26.
 
 ## Cross-mod / ecosystem dependencies
 - [ ] Reads RandomWorldEvents (`randomWorldEvents`); optional FS25_MoistureSystem (external).
