@@ -114,8 +114,6 @@
     <text name="input_CS_EDIT_HUD"        text="Upravit/Přesunout HUD vlhkosti"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
-    <text name="cs_pf_moisture_overlay"      text="Vlhkost půdy"/>
-    <text name="cs_pf_moisture_overlay_desc" text="Zobrazuje aktuální úrovně vlhkosti půdy na vašich polích. Červená označuje suchou půdu, zelená označuje optimální vlhkost a modrá označuje nasycenou půdu."/>
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Seasonal Crop Stress"/>

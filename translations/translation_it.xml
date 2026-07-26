@@ -114,8 +114,6 @@
     <text name="input_CS_EDIT_HUD"        text="Sposta/ridimensiona HUD umidità"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
-    <text name="cs_pf_moisture_overlay"      text="Umidità del suolo"/>
-    <text name="cs_pf_moisture_overlay_desc" text="Mostra i livelli attuali di umidità del suolo nei tuoi campi. Il rosso indica terreno secco, il verde umidità ottimale e il blu terreno saturo."/>
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Stress Stagionale delle Colture"/>

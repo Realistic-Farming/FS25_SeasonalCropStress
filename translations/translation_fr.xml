@@ -114,8 +114,6 @@
     <text name="input_CS_EDIT_HUD"        text="Déplacer/redimensionner HUD humidité"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
-    <text name="cs_pf_moisture_overlay"      text="Humidité du sol"/>
-    <text name="cs_pf_moisture_overlay_desc" text="Affiche le niveau d'humidité du sol sur vos champs. Rouge indique un sol sec, vert une humidité optimale et bleu un sol saturé."/>
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Stress des Cultures Saisonnières"/>

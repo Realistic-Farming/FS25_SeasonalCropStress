@@ -114,8 +114,6 @@
     <text name="input_CS_EDIT_HUD"        text="Flyt/skaler fugtigheds-HUD"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
-    <text name="cs_pf_moisture_overlay"      text="Jordfugtighed"/>
-    <text name="cs_pf_moisture_overlay_desc" text="Viser den aktuelle jordfugtighed på dine marker. Rød viser tør jord, grøn viser optimal fugtighed, og blå viser mættet jord."/>
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Seasonal Crop Stress"/>

@@ -354,8 +354,14 @@ end
 WeatherIntegration.SEASON_MEAN_TEMP = { [0]=12.0, [1]=22.0, [2]=10.0, [3]=2.0 }
 
 -- Seasonal baseline rain probability (fraction of hours with rain, season average).
--- 0=spring(moderate), 1=summer(dry), 2=autumn(moderate), 3=winter(wet)
-WeatherIntegration.SEASON_RAIN_PROB = { [0]=0.30, [1]=0.12, [2]=0.28, [3]=0.35 }
+-- 0=spring(wettest), 1=summer(dry), 2=autumn(high), 3=winter(moderate)
+-- #740 one-story tune: reshaped to mirror SoilFertilizer's Normal-climate SEASONAL SHAPE
+-- (spring > autumn > winter > summer) so SF's short-month fill and this forecast agree on
+-- which seasons run wet. NOTE the unit gap: SF's CLIMATE_PRECIP is a per-DAY rain-day
+-- fraction, this is a per-HOUR fraction, so the SHAPE is matched, not the raw magnitudes
+-- (copying SF's day-fractions here would overstate the forecast). Magnitudes stay in this
+-- constant's native band; retune is Arissani's balance call.
+WeatherIntegration.SEASON_RAIN_PROB = { [0]=0.30, [1]=0.15, [2]=0.28, [3]=0.24 }
 
 -- Returns true always: no FS25 forecast API exists, all projections are approximate.
 function WeatherIntegration:isForecastApproximate()

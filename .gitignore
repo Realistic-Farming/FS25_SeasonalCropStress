@@ -15,3 +15,6 @@ desktop.ini
 
 # Lua IDE files
 .luarc.json
+
+# Test harness deps (npm-installed on first run)
+tools/test/node_modules

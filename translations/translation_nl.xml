@@ -114,8 +114,6 @@
     <text name="input_CS_EDIT_HUD"        text="HUD vochtigheid verplaatsen/schalen"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
-    <text name="cs_pf_moisture_overlay"      text="Grondvochtigheid"/>
-    <text name="cs_pf_moisture_overlay_desc" text="Toont het vochtigheidsniveau van de grond op uw velden. Rood geeft droge grond aan, groen optimale vochtigheid en blauw verzadigde grond."/>
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Seizoensgebonden Gewasstress"/>

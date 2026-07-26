@@ -982,7 +982,7 @@ function CropStressSettingsPanel:buildStatusString()
         table.insert(lines, "  Driest fields:")
         for i = 1, math.min(8, #sorted) do
             local f = sorted[i]
-            local stress = m.stressModifier and m.stressModifier:getStress(f.fieldId) or 0
+            local stress = m:getStress(f.fieldId)
             table.insert(lines, string.format("    Field %d: %d%% moisture  stress %.2f",
                 f.fieldId, math.floor((f.moisture or 0) * 100 + 0.5), stress))
         end

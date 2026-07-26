@@ -29,6 +29,7 @@ source(modDir .. "src/IrrigationManager.lua")
 source(modDir .. "src/settings/CropStressSettings.lua")
 source(modDir .. "src/settings/CropStressSettingsPanel.lua")
 source(modDir .. "src/settings/CropStressSettingsIntegration.lua")
+source(modDir .. "src/settings/SettingsHubBridge.lua")
 
 -- Player-facing systems
 source(modDir .. "src/HUDOverlay.lua")
@@ -38,11 +39,15 @@ source(modDir .. "src/CropConsultant.lua")
 source(modDir .. "src/NPCIntegration.lua")
 source(modDir .. "src/FinanceIntegration.lua")
 source(modDir .. "src/UsedEquipmentMarketplace.lua")
-source(modDir .. "src/PrecisionFarmingOverlay.lua")
 source(modDir .. "src/SoilFertilizerIntegration.lua")
 source(modDir .. "src/CoursePlayIntegration.lua")
 source(modDir .. "src/AutoDriveIntegration.lua")
 source(modDir .. "src/SprayerIntegration.lua")
+
+-- Bedrock bridges (optional, delegate-when-present against the four core APIs)
+source(modDir .. "src/integrations/CropStressStateLedgerBridge.lua")
+source(modDir .. "src/integrations/CropStressNetworkSyncBridge.lua")
+source(modDir .. "src/integrations/CropStressMasterHUDBridge.lua")
 
 -- Event bus
 source(modDir .. "src/events/CropStressSettingsSyncEvent.lua")
@@ -198,6 +203,25 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
 
     g_csManager:initialize()
 
+    -- Register with SettingsHub (if installed) so FarmTablet's System Settings
+    -- app can list Seasonal Crop Stress' settings. No-ops safely if absent.
+    SeasonalSettingsHubBridge.register(g_csManager)
+
+    -- Register with StateLedger (if installed) so crop-stress state persists into
+    -- the shared master save file. careerSavegame.xml stays the safety fallback.
+    -- No-ops safely if absent.
+    CropStressStateLedgerBridge.register(g_csManager)
+
+    -- Register with NetworkSync (if installed) so the hourly moisture/stress
+    -- broadcast batches through NetworkSync's 1Hz map. The join full-sync and the
+    -- moisture event class stay as the fallback. No-ops safely if absent.
+    CropStressNetworkSyncBridge.register(g_csManager)
+
+    -- Register with MasterHUD (if installed) so the crop-stress HUD draws through
+    -- its single suspend-aware loop; the FSBaseMission.draw hook stands down when
+    -- active. No-ops safely if absent.
+    CropStressMasterHUDBridge.register(g_csManager)
+
     -- Install field-ready updater immediately after initialize (NPCFavor pattern).
     -- The updater polls g_currentMission.isMissionStarted + g_fieldManager.fields
     -- each frame and self-removes once enumeration succeeds.
@@ -239,8 +263,17 @@ FSBaseMission.update = Utils.appendedFunction(FSBaseMission.update, function(sel
 end)
 
 -- 4. Draw hook (HUD rendering)
+-- When FS25_MasterHUD is installed it owns our draw (its single suspend-aware loop
+-- calls CropStressMasterHUDBridge.drawStack), so this hook stands down to avoid
+-- double drawing. When MasterHUD is absent this hook runs the exact same body via
+-- drawStack, so the two paths can never diverge.
 FSBaseMission.draw = Utils.appendedFunction(FSBaseMission.draw, function(self)
-    if g_csManager ~= nil then g_csManager:draw() end
+    if CropStressMasterHUDBridge ~= nil and CropStressMasterHUDBridge.active then return end
+    if CropStressMasterHUDBridge ~= nil then
+        CropStressMasterHUDBridge.drawStack()
+    elseif g_csManager ~= nil then
+        g_csManager:draw()
+    end
 end)
 
 -- 5. Cleanup on mission unload

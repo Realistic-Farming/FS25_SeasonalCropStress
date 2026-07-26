@@ -159,7 +159,7 @@ function CropConsultantDialog:buildFieldList()
     local riskList = {}
     for fieldId, data in pairs(soilSystem.fieldData) do
         if isFarmlandOwnedByFarm(fieldId, localFarmId) then
-            local stress   = stressModifier ~= nil and stressModifier:getStress(fieldId) or 0
+            local stress   = g_cropStressManager:getStress(fieldId)
             local moisture = data.moisture or 0.5
             local risk     = stress * 0.6 + (1 - moisture) * 0.4
             table.insert(riskList, { fieldId = fieldId, moisture = moisture, stress = stress, risk = risk })
@@ -171,7 +171,7 @@ function CropConsultantDialog:buildFieldList()
     if #riskList == 0 and next(soilSystem.fieldData) ~= nil then
         print("[CropStress] CropConsultantDialog: No owned fields found, showing all tracked fields as a fallback.")
         for fieldId, data in pairs(soilSystem.fieldData) do
-            local stress   = stressModifier ~= nil and stressModifier:getStress(fieldId) or 0
+            local stress   = g_cropStressManager:getStress(fieldId)
             local moisture = data.moisture or 0.5
             local risk     = stress * 0.6 + (1 - moisture) * 0.4
             table.insert(riskList, { fieldId = fieldId, moisture = moisture, stress = stress, risk = risk })

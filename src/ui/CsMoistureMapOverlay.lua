@@ -49,10 +49,17 @@ function CsMoistureMapOverlay.new(manager)
 end
 
 function CsMoistureMapOverlay:initialize()
+    if createImageOverlay then
+        self.mapDotOverlay = createImageOverlay("dataS/menu/base/graph_pixel.dds")
+    end
     print("[CropStress] CsMoistureMapOverlay initialized")
 end
 
 function CsMoistureMapOverlay:delete()
+    if self.mapDotOverlay then
+        delete(self.mapDotOverlay)
+        self.mapDotOverlay = nil
+    end
     self.samplePoints = {}
 end
 
@@ -189,8 +196,10 @@ function CsMoistureMapOverlay:onDraw(frame, mapElement, ingameMap, pageIndex)
         end
         if screenX and screenX >= mapX and screenX <= mapMaxX
            and screenY >= mapY and screenY <= mapMaxY then
-            drawFilledRect(screenX - halfX, screenY - halfY, sizeX, sizeY,
-                           pt.r, pt.g, pt.b, CsMoistureMapOverlay.ALPHA)
+            if self.mapDotOverlay then
+                setOverlayColor(self.mapDotOverlay, pt.r, pt.g, pt.b, CsMoistureMapOverlay.ALPHA)
+                renderOverlay(self.mapDotOverlay, screenX - halfX, screenY - halfY, sizeX, sizeY)
+            end
         end
     end
 end
@@ -242,11 +251,13 @@ function CsMoistureMapOverlay:onDrawHud(frame)
         { label = tr("cs_map_legend_critical", "Critical <25%"),   c = CsMoistureMapOverlay.C_CRITICAL },
     }
 
+    if not self.mapDotOverlay then return end
+
     local dotOffX, _ = getNormalizedScreenValues(6, 0)
     for _, entry in ipairs(legend) do
         local dotY = currentY + (rowH - dotH) * 0.5
-        drawFilledRect(panelX + padX, dotY, dotW, dotH,
-                       entry.c[1], entry.c[2], entry.c[3], 0.90)
+        setOverlayColor(self.mapDotOverlay, entry.c[1], entry.c[2], entry.c[3], 0.90)
+        renderOverlay(self.mapDotOverlay, panelX + padX, dotY, dotW, dotH)
         setTextColor(0.90, 0.90, 0.90, 1.0)
         setTextAlignment(RenderText.ALIGN_LEFT)
         renderText(panelX + padX + dotW + dotOffX, currentY + rowH * 0.22, txtSz, entry.label)
@@ -256,14 +267,21 @@ function CsMoistureMapOverlay:onDrawHud(frame)
     -- Separator
     currentY = currentY - gap
     local _, sepH = getNormalizedScreenValues(0, 1)
-    drawFilledRect(panelX, currentY, panelWidth, sepH, 0.45, 0.45, 0.45, 0.40)
+    if self.mapDotOverlay then
+        setOverlayColor(self.mapDotOverlay, 0.45, 0.45, 0.45, 0.40)
+        renderOverlay(self.mapDotOverlay, panelX, currentY, panelWidth, sepH)
+    end
     currentY = currentY - sepH - gap * 2
 
     -- "Open Crop PDA" button
     local _, btnH = getNormalizedScreenValues(0, 30)
-    drawFilledRect(panelX, currentY, panelWidth, btnH, 0.04, 0.10, 0.18, 0.88)
-    drawFilledRect(panelX, currentY, acW, btnH,
-                   CsMoistureMapOverlay.C_ACCENT[1], CsMoistureMapOverlay.C_ACCENT[2], CsMoistureMapOverlay.C_ACCENT[3], 1.0)
+    if self.mapDotOverlay then
+        setOverlayColor(self.mapDotOverlay, 0.04, 0.10, 0.18, 0.88)
+        renderOverlay(self.mapDotOverlay, panelX, currentY, panelWidth, btnH)
+        setOverlayColor(self.mapDotOverlay,
+            CsMoistureMapOverlay.C_ACCENT[1], CsMoistureMapOverlay.C_ACCENT[2], CsMoistureMapOverlay.C_ACCENT[3], 1.0)
+        renderOverlay(self.mapDotOverlay, panelX, currentY, acW, btnH)
+    end
     setTextBold(false)
     setTextColor(0.80, 0.92, 1.0, 1.0)
     setTextAlignment(RenderText.ALIGN_LEFT)

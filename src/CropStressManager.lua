@@ -168,14 +168,7 @@ function CropStressManager.new()
         self.usedEquipmentMarketplace = { initialize=function()end, delete=function()end, enableUsedPlusMode=function()end }
     end
 
-    if PrecisionFarmingOverlay ~= nil then
-        self.precisionFarmingOverlay = PrecisionFarmingOverlay.new(self)
-    else
-        csLog("WARNING: PrecisionFarmingOverlay class not loaded — check main.lua source() order")
-        self.precisionFarmingOverlay = { initialize=function()end, delete=function()end, enablePrecisionFarmingMode=function()end }
-    end
-
-    -- New optional mod bridges (loaded in main.lua after PrecisionFarmingOverlay)
+    -- New optional mod bridges (loaded in main.lua)
     local function makeNoop(methods)
         local stub = {}
         for _, m in ipairs(methods) do
@@ -249,7 +242,6 @@ function CropStressManager:initialize()
     self.npcIntegration:initialize()
     self.financeIntegration:initialize()
     self.usedEquipmentMarketplace:initialize()
-    self.precisionFarmingOverlay:initialize()
     self.soilFertilizerIntegration:initialize()
     self.coursePlayIntegration:initialize()
     self.autoDriveIntegration:initialize()
@@ -499,11 +491,17 @@ function CropStressManager:onHourlyTick()
 
         self.financeIntegration:chargeHourlyCosts()
 
-        -- Broadcast updated moisture/stress to all connected clients
-        g_server:broadcastEvent(CropStressMoistureInitEvent.new(
-            self.soilSystem.fieldData,
-            self.stressModifier.fieldStress
-        ), false)
+        -- Push updated moisture/stress to all connected clients. When the
+        -- NetworkSync bridge is active the whole field map batches through its 1Hz
+        -- tick (markFieldDirty); otherwise broadcast the moisture event directly.
+        if CropStressNetworkSyncBridge ~= nil and CropStressNetworkSyncBridge.active then
+            CropStressNetworkSyncBridge.markFieldDirty()
+        else
+            g_server:broadcastEvent(CropStressMoistureInitEvent.new(
+                self.soilSystem.fieldData,
+                self.stressModifier.fieldStress
+            ), false)
+        end
     end
 
     -- Consultant alert evaluation runs everywhere (reads synced field data)
@@ -544,7 +542,15 @@ end
 
 function CropStressManager:loadFromXMLFile()
     if not self.isInitialized then return end
-    self.saveLoad:loadFromXMLFile()
+    -- StateLedger is the load source of truth when present and it delivered a
+    -- block; careerSavegame.xml is the fallback (new save, or ledger absent).
+    -- Composed here so both load sites (onStartMission and the field-ready
+    -- updater) get the ledger choice.
+    if CropStressStateLedgerBridge ~= nil and CropStressStateLedgerBridge.hasLedgerState() then
+        CropStressStateLedgerBridge.applyState(self)
+    else
+        self.saveLoad:loadFromXMLFile()
+    end
 end
 
 -- ============================================================
@@ -568,6 +574,168 @@ function CropStressManager:sendInitialClientState(connection)
     local fieldCount = 0
     for _ in pairs(self.soilSystem.fieldData) do fieldCount = fieldCount + 1 end
     csLog(string.format("MP: sent settings + moisture snapshot (%d fields) to new client", fieldCount))
+end
+
+-- ============================================================
+-- COMPANION READ API
+-- The single, stable read path for a field's moisture / stress. External
+-- companions (CropDisease, RandomWorldEvents, MarketDynamics, FarmTablet)
+-- and the bedrock bridges call these on g_cropStressManager rather than
+-- reaching into the subsystems, so the internal wiring can change without
+-- breaking readers. Mirrors SoilFertilizer's getFieldInfo read contract.
+-- ============================================================
+
+-- Moisture (0.0-1.0) for a field, or nil if the field is not tracked.
+function CropStressManager:getMoisture(fieldId)
+    if self.soilSystem == nil then return nil end
+    return self.soilSystem:getMoisture(fieldId)
+end
+
+-- Stress (0.0-1.0) for a field; 0.0 if the field is not tracked.
+-- NOTE: this is a MOISTURE-DROUGHT scalar ONLY. CropStressModifier accumulates
+-- it purely from moisture deficit inside critical growth windows and folds NO
+-- temperature term, so a well-irrigated field in a heatwave reports ~0.0.
+-- Heat-driven consumers (SCS-010 market heat, SCS-013 livestock heat) must read
+-- getTemperature/getEvaporativeDemand below, never getStress, for heat.
+function CropStressManager:getStress(fieldId)
+    if self.stressModifier == nil then return 0.0 end
+    return self.stressModifier:getStress(fieldId)
+end
+
+-- ── Irrigation & water (B3.2b) ──────────────────────────────
+-- Irrigation-ops + economy consumers (SCS-006/007/008/009/011/012/015/016)
+-- read irrigation state through these getters instead of reaching into
+-- IrrigationManager, so the internal system model can change without breaking
+-- them. All read-only and nil/neutral-safe, mirroring getMoisture.
+
+-- Irrigation moisture-gain rate per in-game hour applied to a field by ALL
+-- active systems combined (the irrigation contribution). 0.0 if not irrigated
+-- or no manager. Compare with getMoisture(fieldId) (the total level) to reason
+-- about irrigation-vs-natural water on a field.
+function CropStressManager:getIrrigationRate(fieldId)
+    if self.irrigationManager == nil then return 0.0 end
+    return self.irrigationManager:getIrrigationRateForField(fieldId) or 0.0
+end
+
+-- True when at least one active irrigation system is watering the field.
+function CropStressManager:isFieldIrrigated(fieldId)
+    return self:getIrrigationRate(fieldId) > 0.0
+end
+
+-- Read-only snapshot list of registered irrigation systems. Each entry is a
+-- COPY, never a live internal table:
+--   { id, type, isActive,
+--     coveredFields = { farmlandId, ... },  -- ARRAY, iterate with ipairs
+--     schedule = { startHour, endHour, activeDays = {bool x7} } or nil,
+--     flowRatePerHour, operationalCostPerHour }
+-- Empty table if no systems / no manager. Mutating the result cannot affect the
+-- live simulation, and the coveredFields ipairs-array contract is preserved.
+function CropStressManager:getIrrigationSystems()
+    local out = {}
+    local irrMgr = self.irrigationManager
+    if irrMgr == nil or irrMgr.systems == nil then return out end
+    for _, sys in pairs(irrMgr.systems) do
+        local covered = {}
+        if sys.coveredFields ~= nil then
+            for i = 1, #sys.coveredFields do covered[i] = sys.coveredFields[i] end
+        end
+        local schedule = nil
+        if sys.schedule ~= nil then
+            local days = {}
+            if sys.schedule.activeDays ~= nil then
+                for i = 1, #sys.schedule.activeDays do days[i] = sys.schedule.activeDays[i] end
+            end
+            schedule = {
+                startHour  = sys.schedule.startHour,
+                endHour    = sys.schedule.endHour,
+                activeDays = days,
+            }
+        end
+        out[#out + 1] = {
+            id                     = sys.id,
+            type                   = sys.type,
+            isActive               = sys.isActive == true,
+            coveredFields          = covered,
+            schedule               = schedule,
+            flowRatePerHour        = sys.flowRatePerHour,
+            operationalCostPerHour = sys.operationalCostPerHour,
+        }
+    end
+    return out
+end
+
+-- Active irrigation schedule covering a field: a COPY of
+-- {startHour, endHour, activeDays} from the first active system whose
+-- coveredFields include the field, or nil when nothing active covers it.
+function CropStressManager:getIrrigationSchedule(fieldId)
+    local irrMgr = self.irrigationManager
+    if irrMgr == nil or irrMgr.systems == nil then return nil end
+    for _, sys in pairs(irrMgr.systems) do
+        if sys.isActive and sys.coveredFields ~= nil and sys.schedule ~= nil then
+            for _, fid in ipairs(sys.coveredFields) do
+                if fid == fieldId then
+                    local days = {}
+                    if sys.schedule.activeDays ~= nil then
+                        for i = 1, #sys.schedule.activeDays do days[i] = sys.schedule.activeDays[i] end
+                    end
+                    return {
+                        startHour  = sys.schedule.startHour,
+                        endHour    = sys.schedule.endHour,
+                        activeDays = days,
+                    }
+                end
+            end
+        end
+    end
+    return nil
+end
+
+-- Field polygon in world space for coverage / area math: returns vx, vz, n
+-- (arrays of vertex world coords + count), or nil when unavailable. Promotes
+-- IrrigationManager:getFieldPolygonWorld — the real field polygon, never a
+-- label-point box.
+function CropStressManager:getFieldPolygonWorld(field)
+    if self.irrigationManager == nil then return nil end
+    return self.irrigationManager:getFieldPolygonWorld(field)
+end
+
+-- ── Advisory / alert hint (B3.2b) ───────────────────────────
+-- Short localised critical-stress hint (e.g. an AutoDrive water-hauling
+-- suggestion), or nil when no advisory applies. Read-only.
+function CropStressManager:getCriticalAlertHint()
+    if self.autoDriveIntegration == nil then return nil end
+    return self.autoDriveIntegration:getCriticalAlertHint()
+end
+
+-- ── Heat / drought (B3.2b, SCS-010 / SCS-013) ───────────────
+-- getStress does NOT fold heat (see its note above), so heat consumers read
+-- these instead. Both promote existing WeatherIntegration reads — no new heat
+-- mechanic is introduced; they are map-wide signals, not per-field.
+
+-- Current ambient temperature in °C (weather-driven). Neutral 15.0 without
+-- weather data.
+function CropStressManager:getTemperature()
+    if self.weatherIntegration == nil then return 15.0 end
+    return self.weatherIntegration:getCurrentTemp() or 15.0
+end
+
+-- Evaporative demand for the current hour: the temperature+season evaporation
+-- multiplier (typically ~0.2 cool/humid .. ~2.5 hot/dry; ~90% lower while
+-- raining). The map-wide heat/drought pressure signal for SCS-010/013 to
+-- compose their own response from. Neutral 1.0 without weather data.
+function CropStressManager:getEvaporativeDemand()
+    if self.weatherIntegration == nil then return 1.0 end
+    return self.weatherIntegration:getHourlyEvapMultiplier() or 1.0
+end
+
+-- True when SCS is charging irrigation operating costs (the player has not disabled
+-- them). Mirrors FinanceIntegration's own gate: enabled unless costsEnabled is
+-- explicitly false. Lets a cost-mirroring consumer (e.g. TaxMod's irrigation expense
+-- line) avoid reporting a charge the player is not actually paying. Neutral true when
+-- no irrigation manager is present (no systems means nothing is charged anyway).
+function CropStressManager:getIrrigationCostsEnabled()
+    if self.irrigationManager == nil then return true end
+    return self.irrigationManager.costsEnabled ~= false
 end
 
 -- ============================================================
@@ -596,11 +764,6 @@ function CropStressManager:detectOptionalMods()
         csLog("FS25_UsedPlus detected — enabling finance integration")
         self.financeIntegration:enableUsedPlusMode()
         self.usedEquipmentMarketplace:enableUsedPlusMode()
-    end
-
-    if g_precisionFarming ~= nil then
-        csLog("Precision Farming DLC detected — enabling PF compat (Phase 4)")
-        self.precisionFarmingOverlay:enablePrecisionFarmingMode()
     end
 
     -- FS25_SoilFertilizer (sibling mod by same author)
@@ -684,15 +847,23 @@ function CropStressManager:onToggleSettings()
     end
 end
 
-function CropStressManager:onOpenIrrigationDialog()
+function CropStressManager:onOpenIrrigationDialog(systemId)
     local irrMgr = self.irrigationManager
     if irrMgr == nil then return end
 
-    -- Find first registered system to open (Phase 2 simplified approach)
-    local firstId = nil
-    for id, _ in pairs(irrMgr.systems) do
-        firstId = id
-        break
+    -- Cross-mod entry point. Callers in OTHER mods (e.g. a Reinke pivot reached
+    -- via g_currentMission.cropStressManager) can pass their own system id so the
+    -- dialog opens for THAT pivot. A bare CsDialogLoader global is only visible
+    -- inside this mod's environment, so external mods must route through here.
+    -- When systemId is nil/unknown, fall back to the first registered system
+    -- (existing in-mod callers pass nothing, so their behaviour is unchanged).
+    local firstId = systemId
+    if firstId == nil or irrMgr.systems[firstId] == nil then
+        firstId = nil
+        for id, _ in pairs(irrMgr.systems) do
+            firstId = id
+            break
+        end
     end
 
     if firstId ~= nil then
@@ -720,7 +891,6 @@ function CropStressManager:delete()
     self.autoDriveIntegration:delete()
     self.coursePlayIntegration:delete()
     self.soilFertilizerIntegration:delete()
-    self.precisionFarmingOverlay:delete()
     self.usedEquipmentMarketplace:delete()
     self.financeIntegration:delete()
     self.npcIntegration:delete()
@@ -773,7 +943,6 @@ function CropStressManager:consoleStatus()
     print("  Optional integrations:")
     print(string.format("    NPCFavor:       %s", tostring(self.npcIntegration and self.npcIntegration.npcFavorActive or false)))
     print(string.format("    UsedPlus:       %s", tostring(self.financeIntegration and self.financeIntegration.usedPlusActive or false)))
-    print(string.format("    PrecisionFarm:  %s", tostring(self.precisionFarmingOverlay and self.precisionFarmingOverlay.pfActive or false)))
     print(string.format("    SoilFertilizer: %s", tostring(self.soilFertilizerIntegration and self.soilFertilizerIntegration.sfActive or false)))
     print(string.format("    CoursePlay:     %s (vehicles active: %d)",
         tostring(self.coursePlayIntegration and self.coursePlayIntegration.cpActive or false),
@@ -788,7 +957,7 @@ function CropStressManager:consoleStatus()
     print("  Driest fields:")
     for i = 1, math.min(5, #sorted) do
         local f = sorted[i]
-        local stress = self.stressModifier:getStress(f.fieldId)
+        local stress = self:getStress(f.fieldId)
         print(string.format("    Field %d: %.1f%% moisture, stress %.2f",
             f.fieldId, f.moisture * 100, stress))
     end

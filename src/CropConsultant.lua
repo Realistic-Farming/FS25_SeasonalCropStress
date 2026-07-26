@@ -157,7 +157,7 @@ function CropConsultant:hourlyEvaluate()
                 -- Only alert if stress is actively accumulating (crop in critical window)
                 local stress = 0
                 if self.manager.stressModifier ~= nil then
-                    stress = self.manager.stressModifier:getStress(fieldId)
+                    stress = self.manager:getStress(fieldId)
                 end
 
                 if stress > 0.01 then
@@ -273,11 +273,10 @@ function CropConsultant:showAlert(fieldId, moisture, severity, cropName)
         end
     end
 
-    -- AutoDrive context: for CRITICAL alerts, suggest setting up a water hauling route
-    if severity == "CRITICAL"
-    and self.manager ~= nil
-    and self.manager.autoDriveIntegration ~= nil then
-        local adHint = self.manager.autoDriveIntegration:getCriticalAlertHint()
+    -- AutoDrive context: for CRITICAL alerts, suggest setting up a water hauling route.
+    -- Read through the manager facade (getCriticalAlertHint) rather than the subsystem.
+    if severity == "CRITICAL" and self.manager ~= nil then
+        local adHint = self.manager:getCriticalAlertHint()
         if adHint ~= nil then
             g_currentMission:showBlinkingWarning(adHint, 5000)
         end

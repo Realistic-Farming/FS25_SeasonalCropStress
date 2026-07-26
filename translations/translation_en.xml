@@ -114,8 +114,6 @@
     <text name="input_CS_EDIT_HUD"        text="Edit/Move Moisture HUD"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
-    <text name="cs_pf_moisture_overlay"      text="Soil Moisture"/>
-    <text name="cs_pf_moisture_overlay_desc" text="Displays current soil moisture levels across your fields. Red indicates dry soil, green indicates optimal moisture, and blue indicates saturated soil."/>
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Seasonal Crop Stress"/>
