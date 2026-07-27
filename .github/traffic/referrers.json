@@ -2648,8 +2648,8 @@
   "2026-07-27": [
     {
       "referrer": "github.com",
-      "count": 205,
-      "uniques": 96
+      "count": 210,
+      "uniques": 92
     },
     {
       "referrer": "Google",
@@ -2665,6 +2665,11 @@
       "referrer": "Bing",
       "count": 4,
       "uniques": 2
+    },
+    {
+      "referrer": "yandex.ru",
+      "count": 2,
+      "uniques": 1
     }
   ]
 }
