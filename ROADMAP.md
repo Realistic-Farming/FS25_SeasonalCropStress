@@ -15,6 +15,7 @@
 - Baseline date: 2026-06-30
 
 ## Near-term (next release cycle)
+- [x] Witcombe join load-gates (3969c44): buildFieldMap deferred until post-join in MP moisture init event and NetworkSync bridge, preventing empty field map on client join. Pushed 2026-07-28.
 - [x] Strip the Precision Farming overlay: DONE. Removed wholesale in 77b3064; zero PF refs remain in any .lua (verified 2026-07-15).
 - [x] "Remove the FSBaseMission.draw hook": closed as wrong premise - the draw hook drives the real moisture HUD, not a no-op stub. Kept.
 - [x] Companion read API façade on `cropStressManager` (getMoisture / getStress) for CropDisease and RandomWorldEvents (B3.2): DONE (83aef10).
