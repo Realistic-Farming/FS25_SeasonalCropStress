@@ -57,6 +57,42 @@ function SprayerIntegration.overwrittenProcessSprayerArea(self, superFunc, workA
     end
 
     if fillType == SprayerIntegration.WATER_FILL_TYPE then
+        -- AI buy-mode detection: detect AI helper with buy-mode enabled
+        -- and inject computed usage so the moisture guard passes.
+        -- Base-game helpers (getIsAIActive) and CoursePlay specs covered.
+        local isAI = false
+        if type(self.getIsAIActive) == "function" then
+            isAI = self:getIsAIActive()
+        end
+        if not isAI and self.spec_aiVehicle ~= nil then isAI = true end
+        if not isAI and self.spec_aiJobVehicle ~= nil then isAI = true end
+
+        local isFieldWork = false
+        if g_currentMission ~= nil and type(g_currentMission.getIsFieldWorkActive) == "function" then
+            isFieldWork = g_currentMission:getIsFieldWorkActive(self)
+        end
+
+        local speed = self.lastSpeedReal or 0
+        local isMoving = speed > 0.5
+
+        local isBuyMode = false
+        if g_currentMission ~= nil and g_currentMission.missionInfo ~= nil then
+            local mi = g_currentMission.missionInfo
+            if mi.helperBuyFertilizer == true or mi.helperManureSource == 2 or mi.helperSlurrySource == 2 then
+                isBuyMode = true
+            end
+        end
+
+        if isAI and isFieldWork and isMoving and isBuyMode then
+            local workWidth = (spec.workAreaParameters ~= nil and spec.workAreaParameters.width) or 3.0
+            local sprayCapacity = (spec.sprayFillType ~= nil and spec.sprayFillTypeCapacity) or 1000
+            local litersPerSecond = (sprayCapacity / 1000) * 0.1
+            local computedUsage = speed * workWidth * litersPerSecond
+            spec.workAreaParameters.usage = computedUsage
+            spec.workAreaParameters.sprayFillLevel = 1.0
+            spec.workAreaParameters.sprayFillType = FillType.WATER
+        end
+
         -- Calculate moisture gain based on usage
         -- usage is in liters per dt
         local usage = spec.workAreaParameters.usage or 0
