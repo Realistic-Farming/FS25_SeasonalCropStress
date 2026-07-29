@@ -12,7 +12,10 @@
 - [x] `getIrrigationCostsEnabled` getter (212ceaa): a nil-safe read of the irrigation-costs-enabled flag, added to the facade for TaxMod's SCS-011 deductible-expense mirror (the first B3.2b consumer, in-game verified).
 
 ## Bugs
+- [x] Witcombe join load-gates: buildFieldMap called before g_fieldManager.fields populated on MP join, producing empty field map. Added field-readiness guards in CropStressMoistureInitEvent:run() and CropStressNetworkSyncBridge._onReadState(). Commit 3969c44, pushed 2026-07-28.
 - [x] CRITICAL (house rule): PF integration mode active on detection - RESOLVED. No PF code path remains after 77b3064; nothing left to stand down.
+- [x] SCS-001: created overlay handle in `initialize()`, replaced bare `drawFilledRect` calls (fixed, merged to main).
+- [x] SCS-002 / SCS-003: additional SeasonalCropStress bugs fixed in 2026-07-26 bug sweep, merged to main.
 
 ## Features / enhancements
 - [x] Short-month weather tune (e6a4fce): `SEASON_RAIN_PROB` reshaped to match SoilFertilizer's Normal climate shape, so SCS moisture and SF's #740 short-month rain fill agree on wet/dry seasonality. Shape-matched, not a raw copy (a day-vs-hour unit gap remains for a later retune with Arissani).

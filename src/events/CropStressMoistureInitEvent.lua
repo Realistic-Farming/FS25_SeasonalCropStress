@@ -97,8 +97,14 @@ function CropStressMoistureInitEvent:run(connection)
         applied = applied + 1
     end
 
-    -- Rebuild fieldById map so the PDA screen can look up field objects
-    mgr:buildFieldMap()
+    -- Rebuild fieldById map so the PDA screen can look up field objects.
+    -- Only do this when fields are ready; on MP join, the field manager may not
+    -- be fully populated yet. The field-ready updater installFieldReadyUpdater()
+    -- handles the initial enumeration and field map build when fields become
+    -- available, so it's safe to skip here.
+    if g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
+        mgr:buildFieldMap()
+    end
 
     csLog(string.format("MP: moisture sync applied for %d fields", applied))
 end

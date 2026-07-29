@@ -131,7 +131,11 @@ function CropStressNetworkSyncBridge._onReadState(arr)
         mgr.stressModifier.fieldStress[fieldId] = fieldStress[fieldId] or 0.0
     end
 
-    if mgr.buildFieldMap ~= nil then mgr:buildFieldMap() end
+    -- Rebuild field map only when fields are ready; on MP join the field manager
+    -- may not yet be populated. The field-ready updater handles initial enumeration.
+    if mgr.buildFieldMap ~= nil and g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
+        mgr:buildFieldMap()
+    end
 end
 
 -- =========================================================
