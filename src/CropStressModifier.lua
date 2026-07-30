@@ -121,6 +121,10 @@ end
 
 function CropStressModifier:initialize()
     self.isInitialized = true
+    -- Re-arm the one-shot "first reduction" log per mission load. The hook itself is
+    -- installed once per game process, so without this a second savegame loaded in the
+    -- same session would never print its proof line.
+    CropStressModifier._loggedFirstReduction = false
 end
 
 -- ============================================================
@@ -296,24 +300,55 @@ function CropStressModifier.installHarvestHook()
 
             local lastArea, totalArea = superFunc(self, workArea, dt)
 
+            -- Why this reports instead of returning silently: this hook spent its whole
+            -- life installed-but-never-called, and when the install was finally fixed it
+            -- STILL produced no yield change with no way to see which gate closed. Every
+            -- exit below is a legitimate no-op, but an unexplained no-op is what cost us
+            -- the original bug. CropStressModifier._diag throttles to once per 2s per
+            -- vehicle so the harvest path stays cheap.
+            local function diag(reason, fieldId, stress)
+                local now = (g_currentMission and g_currentMission.time) or 0
+                if (now - (self._csDiagAt or 0)) < 2000 then return end
+                self._csDiagAt = now
+                csLog(string.format("[HarvestDiag] no reduction: %s (fieldId=%s stress=%s cap=%s)",
+                    reason, tostring(fieldId), tostring(stress),
+                    tostring(g_cropStressManager and g_cropStressManager.stressModifier
+                             and g_cropStressManager.stressModifier:getMaxYieldLoss())))
+            end
+
             -- No area cut this pass, or manager not ready — nothing to do
             if lastArea == nil or lastArea <= 0 then return lastArea, totalArea end
             if g_cropStressManager == nil or not g_cropStressManager.isInitialized then
+                diag("manager not initialized", nil, nil)
                 return lastArea, totalArea
             end
 
             local stressModifier = g_cropStressManager.stressModifier
 
             -- RW mode: RW's getHarvestScaleMultiplier handles yield; we step aside
-            if stressModifier.rwModeActive then return lastArea, totalArea end
+            if stressModifier.rwModeActive then
+                diag("RW mode active, standing aside", nil, nil)
+                return lastArea, totalArea
+            end
 
             -- Identify field from the cut position
             local xs, _, zs = getWorldTranslation(workArea.start)
             local fieldId = CropStressModifier.getFieldIdAtPosition(xs, zs)
-            if fieldId == nil then return lastArea, totalArea end
+            if fieldId == nil then
+                diag("no farmland resolved at cut position", nil, nil)
+                return lastArea, totalArea
+            end
 
             local stress = stressModifier:getStress(fieldId)
-            if stress <= 0.01 then return lastArea, totalArea end
+            if stress <= 0.01 then
+                -- The id-space trap: csForceStress writes whatever number was typed, while
+                -- this resolves g_farmlandManager:getFarmlandAtWorldPosition(...).id. If
+                -- those differ, stress reads 0 here while SoilFertilizer's panel (which
+                -- passes its own fieldId) correctly shows a reduction. Printing the
+                -- RESOLVED id is what tells the two apart.
+                diag("stress at or below 0.01 for the resolved field", fieldId, stress)
+                return lastArea, totalArea
+            end
 
             -- Scale the grain added during this pass.
             -- lastMultiplierArea was incremented by superFunc; we reduce that delta.
@@ -325,10 +360,16 @@ function CropStressModifier.installHarvestHook()
                     spec.workAreaParameters.lastMultiplierArea = multAreaBefore + added * keepFactor
                 end
 
-                if g_cropStressManager.debugMode then
+                -- The FIRST reduction of a session always logs, then it falls back to
+                -- debugMode. One line is enough to prove the feature is alive without
+                -- needing csDebug enabled at the right moment (that ordering cost three
+                -- test runs), and without spamming a normal harvest afterwards.
+                if not CropStressModifier._loggedFirstReduction or g_cropStressManager.debugMode then
+                    CropStressModifier._loggedFirstReduction = true
                     csLog(string.format(
-                        "Harvest field %d: stress=%.2f → yield reduced by %.0f%%",
-                        fieldId, stress, (1.0 - keepFactor) * 100
+                        "Harvest field %d: stress=%.2f → yield reduced by %.0f%% (area %.1f → %.1f)",
+                        fieldId, stress, (1.0 - keepFactor) * 100,
+                        added, added * keepFactor
                     ))
                 end
             end
