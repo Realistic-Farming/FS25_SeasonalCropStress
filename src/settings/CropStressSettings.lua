@@ -51,6 +51,37 @@ local DIFFICULTY_MULTIPLIERS = {
 -- a tunable.
 local LEGACY_MAX_YIELD_LOSS = 0.60
 
+--- One-time default migration for the yield cap (Arissani ruling 2026-07-30).
+---
+--- The harvest hook never installed before this version, so NO stored maxYieldLoss was
+--- ever actually experienced. Changing DEFAULTS alone does not reach existing saves
+--- (they persist the value and the XML read wins), which would leave exactly the
+--- players the ruling protects sitting on the old cap the moment the penalty went live.
+---
+--- A save still carrying the OLD DEFAULT moves to the new one. A player who
+--- deliberately chose anything else keeps it, because an intentional 0.60 is
+--- indistinguishable from an untouched one and "equal to the old default" is the
+--- conservative read of "never configured".
+---
+--- COMPARED WITH A TOLERANCE, NOT WITH ==. The stored value round-trips through XML
+--- text and 0.6 has no exact binary representation, so getFloat's result is not
+--- bit-identical to the Lua literal. The first in-game test proved it: savegame14 held
+--- 0.600000 and an exact compare silently did nothing. The window is far tighter than
+--- the settings UI's step, so it cannot swallow a deliberate neighbouring choice.
+---
+--- Extracted as a named function precisely because the exact-compare version failed
+--- SILENTLY. A no-op bug needs a test that can see it.
+---@param stored number|nil  the value read from the savegame
+---@return number value      the value to use
+---@return boolean migrated  true when the legacy default was replaced
+function CropStressSettings.migrateLegacyYieldCap(stored)
+    if type(stored) ~= "number" then return DEFAULTS.maxYieldLoss, false end
+    if math.abs(stored - LEGACY_MAX_YIELD_LOSS) < 0.001 then
+        return DEFAULTS.maxYieldLoss, true
+    end
+    return stored, false
+end
+
 -- Validation ranges
 local VALIDATION = {
     maxYieldLoss = { min = 0.30, max = 0.75 },
@@ -140,8 +171,9 @@ function CropStressSettings:load(missionInfo)
     -- deliberately moved the slider to anything else keeps their choice untouched,
     -- because we cannot tell an intentional 0.60 from an untouched one and the
     -- conservative read of a value equal to the old default is "never configured".
-    if self.maxYieldLoss == LEGACY_MAX_YIELD_LOSS then
-        self.maxYieldLoss = DEFAULTS.maxYieldLoss
+    local migrated, didMigrate = CropStressSettings.migrateLegacyYieldCap(self.maxYieldLoss)
+    self.maxYieldLoss = migrated
+    if didMigrate then
         csLog(string.format(
             "maxYieldLoss migrated from the pre-fix default %.2f to %.2f (harvest hook now live; see ruling 2026-07-30)",
             LEGACY_MAX_YIELD_LOSS, DEFAULTS.maxYieldLoss))

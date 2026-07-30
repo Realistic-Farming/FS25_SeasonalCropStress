@@ -6,7 +6,7 @@
 -- GENTLE END of the existing 0.30-0.75 clamp rather than the old 0.60, with the full
 -- value routed to the suite balance pass. This file guards both halves: the shipped
 -- default, and the migration that carries the ruling to saves already on disk.
---!load: src/CropStressModifier.lua
+--!load: src/CropStressModifier.lua, src/settings/CropStressSettings.lua
 
 -- ── The shipped default ──────────────────────────────────────────────────────
 do
@@ -62,4 +62,53 @@ do
   -- Raise the cap and the same stress must report the harsher number.
   mod:setMaxYieldLoss(0.60)
   T.eq("impact: reflects a raised cap", mod:getYieldImpactString(1), "-60%")
+end
+
+-- ── The save migration (regression guard for a SILENT no-op) ─────────────────
+-- The first implementation compared the stored value with == and therefore never
+-- fired: savegame14 held 0.600000, was not migrated, and nothing in the log said so.
+-- A bug whose only symptom is absence needs a test that can see it.
+do
+  local migrate = CropStressSettings.migrateLegacyYieldCap
+
+  -- The exact literal migrates.
+  local v, did = migrate(0.60)
+  T.near("migrate: legacy default -> new default", v, 0.30)
+  T.ok("migrate: reports that it migrated", did)
+
+  -- THE CASE THE == VERSION MISSED: a float that came back from XML text and is not
+  -- bit-identical to the literal. Both of these are "0.6" as far as a player is
+  -- concerned and both must migrate.
+  v, did = migrate(0.60000002384185791)
+  T.near("migrate: float-imprecise legacy value still migrates", v, 0.30)
+  T.ok("migrate: imprecise value reports migrated", did)
+  v, did = migrate(0.5999999)
+  T.near("migrate: legacy value a hair low still migrates", v, 0.30)
+  T.ok("migrate: hair-low value reports migrated", did)
+
+  -- A deliberately chosen value is NEVER touched.
+  v, did = migrate(0.75)
+  T.near("migrate: deliberate 0.75 untouched", v, 0.75)
+  T.ok("migrate: 0.75 not reported as migrated", not did)
+  v, did = migrate(0.45)
+  T.near("migrate: deliberate 0.45 untouched", v, 0.45)
+  T.ok("migrate: 0.45 not reported as migrated", not did)
+
+  -- The tolerance must not swallow a neighbouring deliberate choice.
+  v, did = migrate(0.65)
+  T.near("migrate: 0.65 is not the legacy default", v, 0.65)
+  T.ok("migrate: 0.65 not reported as migrated", not did)
+  v, did = migrate(0.55)
+  T.near("migrate: 0.55 is not the legacy default", v, 0.55)
+  T.ok("migrate: 0.55 not reported as migrated", not did)
+
+  -- Already on the new default: nothing to do, and no misleading log.
+  v, did = migrate(0.30)
+  T.near("migrate: already on new default stays", v, 0.30)
+  T.ok("migrate: new default not reported as migrated", not did)
+
+  -- Absent / junk falls to the default without claiming a migration.
+  v, did = migrate(nil)
+  T.near("migrate: nil -> default", v, 0.30)
+  T.ok("migrate: nil not reported as migrated", not did)
 end
