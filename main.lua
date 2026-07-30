@@ -260,6 +260,14 @@ FSBaseMission.update = Utils.appendedFunction(FSBaseMission.update, function(sel
     if g_csManager ~= nil then g_csManager:update(dt) end
     -- Retry PDA registration each frame until InGameMenu is ready
     if CsPDAScreen ~= nil then CsPDAScreen._attemptDeferredRegister(dt) end
+    -- Harvest-hook liveness backstop (see the install block near the bottom of this
+    -- file). Guarded on the specialization actually being present so a genuinely
+    -- absent Cutter cannot spam its skip message once per frame; the flag makes this
+    -- a single boolean test for the rest of the session once the hook lands.
+    if CropStressModifier ~= nil and not CropStressModifier.harvestHookInstalled
+       and Cutter ~= nil and type(Cutter.processCutterArea) == "function" then
+        CropStressModifier.installHarvestHook()
+    end
 end)
 
 -- 4. Draw hook (HUD rendering)
@@ -347,20 +355,35 @@ Mission00.onStartMission = Utils.appendedFunction(Mission00.onStartMission, func
     g_csManager:loadFromXMLFile()
 end)
 
--- 8a. Vehicles loaded: install harvest hook.
--- HarvestingMachine is a vehicle specialization class. It is NOT available at
--- source() load time, loadMission00Finished, or onStartMission — all of those
--- fire before vehicle XML files are parsed and specializations registered.
--- FSBaseMission.onAllVehiclesLoaded is the first guaranteed-safe hook point.
--- (Confirmed by FS25_NPCFavor and CoursePlay: they hook vehicle specs here too.)
-FSBaseMission.onAllVehiclesLoaded = Utils.appendedFunction(
-    FSBaseMission.onAllVehiclesLoaded,
-    function(self)
-        if not CropStressModifier.harvestHookInstalled then
-            CropStressModifier.installHarvestHook()
-        end
+-- 8a. Install the harvest yield hook.
+--
+-- HISTORY, kept because the old comment here was confidently wrong and cost us a
+-- shipped-but-dead feature. It claimed FSBaseMission.onAllVehiclesLoaded was "the
+-- first guaranteed-safe hook point" and cited NPCFavor and CoursePlay as witnesses.
+-- NEITHER MOD USES IT, it appears in no reference doc, and it never fires: a full
+-- session log contains none of installHarvestHook's three outcome lines (success or
+-- either skip). Cutter.processCutterArea was therefore never wrapped and the yield
+-- penalty had never run on any save. Certified in-game 2026-07-30 by forcing stress
+-- to 1.0 and measuring litres per area across the harvest: a flat 0.4 L/m2 before
+-- and after, i.e. no reduction at all.
+--
+-- Mission00.onStartMission is the proven point. SoilFertilizer installs its own
+-- vehicle-specialization hooks there (Combine.addCutterArea,
+-- FillUnit.addFillUnitFillLevel, Mower.onStartWorkAreaProcessing) and all three
+-- install successfully every session, so the Cutter specialization is registered by
+-- then. Cutter:processCutterArea(workArea, dt) is confirmed in the Community LUADOC
+-- (Cutter.md:1853, registered via SpecializationUtil.registerFunction).
+--
+-- The per-frame retry in FSBaseMission.update below is the liveness backstop: if the
+-- specialization is somehow not ready at onStartMission, we keep trying instead of
+-- silently doing nothing for the rest of the session. installHarvestHook() sets
+-- harvestHookInstalled only on success, so the retry costs one boolean test per frame
+-- once it lands, and a genuine "Cutter absent" case still logs its reason.
+Mission00.onStartMission = Utils.appendedFunction(Mission00.onStartMission, function(self, ...)
+    if not CropStressModifier.harvestHookInstalled then
+        CropStressModifier.installHarvestHook()
     end
-)
+end)
 
 -- 8. Multiplayer: send initial state to new client
 FSBaseMission.sendInitialClientState = Utils.appendedFunction(

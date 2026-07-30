@@ -20,8 +20,16 @@
 CropStressModifier = {}
 CropStressModifier.__index = CropStressModifier
 
--- Maximum yield reduction at stress = 1.0 (full stress)
-CropStressModifier.MAX_YIELD_LOSS = 0.60
+-- Maximum yield reduction at stress = 1.0 (full stress).
+--
+-- 0.30 is the GENTLE END of the existing 0.30-0.75 settings clamp, ruled by Arissani
+-- 2026-07-30 when the harvest hook was found never to have installed. Every balance
+-- observation ever made about this mod was made with the penalty inert, so the old
+-- 0.60 describes a system nobody has actually played. Shipping the repair at the
+-- gentle end avoids a surprise tax on existing saves mid-season; the full value is
+-- routed to the suite balance pass, where it rises with every other magnitude
+-- considered together rather than alone. This is a DEFAULT, not new machinery.
+CropStressModifier.MAX_YIELD_LOSS = 0.30
 
 -- Crop stress configuration (matches cropStressDefaults.xml)
 -- key = lowercase fruit type name as returned by FS25 field:getFruitType().name
@@ -360,7 +368,7 @@ end
 
 -- Set maximum yield loss from settings
 function CropStressModifier:setMaxYieldLoss(loss)
-    self.maxYieldLoss = math.max(0.30, math.min(0.75, loss or 0.60))
+    self.maxYieldLoss = math.max(0.30, math.min(0.75, loss or CropStressModifier.MAX_YIELD_LOSS))
 end
 
 -- Override MAX_YIELD_LOSS for settings compatibility

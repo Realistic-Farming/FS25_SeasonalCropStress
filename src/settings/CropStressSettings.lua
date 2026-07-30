@@ -28,7 +28,7 @@ local DEFAULTS = {
     difficulty = "normal",
     hudVisible = true,
     evapotranspiration = "normal",
-    maxYieldLoss = 0.60,
+    maxYieldLoss = 0.30,   -- gentle end of the clamp; Arissani ruling 2026-07-30
     criticalThreshold = 0.25,
     irrigationCosts = true,
     alertsEnabled = true,
@@ -44,6 +44,12 @@ local DIFFICULTY_MULTIPLIERS = {
     normal = { stress = 1.0, evap = 1.0 },
     hard = { stress = 1.5, evap = 1.4 }
 }
+
+-- The pre-2026-07-30 default cap. Retained solely so a save still carrying it can be
+-- migrated to the current default on load (see the migration note in load()). Do not
+-- reuse this for anything else, and do not change it: it is a historical marker, not
+-- a tunable.
+local LEGACY_MAX_YIELD_LOSS = 0.60
 
 -- Validation ranges
 local VALIDATION = {
@@ -121,6 +127,25 @@ function CropStressSettings:load(missionInfo)
     self.debugMode          = readBool(xmlFile, "cropStressSettings.debugMode",          DEFAULTS.debugMode)
     self.hudPanelX          = xmlFile:getFloat("cropStressSettings.hudPanelX")           or DEFAULTS.hudPanelX
     self.hudPanelY          = xmlFile:getFloat("cropStressSettings.hudPanelY")           or DEFAULTS.hudPanelY
+
+    -- One-time default migration for the yield cap (Arissani ruling 2026-07-30).
+    --
+    -- The harvest hook never installed before this version, so NO stored maxYieldLoss
+    -- was ever actually experienced by any player. Changing DEFAULTS alone would not
+    -- reach existing saves (they persist the value and the read above wins), which
+    -- would leave the exact population the ruling protects still on 0.60 the moment
+    -- the penalty goes live. That is the surprise tax the ruling exists to prevent.
+    --
+    -- So: a save still carrying the OLD DEFAULT is moved to the new one. A player who
+    -- deliberately moved the slider to anything else keeps their choice untouched,
+    -- because we cannot tell an intentional 0.60 from an untouched one and the
+    -- conservative read of a value equal to the old default is "never configured".
+    if self.maxYieldLoss == LEGACY_MAX_YIELD_LOSS then
+        self.maxYieldLoss = DEFAULTS.maxYieldLoss
+        csLog(string.format(
+            "maxYieldLoss migrated from the pre-fix default %.2f to %.2f (harvest hook now live; see ruling 2026-07-30)",
+            LEGACY_MAX_YIELD_LOSS, DEFAULTS.maxYieldLoss))
+    end
 
     xmlFile:delete()
 
