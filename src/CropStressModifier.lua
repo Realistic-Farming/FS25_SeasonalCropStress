@@ -279,6 +279,23 @@ end
 --
 -- HarvestingMachine does NOT exist in FS25. setFillUnitFillLevel does NOT exist.
 -- ============================================================
+-- WHY PATCHING THE CLASS ALONE IS NOT ENOUGH (certified 2026-07-30).
+--
+-- `SpecializationUtil.registerFunction(objectType, funcName, func)` does exactly
+-- `objectType.functions[funcName] = func` (Community LUADOC, SpecializationUtil.md:473),
+-- and Cutter registers processCutterArea that way (Cutter.md:2206). The pointer is
+-- COPIED into each vehicle type's function table at type-registration time, and
+-- instances resolve through their type. So assigning Cutter.processCutterArea afterwards
+-- patches a table nothing reads: the hook reported "installed" and its wrapper was never
+-- once invoked, while SoilFertilizer's Combine.addCutterArea hook fired on the same cuts.
+-- Measured on savegame14 with stress forced to 1.0: no reduction and not even a
+-- diagnostic line, because the wrapper simply never ran.
+--
+-- SoilFertilizer already solved this and its two-layer shape is what we copy here
+-- (see HookManager.lua "Layer 2: patch g_vehicleTypeManager.types[*].functions"):
+--   Layer 1: the class, so any type registered LATER picks the wrapper up.
+--   Layer 2: every already-registered vehicle type carrying the cutter spec.
+-- ============================================================
 function CropStressModifier.installHarvestHook()
     if CropStressModifier.harvestHookInstalled then return end
     if Cutter == nil then
@@ -290,8 +307,10 @@ function CropStressModifier.installHarvestHook()
         return
     end
 
-    Cutter.processCutterArea = Utils.overwrittenFunction(
-        Cutter.processCutterArea,
+    -- Factory so the identical body wraps whatever chain sits beneath it, at either
+    -- layer, without duplicating the logic.
+    local function makeWrapper(chainFn)
+        return Utils.overwrittenFunction(chainFn,
         function(self, superFunc, workArea, dt)
             -- Capture accumulated multiplier area before this cut pass
             local spec = self.spec_cutter
@@ -375,11 +394,39 @@ function CropStressModifier.installHarvestHook()
             end
 
             return lastArea, totalArea
+        end)
+    end
+
+    -- Layer 1: the class, for any vehicle type registered after this point.
+    Cutter.processCutterArea = makeWrapper(Cutter.processCutterArea)
+
+    -- Layer 2: every already-registered vehicle type that carries the cutter spec.
+    -- This is the layer that actually makes the reduction happen, because existing
+    -- types already hold their own copy of the original pointer.
+    local typesPatched, typesSeen = 0, 0
+    if g_vehicleTypeManager and g_vehicleTypeManager.types then
+        for _, typeDef in pairs(g_vehicleTypeManager.types) do
+            typesSeen = typesSeen + 1
+            local hasCutter = typeDef.specializationsByName ~= nil
+                              and typeDef.specializationsByName.cutter ~= nil
+            if hasCutter and typeDef.functions ~= nil
+               and type(typeDef.functions.processCutterArea) == "function" then
+                typeDef.functions.processCutterArea = makeWrapper(typeDef.functions.processCutterArea)
+                typesPatched = typesPatched + 1
+            end
         end
-    )
+    end
 
     CropStressModifier.harvestHookInstalled = true
-    csLog("Harvest yield hook installed on Cutter.processCutterArea")
+    csLog(string.format(
+        "Harvest yield hook installed on Cutter.processCutterArea (class + %d/%d vehicle types patched)",
+        typesPatched, typesSeen))
+    if typesPatched == 0 then
+        -- Loud, because this is the exact failure that made the hook a no-op before:
+        -- "installed" with nothing actually wired is the state we must never ship again.
+        csLog("WARNING: no vehicle types were patched - the yield reduction will NOT apply. "
+              .. "Check that g_vehicleTypeManager is populated at this point in the load.")
+    end
 end
 
 function CropStressModifier:delete()
