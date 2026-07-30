@@ -335,8 +335,14 @@ function CropStressModifier.installHarvestHook()
                              and g_cropStressManager.stressModifier:getMaxYieldLoss())))
             end
 
-            -- No area cut this pass, or manager not ready — nothing to do
-            if lastArea == nil or lastArea <= 0 then return lastArea, totalArea end
+            -- No area cut this pass, or manager not ready — nothing to do.
+            -- This one reports too. It is the ONLY path that was left silent, which meant
+            -- "wrapper never ran" and "wrapper ran but cut nothing" looked identical from
+            -- the log, and distinguishing those two is the whole diagnostic question.
+            if lastArea == nil or lastArea <= 0 then
+                diag("wrapper ran but lastArea was nil/zero", nil, nil)
+                return lastArea, totalArea
+            end
             if g_cropStressManager == nil or not g_cropStressManager.isInitialized then
                 diag("manager not initialized", nil, nil)
                 return lastArea, totalArea
@@ -417,15 +423,40 @@ function CropStressModifier.installHarvestHook()
         end
     end
 
+    -- Layer 3: live vehicle INSTANCES carrying the cutter spec.
+    --
+    -- UNVERIFIED IN-GAME as of 2026-07-30. Added because Layers 1+2 patched the class
+    -- and 10/156 vehicle types and the wrapper STILL never ran on the active cutter:
+    -- a harvest at forced stress 1.0 produced no reduction and no diagnostic at all.
+    -- Instance patching is the shape SoilFertilizer uses successfully for the very same
+    -- harvest path (HookManager.installYieldModifierHook logs "N existing combines
+    -- patched"), and an instance assignment shadows the type function, so it wins
+    -- regardless of how the type tables were populated.
+    --
+    -- Kept ALONGSIDE layers 1+2 rather than replacing them: a cutter attached or bought
+    -- after this sweep is not covered here, and the type patch is what catches those.
+    local instancesPatched = 0
+    local vehicleSystem = g_currentMission and g_currentMission.vehicleSystem
+    if vehicleSystem and vehicleSystem.vehicles then
+        for _, vehicle in pairs(vehicleSystem.vehicles) do
+            if vehicle.spec_cutter ~= nil and type(vehicle.processCutterArea) == "function"
+               and not vehicle._csCutterPatched then
+                vehicle.processCutterArea = makeWrapper(vehicle.processCutterArea)
+                vehicle._csCutterPatched = true
+                instancesPatched = instancesPatched + 1
+            end
+        end
+    end
+
     CropStressModifier.harvestHookInstalled = true
     csLog(string.format(
-        "Harvest yield hook installed on Cutter.processCutterArea (class + %d/%d vehicle types patched)",
-        typesPatched, typesSeen))
-    if typesPatched == 0 then
+        "Harvest yield hook installed on Cutter.processCutterArea (class + %d/%d vehicle types + %d live instances patched)",
+        typesPatched, typesSeen, instancesPatched))
+    if typesPatched == 0 and instancesPatched == 0 then
         -- Loud, because this is the exact failure that made the hook a no-op before:
         -- "installed" with nothing actually wired is the state we must never ship again.
-        csLog("WARNING: no vehicle types were patched - the yield reduction will NOT apply. "
-              .. "Check that g_vehicleTypeManager is populated at this point in the load.")
+        csLog("WARNING: nothing was actually wired - the yield reduction will NOT apply. "
+              .. "Check that g_vehicleTypeManager / vehicleSystem are populated at this point.")
     end
 end
 
