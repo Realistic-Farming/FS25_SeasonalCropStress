@@ -23,6 +23,7 @@ do
   local m = newManager({})
   T.eq("empty.getMoisture nil",        m:getMoisture(1),            nil)
   T.eq("empty.getStress 0",            m:getStress(1),              0.0)
+  T.eq("empty.getYieldKeepFactor 1",   m:getYieldKeepFactor(1),     1.0)
   T.eq("empty.getIrrigationRate 0",    m:getIrrigationRate(1),      0.0)
   T.eq("empty.isFieldIrrigated false", m:isFieldIrrigated(1),       false)
   T.eq("empty.getIrrigationSystems 0", #m:getIrrigationSystems(),   0)
@@ -135,4 +136,44 @@ do
        newManager({ irrigationManager = { costsEnabled = true } }):getIrrigationCostsEnabled(), true)
   T.eq("costsEnabled false -> disabled",
        newManager({ irrigationManager = { costsEnabled = false } }):getIrrigationCostsEnabled(), false)
+end
+
+-- 5. getYieldKeepFactor: the cross-mod yield promote (SCS-002) ────────────────
+-- SoilFertilizer folds this into its Soil Monitor forecast so the displayed
+-- "Yield eff." reflects OUR upstream drought cut as well as its own nutrient
+-- modifier. It must equal exactly what CropStressModifier's harvest hook applies.
+do
+  local function fakeSM(stress, maxLoss, rw)
+    return {
+      rwModeActive   = rw or false,
+      getStress      = function(_self, fid) return stress[fid] or 0.0 end,
+      getMaxYieldLoss = function() return maxLoss end,
+    }
+  end
+
+  -- No stress → full keep. Matches the harvest hook's keepFactor of 1.0.
+  local m = newManager({ stressModifier = fakeSM({ [1] = 0.0 }, 0.60) })
+  T.near("keep: no stress → 1.0", m:getYieldKeepFactor(1), 1.0)
+
+  -- Untracked field reads 0 stress → neutral, never a surprise reduction.
+  T.near("keep: untracked field → 1.0", m:getYieldKeepFactor(999), 1.0)
+
+  -- Partial stress → 1 - stress*maxLoss, the exact harvest-hook formula.
+  m = newManager({ stressModifier = fakeSM({ [1] = 0.5 }, 0.60) })
+  T.near("keep: 0.5 stress @ 0.60 maxLoss → 0.70", m:getYieldKeepFactor(1), 0.70)
+
+  -- Full stress at the max clamp → the harshest keep the settings allow.
+  m = newManager({ stressModifier = fakeSM({ [1] = 1.0 }, 0.75) })
+  T.near("keep: full stress @ 0.75 maxLoss → 0.25", m:getYieldKeepFactor(1), 0.25)
+
+  -- RW mode: our reduction steps aside entirely, so we contribute nothing to fold.
+  -- Without this gate SF would double-count RealisticWeather's penalty in its display.
+  m = newManager({ stressModifier = fakeSM({ [1] = 1.0 }, 0.60, true) })
+  T.near("keep: RW mode → 1.0 despite full stress", m:getYieldKeepFactor(1), 1.0)
+
+  -- Out-of-range inputs can never push the factor outside [0,1].
+  m = newManager({ stressModifier = fakeSM({ [1] = 5.0 }, 0.60) })
+  T.near("keep: clamps at 0.0", m:getYieldKeepFactor(1), 0.0)
+  m = newManager({ stressModifier = fakeSM({ [1] = -5.0 }, 0.60) })
+  T.near("keep: clamps at 1.0", m:getYieldKeepFactor(1), 1.0)
 end

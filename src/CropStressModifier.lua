@@ -20,8 +20,16 @@
 CropStressModifier = {}
 CropStressModifier.__index = CropStressModifier
 
--- Maximum yield reduction at stress = 1.0 (full stress)
-CropStressModifier.MAX_YIELD_LOSS = 0.60
+-- Maximum yield reduction at stress = 1.0 (full stress).
+--
+-- 0.30 is the GENTLE END of the existing 0.30-0.75 settings clamp, ruled by Arissani
+-- 2026-07-30 when the harvest hook was found never to have installed. Every balance
+-- observation ever made about this mod was made with the penalty inert, so the old
+-- 0.60 describes a system nobody has actually played. Shipping the repair at the
+-- gentle end avoids a surprise tax on existing saves mid-season; the full value is
+-- routed to the suite balance pass, where it rises with every other magnitude
+-- considered together rather than alone. This is a DEFAULT, not new machinery.
+CropStressModifier.MAX_YIELD_LOSS = 0.30
 
 -- Crop stress configuration (matches cropStressDefaults.xml)
 -- key = lowercase fruit type name as returned by FS25 field:getFruitType().name
@@ -113,6 +121,10 @@ end
 
 function CropStressModifier:initialize()
     self.isInitialized = true
+    -- Re-arm the one-shot "first reduction" log per mission load. The hook itself is
+    -- installed once per game process, so without this a second savegame loaded in the
+    -- same session would never print its proof line.
+    CropStressModifier._loggedFirstReduction = false
 end
 
 -- ============================================================
@@ -267,6 +279,23 @@ end
 --
 -- HarvestingMachine does NOT exist in FS25. setFillUnitFillLevel does NOT exist.
 -- ============================================================
+-- WHY PATCHING THE CLASS ALONE IS NOT ENOUGH (certified 2026-07-30).
+--
+-- `SpecializationUtil.registerFunction(objectType, funcName, func)` does exactly
+-- `objectType.functions[funcName] = func` (Community LUADOC, SpecializationUtil.md:473),
+-- and Cutter registers processCutterArea that way (Cutter.md:2206). The pointer is
+-- COPIED into each vehicle type's function table at type-registration time, and
+-- instances resolve through their type. So assigning Cutter.processCutterArea afterwards
+-- patches a table nothing reads: the hook reported "installed" and its wrapper was never
+-- once invoked, while SoilFertilizer's Combine.addCutterArea hook fired on the same cuts.
+-- Measured on savegame14 with stress forced to 1.0: no reduction and not even a
+-- diagnostic line, because the wrapper simply never ran.
+--
+-- SoilFertilizer already solved this and its two-layer shape is what we copy here
+-- (see HookManager.lua "Layer 2: patch g_vehicleTypeManager.types[*].functions"):
+--   Layer 1: the class, so any type registered LATER picks the wrapper up.
+--   Layer 2: every already-registered vehicle type carrying the cutter spec.
+-- ============================================================
 function CropStressModifier.installHarvestHook()
     if CropStressModifier.harvestHookInstalled then return end
     if Cutter == nil then
@@ -278,8 +307,10 @@ function CropStressModifier.installHarvestHook()
         return
     end
 
-    Cutter.processCutterArea = Utils.overwrittenFunction(
-        Cutter.processCutterArea,
+    -- Factory so the identical body wraps whatever chain sits beneath it, at either
+    -- layer, without duplicating the logic.
+    local function makeWrapper(chainFn)
+        return Utils.overwrittenFunction(chainFn,
         function(self, superFunc, workArea, dt)
             -- Capture accumulated multiplier area before this cut pass
             local spec = self.spec_cutter
@@ -288,24 +319,61 @@ function CropStressModifier.installHarvestHook()
 
             local lastArea, totalArea = superFunc(self, workArea, dt)
 
-            -- No area cut this pass, or manager not ready — nothing to do
-            if lastArea == nil or lastArea <= 0 then return lastArea, totalArea end
+            -- Why this reports instead of returning silently: this hook spent its whole
+            -- life installed-but-never-called, and when the install was finally fixed it
+            -- STILL produced no yield change with no way to see which gate closed. Every
+            -- exit below is a legitimate no-op, but an unexplained no-op is what cost us
+            -- the original bug. CropStressModifier._diag throttles to once per 2s per
+            -- vehicle so the harvest path stays cheap.
+            local function diag(reason, fieldId, stress)
+                local now = (g_currentMission and g_currentMission.time) or 0
+                if (now - (self._csDiagAt or 0)) < 2000 then return end
+                self._csDiagAt = now
+                csLog(string.format("[HarvestDiag] no reduction: %s (fieldId=%s stress=%s cap=%s)",
+                    reason, tostring(fieldId), tostring(stress),
+                    tostring(g_cropStressManager and g_cropStressManager.stressModifier
+                             and g_cropStressManager.stressModifier:getMaxYieldLoss())))
+            end
+
+            -- No area cut this pass, or manager not ready — nothing to do.
+            -- This one reports too. It is the ONLY path that was left silent, which meant
+            -- "wrapper never ran" and "wrapper ran but cut nothing" looked identical from
+            -- the log, and distinguishing those two is the whole diagnostic question.
+            if lastArea == nil or lastArea <= 0 then
+                diag("wrapper ran but lastArea was nil/zero", nil, nil)
+                return lastArea, totalArea
+            end
             if g_cropStressManager == nil or not g_cropStressManager.isInitialized then
+                diag("manager not initialized", nil, nil)
                 return lastArea, totalArea
             end
 
             local stressModifier = g_cropStressManager.stressModifier
 
             -- RW mode: RW's getHarvestScaleMultiplier handles yield; we step aside
-            if stressModifier.rwModeActive then return lastArea, totalArea end
+            if stressModifier.rwModeActive then
+                diag("RW mode active, standing aside", nil, nil)
+                return lastArea, totalArea
+            end
 
             -- Identify field from the cut position
             local xs, _, zs = getWorldTranslation(workArea.start)
             local fieldId = CropStressModifier.getFieldIdAtPosition(xs, zs)
-            if fieldId == nil then return lastArea, totalArea end
+            if fieldId == nil then
+                diag("no farmland resolved at cut position", nil, nil)
+                return lastArea, totalArea
+            end
 
             local stress = stressModifier:getStress(fieldId)
-            if stress <= 0.01 then return lastArea, totalArea end
+            if stress <= 0.01 then
+                -- The id-space trap: csForceStress writes whatever number was typed, while
+                -- this resolves g_farmlandManager:getFarmlandAtWorldPosition(...).id. If
+                -- those differ, stress reads 0 here while SoilFertilizer's panel (which
+                -- passes its own fieldId) correctly shows a reduction. Printing the
+                -- RESOLVED id is what tells the two apart.
+                diag("stress at or below 0.01 for the resolved field", fieldId, stress)
+                return lastArea, totalArea
+            end
 
             -- Scale the grain added during this pass.
             -- lastMultiplierArea was incremented by superFunc; we reduce that delta.
@@ -317,20 +385,79 @@ function CropStressModifier.installHarvestHook()
                     spec.workAreaParameters.lastMultiplierArea = multAreaBefore + added * keepFactor
                 end
 
-                if g_cropStressManager.debugMode then
+                -- The FIRST reduction of a session always logs, then it falls back to
+                -- debugMode. One line is enough to prove the feature is alive without
+                -- needing csDebug enabled at the right moment (that ordering cost three
+                -- test runs), and without spamming a normal harvest afterwards.
+                if not CropStressModifier._loggedFirstReduction or g_cropStressManager.debugMode then
+                    CropStressModifier._loggedFirstReduction = true
                     csLog(string.format(
-                        "Harvest field %d: stress=%.2f → yield reduced by %.0f%%",
-                        fieldId, stress, (1.0 - keepFactor) * 100
+                        "Harvest field %d: stress=%.2f → yield reduced by %.0f%% (area %.1f → %.1f)",
+                        fieldId, stress, (1.0 - keepFactor) * 100,
+                        added, added * keepFactor
                     ))
                 end
             end
 
             return lastArea, totalArea
+        end)
+    end
+
+    -- Layer 1: the class, for any vehicle type registered after this point.
+    Cutter.processCutterArea = makeWrapper(Cutter.processCutterArea)
+
+    -- Layer 2: every already-registered vehicle type that carries the cutter spec.
+    -- This is the layer that actually makes the reduction happen, because existing
+    -- types already hold their own copy of the original pointer.
+    local typesPatched, typesSeen = 0, 0
+    if g_vehicleTypeManager and g_vehicleTypeManager.types then
+        for _, typeDef in pairs(g_vehicleTypeManager.types) do
+            typesSeen = typesSeen + 1
+            local hasCutter = typeDef.specializationsByName ~= nil
+                              and typeDef.specializationsByName.cutter ~= nil
+            if hasCutter and typeDef.functions ~= nil
+               and type(typeDef.functions.processCutterArea) == "function" then
+                typeDef.functions.processCutterArea = makeWrapper(typeDef.functions.processCutterArea)
+                typesPatched = typesPatched + 1
+            end
         end
-    )
+    end
+
+    -- Layer 3: live vehicle INSTANCES carrying the cutter spec.
+    --
+    -- UNVERIFIED IN-GAME as of 2026-07-30. Added because Layers 1+2 patched the class
+    -- and 10/156 vehicle types and the wrapper STILL never ran on the active cutter:
+    -- a harvest at forced stress 1.0 produced no reduction and no diagnostic at all.
+    -- Instance patching is the shape SoilFertilizer uses successfully for the very same
+    -- harvest path (HookManager.installYieldModifierHook logs "N existing combines
+    -- patched"), and an instance assignment shadows the type function, so it wins
+    -- regardless of how the type tables were populated.
+    --
+    -- Kept ALONGSIDE layers 1+2 rather than replacing them: a cutter attached or bought
+    -- after this sweep is not covered here, and the type patch is what catches those.
+    local instancesPatched = 0
+    local vehicleSystem = g_currentMission and g_currentMission.vehicleSystem
+    if vehicleSystem and vehicleSystem.vehicles then
+        for _, vehicle in pairs(vehicleSystem.vehicles) do
+            if vehicle.spec_cutter ~= nil and type(vehicle.processCutterArea) == "function"
+               and not vehicle._csCutterPatched then
+                vehicle.processCutterArea = makeWrapper(vehicle.processCutterArea)
+                vehicle._csCutterPatched = true
+                instancesPatched = instancesPatched + 1
+            end
+        end
+    end
 
     CropStressModifier.harvestHookInstalled = true
-    csLog("Harvest yield hook installed on Cutter.processCutterArea")
+    csLog(string.format(
+        "Harvest yield hook installed on Cutter.processCutterArea (class + %d/%d vehicle types + %d live instances patched)",
+        typesPatched, typesSeen, instancesPatched))
+    if typesPatched == 0 and instancesPatched == 0 then
+        -- Loud, because this is the exact failure that made the hook a no-op before:
+        -- "installed" with nothing actually wired is the state we must never ship again.
+        csLog("WARNING: nothing was actually wired - the yield reduction will NOT apply. "
+              .. "Check that g_vehicleTypeManager / vehicleSystem are populated at this point.")
+    end
 end
 
 function CropStressModifier:delete()
@@ -360,7 +487,7 @@ end
 
 -- Set maximum yield loss from settings
 function CropStressModifier:setMaxYieldLoss(loss)
-    self.maxYieldLoss = math.max(0.30, math.min(0.75, loss or 0.60))
+    self.maxYieldLoss = math.max(0.30, math.min(0.75, loss or CropStressModifier.MAX_YIELD_LOSS))
 end
 
 -- Override MAX_YIELD_LOSS for settings compatibility

@@ -28,7 +28,7 @@
 
     <!-- Gameplay difficulty multipliers (1.0 = normal) -->
     <difficulty
-        maxYieldLoss="0.60"
+        maxYieldLoss="0.30"
         stressMultiplier="1.0"
         evaporationMultiplier="1.0"
         rainAbsorptionMultiplier="1.0"

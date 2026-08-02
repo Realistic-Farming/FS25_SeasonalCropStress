@@ -602,6 +602,29 @@ function CropStressManager:getStress(fieldId)
     return self.stressModifier:getStress(fieldId)
 end
 
+-- Yield KEEP-factor (0.0-1.0) that our harvest hook actually applies to a field's
+-- grain: 1.0 = no drought reduction, 0.75 = a quarter of the crop lost to stress.
+-- This is the single number a cross-mod consumer needs to reason about SCS's share
+-- of the final yield, and it is derived from the same stress + maxYieldLoss the
+-- CropStressModifier harvest hook uses, so the two can never disagree.
+--
+-- Promoted deliberately rather than leaving consumers to compute stress*maxLoss
+-- themselves: that formula (and the RW stand-down below) must live in ONE place,
+-- or a tuning change here silently desyncs every reader.
+--
+-- Returns 1.0 (neutral) when there is no stressModifier, or when RW mode is active
+-- -- in RW mode our Cutter.processCutterArea reduction steps aside entirely and
+-- FS25_RealisticWeather owns the yield penalty, so SCS contributes nothing to fold.
+function CropStressManager:getYieldKeepFactor(fieldId)
+    local sm = self.stressModifier
+    if sm == nil then return 1.0 end
+    if sm.rwModeActive then return 1.0 end
+    local keep = 1.0 - (sm:getStress(fieldId) * sm:getMaxYieldLoss())
+    if keep < 0.0 then return 0.0 end
+    if keep > 1.0 then return 1.0 end
+    return keep
+end
+
 -- ── Irrigation & water (B3.2b) ──────────────────────────────
 -- Irrigation-ops + economy consumers (SCS-006/007/008/009/011/012/015/016)
 -- read irrigation state through these getters instead of reaching into
