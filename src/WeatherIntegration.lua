@@ -149,6 +149,22 @@ end
 -- WEATHER DATA ACCESSORS (with RealisticWeather support)
 -- ============================================================
 function WeatherIntegration:getTemperatureFromWeather()
+    -- [F93] WeatherGuard FIRST, when present. WeatherGuard is the ecosystem's
+    -- sixth core service and publishes the certified temperature route:
+    -- getCurrentSky().temperature reads weather.temperatureUpdater:getTemperatureAtTime()
+    -- (certified in WeatherGuard.lua against four shipping call sites), and it
+    -- warns once rather than substituting a number when the route is unreadable.
+    -- The cross-mod handle is the mission bridge (g_currentMission.weatherGuard),
+    -- exactly the delegate-when-present shape every core service uses. A bare
+    -- global would be per-mod scoped and invisible here.
+    local wg = g_currentMission and g_currentMission.weatherGuard
+    if wg ~= nil and type(wg.getCurrentSky) == "function" then
+        local ok, sky = pcall(function() return wg:getCurrentSky() end)
+        if ok and sky and type(sky.temperature) == "number" then
+            return sky.temperature
+        end
+    end
+
     -- Try RealisticWeather first if active.
     if self.realisticWeatherActive then
         local rw = g_realisticWeather or g_weatherSystem
@@ -170,7 +186,23 @@ function WeatherIntegration:getTemperatureFromWeather()
     -- Fall back to vanilla FS25 weather
     local env = g_currentMission.environment
     if env ~= nil then
-        -- FS25 primary weather system
+        -- [F93] The certified vanilla route. There is NO WeatherSystem class in
+        -- FS25: Environment.weather is a Weather instance, and
+        -- Weather:getCurrentTemperature() exists (certified at VehicleSystem.lua:158
+        -- and in the decompile, Weather.lua:671-672 via temperatureUpdater). The old
+        -- weatherSystem:getTemperature() probe below never matched anything, so SCS
+        -- believed it was permanently 15 degrees.
+        if env.weather ~= nil then
+            if type(env.weather.getCurrentTemperature) == "function" then
+                local ok, v = pcall(function() return env.weather:getCurrentTemperature() end)
+                if ok and v ~= nil then return v end
+            end
+            if env.weather.temperature ~= nil then
+                return env.weather.temperature
+            end
+        end
+
+        -- Legacy or alternative access (FS22 style)
         if env.weatherSystem ~= nil then
             if type(env.weatherSystem.getTemperature) == "function" then
                 return env.weatherSystem:getTemperature()
@@ -178,15 +210,6 @@ function WeatherIntegration:getTemperatureFromWeather()
                 return env.weatherSystem:getCurrentTemperature()
             elseif env.weatherSystem.temperature ~= nil then
                 return env.weatherSystem.temperature
-            end
-        end
-
-        -- Legacy or alternative access (FS22 style)
-        if env.weather ~= nil then
-            if env.weather.temperature ~= nil then
-                return env.weather.temperature
-            elseif type(env.weather.getCurrentTemperature) == "function" then
-                return env.weather:getCurrentTemperature() or 15.0
             end
         end
     end

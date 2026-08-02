@@ -19,6 +19,13 @@ function getWorldTranslation(_node) return 0, 0, 0 end
 function getTerrainHeightAtWorldPos(_node, _x, _y, _z) return 0 end
 g_terrainNode = nil
 
+-- FS25's per-mod global environment. Modules publish themselves via
+-- getfenv(0)[...] and probe optional mod globals through it. A shared table is
+-- enough for module load + optional-mod detection in the bench.
+local _sharedEnv = _G
+function getfenv(_level) return _sharedEnv end
+function setfenv(fn, _env) return fn end
+
 g_currentMission = {
   time = 1000,
   environment = { currentDay = 1, daysPerPeriod = 1 },
