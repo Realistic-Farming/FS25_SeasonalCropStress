@@ -214,13 +214,19 @@ Found a bug? [Open an issue](https://github.com/TheCodingDad-TisonK/FS25_Seasona
 
 ---
 
+## 📋 Changelog
+
+- **1.2.5.0** - Release gate. Experimental systems ship locked until deliberately released. Turn them on under the mod's settings, independent of difficulty. No systems are gated yet; the future #89 rebuild and moisture coupling rows are noted but not built. The F93 temperature fix stays in the stable baseline.
+
+---
+
 ## 📝 License
 
 This mod is licensed under **[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/)**.
 
 You may share it in its original form with attribution. You may not sell it, modify and redistribute it, or reupload it under a different name or authorship. Contributions via pull request are explicitly permitted and encouraged.
 
-**Author:** TisonK · **Version:** 1.2.3.3
+**Author:** TisonK · **Version:** 1.2.5.0
 
 © 2026 TisonK — See [LICENSE](LICENSE) for full terms.
 

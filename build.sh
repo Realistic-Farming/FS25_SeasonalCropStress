@@ -57,14 +57,17 @@ import zipfile, os, sys
 MOD_DIR = os.getcwd()
 ZIP_PATH = os.path.join(os.path.dirname(MOD_DIR), os.path.basename(MOD_DIR) + ".zip")
 
-EXCLUDE_DIRS  = {".git", ".claude", "__MACOSX"}
+EXCLUDE_DIRS  = {".git", ".claude", "__MACOSX", "node_modules", "tools/test"}
 EXCLUDE_EXTS  = {".sh", ".md", ".DS_Store", ".zip"}
 EXCLUDE_FILES = {".gitignore"}
 
+def rel(path):
+    return os.path.relpath(path, MOD_DIR).replace("\\", "/")
+
 with zipfile.ZipFile(ZIP_PATH, "w", zipfile.ZIP_DEFLATED) as zf:
     for root, dirs, files in os.walk(MOD_DIR):
-        # Prune excluded dirs in-place
-        dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
+        # Prune excluded dirs in-place (match by full relative path)
+        dirs[:] = [d for d in dirs if rel(os.path.join(root, d)) not in EXCLUDE_DIRS]
         for fname in files:
             if fname in EXCLUDE_FILES:
                 continue
@@ -72,7 +75,7 @@ with zipfile.ZipFile(ZIP_PATH, "w", zipfile.ZIP_DEFLATED) as zf:
                 continue
             full_path = os.path.join(root, fname)
             # Paths relative to MOD_DIR → files land at ZIP root (not in a subfolder)
-            arc_name = os.path.relpath(full_path, MOD_DIR)
+            arc_name = rel(full_path)
             # Enforce forward slashes (FS25 requirement)
             arc_name = arc_name.replace("\\", "/")
             zf.write(full_path, arc_name)
