@@ -15,6 +15,7 @@
 - Baseline date: 2026-06-30
 
 ## Near-term (next release cycle)
+- [x] Release gate (2026-08-04): wired per Arissani's 2026-08-03 lock set. The #89 rebuild and the moisture coupling LOCK when built (both unbuilt today; the two registry rows are noted as such). F93 ships STABLE, it is a fix not a system. `ReleaseGate.lua` + `experimentalSystems` opt-in (default false, orthogonal to difficulty) through settings/persistence/MP sync/SettingsHub/panel + `csRelease` status command. 145 assertions green.
 - [x] F93 temperature fix (2026-08-02): the temperature read was a permanent 15.0. `getTemperatureFromWeather()` probed a nonexistent `weatherSystem` class; it now delegates to WeatherGuard's `getCurrentSky().temperature` first (the certified temperatureUpdater route via the mission bridge), then the certified vanilla `Weather:getCurrentTemperature()`. Heat-driven behaviours were inert while looking healthy; this unblocks them. Covered by `tools/test/lua/weather_temp_f93_test.lua` (8 assertions).
 - [x] Witcombe join load-gates (3969c44): buildFieldMap deferred until post-join in MP moisture init event and NetworkSync bridge, preventing empty field map on client join. Pushed 2026-07-28.
 - [x] Strip the Precision Farming overlay: DONE. Removed wholesale in 77b3064; zero PF refs remain in any .lua (verified 2026-07-15).

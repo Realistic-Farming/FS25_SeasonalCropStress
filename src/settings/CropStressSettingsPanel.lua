@@ -99,6 +99,7 @@ local CATEGORIES = {
             { header = "HUD",    items = { "hudVisible" } },
             { header = "Alerts", items = { "alertsEnabled", "alertCooldown" } },
             { header = "Debug",  items = { "debugMode" } },
+            { header = "Release Gate", items = { "experimentalSystems" } },
         },
     },
 }
@@ -166,6 +167,11 @@ local SETTINGS_META = {
     debugMode = {
         label = "Debug Mode",
         desc  = "Extra logging to game log for troubleshooting",
+        stype = "bool",
+    },
+    experimentalSystems = {
+        label = "Experimental Systems",
+        desc  = "Enable experimental (not yet released) systems at your own risk",
         stype = "bool",
     },
 }

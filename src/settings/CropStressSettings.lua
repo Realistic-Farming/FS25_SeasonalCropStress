@@ -34,6 +34,8 @@ local DEFAULTS = {
     alertsEnabled = true,
     alertCooldown = 12,
     debugMode = false,
+    -- Release-gate opt-in (default false), orthogonal to difficulty. See ReleaseGate.lua.
+    experimentalSystems = false,
     hudPanelX = 0.010,   -- matches HUDOverlay.PANEL_X
     hudPanelY = 0.175    -- matches HUDOverlay.PANEL_Y
 }
@@ -156,6 +158,7 @@ function CropStressSettings:load(missionInfo)
     self.alertsEnabled      = readBool(xmlFile, "cropStressSettings.alertsEnabled",      DEFAULTS.alertsEnabled)
     self.alertCooldown      = xmlFile:getInt("cropStressSettings.alertCooldown")         or DEFAULTS.alertCooldown
     self.debugMode          = readBool(xmlFile, "cropStressSettings.debugMode",          DEFAULTS.debugMode)
+    self.experimentalSystems = readBool(xmlFile, "cropStressSettings.experimentalSystems", DEFAULTS.experimentalSystems)
     self.hudPanelX          = xmlFile:getFloat("cropStressSettings.hudPanelX")           or DEFAULTS.hudPanelX
     self.hudPanelY          = xmlFile:getFloat("cropStressSettings.hudPanelY")           or DEFAULTS.hudPanelY
 
@@ -235,6 +238,7 @@ function CropStressSettings:saveToXMLFile(missionInfo)
     xmlFile:setBool("cropStressSettings.alertsEnabled", self.alertsEnabled)
     xmlFile:setInt("cropStressSettings.alertCooldown", self.alertCooldown)
     xmlFile:setBool("cropStressSettings.debugMode", self.debugMode)
+    xmlFile:setBool("cropStressSettings.experimentalSystems", self.experimentalSystems)
     xmlFile:setFloat("cropStressSettings.hudPanelX", self.hudPanelX)
     xmlFile:setFloat("cropStressSettings.hudPanelY", self.hudPanelY)
 
@@ -295,6 +299,14 @@ function CropStressSettings:validateSettings()
     self.irrigationCosts = not not self.irrigationCosts
     self.alertsEnabled = not not self.alertsEnabled
     self.debugMode = not not self.debugMode
+    self.experimentalSystems = not not self.experimentalSystems
+end
+
+--- Release-gate opt-in. True when the player has explicitly enabled experimental
+--- (LOCKED) systems. Orthogonal to difficulty: the two locks stack, see ReleaseGate.lua.
+---@return boolean
+function CropStressSettings:allowsExperimentalSystems()
+    return self.experimentalSystems == true
 end
 
 -- Get stress rate multiplier based on difficulty
