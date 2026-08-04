@@ -986,6 +986,15 @@ function CropStressManager:consoleStatus()
     end
 end
 
+function CropStressManager:consoleRelease()
+    if not ReleaseGate then
+        print("[CropStress] Release gate not loaded")
+        return
+    end
+    local optIn = self.settings ~= nil and self.settings.experimentalSystems == true or nil
+    print(ReleaseGate.status(optIn))
+end
+
 function CropStressManager:consoleSetMoisture(fieldIdStr, valueStr)
     local fieldId = tonumber(fieldIdStr)
     local value   = tonumber(valueStr)

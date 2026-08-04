@@ -26,6 +26,7 @@ source(modDir .. "src/CropStressModifier.lua")
 source(modDir .. "src/IrrigationManager.lua")
 
 -- Settings
+source(modDir .. "src/ReleaseGate.lua")
 source(modDir .. "src/settings/CropStressSettings.lua")
 source(modDir .. "src/settings/CropStressSettingsPanel.lua")
 source(modDir .. "src/settings/CropStressSettingsIntegration.lua")
@@ -252,6 +253,7 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
         addConsoleCommand("csSimulateHeat","Simulate heat wave: csSimulateHeat <days>",                    "consoleSimulateHeat",g_csManager)
         addConsoleCommand("csDebug",       "Toggle verbose debug logging",                                 "consoleToggleDebug", g_csManager)
         addConsoleCommand("csConsultant",  "Open the Crop Consultant dialog",                              "consoleConsultant",  g_csManager)
+        addConsoleCommand("csRelease",     "Release gate: show STABLE vs experimental-LOCKED systems",     "consoleRelease",     g_csManager)
     end
 end)
 
@@ -302,6 +304,7 @@ FSBaseMission.delete = Utils.appendedFunction(FSBaseMission.delete, function(sel
             removeConsoleCommand("csSimulateHeat")
             removeConsoleCommand("csDebug")
             removeConsoleCommand("csConsultant")
+            removeConsoleCommand("csRelease")
         end
     end
 end)
