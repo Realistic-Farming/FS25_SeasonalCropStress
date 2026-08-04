@@ -21,6 +21,7 @@
 - [x] SCS-002 / SCS-003: additional SeasonalCropStress bugs fixed in 2026-07-26 bug sweep, merged to main.
 
 ## Features / enhancements
+- [x] Release gate (2026-08-04): `ReleaseGate.lua` with the `cs_89_rebuild` and `moisture_coupling` rows, both noted "not built yet; locks when it lands" (Arissani 2026-08-03). F93 ships stable and is not in the registry. `experimentalSystems` opt-in (default false, orthogonal to difficulty) through `CropStressSettings` defaults/load/save/validate, the MP bulk sync (count 10 to 11), the SettingsHub mirror and a settings-panel row. `csRelease` status command. 23 assertions in release_gate_test.lua.
 - [x] Short-month weather tune (e6a4fce): `SEASON_RAIN_PROB` reshaped to match SoilFertilizer's Normal climate shape, so SCS moisture and SF's #740 short-month rain fill agree on wet/dry seasonality. Shape-matched, not a raw copy (a day-vs-hour unit gap remains for a later retune with Arissani).
 - [x] Bedrock migration per Point 1-4: all four now BUILT. SettingsHub was already live; StateLedger + NetworkSync + MasterHUD (B3.4) were built this session against the SoilFertilizer reference, delegate-when-present. Not shipped until the SCS module-ids are locked with Claude(A) + a single-host in-game smoke passes.
 
