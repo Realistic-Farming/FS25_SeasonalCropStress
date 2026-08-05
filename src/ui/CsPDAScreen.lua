@@ -167,6 +167,16 @@ end
 -- ── Registration ──────────────────────────────────────────
 
 function CsPDAScreen.register(modDir)
+    -- Greenfield RF Esc door owns the Esc tab when it actually exists.
+    -- RfEscBootstrap ~= nil only means the class was sourced — NOT that the door is live.
+    if RfEscBootstrap ~= nil and CsRfPdaGuest ~= nil and type(CsRfPdaGuest.tryRegister) == "function" then
+        CsRfPdaGuest.tryRegister()
+    end
+    if g_inGameMenu ~= nil and g_inGameMenu.menuRealisticFarming ~= nil then
+        print("[CropStress] CsPDAScreen: RF Esc door present — skipping legacy menuCropStress inject")
+        _pendingRegistration = false
+        return
+    end
     if CsPDAScreen._performRegistration(modDir) then return end
     _pendingRegistration = true
     _pendingModDir       = modDir
@@ -174,6 +184,13 @@ function CsPDAScreen.register(modDir)
 end
 
 function CsPDAScreen._attemptDeferredRegister(dt)
+    if RfEscBootstrap ~= nil and CsRfPdaGuest ~= nil and type(CsRfPdaGuest.tryRegister) == "function" then
+        CsRfPdaGuest.tryRegister()
+    end
+    if g_inGameMenu ~= nil and g_inGameMenu.menuRealisticFarming ~= nil then
+        _pendingRegistration = false
+        return
+    end
     if not _pendingRegistration then return end
     if CsPDAScreen._performRegistration(_pendingModDir) then
         _pendingRegistration = false
@@ -183,6 +200,14 @@ end
 
 function CsPDAScreen._performRegistration(modDir)
     if g_gui == nil or g_inGameMenu == nil then return false end
+
+    if RfEscBootstrap ~= nil and CsRfPdaGuest ~= nil and type(CsRfPdaGuest.tryRegister) == "function" then
+        CsRfPdaGuest.tryRegister()
+    end
+    if g_inGameMenu.menuRealisticFarming ~= nil then
+        print("[CropStress] CsPDAScreen: RF Esc door present — skipping legacy inject")
+        return true
+    end
 
     if g_inGameMenu[CsPDAScreen.MENU_PAGE_NAME] ~= nil then
         print("[CropStress] CsPDAScreen: already registered, skipping")
