@@ -260,9 +260,9 @@
     <text name="cs_pda_fields_tracked"         text="Fields Tracked"/>
     <text name="cs_pda_fields_owned"           text="Fields Owned"/>
     <text name="cs_pda_avg_moisture"           text="Average Moisture"/>
-    <text name="cs_pda_fields_healthy"         text="Healthy (<!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->gt;=40%)"/>
+    <text name="cs_pda_fields_healthy"         text="Healthy (&gt;=40%)"/>
     <text name="cs_pda_fields_warning"         text="Warning (25-40%)"/>
-    <text name="cs_pda_fields_critical"        text="Critical (<!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->lt;25%)"/>
+    <text name="cs_pda_fields_critical"        text="Critical (&lt;25%)"/>
     <text name="cs_pda_avg_stress"             text="Average Stress"/>
     <text name="cs_pda_est_yield_loss"         text="Est. Yield Loss"/>
     <text name="cs_pda_irrigated_fields"       text="Irrigated Fields"/>
@@ -276,9 +276,9 @@
     <!-- ========== MAP OVERLAY ========== -->
     <text name="cs_map_page_title"            text="Crop Moisture"/>
     <text name="cs_map_sidebar_title"         text="MOISTURE LEGEND"/>
-    <text name="cs_map_legend_healthy"        text="Healthy  <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->gt;=40%"/>
+    <text name="cs_map_legend_healthy"        text="Healthy  &gt;=40%"/>
     <text name="cs_map_legend_warning"        text="Warning  25-40%"/>
-    <text name="cs_map_legend_critical"       text="Critical  <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->lt;25%"/>
+    <text name="cs_map_legend_critical"       text="Critical  &lt;25%"/>
     <text name="cs_map_btn_open_pda"          text="Open Crop PDA"/>
 
     <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->
