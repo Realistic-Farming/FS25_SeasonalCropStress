@@ -1,4 +1,4 @@
-﻿-- =========================================================
+-- =========================================================
 -- CsRfPdaGuest
 -- Esc RF PDA guest panel for Seasonal Crop Stress.
 -- Owned: Claude Engineering Stage-8 BUILD 2026-07-30 (reuse-after-review).
