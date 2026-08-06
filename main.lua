@@ -300,6 +300,11 @@ FSBaseMission.delete = Utils.appendedFunction(FSBaseMission.delete, function(sel
     -- Reset dialog instances so the next mission load creates fresh ones.
     CsDialogLoader.cleanup()
 
+    -- Retained deep page must not survive a mission unload.
+    if CsPDAScreen ~= nil then
+        CsPDAScreen._retainedDeepScreen = nil
+    end
+
     if g_csManager ~= nil then
         g_csManager:delete()
         g_csManager = nil

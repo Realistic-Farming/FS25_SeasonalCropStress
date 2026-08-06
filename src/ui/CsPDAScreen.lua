@@ -284,6 +284,34 @@ end
 
 -- ── Public toggle (called from map overlay button & keybind) ──
 
+--- Ensure the deep PDA screen is in InGameMenu paging (no Esc tab) for map open only.
+function CsPDAScreen._ensureDeepPageInjectable(inGameMenu, page)
+    if inGameMenu == nil or page == nil or inGameMenu.pagingElement == nil then
+        return false
+    end
+    local pe = inGameMenu.pagingElement
+    local inElements = false
+    if pe.elements ~= nil then
+        for _, el in ipairs(pe.elements) do
+            if el == page then
+                inElements = true
+                break
+            end
+        end
+    end
+    if not inElements and type(pe.addElement) == "function" then
+        pe:addElement(page)
+    end
+    inGameMenu[CsPDAScreen.MENU_PAGE_NAME] = page
+    if type(pe.updateAbsolutePosition) == "function" then
+        pcall(pe.updateAbsolutePosition, pe)
+    end
+    if type(pe.updatePageMapping) == "function" then
+        pcall(pe.updatePageMapping, pe)
+    end
+    return true
+end
+
 function CsPDAScreen.toggle()
     if g_gui == nil then return end
     -- Don't interrupt other dialogs (MDM pattern)
@@ -293,13 +321,18 @@ function CsPDAScreen.toggle()
     local inGameMenu = g_gui.screenControllers[InGameMenu] or g_inGameMenu
     if inGameMenu == nil then return end
 
-    local screen = inGameMenu[CsPDAScreen.MENU_PAGE_NAME]
+    local screen = inGameMenu[CsPDAScreen.MENU_PAGE_NAME] or CsPDAScreen._retainedDeepScreen
     if screen == nil then return end
 
     -- If already on our page, close the menu
     if curName == "InGameMenu" and inGameMenu.currentPage == screen then
         g_gui:changeScreen(nil)
         return
+    end
+
+    -- After Esc rail stand-down, page lives only on _retainedDeepScreen; re-inject without tab.
+    if inGameMenu[CsPDAScreen.MENU_PAGE_NAME] == nil or CsPDAScreen._retainedDeepScreen == screen then
+        CsPDAScreen._ensureDeepPageInjectable(inGameMenu, screen)
     end
 
     -- Navigate to our page — works from map view and gameplay (MDM: goToPage pattern)

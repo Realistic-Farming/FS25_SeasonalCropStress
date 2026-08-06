@@ -38,3 +38,7 @@
 ## Blocked / waiting on
 - [!] `soilMoistureSystem` alias removal (B3.3): read-path confirmed, there IS an active consumer. FarmTablet `IncomeApp.lua:345` reads `mgr.soilMoistureSystem` as its PRIMARY moisture source (duck-typed `:getMoisture` fallback at :412), not the formal facade. So the alias stays until FarmTablet's IncomeApp is migrated to `mgr:getMoisture`/`:getStress` (a FarmTablet-repo change + its own in-game verify). Alias kept meanwhile (harmless one-liner).
 - [~] Before RELEASE, the 3 bedrock bridges (B3.4): module-ids now LOCKED (fab67d6), so the gate reduces to a single-host in-game smoke (the reframed MP gate). Not merged, not released.
+
+## Esc doors + map buttons (2026-08-06)
+- [x] Moisture map overlay button restored via retained-page pattern (CsPDAScreen._retainedDeepScreen + _ensureDeepPageInjectable). DONE in code, deployed.
+- [~] In-game observation pending: confirm the moisture overlay button opens the screen with no Farm Tablet installed, and that the Esc rail still shows exactly one Realistic Farming tab.

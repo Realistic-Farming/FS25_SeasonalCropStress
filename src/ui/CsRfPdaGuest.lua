@@ -873,8 +873,18 @@ function CsRfPdaGuest.standDownLegacyEsc()
     local pageName = CsPDAScreen and CsPDAScreen.MENU_PAGE_NAME or "menuCropStress"
     local screen = inGameMenu[pageName]
     if screen == nil then
+        if CsPDAScreen ~= nil and CsPDAScreen._retainedDeepScreen ~= nil then
+            _legacyStoodDown = true
+            return true
+        end
         _legacyStoodDown = true
         return true
+    end
+
+    -- Giants-safe remove: retain the deep page before nilling it so the map
+    -- overlay can still open it. The Esc rail tab stays stood down.
+    if CsPDAScreen ~= nil then
+        CsPDAScreen._retainedDeepScreen = screen
     end
 
     local ok = pcall(function()
