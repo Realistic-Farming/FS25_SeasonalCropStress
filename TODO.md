@@ -42,3 +42,7 @@
 ## Esc doors + map buttons (2026-08-06)
 - [x] Moisture map overlay button restored via retained-page pattern (CsPDAScreen._retainedDeepScreen + _ensureDeepPageInjectable). DONE in code, deployed.
 - [~] In-game observation pending: confirm the moisture overlay button opens the screen with no Farm Tablet installed, and that the Esc rail still shows exactly one Realistic Farming tab.
+
+## Esc panel buttons UI fixes (2026-08-07)
+- [x] Bottom-bar buttons were disabled while the Esc menu is paused; fixed via showWhenPaused.
+- [x] Cross-mod resolution: callbacks now resolve Soil classes via g_modEnvironments (MDM builds the door first when installed). Built, deploy pending (game locks the zip). In-game verification pending.
