@@ -45,4 +45,4 @@
 
 ## Esc panel buttons UI fixes (2026-08-07)
 - [x] Bottom-bar buttons were disabled while the Esc menu is paused; fixed via showWhenPaused.
-- [x] Cross-mod resolution: callbacks now resolve Soil classes via g_modEnvironments (MDM builds the door first when installed). Built, deploy pending (game locks the zip). In-game verification pending.
+- [x] Cross-mod resolution: callbacks now resolve Soil classes via the g_currentMission handoff (MDM builds the door first when installed). Deployed and verified in-game.
