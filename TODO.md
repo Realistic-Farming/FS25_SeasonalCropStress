@@ -47,3 +47,6 @@
 - [x] Bottom-bar buttons were disabled while the Esc menu is paused; fixed via showWhenPaused.
 - [x] Cross-mod resolution: callbacks now resolve Soil classes via the g_currentMission handoff (MDM builds the door first when installed). Deployed and verified in-game.
 - [x] Help button shows only on the Soil module; the Crop Stress module shows Back only (the Soil guide is Soil-specific).
+
+## Module page dots always visible (2026-08-07)
+- [x] The Esc RF module page dots were hidden while Worker Costs or Market Dynamics was active, so WC never read as the 3rd module. All four RfPdaMenuPage copies now keep them visible. Built, deployed, PR open.
