@@ -61,6 +61,15 @@ source(modDir .. "src/SaveLoadHandler.lua")
 source(modDir .. "src/ui/CsMoistureMapOverlay.lua")
 source(modDir .. "src/ui/CsMapHooks.lua")
 source(modDir .. "src/ui/CsPDAScreen.lua")
+-- RF Esc greenfield (NO-HOST Option B): shared door + Crop Stress module.
+-- Legacy CsPDAScreen Esc tab stands down when menuRealisticFarming is live.
+-- CsMapHooks left on development path (Map overlay only; no Esc MapFrame rewrite).
+source(modDir .. "src/ui/RfEscModules.lua")
+source(modDir .. "src/ui/RfPdaMenuPage.lua")
+source(modDir .. "src/ui/RfEscBootstrap.lua")
+-- DEV: Esc UIDebugger (F6). Install no-ops if Soil (or another mod) already registered.
+source(modDir .. "src/ui/RfEscUiDebugger.lua")
+source(modDir .. "src/ui/CsRfPdaGuest.lua")
 source(modDir .. "src/ui/CsHelpDialog.lua")
 
 -- GUI dialog loader (must precede dialog scripts)
@@ -290,6 +299,11 @@ end)
 FSBaseMission.delete = Utils.appendedFunction(FSBaseMission.delete, function(self)
     -- Reset dialog instances so the next mission load creates fresh ones.
     CsDialogLoader.cleanup()
+
+    -- Retained deep page must not survive a mission unload.
+    if CsPDAScreen ~= nil then
+        CsPDAScreen._retainedDeepScreen = nil
+    end
 
     if g_csManager ~= nil then
         g_csManager:delete()

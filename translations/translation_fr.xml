@@ -314,5 +314,57 @@
 <text name="helpLine_cs_t3_title" text="Pulvérisateurs &amp; arrosage"/>
 <text name="helpLine_cs_t3_sprayer_title" text="Utiliser les pulvérisateurs comme irrigation"/>
 <text name="helpLine_cs_t3_sprayer_text" text="Les pulvérisateurs standards montés sur véhicule peuvent être utilisés comme alternative manuelle aux systèmes d'irrigation permanents. Si vous remplissez un pulvérisateur avec de l'EAU, toute zone pulvérisée recevra immédiatement un gain d'humidité. Cela est utile pour les petits champs ou comme solution temporaire jusqu'à ce que vous puissiez vous offrir un pivot central ou une ligne goutte-à-goutte."/>
-    </texts>
+    
+    <!-- Esc RF PDA greenfield guest (2026-08-02) -->
+    <text name="cs_rf_pda_module_title" text="Crop Stress"/>
+    <text name="cs_rf_pda_blurb" text="Field moisture, stress, irrigation schedule and rate, and yield keep. Open Farm Tablet to edit systems or open Crop Consultant."/>
+    <text name="cs_rf_pda_col_field" text="Field"/>
+    <text name="cs_rf_pda_col_crop" text="Crop"/>
+    <text name="cs_rf_pda_col_moisture" text="Moisture"/>
+    <text name="cs_rf_pda_col_stress" text="Stress"/>
+    <text name="cs_rf_pda_col_irrigated" text="Irrigated"/>
+    <text name="cs_rf_pda_col_status" text="Status"/>
+    <text name="cs_rf_pda_empty" text="No crop stress data yet. Fields appear after the simulation runs."/>
+    <text name="cs_rf_pda_detail_title" text="Field Detail"/>
+    <text name="cs_rf_pda_select_field" text="Select a field in the table for details."/>
+    <text name="rf_pda_side_info_soil" text="[EN] Soil Fertilizer&#10;&#10;This table lists every field you own. One row = one field.&#10;&#10;Columns: Field #, Area, N/P/K (% of a healthy target), Status (Good / Fair / Poor), Fertilizer need (short cue for what still looks short).&#10;&#10;Click a row. Treatment (below) is the plan for that field:&#10;- PRODUCT = what to buy (first is preferred; &quot;or ...&quot; is an alternate)&#10;- RATE = amount per area / TOTAL = amount for this field&#10;- Selected names the field; Next (under it) says what to do first&#10;&#10;How to apply: dry goods (urea, MAP, potash, lime) go through a fertilizer spreader; liquids go in a sprayer tank. If pH and nutrients both show, fix lime or gypsum first so nutrients can work. Weed, pest, or disease lines mean spray (or weed mechanically) before you expect a full crop.&#10;&#10;Start with the weakest Status, open Treatment, follow Next, then the rest of the list."/>
+    <text name="rf_pda_side_info_crop_stress" text="[EN] Crop Stress&#10;&#10;This table lists every field you own. One row = one field.&#10;&#10;Columns: Field # / Crop, Moisture (how wet the soil is), Stress (how hard the crop is fighting dry spells), Irrigation (water help covering this field), Status (Healthy / Warning / Critical).&#10;&#10;Click a row. The strip below names the field, then Next says what to do first:&#10;- Critical or Warning Moisture → water that field (turn on irrigation if covered, or spray WATER / place coverage)&#10;- High Stress or a sensitive growth window → protect now; stress today cuts harvest later&#10;- Looking fine → recheck later; worse fields first&#10;&#10;Irrigation: Yes means a system can cover this field. The strip under the table shows this field's schedule, water rate, yield keep, and air dry-pull. Edit systems on Farm Tablet / Crop Consultant when you need to change them.&#10;&#10;If Soil Fertilizer is also loaded, check nutrients there too. Dry soil drains faster when soil health is poor.&#10;&#10;Start with Critical Status, follow Next, then work up the list."/>
+
+        <!-- Esc RF shared Soil chrome keys (door may be created by CS) 2026-08-02 FAILFIX -->
+    <text name="sf_pda_col_field" text="[EN] Field"/>
+    <text name="rf_pda_col_area" text="[EN] Area"/>
+    <text name="sf_pda_col_status" text="[EN] Status"/>
+    <text name="rf_pda_col_fert" text="[EN] Fertilizer"/>
+    <text name="sf_pda_no_fields" text="[EN] No field data recorded yet."/>
+    <text name="rf_pda_section_treatment" text="[EN] Treatment"/>
+    <text name="rf_pda_treat_products" text="[EN] Products"/>
+    <text name="rf_pda_sample_hint" text="[EN] Soil sample dates appear here when available."/>
+        <text name="cs_rf_pda_next" text="[EN] Next: %s"/>
+    <text name="cs_rf_pda_next_no_crop" text="[EN] No crop on this field - nothing to stress; pick another row."/>
+    <text name="cs_rf_pda_next_critical_watering" text="[EN] Moisture critical - irrigation is on; wait for moisture to recover, then recheck."/>
+    <text name="cs_rf_pda_next_critical_covered" text="[EN] Moisture critical - irrigate now. A system covers this field; confirm it is running."/>
+    <text name="cs_rf_pda_next_critical_uncovered" text="[EN] Moisture critical - irrigate now (spray WATER or place / aim coverage)."/>
+    <text name="cs_rf_pda_next_window" text="[EN] Sensitive growth window - keep this field watered so stress does not climb."/>
+    <text name="cs_rf_pda_next_window_append" text="[EN]  Crop is in a sensitive window."/>
+    <text name="cs_rf_pda_next_stress" text="[EN] Stress is high (about %s harvest risk) - water / protect before it gets worse."/>
+    <text name="cs_rf_pda_next_warning_watering" text="[EN] Moisture low - irrigation is on; recheck Moisture as it recovers."/>
+    <text name="cs_rf_pda_next_warning_covered" text="[EN] Moisture low - irrigate soon. Coverage is on this field; confirm the system is running."/>
+    <text name="cs_rf_pda_next_warning_uncovered" text="[EN] Moisture low - irrigate soon (coverage / WATER sprayer)."/>
+    <text name="cs_rf_pda_next_no_coverage" text="[EN] No irrigation coverage - add a system, or spray WATER for a temporary boost."/>
+    <text name="cs_rf_pda_next_covered_idle" text="[EN] Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
+    <text name="cs_rf_pda_next_looking_good" text="[EN] Looking good - recheck later; handle Critical fields first."/>
+    <text name="cs_rf_pda_yield_keep" text="[EN] Yield keep: %d%%"/>
+    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0f°C, dry pull %.1f"/>
+    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %d–%d"/>
+    <text name="cs_rf_pda_sched_daily" text=" daily"/>
+    <text name="cs_rf_pda_sched_weekdays" text=" weekdays"/>
+    <text name="cs_rf_pda_sched_none" text="[EN] no schedule"/>
+    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered · no schedule"/>
+    <text name="cs_rf_pda_no_coverage" text="[EN] No coverage"/>
+    <text name="cs_rf_pda_rate_off" text="[EN] Rate off"/>
+    <text name="cs_rf_pda_rate_on" text="[EN] Rate +%.2f/h"/>
+    <text name="cs_rf_pda_alert_prefix" text="[EN] Alert: %s"/>
+    <text name="cs_rf_pda_next_alert_sep" text=" · %s"/>
+    <text name="cs_rf_pda_status_join" text="[EN] %s  ·  Status: %s"/>
+</texts>
 </l10n>

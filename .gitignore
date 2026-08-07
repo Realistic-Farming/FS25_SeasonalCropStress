@@ -18,3 +18,6 @@ desktop.ini
 
 # Test harness deps (npm-installed on first run)
 tools/test/node_modules
+
+# Pre-commit gate deps (tools/test/ - installed by npm, never shipped)
+node_modules/

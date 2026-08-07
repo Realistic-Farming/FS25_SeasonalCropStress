@@ -40,3 +40,8 @@
 
 ## Deferred / parked
 - Any Precision Farming compatibility: never. Detect-to-stand-down only.
+
+
+## 2026-08-06 (Fred): Esc RF doors + map moisture button restored
+- [x] With the RF Esc door live, the legacy menuCropStress Esc page is stood down, which nilled inGameMenu[pageName] and killed the moisture map overlay button (it read the nil page and returned silently).
+- [x] The moisture map button works again via the retained-page pattern: stand-down keeps the deep page on CsPDAScreen._retainedDeepScreen, and toggle re-injects it into InGameMenu paging without restoring the Esc tab icon. In-game observation still pending.
