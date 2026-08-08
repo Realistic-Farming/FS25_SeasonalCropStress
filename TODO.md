@@ -50,3 +50,12 @@
 
 ## Module page dots always visible (2026-08-07)
 - [x] The Esc RF module page dots were hidden while Worker Costs or Market Dynamics was active, so WC never read as the 3rd module. All four RfPdaMenuPage copies now keep them visible. Built, deployed, PR open.
+
+## SCS-018 per-cell moisture store (2026-08-08)
+- [x] Per-cell store + shared grid + single write path in SoilMoistureSystem (relief threshold/cap, derived aggregate, positional getter).
+- [x] Per-cell pivot/drip/sprayer water + Irrigate Now server routing (new CropStressIrrigateNowEvent).
+- [x] Packed persistence both doors (StateLedger SCHEMA 2 + careerSavegame.xml leaf).
+- [x] Daily TimeGuard `simulation` accrual + day-hook fallback + version-skew guard.
+- [x] RealisticWeather moisture unwind (2 writes + 2 step-asides removed; RW stays weather-only).
+- [x] Three offline benches (relief sparsity, drainage conservation, real-scheduler catch-up). Suite 162/0.
+- [~] In-game acceptance owed: hollow stays wetter over dry days; continuity on old saves; skip lands exactly; cell round-trip on both save paths; Irrigate Now survives broadcast on a client; RW map moisture evolves on our model.

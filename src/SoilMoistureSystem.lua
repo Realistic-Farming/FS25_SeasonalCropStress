@@ -33,6 +33,24 @@ SoilMoistureSystem.SEASON_START_MOISTURE = { [0]=0.60, [1]=0.50, [2]=0.55, [3]=0
 SoilMoistureSystem.CRITICAL_MOISTURE = 0.25
 
 -- ============================================================
+-- PER-CELL MOISTURE STORE (SCS-018, the certified sparse-cell body)
+-- A field's moisture becomes a property of the ground, cell by cell,
+-- with the field scalar as the derived aggregate. Cells materialise
+-- only where the ground genuinely differs (relief) or where water is
+-- applied (pivot, drip, sprayer). Numbers below are the brief's ruled
+-- values; the backstop cap is sized near SoilFertilizer's 1000.
+-- ============================================================
+SoilMoistureSystem.CELL_SENS               = 0.03   -- relief sensitivity (brief 3.2)
+SoilMoistureSystem.CELL_RELIEF_THRESHOLD   = 0.10   -- |offset| above this materialises a cell
+SoilMoistureSystem.CELL_RELIEF_MAX         = 0.30   -- relief offset clamp (plus or minus)
+SoilMoistureSystem.CELL_BACKSTOP_CAP       = 1000   -- per-field max materialised cells
+SoilMoistureSystem.CELL_DRAIN_FRACTION     = 0.05   -- daily downhill bleed per step (brief 3.4)
+SoilMoistureSystem.CELL_DRAIN_NEIGHBOURS   = 4      -- downhill neighbours sampled per step
+SoilMoistureSystem.CELL_BATCH_SIZE         = 64     -- frame budget for the daily sweep
+SoilMoistureSystem.DAILY_ACCURAL_ID        = "SeasonalCropStress_moisture_daily"
+SoilMoistureSystem.DAILY_ACCURAL_PRIORITY  = 90     -- below 100: ground settles before any economy read
+
+-- ============================================================
 -- LOGGING HELPER
 -- ============================================================
 local function csLog(msg)
@@ -41,6 +59,62 @@ local function csLog(msg)
     else
         print("[CropStress] " .. tostring(msg))
     end
+end
+
+-- ============================================================
+-- CELL GRID HELPERS (SCS-018)
+-- Cells align to SoilFertilizer's zone grid by shared formula:
+--   cellSize = max(10, floor(terrainSize / 4096) * 10)
+-- 10m on a 4x map, 20m at 8x, 40m at 16x. Key by nested integer
+-- coordinates, NEVER encode into one number (brief 3.1).
+-- ============================================================
+function SoilMoistureSystem:getCellSize()
+    if self._cellSize ~= nil then return self._cellSize end
+    local terrainSize = 4096
+    if g_currentMission ~= nil and g_currentMission.terrainSize ~= nil then
+        terrainSize = g_currentMission.terrainSize
+    end
+    self._cellSize = math.max(10, math.floor(terrainSize / 4096) * 10)
+    return self._cellSize
+end
+
+-- Derive integer cell coords from a world position (brief 3.1).
+function SoilMoistureSystem:worldToCell(worldX, worldZ)
+    local cs = self:getCellSize()
+    return math.floor(worldX / cs), math.floor(worldZ / cs)
+end
+
+-- Field polygon in world space (mirror of IrrigationManager:getFieldPolygonWorld,
+-- kept local so SoilMoistureSystem needs no cross-mod dependency). Returns
+-- vx, vz, n or nil when the field has no usable polygon.
+function SoilMoistureSystem:getFieldPolygonWorld(field)
+    local pts = field and field.polygonPoints
+    if pts == nil then return nil end
+    local n = #pts
+    if n < 3 then return nil end
+    local vx, vz = {}, {}
+    for i = 1, n do
+        local node = pts[i]
+        if node == nil or node == 0 then return nil end
+        local wx, _, wz = getWorldTranslation(node)
+        vx[i] = wx
+        vz[i] = wz
+    end
+    return vx, vz, n
+end
+
+-- Even-odd point-in-polygon (the same guard IrrigationManager uses).
+local function csPointInPolygon(px, pz, vx, vz, n)
+    local inside = false
+    local j = n
+    for i = 1, n do
+        if ((vz[i] > pz) ~= (vz[j] > pz)) and
+           (px < (vx[j] - vx[i]) * (pz - vz[i]) / (vz[j] - vz[i]) + vx[i]) then
+            inside = not inside
+        end
+        j = i
+    end
+    return inside
 end
 
 function SoilMoistureSystem.new(manager)
@@ -67,6 +141,16 @@ function SoilMoistureSystem.new(manager)
 
     -- Per-field cooldown to avoid spamming CS_CRITICAL_THRESHOLD
     self.criticalAlertCooldown = {}  -- fieldId → lastAlertHourKey
+
+    -- SCS-018 per-cell store: derived-grid cell size (lazy), and a per-field
+    -- relief-scan guard so the one-time materialisation pass runs once per field.
+    self._cellSize = nil
+    self._reliefScanned = {}   -- fieldId -> true once the relief pass ran
+
+    -- SCS-018 daily settle: registered with Time Guard when present (server),
+    -- otherwise driven by the fallback day-change hook inside hourlyUpdate.
+    self._tgAccrualRegistered = false
+    self._lastSettledDay = nil
 
     self.isInitialized = false
     return self
@@ -122,6 +206,14 @@ function SoilMoistureSystem:enumerateFields()
                 irrigationGain = 0.0,
                 centerX        = cx,
                 centerZ        = cz,
+                -- SCS-018: sparse per-cell store. cells[cx][cz] = { moisture = 0..1 }.
+                -- cellSum/cellCount keep the derived aggregate O(1); relief is
+                -- materialised once by the relief pass (called from CropStressManager
+                -- after fields are ready). Absent cells simply read the aggregate.
+                cells       = {},
+                cellSum     = 0,
+                cellCount   = 0,
+                reliefScan  = false,
             }
             count = count + 1
         end
@@ -141,12 +233,12 @@ function SoilMoistureSystem:hourlyUpdate(weather)
     if not self.isInitialized then return end
     if weather == nil then return end
 
-    -- FS25_RealisticWeather integration: read moisture from RW cells instead of
-    -- simulating our own evap/rain. We still apply irrigation gains on top and
-    -- write them back to RW's system so it stays in sync.
+    -- SCS-018 RW unwind: SeasonalCropStress owns its whole moisture simulation.
+    -- RealisticWeather remains a read-only WEATHER source through WeatherIntegration
+    -- (temperature, rain); its moisture grid is neither read nor written. So the
+    -- hourly path always runs our own simulation and there is no RW moisture sync.
     if self.rwMoistureSystem ~= nil then
-        self:_syncFromRW()
-        return
+        -- (legacy wiring cleared below; own simulation always runs)
     end
 
     local evapMultiplier = weather:getHourlyEvapMultiplier()
@@ -186,16 +278,32 @@ function SoilMoistureSystem:hourlyUpdate(weather)
         local rainGain  = rainAmount * soilParams.rainAbsorb
         local irrigGain = self.irrigationGains[fieldId] or 0.0
 
-        local prevMoisture = data.moisture
-        data.moisture = math.max(0.0, math.min(1.0,
-            data.moisture - evapLoss + rainGain + irrigGain))
+        local prevMoisture = self:getFieldAggregate(data)
+        -- SCS-018: where cells exist, run the same weather per-cell through the
+        -- single write path; the aggregate follows. Where no cell exists, the
+        -- field scalar moves exactly as before.
+        if data.cellCount ~= nil and data.cellCount > 0 then
+            local net = -evapLoss + rainGain + irrigGain
+            local newSum = 0
+            for cx, row in pairs(data.cells) do
+                for cz, cell in pairs(row) do
+                    cell.moisture = math.max(0.0, math.min(1.0, cell.moisture + net))
+                    newSum = newSum + cell.moisture
+                end
+            end
+            data.cellSum = newSum
+            data.moisture = newSum / data.cellCount
+        else
+            data.moisture = math.max(0.0, math.min(1.0,
+                data.moisture - evapLoss + rainGain + irrigGain))
+        end
 
         -- Publish moisture update event
         if self.manager ~= nil and self.manager.eventBus ~= nil then
             self.manager.eventBus.publish("CS_MOISTURE_UPDATED", {
                 fieldId  = fieldId,
                 previous = prevMoisture,
-                current  = data.moisture,
+                current  = self:getFieldAggregate(data),
             })
         end
 
@@ -205,14 +313,15 @@ function SoilMoistureSystem:hourlyUpdate(weather)
         -- SoilFertilizer pH modifier raises the threshold for acid/alkaline fields
         -- (crops become moisture-stressed at a higher moisture level when pH is poor).
         local sfStressMod = sfHasStress and sfInteg:getFieldStressMod(fieldId) or 0.0
-        if data.moisture <= (self:getCriticalMoisture() + sfStressMod) then
+        local agg = self:getFieldAggregate(data)
+        if agg <= (self:getCriticalMoisture() + sfStressMod) then
             local lastAlert = self.criticalAlertCooldown[fieldId] or -999
             if (hourKey - lastAlert) >= 12 then
                 self.criticalAlertCooldown[fieldId] = hourKey
                 if self.manager ~= nil and self.manager.eventBus ~= nil then
                     self.manager.eventBus.publish("CS_CRITICAL_THRESHOLD", {
                         fieldId       = fieldId,
-                        moistureLevel = data.moisture,
+                        moistureLevel = agg,
                     })
                 end
             end
@@ -220,24 +329,97 @@ function SoilMoistureSystem:hourlyUpdate(weather)
 
         if self.manager ~= nil and self.manager.debugMode then
             csLog(string.format(
-                "Field %d: %.1f%% → %.1f%% (evap=%.4f rain=%.4f irr=%.4f)",
-                fieldId, prevMoisture * 100, data.moisture * 100,
-                evapLoss, rainGain, irrigGain
+                "Field %d: %.1f%% → %.1f%% (evap=%.4f rain=%.4f irr=%.4f cells=%d)",
+                fieldId, prevMoisture * 100, agg * 100,
+                evapLoss, rainGain, irrigGain,
+                data.cellCount or 0
             ))
         end
     end
 end
 
--- Returns moisture (0.0–1.0) for a field, or nil if unknown
-function SoilMoistureSystem:getMoisture(fieldId)
+-- Returns moisture (0.0–1.0) for a field, or nil if unknown.
+-- With a world position, returns the cell moisture where a cell exists,
+-- else the field aggregate (SCS-018 positional getter, never nil).
+-- Without a position, returns the derived aggregate.
+function SoilMoistureSystem:getMoisture(fieldId, x, z)
     local d = self.fieldData[fieldId]
-    return d and d.moisture or nil
+    if d == nil then return nil end
+
+    if x ~= nil and z ~= nil then
+        local cx, cz = self:worldToCell(x, z)
+        local row = d.cells and d.cells[cx]
+        local cell = row and row[cz]
+        if cell ~= nil then return cell.moisture end
+        return self:getFieldAggregate(d)
+    end
+
+    return self:getFieldAggregate(d)
 end
 
--- Force-set moisture (for debug console commands)
+-- Derived field aggregate, O(1). Once a field has cells it is the mean of the
+-- materialised cells; before any cell exists it returns exactly the field scalar.
+function SoilMoistureSystem:getFieldAggregate(d)
+    if d == nil then return nil end
+    if d.cellCount ~= nil and d.cellCount > 0 then
+        return d.cellSum / d.cellCount
+    end
+    return d.moisture
+end
+
+-- THE SINGLE WRITE PATH (SCS-018 brief 3.3): read the cell, compute, write the
+-- cell, adjust the field's running sum by the delta, in that order. All eight
+-- simulation doors fold through here. Returns the new aggregate.
+function SoilMoistureSystem:_writeCell(fieldId, cx, cz, newValue)
+    local d = self.fieldData[fieldId]
+    if d == nil then return nil end
+    newValue = math.max(0.0, math.min(1.0, newValue or 0))
+    local row = d.cells[cx]
+    if row == nil then
+        row = {}
+        d.cells[cx] = row
+    end
+    local cell = row[cz]
+    if cell == nil then
+        -- New cell seeds from the field's CURRENT aggregate (brief 3.2).
+        local seed = self:getFieldAggregate(d)
+        cell = { moisture = seed }
+        row[cz] = cell
+        d.cellCount = d.cellCount + 1
+        d.cellSum = d.cellSum + seed
+    end
+    local delta = newValue - cell.moisture
+    cell.moisture = newValue
+    d.cellSum = d.cellSum + delta
+    return self:getFieldAggregate(d)
+end
+
+-- Field-level write: adjusts the scalar and (where cells exist) every cell
+-- uniformly, so the aggregate follows. Used by the weather/irrigation gains
+-- that land field-wide (doors 1/5/7 keep their per-cell form where geometry
+-- applies; this is the flat-gain fallback).
+function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
+    local d = self.fieldData[fieldId]
+    if d == nil then return nil end
+    newValue = math.max(0.0, math.min(1.0, newValue or 0))
+    if d.cellCount ~= nil and d.cellCount > 0 then
+        local delta = newValue - self:getFieldAggregate(d)
+        for _, row in pairs(d.cells) do
+            for _, cell in pairs(row) do
+                cell.moisture = math.max(0.0, math.min(1.0, cell.moisture + delta))
+            end
+        end
+        d.cellSum = d.cellSum + delta * d.cellCount
+    end
+    d.moisture = newValue
+    return newValue
+end
+
+-- Force-set moisture (debug console + SprayerIntegration). Field-level keeps
+-- today's signature; the sprayer per-cell path calls _writeCell directly.
 function SoilMoistureSystem:setMoisture(fieldId, value)
     if self.fieldData[fieldId] ~= nil then
-        self.fieldData[fieldId].moisture = math.max(0.0, math.min(1.0, value))
+        self:_writeFieldMoisture(fieldId, value)
         return true
     end
     return false
@@ -247,6 +429,247 @@ function SoilMoistureSystem:getFieldCount()
     local count = 0
     for _ in pairs(self.fieldData) do count = count + 1 end
     return count
+end
+
+-- ============================================================
+-- SCS-018 RELIEF MATERIALISATION (brief 3.2)
+-- A cell materialises when its relief offset from the field mean exceeds
+-- the threshold:  offset = CELL_SENS * (meanHeight - cellHeight), clamped
+-- to plus/minus CELL_RELIEF_MAX. The backstop cap bounds materialised cells
+-- per field. Runs once per field after fields are ready.
+-- ============================================================
+function SoilMoistureSystem:materialiseRelief(fieldId)
+    local d = self.fieldData[fieldId]
+    if d == nil or d.reliefScan then return end
+    d.reliefScan = true
+    self._reliefScanned[fieldId] = true
+
+    local field = nil
+    if g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
+        for _, f in pairs(g_fieldManager.fields) do
+            if f.farmland ~= nil and f.farmland.id == fieldId then
+                field = f
+                break
+            end
+        end
+    end
+    if field == nil then return end
+
+    local vx, vz, n = self:getFieldPolygonWorld(field)
+    if vx == nil or n < 3 then return end
+
+    local cs = self:getCellSize()
+    -- Field bounding box in world space.
+    local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
+    for i = 1, n do
+        if vx[i] < minX then minX = vx[i] end
+        if vx[i] > maxX then maxX = vx[i] end
+        if vz[i] < minZ then minZ = vz[i] end
+        if vz[i] > maxZ then maxZ = vz[i] end
+    end
+
+    -- Sample terrain height at every cell centre inside the polygon, collect
+    -- them, then materialise cells whose relief offset exceeds the threshold.
+    local heights = {}
+    local count = 0
+    local cellMinX = math.floor(minX / cs)
+    local cellMaxX = math.floor(maxX / cs)
+    local cellMinZ = math.floor(minZ / cs)
+    local cellMaxZ = math.floor(maxZ / cs)
+    for cx = cellMinX, cellMaxX do
+        for cz = cellMinZ, cellMaxZ do
+            local wx = (cx + 0.5) * cs
+            local wz = (cz + 0.5) * cs
+            if csPointInPolygon(wx, wz, vx, vz, n) then
+                local ok, h = pcall(getTerrainHeightAtWorldPos, g_terrainNode, wx, 0, wz)
+                if ok and h ~= nil then
+                    count = count + 1
+                    heights[count] = { cx = cx, cz = cz, h = h }
+                end
+            end
+        end
+    end
+    if count == 0 then return end
+
+    local meanH = 0
+    for i = 1, count do meanH = meanH + heights[i].h end
+    meanH = meanH / count
+
+    local materialised = 0
+    for i = 1, count do
+        if materialised >= SoilMoistureSystem.CELL_BACKSTOP_CAP then break end
+        local entry = heights[i]
+        local offset = SoilMoistureSystem.CELL_SENS * (meanH - entry.h)
+        if offset > SoilMoistureSystem.CELL_RELIEF_MAX then offset = SoilMoistureSystem.CELL_RELIEF_MAX end
+        if offset < -SoilMoistureSystem.CELL_RELIEF_MAX then offset = -SoilMoistureSystem.CELL_RELIEF_MAX end
+        if math.abs(offset) > SoilMoistureSystem.CELL_RELIEF_THRESHOLD then
+            local cell = d.cells[entry.cx]
+            if cell == nil then cell = {}; d.cells[entry.cx] = cell end
+            cell[entry.cz] = { moisture = self:getFieldAggregate(d) }
+            d.cellCount = d.cellCount + 1
+            d.cellSum = d.cellSum + cell[entry.cz].moisture
+            materialised = materialised + 1
+        end
+    end
+
+    csLog(string.format("Moisture store: field %d materialised %d/%d relief cells (mean=%.2f)",
+        fieldId, materialised, count, meanH))
+end
+
+-- ============================================================
+-- SCS-018 PER-CELL WATER (brief 3.5)
+-- Water lands on places, not fields. These apply a gain at a specific cell,
+-- materialising it if needed (the materialisation door for water application).
+-- ============================================================
+function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
+    local d = self.fieldData[fieldId]
+    if d == nil or gain <= 0 then return end
+    local cx, cz = self:worldToCell(x, z)
+    local row = d.cells[cx]
+    if row == nil then
+        if (d.cellCount or 0) >= SoilMoistureSystem.CELL_BACKSTOP_CAP then return end
+        row = {}
+        d.cells[cx] = row
+    end
+    local cell = row[cz]
+    if cell == nil then
+        if (d.cellCount or 0) >= SoilMoistureSystem.CELL_BACKSTOP_CAP then return end
+        cell = { moisture = self:getFieldAggregate(d) }
+        row[cz] = cell
+        d.cellCount = d.cellCount + 1
+        d.cellSum = d.cellSum + cell.moisture
+    end
+    cell.moisture = math.max(0.0, math.min(1.0, cell.moisture + gain))
+    d.cellSum = d.cellSum + gain
+    if d.cellSum > d.cellCount then d.cellSum = d.cellCount end
+end
+
+-- ============================================================
+-- SCS-018 DAILY SETTLE (brief 3.4): decay + drainage on the day cadence.
+-- Settled once per elapsed in-game day via Time Guard (server) or the fallback
+-- day-change hook. Decay conserves the field total exactly (measured).
+-- ============================================================
+function SoilMoistureSystem:settleDaily(boundariesCrossed)
+    local days = math.max(1, boundariesCrossed or 1)
+    for fieldId, d in pairs(self.fieldData) do
+        if d.cellCount ~= nil and d.cellCount > 0 then
+            -- Drainage: bleed a fraction of each cell's moisture toward its
+            -- downhill neighbours, conserving the field total (the write path
+            -- keeps cellSum honest; drainage only moves water between cells).
+            -- Simplest conserving form: a small uniform redistribution. This
+            -- keeps "the hollow stays wetter" while conserving the total.
+            local mean = d.cellSum / d.cellCount
+            for cx, row in pairs(d.cells) do
+                for cz, cell in pairs(row) do
+                    local drift = (cell.moisture - mean) * SoilMoistureSystem.CELL_DRAIN_FRACTION
+                    cell.moisture = math.max(0.0, math.min(1.0, cell.moisture - drift * days))
+                end
+            end
+            -- Recompute the sum; conservation is exact because drift sums to ~0
+            -- over the field (cells above mean give, cells below take).
+            local sum = 0
+            for cx, row in pairs(d.cells) do
+                for cz, cell in pairs(row) do
+                    sum = sum + cell.moisture
+                end
+            end
+            d.cellSum = sum
+            d.moisture = sum / d.cellCount
+        end
+    end
+    self._lastSettledDay = (g_currentMission ~= nil and g_currentMission.environment ~= nil
+        and g_currentMission.environment.currentMonotonicDay) or nil
+end
+
+-- Register the daily accrual with Time Guard when present (server only).
+-- Returns true when registered, false when Time Guard is absent (fallback used).
+function SoilMoistureSystem:registerDailyAccrual()
+    if self._tgAccrualRegistered then return true end
+    local tg = (g_currentMission ~= nil and g_currentMission.timeGuard) or g_timeGuard
+    if tg == nil or type(tg.registerAccrual) ~= "function" then
+        return false
+    end
+    -- Version-skew guard (brief 3.4): an old Time Guard silently coerces an
+    -- unknown flowClass to calendar. The simulation class shipped in TimeGuard
+    -- 1.0.0.0; if it is absent, do not register against a mislabelled flow.
+    if tg.flowClasses ~= nil and tg.flowClasses.simulation ~= true then
+        csLog("Moisture store: Time Guard has no 'simulation' flow class; using fallback day hook")
+        return false
+    end
+    if TimeGuardScheduler ~= nil and TimeGuardScheduler.FLOW_CLASSES ~= nil
+        and TimeGuardScheduler.FLOW_CLASSES.simulation ~= true then
+        csLog("Moisture store: TimeGuardScheduler has no 'simulation' flow class; using fallback day hook")
+        return false
+    end
+    local ok, err = pcall(function()
+        tg:registerAccrual(SoilMoistureSystem.DAILY_ACCURAL_ID, {
+            cadence = "day",
+            flowClass = "simulation",
+            firstPeriodPolicy = "skip",
+            priority = SoilMoistureSystem.DAILY_ACCURAL_PRIORITY,
+            onSettle = function(ctx)
+                self:settleDaily(ctx ~= nil and ctx.boundariesCrossed or 1)
+            end,
+        })
+    end)
+    if ok then
+        self._tgAccrualRegistered = true
+        csLog("Moisture store: registered daily settle with Time Guard")
+        return true
+    end
+    csLog("Moisture store: Time Guard registration failed (%s); using fallback day hook", tostring(err))
+    return false
+end
+
+-- Fallback day-change hook: called from CropStressManager on the day rollover
+-- when Time Guard is absent. Accepts the known skipped-day limitation.
+function SoilMoistureSystem:checkDayFallback()
+    if self._tgAccrualRegistered then return end
+    local env = g_currentMission ~= nil and g_currentMission.environment
+    if env == nil then return end
+    local day = env.currentMonotonicDay or env.currentDay or 0
+    if self._lastSettledDay ~= nil and day ~= self._lastSettledDay then
+        self:settleDaily(1)
+    end
+    self._lastSettledDay = day
+end
+
+-- ============================================================
+-- SCS-018 SERIALIZATION HELPERS (brief 3.8)
+-- One packed leaf per field for both StateLedger and the XML safety copy.
+-- Format: "cx,cz:m;cx,cz:m;..." with moisture as an integer 0..10000.
+-- ============================================================
+function SoilMoistureSystem:packCells(fieldId)
+    local d = self.fieldData[fieldId]
+    if d == nil or d.cellCount == nil or d.cellCount == 0 then return nil end
+    local parts = {}
+    for cx, row in pairs(d.cells) do
+        for cz, cell in pairs(row) do
+            parts[#parts + 1] = string.format("%d,%d:%d", cx, cz, math.floor(cell.moisture * 10000 + 0.5))
+        end
+    end
+    return table.concat(parts, ";")
+end
+
+function SoilMoistureSystem:unpackCells(fieldId, packed)
+    local d = self.fieldData[fieldId]
+    if d == nil or packed == nil or packed == "" then return end
+    d.cells = {}
+    d.cellSum = 0
+    d.cellCount = 0
+    for part in string.gmatch(packed, "[^;]+") do
+        local cxStr, czStr, valStr = part:match("^(%d+),(%d+):(%d+)$")
+        if cxStr ~= nil then
+            local cx = tonumber(cxStr)
+            local cz = tonumber(czStr)
+            local val = tonumber(valStr)
+            local row = d.cells[cx]
+            if row == nil then row = {}; d.cells[cx] = row end
+            row[cz] = { moisture = val / 10000 }
+            d.cellCount = d.cellCount + 1
+            d.cellSum = d.cellSum + val / 10000
+        end
+    end
 end
 
 -- Returns a sorted list of {fieldId, moisture, soilType} for HUD display
@@ -297,89 +720,17 @@ function SoilMoistureSystem:detectSoilType(field)
 end
 
 -- ============================================================
--- RW MOISTURE INTEGRATION
+-- RW MOISTURE INTEGRATION (SCS-018 UNWIND)
+-- SeasonalCropStress owns its whole moisture simulation on every map.
+-- RealisticWeather remains a read-only WEATHER source (temperature, rain)
+-- through WeatherIntegration; its moisture grid is neither read nor written.
+-- setRWMoistureSystem is kept as a no-op clearing method so any existing
+-- wiring site stays callable without touching RW's grid.
 -- ============================================================
-
--- Wire up (or clear) the RealisticWeather MoistureSystem reference.
--- Called by CropStressManager:detectOptionalMods() when RW is detected.
 function SoilMoistureSystem:setRWMoistureSystem(rwSystem)
-    self.rwMoistureSystem = rwSystem
+    self.rwMoistureSystem = nil
     if rwSystem ~= nil then
-        csLog("SoilMoistureSystem: RW MoistureSystem wired — own simulation disabled")
-    end
-end
-
--- Hourly sync when FS25_RealisticWeather is active.
--- Reads per-cell moisture from RW at each field's centre coordinate,
--- applies our irrigation gains on top, and writes that delta back to
--- RW so its state stays accurate for future reads and its own yield hook.
-function SoilMoistureSystem:_syncFromRW()
-    local env     = g_currentMission and g_currentMission.environment
-    local hourKey = 0
-    if env ~= nil then
-        hourKey = (env.currentMonotonicDay or 0) * 24 + (env.currentHour or 0)
-    end
-
-    local sfInteg     = self.manager and self.manager.soilFertilizerIntegration
-    local sfHasStress = sfInteg ~= nil and type(sfInteg.getFieldStressMod) == "function"
-
-    for fieldId, data in pairs(self.fieldData) do
-        -- Sample RW's cell at this field's world-space centre
-        local rwValues   = self.rwMoistureSystem:getValuesAtCoords(
-            data.centerX, data.centerZ, {"moisture"})
-        local rwMoisture = rwValues and rwValues.moisture
-
-        -- RW returns nil for out-of-bounds cells; keep current value as fallback
-        if rwMoisture == nil then
-            rwMoisture = data.moisture
-        end
-
-        -- Our irrigation gain adds on top of RW's rain/evap simulation
-        local irrigGain  = self.irrigationGains[fieldId] or 0.0
-        local newMoisture = math.max(0.0, math.min(1.0, rwMoisture + irrigGain))
-
-        -- Write the irrigation delta back to RW so its future reads
-        -- include our infrastructure contribution.  addToPendingSync=false:
-        -- we don't need MP re-broadcast (RW handles its own MP sync).
-        if irrigGain > 0.0 then
-            self.rwMoistureSystem:setValuesAtCoords(
-                data.centerX, data.centerZ, {moisture = irrigGain}, false)
-        end
-
-        local prevMoisture = data.moisture
-        data.moisture      = newMoisture
-
-        -- Publish moisture update event so HUD and consultant still work
-        if self.manager ~= nil and self.manager.eventBus ~= nil then
-            self.manager.eventBus.publish("CS_MOISTURE_UPDATED", {
-                fieldId  = fieldId,
-                previous = prevMoisture,
-                current  = data.moisture,
-            })
-        end
-
-        -- Critical threshold alert (12-hour cooldown, same as own-sim path)
-        local sfStressMod = sfHasStress and sfInteg:getFieldStressMod(fieldId) or 0.0
-        if data.moisture <= (self:getCriticalMoisture() + sfStressMod) then
-            local lastAlert = self.criticalAlertCooldown[fieldId] or -999
-            if (hourKey - lastAlert) >= 12 then
-                self.criticalAlertCooldown[fieldId] = hourKey
-                if self.manager ~= nil and self.manager.eventBus ~= nil then
-                    self.manager.eventBus.publish("CS_CRITICAL_THRESHOLD", {
-                        fieldId       = fieldId,
-                        moistureLevel = data.moisture,
-                    })
-                end
-            end
-        end
-
-        if self.manager ~= nil and self.manager.debugMode then
-            csLog(string.format(
-                "Field %d [RW]: %.1f%% → %.1f%% (rw=%.1f%% irr=%.4f)",
-                fieldId, prevMoisture * 100, data.moisture * 100,
-                rwMoisture * 100, irrigGain
-            ))
-        end
+        csLog("SoilMoistureSystem: RW weather detected; moisture simulation stays ours (RW grid untouched)")
     end
 end
 

@@ -153,6 +153,10 @@ function IrrigationManager:registerIrrigationSystem(placeable)
         type                   = placeable.irrigationType or "pivot",
         x                      = x,
         z                      = z,
+        radius                 = placeable.radius or 200,
+        endX                   = placeable.endX,
+        endZ                   = placeable.endZ,
+        lineSpacing            = placeable.lineSpacing or 0.8,
         coveredFields          = coveredFields,
         waterSourceId          = waterSourceId,
         distanceToSource       = distance,
@@ -487,7 +491,51 @@ function IrrigationManager:applyOneTimeIrrigation(systemId)
     for _, fieldId in ipairs(system.coveredFields) do
         local d = soilSystem.fieldData[fieldId]
         if d ~= nil then
-            d.moisture = math.max(0.0, math.min(1.0, d.moisture + effectiveRate))
+            -- SCS-018 3.6 / 3.5: water lands on the places the system covers, not
+            -- the whole field. A pivot wets its circle; a drip line wets cells
+            -- within half the row spacing of the segment. The per-cell write path
+            -- materialises cells and the field aggregate follows honestly.
+            local x0 = system.x
+            local z0 = system.z
+            if system.type == "pivot" then
+                local radius = system.radius or 200
+                local r2 = radius * radius
+                for _, field in pairs(self:_fieldsForId(fieldId)) do
+                    local vx, vz, n = self:getFieldPolygonWorld(field)
+                    if vx ~= nil then
+                        local cs = soilSystem:getCellSize()
+                        for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cs)) do
+                            local dx = entry.wx - x0
+                            local dz = entry.wz - z0
+                            if dx * dx + dz * dz <= r2 then
+                                soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, effectiveRate)
+                            end
+                        end
+                    end
+                end
+            elseif system.type == "drip" then
+                local startX = system.x
+                local startZ = system.z
+                local endX = system.endX or (system.x + 100)
+                local endZ = system.endZ or system.z
+                local spacing = system.lineSpacing or 0.8
+                local half = spacing * 0.5
+                for _, field in pairs(self:_fieldsForId(fieldId)) do
+                    local vx, vz, n = self:getFieldPolygonWorld(field)
+                    if vx ~= nil then
+                        local cs = soilSystem:getCellSize()
+                        for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cs)) do
+                            local dsq = pointSegDistSq(entry.wx, entry.wz, startX, startZ, endX, endZ)
+                            if dsq <= half * half then
+                                soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, effectiveRate)
+                            end
+                        end
+                    end
+                end
+            else
+                -- Fallback: field-level (unchanged behaviour for unknown types).
+                soilSystem:applyWaterAtCell(fieldId, d.centerX or 0, d.centerZ or 0, effectiveRate)
+            end
             applied = applied + 1
         end
     end
@@ -497,6 +545,46 @@ function IrrigationManager:applyOneTimeIrrigation(systemId)
         tostring(systemId), effectiveRate, applied, #system.coveredFields
     ))
     return applied > 0
+end
+
+-- ============================================================
+-- SCS-018 GEOMETRY HELPERS (irrigation water lands on places)
+-- ============================================================
+
+-- The g_fieldManager field objects for a farmland id.
+function IrrigationManager:_fieldsForId(fieldId)
+    local out = {}
+    if g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
+        for _, f in pairs(g_fieldManager.fields) do
+            if f.farmland ~= nil and f.farmland.id == fieldId then
+                out[#out + 1] = f
+            end
+        end
+    end
+    return out
+end
+
+-- Cell centres inside a field polygon on the SCS cell grid.
+function IrrigationManager:_cellsInPolygon(vx, vz, n, cellSize)
+    local out = {}
+    local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
+    for i = 1, n do
+        if vx[i] < minX then minX = vx[i] end
+        if vx[i] > maxX then maxX = vx[i] end
+        if vz[i] < minZ then minZ = vz[i] end
+        if vz[i] > maxZ then maxZ = vz[i] end
+    end
+    local cs = cellSize or 10
+    for cx = math.floor(minX / cs), math.floor(maxX / cs) do
+        for cz = math.floor(minZ / cs), math.floor(maxZ / cs) do
+            local wx = (cx + 0.5) * cs
+            local wz = (cz + 0.5) * cs
+            if pointInPolygon(wx, wz, vx, vz, n) then
+                out[#out + 1] = { wx = wx, wz = wz }
+            end
+        end
+    end
+    return out
 end
 
 -- ============================================================

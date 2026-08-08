@@ -34,7 +34,10 @@ CropStressStateLedgerBridge = {}
 -- crop-stress data). Follows the locked <Mod>_<Thing> convention, matching the
 -- StateLedger build brief (SeasonalCropStress_State).
 CropStressStateLedgerBridge.MODULE_ID = "SeasonalCropStress_State"
-CropStressStateLedgerBridge.SCHEMA    = 1
+-- SCS-018: schema 2 adds the per-field packed cell leaf (cells) to the state
+-- table. Old schema-1 blocks load fine: applyStateTable simply has no cells
+-- field and the fields behave exactly as before until cells materialise.
+CropStressStateLedgerBridge.SCHEMA    = 2
 
 CropStressStateLedgerBridge.active       = false   -- ledger present and we registered
 CropStressStateLedgerBridge.delivered    = false   -- deserialize has fired (once)

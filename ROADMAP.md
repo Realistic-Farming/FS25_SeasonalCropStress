@@ -48,3 +48,6 @@
 
 ## 2026-08-07 (Fred): module page dots always visible
 - [x] The Esc RF module selector hid its page dots when Worker Costs or Market Dynamics was the active module. Soil and Crop Stress always showed theirs, so WC never read as the 3rd module and the left panel was inconsistent. All four RfPdaMenuPage copies now keep the dots visible (dots = N, chrome unchanged, per the esc-rf-pda umbrella brief). Built, deployed, PR open.
+
+## 2026-08-08 (Fred): SCS-018 per-cell moisture store (combined spatial-soil drop, head)
+- [x] Moisture is now a property of the ground, cell by cell, on the same grid SoilFertilizer uses (10m at 4x, 20m at 8x, 40m at 16x). Cells materialise where relief exceeds the threshold or water is applied; the field scalar stays the derived aggregate. Single write path, packed persistence (StateLedger SCHEMA 2 + XML), daily settle via the TimeGuard `simulation` flow class with a day-hook fallback, per-cell pivot/drip/sprayer water, Irrigate Now server-routed, and the RealisticWeather moisture unwind (RW stays a weather source only). Three offline benches green (relief sparsity, drainage conservation, real-scheduler catch-up). In-game observation owed (acceptance checks in the brief).

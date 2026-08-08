@@ -117,15 +117,13 @@ function SprayerIntegration.overwrittenProcessSprayerArea(self, superFunc, workA
                     local current = soilSystem:getMoisture(fieldId)
                     if current ~= nil then
                         local newMoisture = math.min(1.0, current + gain)
-                        soilSystem:setMoisture(fieldId, newMoisture)
-
-                        -- If Realistic Weather is active, sync it back
-                        if soilSystem.rwMoistureSystem ~= nil then
-                            soilSystem.rwMoistureSystem:setValuesAtCoords(sx, sz, {moisture = gain}, false)
-                        end
+                        -- SCS-018: water lands on the place, not the whole field.
+                        -- Route through the single per-cell write path so the
+                        -- cell materialises and the aggregate follows honestly.
+                        soilSystem:applyWaterAtCell(fieldId, sx, sz, gain)
 
                         if g_cropStressManager.debugMode then
-                            print(string.format("[CropStress] Sprayer water applied to Field %d: +%.4f moisture (usage=%.2f area=%.1f)", fieldId, gain, usage, area))
+                            print(string.format("[CropStress] Sprayer water applied to Field %d @(%.1f,%.1f): +%.4f moisture (usage=%.2f area=%.1f)", fieldId, sx, sz, gain, usage, area))
                         end
                     end
                 end

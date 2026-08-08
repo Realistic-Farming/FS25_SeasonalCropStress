@@ -350,11 +350,10 @@ function CropStressModifier.installHarvestHook()
 
             local stressModifier = g_cropStressManager.stressModifier
 
-            -- RW mode: RW's getHarvestScaleMultiplier handles yield; we step aside
-            if stressModifier.rwModeActive then
-                diag("RW mode active, standing aside", nil, nil)
-                return lastArea, totalArea
-            end
+            -- SCS-018 RW unwind: the harvest penalty is OURS on every map now.
+            -- RealisticWeather is a read-only weather source; its moisture grid
+            -- and its yield hook are neither read nor deferred to. (The old
+            -- rwModeActive step-aside was removed with the unwind.)
 
             -- Identify field from the cut position
             local xs, _, zs = getWorldTranslation(workArea.start)
@@ -466,12 +465,11 @@ function CropStressModifier:delete()
     -- On mod reload, the whole game restarts so this is not a concern.
 end
 
--- Enable/disable RW integration mode (called by CropStressManager:detectOptionalMods)
+-- SCS-018 RW unwind: the harvest penalty is ours on every map. RealisticWeather
+-- remains a read-only weather source; nothing here defers to RW's yield hook.
+-- Kept callable as a no-op so any wiring site stays safe.
 function CropStressModifier:setRWMode(active)
-    self.rwModeActive = active == true
-    if self.rwModeActive then
-        csLog("CropStressModifier: RW mode active — harvest yield penalty deferred to RW")
-    end
+    self.rwModeActive = false
 end
 
 -- Set stress rate multiplier from settings
