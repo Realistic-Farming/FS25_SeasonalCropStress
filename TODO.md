@@ -42,3 +42,20 @@
 ## Esc doors + map buttons (2026-08-06)
 - [x] Moisture map overlay button restored via retained-page pattern (CsPDAScreen._retainedDeepScreen + _ensureDeepPageInjectable). DONE in code, deployed.
 - [~] In-game observation pending: confirm the moisture overlay button opens the screen with no Farm Tablet installed, and that the Esc rail still shows exactly one Realistic Farming tab.
+
+## Esc panel buttons UI fixes (2026-08-07)
+- [x] Bottom-bar buttons were disabled while the Esc menu is paused; fixed via showWhenPaused.
+- [x] Cross-mod resolution: callbacks now resolve Soil classes via the g_currentMission handoff (MDM builds the door first when installed). Deployed and verified in-game.
+- [x] Help button shows only on the Soil module; the Crop Stress module shows Back only (the Soil guide is Soil-specific).
+
+## Module page dots always visible (2026-08-07)
+- [x] The Esc RF module page dots were hidden while Worker Costs or Market Dynamics was active, so WC never read as the 3rd module. All four RfPdaMenuPage copies now keep them visible. Built, deployed, PR open.
+
+## SCS-018 per-cell moisture store (2026-08-08)
+- [x] Per-cell store + shared grid + single write path in SoilMoistureSystem (relief threshold/cap, derived aggregate, positional getter).
+- [x] Per-cell pivot/drip/sprayer water + Irrigate Now server routing (new CropStressIrrigateNowEvent).
+- [x] Packed persistence both doors (StateLedger SCHEMA 2 + careerSavegame.xml leaf).
+- [x] Daily TimeGuard `simulation` accrual + day-hook fallback + version-skew guard.
+- [x] RealisticWeather moisture unwind (2 writes + 2 step-asides removed; RW stays weather-only).
+- [x] Three offline benches (relief sparsity, drainage conservation, real-scheduler catch-up). Suite 162/0.
+- [~] In-game acceptance owed: hollow stays wetter over dry days; continuity on old saves; skip lands exactly; cell round-trip on both save paths; Irrigate Now survives broadcast on a client; RW map moisture evolves on our model.

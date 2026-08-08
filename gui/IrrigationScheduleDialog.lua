@@ -412,7 +412,15 @@ function IrrigationScheduleDialog:onIrrigateNow()
 
     local ok = false
     if g_cropStressManager ~= nil and g_cropStressManager.irrigationManager ~= nil then
-        ok = g_cropStressManager.irrigationManager:applyOneTimeIrrigation(self.systemId)
+        if g_server == nil and g_client ~= nil and CropStressIrrigateNowEvent ~= nil then
+            -- SCS-018 3.6: a client routes the request to the server; the server
+            -- applies the water through the single per-cell write path. Never
+            -- write local state and let the next broadcast erase it.
+            CropStressIrrigateNowEvent.sendToServer(self.systemId)
+            ok = true
+        else
+            ok = g_cropStressManager.irrigationManager:applyOneTimeIrrigation(self.systemId)
+        end
     end
 
     if g_currentMission ~= nil then

@@ -101,6 +101,13 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
             setFloat( key .. "#moisture", data.moisture)
             setFloat( key .. "#stress",   self.manager.stressModifier:getStress(fieldId))
             setString(key .. "#soilType", data.soilType or "loamy")
+            -- SCS-018 3.8: packed cell leaf per field (nil when no cells exist).
+            if soilSystem.packCells ~= nil then
+                local packed = soilSystem:packCells(fieldId)
+                if packed ~= nil then
+                    setString(key .. "#cells", packed)
+                end
+            end
             i = i + 1
         end
     end
@@ -223,6 +230,11 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
                 if soilType ~= nil and SoilMoistureSystem.SOIL_PARAMS[soilType] ~= nil then
                     soilSystem.fieldData[fieldId].soilType = soilType
                 end
+                -- SCS-018 3.8: install cells from the packed leaf (both load doors).
+                local cellsStr = getString(key .. "#cells", nil)
+                if cellsStr ~= nil and soilSystem.unpackCells ~= nil then
+                    soilSystem:unpackCells(fieldId, cellsStr)
+                end
             end
             i = i + 1
         end
@@ -295,11 +307,16 @@ function SaveLoadHandler:buildStateTable()
     local stressModifier = self.manager.stressModifier
     if soilSystem ~= nil then
         for fieldId, data in pairs(soilSystem.fieldData) do
-            out.fields[fieldId] = {
+            local entry = {
                 moisture = data.moisture,
                 stress   = (stressModifier ~= nil) and stressModifier:getStress(fieldId) or 0.0,
                 soilType = data.soilType or "loamy",
             }
+            -- SCS-018 3.8: packed cell leaf rides the ledger table (nil when no cells).
+            if soilSystem.packCells ~= nil then
+                entry.cells = soilSystem:packCells(fieldId)
+            end
+            out.fields[fieldId] = entry
         end
     end
 
@@ -354,6 +371,10 @@ function SaveLoadHandler:applyStateTable(data)
                 end
                 if f.soilType ~= nil and SoilMoistureSystem.SOIL_PARAMS[f.soilType] ~= nil then
                     soilSystem.fieldData[fieldId].soilType = f.soilType
+                end
+                -- SCS-018 3.8: install cells from the ledger-packed leaf.
+                if f.cells ~= nil and soilSystem.unpackCells ~= nil then
+                    soilSystem:unpackCells(fieldId, f.cells)
                 end
                 n = n + 1
             end

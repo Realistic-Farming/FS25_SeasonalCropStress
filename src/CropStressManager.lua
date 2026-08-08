@@ -312,6 +312,19 @@ function CropStressManager:installFieldReadyUpdater()
             local mapped = manager:buildFieldMap()
             csLog(string.format("CropStressManager fieldReady: buildFieldMap mapped %d fields", mapped))
 
+            -- SCS-018: once fields are ready, materialise relief cells (one pass,
+            -- terrain is available after mission start) and register the daily
+            -- settle with Time Guard (server). The store's relief pass and the
+            -- fallback day hook handle absence.
+            if manager.soilSystem.materialiseRelief ~= nil then
+                for fieldId in pairs(manager.soilSystem.fieldData) do
+                    manager.soilSystem:materialiseRelief(fieldId)
+                end
+            end
+            if g_server ~= nil and manager.soilSystem.registerDailyAccrual ~= nil then
+                manager.soilSystem:registerDailyAccrual()
+            end
+
             if found == 0 then
                 csLog("CropStressManager fieldReady: WARNING — enumerateFields returned 0. Check g_fieldManager.fields.")
             end
@@ -476,6 +489,12 @@ function CropStressManager:onHourlyTick()
         -- 2b. Activate/deactivate irrigation systems BEFORE moisture update so
         --     gains set by activateSystem() are included in this tick.
         self.irrigationManager:hourlyScheduleCheck()
+
+        -- SCS-018: when Time Guard is absent, the daily settle rides the
+        -- fallback day-change hook (accepts the known skipped-day limitation).
+        if self.soilSystem.checkDayFallback ~= nil then
+            self.soilSystem:checkDayFallback()
+        end
 
         -- 2c. Advance soil moisture simulation
         self.soilSystem:hourlyUpdate(self.weatherIntegration)
@@ -812,15 +831,16 @@ function CropStressManager:detectOptionalMods()
         self.autoDriveIntegration:enableAutoDriveMode()
     end
 
-    -- FS25_RealisticWeather moisture integration.
-    -- RW injects g_currentMission.moistureSystem in DensityMapHeightManager.loadMapData,
-    -- which runs before loadMission00Finished, so the object is available here.
-    -- We verify getValuesAtCoords exists to avoid false-positive collisions.
+    -- FS25_RealisticWeather: WEATHER source only (temperature, rain) through
+    -- WeatherIntegration. SCS-018 unwind: its moisture grid is neither read nor
+    -- written; SCS owns its whole moisture simulation on every map. The wiring
+    -- calls below are kept (no-op clears) so the detection stays truthful about
+    -- weather without touching RW's moisture state.
     local rwMs = g_currentMission and g_currentMission.moistureSystem
     if rwMs ~= nil and type(rwMs.getValuesAtCoords) == "function" then
-        csLog("FS25_RealisticWeather MoistureSystem detected — moisture sourced from RW cells; harvest penalty deferred to RW")
-        self.soilSystem:setRWMoistureSystem(rwMs)
-        self.stressModifier:setRWMode(true)
+        csLog("FS25_RealisticWeather detected as WEATHER source; SCS moisture simulation stays ours (RW grid untouched)")
+        self.soilSystem:setRWMoistureSystem(nil)
+        self.stressModifier:setRWMode(false)
     end
 
     -- FS25_MoistureSystem (by Ozz) detection

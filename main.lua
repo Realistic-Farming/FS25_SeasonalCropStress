@@ -53,6 +53,7 @@ source(modDir .. "src/integrations/CropStressMasterHUDBridge.lua")
 -- Event bus
 source(modDir .. "src/events/CropStressSettingsSyncEvent.lua")
 source(modDir .. "src/events/CropStressMoistureInitEvent.lua")
+source(modDir .. "src/events/CropStressIrrigateNowEvent.lua")
 
 -- Persistence
 source(modDir .. "src/SaveLoadHandler.lua")
