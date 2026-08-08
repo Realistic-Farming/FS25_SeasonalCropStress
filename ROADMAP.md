@@ -51,3 +51,7 @@
 
 ## 2026-08-08 (Fred): SCS-018 per-cell moisture store (combined spatial-soil drop, head)
 - [x] Moisture is now a property of the ground, cell by cell, on the same grid SoilFertilizer uses (10m at 4x, 20m at 8x, 40m at 16x). Cells materialise where relief exceeds the threshold or water is applied; the field scalar stays the derived aggregate. Single write path, packed persistence (StateLedger SCHEMA 2 + XML), daily settle via the TimeGuard `simulation` flow class with a day-hook fallback, per-cell pivot/drip/sprayer water, Irrigate Now server-routed, and the RealisticWeather moisture unwind (RW stays a weather source only). Three offline benches green (relief sparsity, drainage conservation, real-scheduler catch-up). In-game observation owed (acceptance checks in the brief).
+
+## 2026-08-08 (Fred): SCS-018 positional read facade fixed
+- [x] The SCS-018 contract claimed getMoisture(fieldId, x, z) shipped, but the CropStressManager facade forwarded only fieldId, so SF-18's positional reads degraded to the field aggregate. SoilMoistureSystem already had the positional getter; the facade now forwards x, z. One-arg callers unchanged. Suite 162/0 across 9 files. Built and deployed. The SF-18 keystone (FS25_SoilFertilizer) consumes the positional read.
+
