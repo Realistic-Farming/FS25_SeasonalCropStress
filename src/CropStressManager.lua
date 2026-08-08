@@ -605,9 +605,11 @@ end
 -- ============================================================
 
 -- Moisture (0.0-1.0) for a field, or nil if the field is not tracked.
-function CropStressManager:getMoisture(fieldId)
+-- With a world position (fieldId, x, z) returns the per-cell moisture where a
+-- cell exists, else the field aggregate (SCS-018 positional read; never nil).
+function CropStressManager:getMoisture(fieldId, x, z)
     if self.soilSystem == nil then return nil end
-    return self.soilSystem:getMoisture(fieldId)
+    return self.soilSystem:getMoisture(fieldId, x, z)
 end
 
 -- Stress (0.0-1.0) for a field; 0.0 if the field is not tracked.
