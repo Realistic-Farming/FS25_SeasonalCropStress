@@ -58,4 +58,6 @@
 - [x] Daily TimeGuard `simulation` accrual + day-hook fallback + version-skew guard.
 - [x] RealisticWeather moisture unwind (2 writes + 2 step-asides removed; RW stays weather-only).
 - [x] Three offline benches (relief sparsity, drainage conservation, real-scheduler catch-up). Suite 162/0.
+- [x] SCS-018 positional read facade fixed: CropStressManager.getMoisture forwards x, z to SoilMoistureSystem (the 1-arg facade was the uncommitted gap; SF-18 consumes the positional read). Suite 162/0.
 - [~] In-game acceptance owed: hollow stays wetter over dry days; continuity on old saves; skip lands exactly; cell round-trip on both save paths; Irrigate Now survives broadcast on a client; RW map moisture evolves on our model.
+
