@@ -20,6 +20,11 @@ local modDir = g_currentModDirectory
 -- Weather bridge
 source(modDir .. "src/WeatherIntegration.lua")
 
+-- Value-map substrate (SCS-039): loads BEFORE SoilMoistureSystem, which
+-- delegates to it when the engine is capable and falls back to its own
+-- cell store when it is not.
+source(modDir .. "src/maps/CropStressValueMap.lua")
+
 -- Core simulation
 source(modDir .. "src/SoilMoistureSystem.lua")
 source(modDir .. "src/CropStressModifier.lua")
