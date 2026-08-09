@@ -2862,13 +2862,13 @@
   "2026-08-09": [
     {
       "referrer": "github.com",
-      "count": 440,
+      "count": 449,
       "uniques": 115
     },
     {
       "referrer": "Google",
-      "count": 82,
-      "uniques": 40
+      "count": 58,
+      "uniques": 36
     },
     {
       "referrer": "kingmods.net",
@@ -2877,13 +2877,13 @@
     },
     {
       "referrer": "yandex.ru",
-      "count": 8,
+      "count": 10,
       "uniques": 4
     },
     {
       "referrer": "Bing",
-      "count": 4,
-      "uniques": 3
+      "count": 2,
+      "uniques": 2
     },
     {
       "referrer": "l.facebook.com",
