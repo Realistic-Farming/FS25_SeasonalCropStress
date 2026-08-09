@@ -312,11 +312,28 @@ function CropStressManager:installFieldReadyUpdater()
             local mapped = manager:buildFieldMap()
             csLog(string.format("CropStressManager fieldReady: buildFieldMap mapped %d fields", mapped))
 
+            -- SCS-039: stand the 2m value map up FIRST, because whether it is
+            -- carrying the truth decides whether the relief pass below runs at
+            -- all. Terrain is available by this point, which is what the map
+            -- needs. Declines quietly on any install the engine cannot carry.
+            local mapLive = false
+            if manager.soilSystem.initValueMap ~= nil then
+                local sgDir = g_currentMission ~= nil and g_currentMission.missionInfo ~= nil
+                    and g_currentMission.missionInfo.savegameDirectory or nil
+                mapLive = manager.soilSystem:initValueMap(sgDir)
+            end
+
             -- SCS-018: once fields are ready, materialise relief cells (one pass,
             -- terrain is available after mission start) and register the daily
             -- settle with Time Guard (server). The store's relief pass and the
             -- fallback day hook handle absence.
-            if manager.soilSystem.materialiseRelief ~= nil then
+            --
+            -- UNDER THE MAP DEFAULT THE RELIEF PASS IS FALLBACK-ONLY, per the
+            -- moisture brief's ratified rebase addendum: the materialisation
+            -- machinery (threshold, relief trigger, backstop cap) is text that
+            -- only applies when the map is absent. Running it anyway would build
+            -- a second store nothing reads and pay for it every load.
+            if not mapLive and manager.soilSystem.materialiseRelief ~= nil then
                 for fieldId in pairs(manager.soilSystem.fieldData) do
                     manager.soilSystem:materialiseRelief(fieldId)
                 end
@@ -437,6 +454,12 @@ function CropStressManager:update(dt)
     -- NPCFavor deferred registration: poll each frame until npcSystem.isInitialized
     if self.npcIntegration ~= nil then
         self.npcIntegration:tryDeferredRegistration()
+    end
+
+    -- SCS-039: walk any queued moisture-map delivery a few rows per frame.
+    -- Returns immediately when the queue is empty, which is the normal case.
+    if g_server ~= nil and self.soilSystem ~= nil and self.soilSystem.updateMapSync ~= nil then
+        self.soilSystem:updateMapSync()
     end
 
     local env = g_currentMission.environment
@@ -590,6 +613,14 @@ function CropStressManager:sendInitialClientState(connection)
     )
     connection:sendEvent(moistureEvent)
 
+    -- 3. SCS-039: queue the 2m map for this client. The snapshot above already
+    --    gave them every field SCALAR, so their HUD is correct immediately; the
+    --    map rows fill in the sub-field detail behind it, a few per frame. A
+    --    client that disconnects mid-walk simply stops receiving rows.
+    if self.soilSystem.queueMapSync ~= nil then
+        self.soilSystem:queueMapSync(connection)
+    end
+
     local fieldCount = 0
     for _ in pairs(self.soilSystem.fieldData) do fieldCount = fieldCount + 1 end
     csLog(string.format("MP: sent settings + moisture snapshot (%d fields) to new client", fieldCount))
@@ -605,9 +636,11 @@ end
 -- ============================================================
 
 -- Moisture (0.0-1.0) for a field, or nil if the field is not tracked.
-function CropStressManager:getMoisture(fieldId)
+-- With a world position (fieldId, x, z) returns the per-cell moisture where a
+-- cell exists, else the field aggregate (SCS-018 positional read; never nil).
+function CropStressManager:getMoisture(fieldId, x, z)
     if self.soilSystem == nil then return nil end
-    return self.soilSystem:getMoisture(fieldId)
+    return self.soilSystem:getMoisture(fieldId, x, z)
 end
 
 -- Stress (0.0-1.0) for a field; 0.0 if the field is not tracked.
@@ -1004,6 +1037,35 @@ function CropStressManager:consoleStatus()
         print(string.format("    Field %d: %.1f%% moisture, stress %.2f",
             f.fieldId, f.moisture * 100, stress))
     end
+end
+
+--- SCS-039 THE FRAME-COST INSTRUMENT. The brief left in-game frame cost as its
+--- one open measurement; this makes it readable rather than guessed at.
+function CropStressManager:consoleMapStats()
+    local soil = self.soilSystem
+    if soil == nil or soil.getMapStats == nil then
+        print("Moisture map: unavailable (soil system not ready)")
+        return
+    end
+    local s = soil:getMapStats()
+    print("=== Moisture value map (SCS-039) ===")
+    if not s.active then
+        print("  ACTIVE: no - the sparse-cell store is carrying moisture")
+        print("  (engine incapable, release-gated off, or the map declined to load)")
+        return
+    end
+    local m = s.map or {}
+    print(string.format("  ACTIVE: yes   grain %.2f m/px   %dx%d   %s",
+        m.grainMetres or 0, m.resolution or 0, m.resolution or 0,
+        m.fromSave and "restored from savegame" or "fresh"))
+    print(string.format("  one raw step = %.5f moisture (the quantisation floor)", m.unitsPerRaw or 0))
+    print(string.format("  fields seeded onto the map: %d", s.seededFields or 0))
+    print(string.format("  last daily settle: %s ms over %d fields / %d sampled blocks",
+        tostring(s.settleMs or "n/a"), s.settleFields or 0, s.settleBlocks or 0))
+    print(string.format("  MP rows sent: %d   deliveries pending: %d",
+        s.syncRowsSent or 0, s.syncPending or 0))
+    print(string.format("  engine paths: executeAdd=%s polygonOps=%s",
+        tostring(m.executeAdd), tostring(m.polygonOps)))
 end
 
 function CropStressManager:consoleRelease()

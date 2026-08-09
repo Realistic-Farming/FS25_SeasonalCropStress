@@ -20,6 +20,11 @@ local modDir = g_currentModDirectory
 -- Weather bridge
 source(modDir .. "src/WeatherIntegration.lua")
 
+-- Value-map substrate (SCS-039): loads BEFORE SoilMoistureSystem, which
+-- delegates to it when the engine is capable and falls back to its own
+-- cell store when it is not.
+source(modDir .. "src/maps/CropStressValueMap.lua")
+
 -- Core simulation
 source(modDir .. "src/SoilMoistureSystem.lua")
 source(modDir .. "src/CropStressModifier.lua")
@@ -54,6 +59,7 @@ source(modDir .. "src/integrations/CropStressMasterHUDBridge.lua")
 source(modDir .. "src/events/CropStressSettingsSyncEvent.lua")
 source(modDir .. "src/events/CropStressMoistureInitEvent.lua")
 source(modDir .. "src/events/CropStressIrrigateNowEvent.lua")
+source(modDir .. "src/events/CropStressMoistureRowEvent.lua")
 
 -- Persistence
 source(modDir .. "src/SaveLoadHandler.lua")
@@ -264,6 +270,7 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
         addConsoleCommand("csDebug",       "Toggle verbose debug logging",                                 "consoleToggleDebug", g_csManager)
         addConsoleCommand("csConsultant",  "Open the Crop Consultant dialog",                              "consoleConsultant",  g_csManager)
         addConsoleCommand("csRelease",     "Release gate: show STABLE vs experimental-LOCKED systems",     "consoleRelease",     g_csManager)
+        addConsoleCommand("csMapStats",    "Moisture value map: grain, settle cost, sync progress",       "consoleMapStats",    g_csManager)
     end
 end)
 

@@ -37,6 +37,14 @@ ReleaseGate.EXPERIMENTAL = {
         name = "Moisture coupling",
         status = "not built yet; locks when it lands",
     },
+    -- SCS-039 / GRID-1. LOCKED at merge per the brief. Unlock gates on the
+    -- standard in-game layer look: no FPS regression beside the six shipped
+    -- soil layers. The system is inert on any install where the engine cannot
+    -- carry the map, so a locked row here never costs the fallback anything.
+    cs_grid_concordance = {
+        name = "Moisture on the 2m grid",
+        status = "new; awaiting the in-game layer look",
+    },
 }
 
 -- Console command -> systemId, so command refusals route through the same registry.
