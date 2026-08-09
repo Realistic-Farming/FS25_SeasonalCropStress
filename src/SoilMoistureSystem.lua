@@ -172,11 +172,32 @@ end
 --- carrying the moisture truth, false when the cell store still is.
 function SoilMoistureSystem:initValueMap(savegameDir)
     if self.valueMap ~= nil then return self.valueMap.available end
+    -- Once it has declined it stays declined for the session. Without this the
+    -- nil-on-failure below would make every caller retry the whole engine probe.
+    if self._valueMapTried then return false end
+    self._valueMapTried = true
     if CropStressValueMap == nil then return false end
+
+    -- SCS-039 ships LOCKED. Until the in-game layer look clears it, the map only
+    -- stands up for a player who has opted into experimental systems; everyone
+    -- else runs the shipped cell store, which is exactly today.
+    if ReleaseGate ~= nil and ReleaseGate.isSystemLive ~= nil
+       and not ReleaseGate.isSystemLive("cs_grid_concordance") then
+        csLog("Moisture: the 2m value map is release-gated off; using the cell store")
+        return false
+    end
+
     self.valueMap = CropStressValueMap.new()
     local ok = self.valueMap:initialize(savegameDir)
     if ok then
         csLog("Moisture: the 2m value map is live; the cell store is now the fallback only")
+    else
+        -- THE DEGRADE, and it is the whole reason the scalar rows stay in the
+        -- savegame. A map that cannot stand up (no engine, or a .grle that is
+        -- missing or refuses to load) leaves the cell store and its per-field
+        -- scalars carrying the save, with nothing lost but the sub-field detail.
+        csLog("Moisture: the 2m value map declined; the cell store and its scalars carry this save")
+        self.valueMap = nil
     end
     return ok
 end
@@ -326,10 +347,21 @@ function SoilMoistureSystem:enumerateFields()
     return count
 end
 
--- Called every in-game hour
-function SoilMoistureSystem:hourlyUpdate(weather)
+--- Called every in-game hour.
+---
+--- SCS-037 COMPOSITION SEAM: `elapsedHours` defaults to 1, which is exactly
+--- today's behaviour. SCS-037 replaces the hourly EDGE DETECTOR with a real
+--- elapsed count, and when it lands it passes that count here and this path
+--- integrates it without any further change. The map's pending-delta
+--- accumulator is what makes that safe: a 72-hour catch-up is 72 hours of
+--- weather added to the accumulator, which then spends whole raw steps once,
+--- rather than 72 separate sub-step writes that would each floor to nothing.
+---@param weather table
+---@param elapsedHours number|nil  hours since the last tick (default 1)
+function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours)
     if not self.isInitialized then return end
     if weather == nil then return end
+    local hours = math.max(1, math.floor(elapsedHours or 1))
 
     -- SCS-018 RW unwind: SeasonalCropStress owns its whole moisture simulation.
     -- RealisticWeather remains a read-only WEATHER source through WeatherIntegration
@@ -366,15 +398,19 @@ function SoilMoistureSystem:hourlyUpdate(weather)
         -- sfEvapMod        = per-field organic matter modifier from FS25_SoilFertilizer (if present)
         --                    High OM (>5%) lowers evap; poor OM (<1%) raises it. Default 1.0.
         local sfEvapMod = sfHasEvap and sfInteg:getFieldEvapMod(fieldId) or 1.0
+        -- Every term below is a PER-HOUR quantity, so each is multiplied by the
+        -- elapsed count. At the default of 1 this is arithmetically identical to
+        -- what shipped; SCS-037 changes only what arrives in `hours`.
         local evapLoss = SoilMoistureSystem.BASE_EVAP_RATE
             * evapMultiplier
             * soilParams.evapMod
             * settingsEvapMult
             * sfEvapMod
+            * hours
 
         -- Rain gain (modulated by soil absorption)
-        local rainGain  = rainAmount * soilParams.rainAbsorb
-        local irrigGain = self.irrigationGains[fieldId] or 0.0
+        local rainGain  = rainAmount * soilParams.rainAbsorb * hours
+        local irrigGain = (self.irrigationGains[fieldId] or 0.0) * hours
 
         local prevMoisture = self:getFieldAggregate(data)
         -- SCS-039 MAP PATH. The hourly net is almost always SMALLER than one raw
@@ -734,13 +770,27 @@ function SoilMoistureSystem:settleDaily(boundariesCrossed)
     -- Re-deriving once a day makes the scalar self-correcting instead of
     -- slowly drifting away from the map it is supposed to describe.
     if self:mapActive() then
+        -- Instrumented: the brief's one open measurement is the in-game frame
+        -- cost of this pass, so it is measured rather than estimated. Read it
+        -- with csMapStats.
+        local t0 = (g_currentMission ~= nil and g_currentMission.time) or nil
+        local fields, blocks = 0, 0
         for fieldId, d in pairs(self.fieldData) do
-            self:_drainFieldOnMap(fieldId, days)
+            local drained = self:_drainFieldOnMap(fieldId, days)
+            if drained then
+                fields = fields + 1
+                blocks = blocks + (self._lastFieldBlocks or 0)
+            end
             local vx, vz, n = self:_getFieldVerts(fieldId)
             if vx ~= nil then
                 local mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
                 if mean ~= nil then d.moisture = mean end
             end
+        end
+        self._lastSettleFields = fields
+        self._lastSettleBlocks = blocks
+        if t0 ~= nil and g_currentMission.time ~= nil then
+            self._lastSettleMs = g_currentMission.time - t0
         end
         self._lastSettledDay = (g_currentMission ~= nil and g_currentMission.environment ~= nil
             and g_currentMission.environment.currentMonotonicDay) or nil
@@ -830,6 +880,7 @@ function SoilMoistureSystem:_drainFieldOnMap(fieldId, days)
         end
         x = x + step
     end
+    self._lastFieldBlocks = count
     if count < 2 then return false end
 
     -- Pass 2: the drift. A block's share of the move is set by how far its
@@ -887,6 +938,77 @@ function SoilMoistureSystem.computeDrainageAdditions(heights, moistures, frac)
                        + (meanH - heights[i]) * SoilMoistureSystem.CELL_SENS)
     end
     return out
+end
+
+-- ============================================================
+-- SCS-039 MP DELIVERY: the server walks the map to a joining client a few rows
+-- per frame. Never in one payload: a 2048x2048 map is 4 MB of raw bytes, and
+-- sending it whole would stall the join for everyone already in the game.
+-- ============================================================
+SoilMoistureSystem.SYNC_ROWS_PER_FRAME = 8
+
+--- Queue the whole map for a connection. Safe to call for each joining client.
+function SoilMoistureSystem:queueMapSync(connection)
+    if not self:mapActive() or connection == nil then return false end
+    if g_server == nil then return false end
+    self._syncQueue = self._syncQueue or {}
+    self._syncQueue[#self._syncQueue + 1] = { conn = connection, nextRow = 0 }
+    return true
+end
+
+--- Drive the queue. Called from the manager's per-frame update on the server.
+--- Returns the number of rows sent this frame (0 when there is nothing to do),
+--- which is also what makes the cost visible to the instrument below.
+function SoilMoistureSystem:updateMapSync()
+    local q = self._syncQueue
+    if q == nil or #q == 0 then return 0 end
+    if not self:mapActive() then
+        self._syncQueue = nil
+        return 0
+    end
+
+    local job = q[1]
+    local total = self.valueMap:getSyncRowCount()
+    local sent = 0
+    while sent < SoilMoistureSystem.SYNC_ROWS_PER_FRAME and job.nextRow < total do
+        local raw = self.valueMap:readSyncRow(job.nextRow)
+        if raw ~= nil and CropStressMoistureRowEvent ~= nil then
+            local packed = CropStressValueMap.packRow(raw)
+            g_server:sendEvent(CropStressMoistureRowEvent.new(job.nextRow, packed),
+                false, nil, job.conn)
+        end
+        job.nextRow = job.nextRow + 1
+        sent = sent + 1
+    end
+
+    if job.nextRow >= total then
+        table.remove(q, 1)
+        csLog(string.format("Moisture map: delivered %d rows to a client", total))
+    end
+    self._syncTotalRowsSent = (self._syncTotalRowsSent or 0) + sent
+    return sent
+end
+
+-- ============================================================
+-- SCS-039 THE FRAME-COST INSTRUMENT (the brief's one named open measurement).
+-- Nothing here changes behaviour; it makes the cost the brief asked K to
+-- measure READABLE in-game instead of guessed at, via csMapStats.
+-- ============================================================
+function SoilMoistureSystem:getMapStats()
+    local s = {
+        active         = self:mapActive(),
+        settleMs       = self._lastSettleMs,
+        settleBlocks   = self._lastSettleBlocks,
+        settleFields   = self._lastSettleFields,
+        syncRowsSent   = self._syncTotalRowsSent or 0,
+        syncPending    = (self._syncQueue ~= nil) and #self._syncQueue or 0,
+        seededFields   = 0,
+    }
+    for _ in pairs(self._mapSeeded or {}) do s.seededFields = s.seededFields + 1 end
+    if self.valueMap ~= nil and self.valueMap.getDebugStats ~= nil then
+        s.map = self.valueMap:getDebugStats()
+    end
+    return s
 end
 
 -- Register the daily accrual with Time Guard when present (server only).

@@ -391,6 +391,95 @@ function CropStressValueMap:readAverageOfPolygon(vx, vz, n)
     return decode(acc / numPixels, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
 end
 
+-- ─────────────────────────────────────────────────────────
+-- MULTIPLAYER DELIVERY (brief step 5, the six-layer precedent)
+--
+-- The server owns the moisture truth; a client allocates the same map and is
+-- filled a ROW AT A TIME rather than in one payload, because a 2048x2048 map is
+-- 4 MB of raw bytes and no single event carries that. Rows are raw values, so
+-- nothing is re-quantised in flight and a client's pixels are bit-identical to
+-- the server's.
+-- ─────────────────────────────────────────────────────────
+
+function CropStressValueMap:getSyncRowCount()
+    if not self.available then return 0 end
+    return self.resolution
+end
+
+--- Read one row of RAW values off the map. Returns nil when unavailable so the
+--- caller can stop rather than send a row of zeros that would erase a client.
+function CropStressValueMap:readSyncRow(gy)
+    if not self.available then return nil end
+    if getBitVectorMapPoint == nil then return nil end
+    if gy == nil or gy < 0 or gy >= self.resolution then return nil end
+    local row = {}
+    for gx = 0, self.resolution - 1 do
+        local ok, raw = pcall(getBitVectorMapPoint, self.bvm, gx, gy, 0, NUM_CHANNELS)
+        row[gx + 1] = (ok and raw) or 0
+    end
+    return row
+end
+
+--- Apply one received row. Client side only in practice, but it is written as a
+--- plain map operation so the bench can drive it without a network.
+function CropStressValueMap:applySyncRow(gy, row)
+    if not self.available or row == nil then return false end
+    if setBitVectorMapPoint == nil then return false end
+    if gy == nil or gy < 0 or gy >= self.resolution then return false end
+    local limit = math.min(#row, self.resolution)
+    for i = 1, limit do
+        local raw = row[i] or 0
+        pcall(setBitVectorMapPoint, self.bvm, i - 1, gy, 0, NUM_CHANNELS, raw)
+    end
+    return true
+end
+
+--- Pack a raw row into a compact run-length form for the wire. Moisture maps are
+--- overwhelmingly runs of one value (a field at a uniform level, and the whole
+--- off-field remainder at the raw-0 sentinel), so this is the difference between
+--- a sane join and a stall. Falls back to nothing clever when the row is noisy.
+---@return table pairs  flat {count, value, count, value, ...}
+function CropStressValueMap.packRow(row)
+    local out = {}
+    if row == nil or #row == 0 then return out end
+    local runValue = row[1]
+    local runLen   = 1
+    for i = 2, #row do
+        local v = row[i]
+        if v == runValue and runLen < 65535 then
+            runLen = runLen + 1
+        else
+            out[#out + 1] = runLen
+            out[#out + 1] = runValue
+            runValue = v
+            runLen = 1
+        end
+    end
+    out[#out + 1] = runLen
+    out[#out + 1] = runValue
+    return out
+end
+
+--- Inverse of packRow. Never trusts the payload: a malformed or hostile run
+--- table cannot make this allocate past the map's own width.
+function CropStressValueMap.unpackRow(packed, width)
+    local row = {}
+    if packed == nil then return row end
+    local n = 0
+    local i = 1
+    while i < #packed do
+        local count = packed[i] or 0
+        local value = packed[i + 1] or 0
+        i = i + 2
+        for _ = 1, count do
+            if width ~= nil and n >= width then return row end
+            n = n + 1
+            row[n] = value
+        end
+    end
+    return row
+end
+
 function CropStressValueMap:getDebugStats()
     return {
         available   = self.available,

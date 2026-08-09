@@ -456,6 +456,12 @@ function CropStressManager:update(dt)
         self.npcIntegration:tryDeferredRegistration()
     end
 
+    -- SCS-039: walk any queued moisture-map delivery a few rows per frame.
+    -- Returns immediately when the queue is empty, which is the normal case.
+    if g_server ~= nil and self.soilSystem ~= nil and self.soilSystem.updateMapSync ~= nil then
+        self.soilSystem:updateMapSync()
+    end
+
     local env = g_currentMission.environment
     if env == nil then return end
 
@@ -606,6 +612,14 @@ function CropStressManager:sendInitialClientState(connection)
         self.stressModifier.fieldStress
     )
     connection:sendEvent(moistureEvent)
+
+    -- 3. SCS-039: queue the 2m map for this client. The snapshot above already
+    --    gave them every field SCALAR, so their HUD is correct immediately; the
+    --    map rows fill in the sub-field detail behind it, a few per frame. A
+    --    client that disconnects mid-walk simply stops receiving rows.
+    if self.soilSystem.queueMapSync ~= nil then
+        self.soilSystem:queueMapSync(connection)
+    end
 
     local fieldCount = 0
     for _ in pairs(self.soilSystem.fieldData) do fieldCount = fieldCount + 1 end
@@ -1023,6 +1037,35 @@ function CropStressManager:consoleStatus()
         print(string.format("    Field %d: %.1f%% moisture, stress %.2f",
             f.fieldId, f.moisture * 100, stress))
     end
+end
+
+--- SCS-039 THE FRAME-COST INSTRUMENT. The brief left in-game frame cost as its
+--- one open measurement; this makes it readable rather than guessed at.
+function CropStressManager:consoleMapStats()
+    local soil = self.soilSystem
+    if soil == nil or soil.getMapStats == nil then
+        print("Moisture map: unavailable (soil system not ready)")
+        return
+    end
+    local s = soil:getMapStats()
+    print("=== Moisture value map (SCS-039) ===")
+    if not s.active then
+        print("  ACTIVE: no - the sparse-cell store is carrying moisture")
+        print("  (engine incapable, release-gated off, or the map declined to load)")
+        return
+    end
+    local m = s.map or {}
+    print(string.format("  ACTIVE: yes   grain %.2f m/px   %dx%d   %s",
+        m.grainMetres or 0, m.resolution or 0, m.resolution or 0,
+        m.fromSave and "restored from savegame" or "fresh"))
+    print(string.format("  one raw step = %.5f moisture (the quantisation floor)", m.unitsPerRaw or 0))
+    print(string.format("  fields seeded onto the map: %d", s.seededFields or 0))
+    print(string.format("  last daily settle: %s ms over %d fields / %d sampled blocks",
+        tostring(s.settleMs or "n/a"), s.settleFields or 0, s.settleBlocks or 0))
+    print(string.format("  MP rows sent: %d   deliveries pending: %d",
+        s.syncRowsSent or 0, s.syncPending or 0))
+    print(string.format("  engine paths: executeAdd=%s polygonOps=%s",
+        tostring(m.executeAdd), tostring(m.polygonOps)))
 end
 
 function CropStressManager:consoleRelease()
