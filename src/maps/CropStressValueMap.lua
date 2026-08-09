@@ -375,14 +375,20 @@ end
 ---@return number|nil grain  metres per pixel (the concordance)
 function CropStressValueMap:readAverageOfPolygon(vx, vz, n)
     if not self.available then return nil, nil end
-    if getDensityMapModifierStats == nil then return nil, nil end
+    local m = self.modifier
+    if m == nil or m.executeGet == nil then return nil, nil end
     if not self:_setPolygonRegion(vx, vz, n) then return nil, nil end
-    local ok, total, area = pcall(function()
-        return self.modifier:executeGet()
+    -- executeGet returns (accumulator, numPixels, totalArea), confirmed at the
+    -- decompile: PrecisionFarming NitrogenMap.lua:1034 reads it as
+    -- `local acc, numPixels, _ = modifierFruit:executeGet()`. The mean we want
+    -- is over WRITTEN pixels, so numPixels is the divisor, never totalArea.
+    local ok, acc, numPixels = pcall(function()
+        return m:executeGet()
     end)
-    if not ok or area == nil or area == 0 then return nil, nil end
-    local meanRaw = total / area
-    return decode(meanRaw, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
+    if not ok or acc == nil or numPixels == nil or numPixels == 0 then
+        return nil, nil
+    end
+    return decode(acc / numPixels, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
 end
 
 function CropStressValueMap:getDebugStats()

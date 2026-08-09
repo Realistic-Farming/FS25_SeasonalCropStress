@@ -152,8 +152,106 @@ function SoilMoistureSystem.new(manager)
     self._tgAccrualRegistered = false
     self._lastSettledDay = nil
 
+    -- SCS-039: the vendored 2 m value map. nil until initValueMap runs, and
+    -- still inert afterwards on any install where the engine cannot carry it.
+    -- Every branch below tests mapActive(); when it is false NOTHING changes and
+    -- the sparse-cell store above is the whole system, bit for bit.
+    self.valueMap = nil
+    self._fieldVerts = {}      -- fieldId -> {vx, vz, n}, cached polygon
+    self._mapSeeded  = {}      -- fieldId -> true once migrated onto the map
+
     self.isInitialized = false
     return self
+end
+
+-- ============================================================
+-- SCS-039 THE VALUE MAP: detection, and the one test every branch uses.
+-- ============================================================
+
+--- Stand the map up. Safe to call more than once. Returns true when the map is
+--- carrying the moisture truth, false when the cell store still is.
+function SoilMoistureSystem:initValueMap(savegameDir)
+    if self.valueMap ~= nil then return self.valueMap.available end
+    if CropStressValueMap == nil then return false end
+    self.valueMap = CropStressValueMap.new()
+    local ok = self.valueMap:initialize(savegameDir)
+    if ok then
+        csLog("Moisture: the 2m value map is live; the cell store is now the fallback only")
+    end
+    return ok
+end
+
+--- THE SINGLE DELEGATE TEST. Read it as "is the map carrying the truth".
+function SoilMoistureSystem:mapActive()
+    return self.valueMap ~= nil and self.valueMap.available == true
+end
+
+--- Field polygon in world space, cached. The map's region ops need it on every
+--- hourly write, and rebuilding it per tick from scene nodes would be wasteful.
+function SoilMoistureSystem:_getFieldVerts(fieldId)
+    local cached = self._fieldVerts[fieldId]
+    if cached ~= nil then
+        if cached.n == 0 then return nil end
+        return cached.vx, cached.vz, cached.n
+    end
+    local field = nil
+    if g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
+        for _, f in pairs(g_fieldManager.fields) do
+            if f.farmland ~= nil and f.farmland.id == fieldId then
+                field = f
+                break
+            end
+        end
+    end
+    local vx, vz, n = nil, nil, nil
+    if field ~= nil then
+        vx, vz, n = self:getFieldPolygonWorld(field)
+    end
+    if vx == nil or n == nil or n < 3 then
+        -- Cache the refusal too, or every tick re-walks the field list.
+        self._fieldVerts[fieldId] = { n = 0 }
+        return nil
+    end
+    self._fieldVerts[fieldId] = { vx = vx, vz = vz, n = n }
+    return vx, vz, n
+end
+
+--- ONE-TIME MIGRATION (brief step 4): seed the map from whatever the cell store
+--- already knows, once per field, at the first engine-present load.
+---
+--- CLAMP-HONEST: the field is painted at its aggregate first so no pixel is left
+--- at the raw-0 no-data sentinel, then each materialised cell stamps its own
+--- value over the top. Totals are preserved up to each tier's clamp, which is
+--- the most that can be promised when 10-40 m cells land on a 2 m grid.
+function SoilMoistureSystem:migrateFieldToMap(fieldId)
+    if not self:mapActive() then return false end
+    if self._mapSeeded[fieldId] then return true end
+    local d = self.fieldData[fieldId]
+    if d == nil then return false end
+    local vx, vz, n = self:_getFieldVerts(fieldId)
+    if vx == nil then return false end
+
+    self._mapSeeded[fieldId] = true
+    local base = self:getFieldAggregate(d) or 0.5
+    self.valueMap:paintPolygon(vx, vz, n, base)
+
+    -- Stamp the materialised cells over the base coat. Absent cells were always
+    -- "read the aggregate", and the base coat is exactly that, so nothing is lost.
+    local cs = self:getCellSize()
+    local stamped = 0
+    if d.cells ~= nil then
+        for cx, row in pairs(d.cells) do
+            for cz, cell in pairs(row) do
+                local wx = (cx + 0.5) * cs
+                local wz = (cz + 0.5) * cs
+                self.valueMap:writeValueAtWorld(wx, wz, cell.moisture, cs * 0.5)
+                stamped = stamped + 1
+            end
+        end
+    end
+    csLog(string.format("Moisture map: field %d migrated (base=%.2f, %d cells stamped)",
+        fieldId, base, stamped))
+    return true
 end
 
 function SoilMoistureSystem:initialize()
@@ -279,10 +377,35 @@ function SoilMoistureSystem:hourlyUpdate(weather)
         local irrigGain = self.irrigationGains[fieldId] or 0.0
 
         local prevMoisture = self:getFieldAggregate(data)
-        -- SCS-018: where cells exist, run the same weather per-cell through the
-        -- single write path; the aggregate follows. Where no cell exists, the
-        -- field scalar moves exactly as before.
-        if data.cellCount ~= nil and data.cellCount > 0 then
+        -- SCS-039 MAP PATH. The hourly net is almost always SMALLER than one raw
+        -- step (one step is ~0.0039 moisture), so writing it straight through
+        -- would floor to nothing every hour and the ground would stop answering
+        -- the weather entirely. Accumulate instead, and spend only whole steps.
+        -- The remainder is carried, so nothing is lost and nothing is invented.
+        if self:mapActive() then
+            self:migrateFieldToMap(fieldId)
+            local net = -evapLoss + rainGain + irrigGain
+            local pending = (data.mapPending or 0) + net
+            local applied, remainder = CropStressValueMap.quantiseDelta(pending)
+            data.mapPending = remainder
+            if applied ~= 0 then
+                local vx, vz, n = self:_getFieldVerts(fieldId)
+                if vx ~= nil then
+                    local moved = self.valueMap:applyDeltaToPolygon(vx, vz, n, applied)
+                    if moved == 0 then
+                        -- The engine refused the add path. Give the delta back to
+                        -- the accumulator rather than dropping it on the floor.
+                        data.mapPending = pending
+                    else
+                        -- applyDeltaToPolygon shifts every written pixel by the
+                        -- same amount, so the field mean moves by exactly that.
+                        -- The daily settle re-derives from the map and corrects
+                        -- any drift the positional writes introduce.
+                        data.moisture = math.max(0.0, math.min(1.0, data.moisture + moved))
+                    end
+                end
+            end
+        elseif data.cellCount ~= nil and data.cellCount > 0 then
             local net = -evapLoss + rainGain + irrigGain
             local newSum = 0
             for cx, row in pairs(data.cells) do
@@ -342,19 +465,35 @@ end
 -- With a world position, returns the cell moisture where a cell exists,
 -- else the field aggregate (SCS-018 positional getter, never nil).
 -- Without a position, returns the derived aggregate.
+--- SCS-039 THE CONCORDANCE: every read now also reports the GRAIN it was
+--- measured at, in metres, as a second return. A consumer that cares can tell a
+--- 2 m map reading from a 10-40 m cell reading; one that does not care ignores
+--- the extra value and behaves exactly as it always has. That additive shape is
+--- why all six existing consumers are untouched.
+---@return number|nil moisture 0..1
+---@return number|nil grainMetres
 function SoilMoistureSystem:getMoisture(fieldId, x, z)
     local d = self.fieldData[fieldId]
-    if d == nil then return nil end
+    if d == nil then return nil, nil end
 
     if x ~= nil and z ~= nil then
+        if self:mapActive() then
+            local v, grain = self.valueMap:readValueAtWorld(x, z)
+            -- nil means nothing is written at that pixel (off-field or not yet
+            -- seeded), which is the aggregate's job to answer, not a hole.
+            if v ~= nil then return v, grain end
+            return self:getFieldAggregate(d), grain
+        end
         local cx, cz = self:worldToCell(x, z)
         local row = d.cells and d.cells[cx]
         local cell = row and row[cz]
-        if cell ~= nil then return cell.moisture end
-        return self:getFieldAggregate(d)
+        if cell ~= nil then return cell.moisture, self:getCellSize() end
+        return self:getFieldAggregate(d), self:getCellSize()
     end
 
-    return self:getFieldAggregate(d)
+    -- Field-level read: the scalar is the derived aggregate either way, so the
+    -- grain reported is the field itself rather than any cell size.
+    return self:getFieldAggregate(d), nil
 end
 
 -- Derived field aggregate, O(1). Once a field has cells it is the mean of the
@@ -402,6 +541,25 @@ function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
     local d = self.fieldData[fieldId]
     if d == nil then return nil end
     newValue = math.max(0.0, math.min(1.0, newValue or 0))
+
+    -- SCS-039: a field-level set must reach the MAP, or the daily re-derive
+    -- reads the untouched ground back over it and the write silently reverts.
+    -- That would make csSetMoisture and the sprayer path look like they worked
+    -- for a few hours and then undo themselves, which is worse than refusing.
+    if self:mapActive() then
+        self:migrateFieldToMap(fieldId)
+        local vx, vz, n = self:_getFieldVerts(fieldId)
+        if vx ~= nil then
+            self.valueMap:paintPolygon(vx, vz, n, newValue)
+        end
+        -- The scalar is the derived aggregate, and a uniform paint makes the
+        -- mean exactly the painted value. Any carried sub-step delta is now
+        -- stale: it was accumulated against ground that no longer exists.
+        d.mapPending = 0
+        d.moisture = newValue
+        return newValue
+    end
+
     if d.cellCount ~= nil and d.cellCount > 0 then
         local delta = newValue - self:getFieldAggregate(d)
         for _, row in pairs(d.cells) do
@@ -524,6 +682,23 @@ end
 function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
     local d = self.fieldData[fieldId]
     if d == nil or gain <= 0 then return end
+
+    -- SCS-039: water lands on a PLACE, and on the map that place is a 2 m pixel
+    -- instead of a 10-40 m cell. Read what is there, add the gain, write it back.
+    -- No accumulator here: an irrigation gain at a point is a real quantity at a
+    -- real spot, not a field-wide sub-step drift, and the pivot's own pass writes
+    -- enough water to clear the floor.
+    if self:mapActive() then
+        self:migrateFieldToMap(fieldId)
+        local current = self.valueMap:readValueAtWorld(x, z)
+        if current == nil then current = self:getFieldAggregate(d) or 0 end
+        local grain = self.valueMap:getGrainMetres() or 2
+        self.valueMap:writeValueAtWorld(x, z, math.max(0.0, math.min(1.0, current + gain)), grain * 0.5)
+        -- The field aggregate is re-derived from the map on the daily settle;
+        -- a single pixel's gain is below the noise of the field mean until then.
+        return
+    end
+
     local cx, cz = self:worldToCell(x, z)
     local row = d.cells[cx]
     if row == nil then
@@ -551,6 +726,26 @@ end
 -- ============================================================
 function SoilMoistureSystem:settleDaily(boundariesCrossed)
     local days = math.max(1, boundariesCrossed or 1)
+
+    -- SCS-039: on the map, the daily settle is also where the field scalar is
+    -- RE-DERIVED from the ground rather than trusted. The hourly path keeps it
+    -- exact for uniform shifts, but positional writes (a pivot wetting its
+    -- circle) move the real mean by an area fraction we do not track per write.
+    -- Re-deriving once a day makes the scalar self-correcting instead of
+    -- slowly drifting away from the map it is supposed to describe.
+    if self:mapActive() then
+        for fieldId, d in pairs(self.fieldData) do
+            local vx, vz, n = self:_getFieldVerts(fieldId)
+            if vx ~= nil then
+                local mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+                if mean ~= nil then d.moisture = mean end
+            end
+        end
+        self._lastSettledDay = (g_currentMission ~= nil and g_currentMission.environment ~= nil
+            and g_currentMission.environment.currentMonotonicDay) or nil
+        return
+    end
+
     for fieldId, d in pairs(self.fieldData) do
         if d.cellCount ~= nil and d.cellCount > 0 then
             -- Drainage: bleed a fraction of each cell's moisture toward its

@@ -56,6 +56,20 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
     if not self.isInitialized then return end
     if xmlFile == nil then return end
 
+    -- SCS-039: the value map SAVES NATIVELY, per the ratified persistence
+    -- posture. The per-field scalar rows written below stay exactly as they are
+    -- and become the DEGRADE layer: if the .grle is missing or refuses to load,
+    -- the field scalars still restore and the cell store carries the save.
+    local soilSystemForMap = self.manager ~= nil and self.manager.soilSystem or nil
+    if soilSystemForMap ~= nil and soilSystemForMap.valueMap ~= nil
+       and soilSystemForMap.valueMap.available then
+        local sgDir = g_currentMission ~= nil and g_currentMission.missionInfo ~= nil
+            and g_currentMission.missionInfo.savegameDirectory or nil
+        if sgDir ~= nil then
+            soilSystemForMap.valueMap:saveToSavegame(sgDir)
+        end
+    end
+
     local root = "careerSavegame.cropStress"
 
     -- Helper functions that work with both object and global APIs

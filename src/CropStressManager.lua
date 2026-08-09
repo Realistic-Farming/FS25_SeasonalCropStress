@@ -312,11 +312,28 @@ function CropStressManager:installFieldReadyUpdater()
             local mapped = manager:buildFieldMap()
             csLog(string.format("CropStressManager fieldReady: buildFieldMap mapped %d fields", mapped))
 
+            -- SCS-039: stand the 2m value map up FIRST, because whether it is
+            -- carrying the truth decides whether the relief pass below runs at
+            -- all. Terrain is available by this point, which is what the map
+            -- needs. Declines quietly on any install the engine cannot carry.
+            local mapLive = false
+            if manager.soilSystem.initValueMap ~= nil then
+                local sgDir = g_currentMission ~= nil and g_currentMission.missionInfo ~= nil
+                    and g_currentMission.missionInfo.savegameDirectory or nil
+                mapLive = manager.soilSystem:initValueMap(sgDir)
+            end
+
             -- SCS-018: once fields are ready, materialise relief cells (one pass,
             -- terrain is available after mission start) and register the daily
             -- settle with Time Guard (server). The store's relief pass and the
             -- fallback day hook handle absence.
-            if manager.soilSystem.materialiseRelief ~= nil then
+            --
+            -- UNDER THE MAP DEFAULT THE RELIEF PASS IS FALLBACK-ONLY, per the
+            -- moisture brief's ratified rebase addendum: the materialisation
+            -- machinery (threshold, relief trigger, backstop cap) is text that
+            -- only applies when the map is absent. Running it anyway would build
+            -- a second store nothing reads and pay for it every load.
+            if not mapLive and manager.soilSystem.materialiseRelief ~= nil then
                 for fieldId in pairs(manager.soilSystem.fieldData) do
                     manager.soilSystem:materialiseRelief(fieldId)
                 end
