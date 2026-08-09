@@ -735,6 +735,7 @@ function SoilMoistureSystem:settleDaily(boundariesCrossed)
     -- slowly drifting away from the map it is supposed to describe.
     if self:mapActive() then
         for fieldId, d in pairs(self.fieldData) do
+            self:_drainFieldOnMap(fieldId, days)
             local vx, vz, n = self:_getFieldVerts(fieldId)
             if vx ~= nil then
                 local mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
@@ -774,6 +775,118 @@ function SoilMoistureSystem:settleDaily(boundariesCrossed)
     end
     self._lastSettledDay = (g_currentMission ~= nil and g_currentMission.environment ~= nil
         and g_currentMission.environment.currentMonotonicDay) or nil
+end
+
+-- ============================================================
+-- SCS-039 CONSERVED DRAINAGE ON THE MAP (brief step 4 / the geometry audit's
+-- build law). Water moves DOWNHILL and the field total does not change.
+--
+-- FRESH HEIGHT READS EVERY TIME, and that is the audit's law rather than a
+-- preference: terrain is deformable (levelling placeables, rice fields), so a
+-- cached relief picture goes stale the day a player reshapes the ground and
+-- then drains water toward a hollow that no longer exists.
+--
+-- Conservation is by construction, the same additive shape the rest of this
+-- work uses: every block's drift is measured against the block mean, so the
+-- drifts sum to zero and the field total cannot move. Drainage only ever
+-- REDISTRIBUTES; evaporation and rain are the hourly path's job.
+-- ============================================================
+SoilMoistureSystem.MAP_DRAIN_BLOCK      = 16     -- metres per sampled block
+SoilMoistureSystem.MAP_DRAIN_MAX_BLOCKS = 400    -- per field, per settle
+
+function SoilMoistureSystem:_drainFieldOnMap(fieldId, days)
+    if not self:mapActive() then return false end
+    if getTerrainHeightAtWorldPos == nil or g_terrainNode == nil then return false end
+    local vx, vz, n = self:_getFieldVerts(fieldId)
+    if vx == nil then return false end
+
+    local step = SoilMoistureSystem.MAP_DRAIN_BLOCK
+    local half = step * 0.5
+    local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
+    for i = 1, n do
+        if vx[i] < minX then minX = vx[i] end
+        if vx[i] > maxX then maxX = vx[i] end
+        if vz[i] < minZ then minZ = vz[i] end
+        if vz[i] > maxZ then maxZ = vz[i] end
+    end
+
+    -- Pass 1: sample the ground and the water at each block centre inside the
+    -- polygon. Both reads are fresh; neither is cached between settles.
+    local bx, bz, bh, bm = {}, {}, {}, {}
+    local count = 0
+    local x = minX + half
+    while x <= maxX and count < SoilMoistureSystem.MAP_DRAIN_MAX_BLOCKS do
+        local z = minZ + half
+        while z <= maxZ and count < SoilMoistureSystem.MAP_DRAIN_MAX_BLOCKS do
+            if csPointInPolygon(x, z, vx, vz, n) then
+                local ok, h = pcall(getTerrainHeightAtWorldPos, g_terrainNode, x, 0, z)
+                local m = self.valueMap:readValueAtWorld(x, z)
+                if ok and h ~= nil and m ~= nil then
+                    count = count + 1
+                    bx[count], bz[count], bh[count], bm[count] = x, z, h, m
+                end
+            end
+            z = z + step
+        end
+        x = x + step
+    end
+    if count < 2 then return false end
+
+    -- Pass 2: the drift. A block's share of the move is set by how far its
+    -- GROUND sits from the field's mean ground, so water leaves high blocks and
+    -- arrives at low ones; the amount it can give is bounded by how much water
+    -- it holds relative to the field's mean water, so a dry ridge cannot donate
+    -- water it does not have.
+    local sumH, sumM = 0, 0
+    for i = 1, count do
+        sumH = sumH + bh[i]
+        sumM = sumM + bm[i]
+    end
+    local meanH, meanM = sumH / count, sumM / count
+
+    local frac = math.min(0.5, SoilMoistureSystem.CELL_DRAIN_FRACTION * math.max(1, days))
+
+    -- TWO TERMS, AND EACH ONE SUMS TO ZERO ON ITS OWN, so their sum does too and
+    -- conservation needs no correction pass to rescue it:
+    --   waterTerm  = (meanM - m_i)  levels the water toward the field mean
+    --   reliefTerm = (meanH - h_i) * CELL_SENS  pushes it downhill, positive for
+    --                low ground, so a hollow gains and a ridge gives
+    -- Both are deviations from a mean over the same block set, which is exactly
+    -- why they are zero-sum for every possible field shape.
+    for i = 1, count do
+        local waterTerm  = (meanM - bm[i])
+        local reliefTerm = (meanH - bh[i]) * SoilMoistureSystem.CELL_SENS
+        local addition   = frac * (waterTerm + reliefTerm)
+        -- The write clamps to 0..1. On a field already sitting at a bound the
+        -- clamp absorbs part of the move, which is the known clamp residual and
+        -- the one place conservation is approximate rather than exact.
+        self.valueMap:writeValueAtWorld(bx[i], bz[i], bm[i] + addition, half)
+    end
+    return true
+end
+
+--- The drainage maths, pure and engine-free so the bench can prove the two
+--- claims that matter: the additions sum to zero (the field total does not
+--- move) and low ground gains while high ground gives.
+---@param heights number[]   terrain height per block
+---@param moistures number[] current moisture per block
+---@param frac number        settle fraction for the elapsed days
+---@return number[] additions  signed moisture change per block
+function SoilMoistureSystem.computeDrainageAdditions(heights, moistures, frac)
+    local n = heights and #heights or 0
+    if n < 2 or moistures == nil or #moistures ~= n then return nil end
+    local sumH, sumM = 0, 0
+    for i = 1, n do
+        sumH = sumH + heights[i]
+        sumM = sumM + moistures[i]
+    end
+    local meanH, meanM = sumH / n, sumM / n
+    local out = {}
+    for i = 1, n do
+        out[i] = frac * ((meanM - moistures[i])
+                       + (meanH - heights[i]) * SoilMoistureSystem.CELL_SENS)
+    end
+    return out
 end
 
 -- Register the daily accrual with Time Guard when present (server only).

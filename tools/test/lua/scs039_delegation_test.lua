@@ -186,4 +186,54 @@ do
   T.near("set.survivesSettle", sys.fieldData[1].moisture, 0.80, 1e-9)
 end
 
+
+-- 9. MAP DRAINAGE: conserved by construction, and it runs downhill.
+--    Water must MOVE between places without the field total changing, and it
+--    must arrive at the hollow rather than the ridge.
+do
+  local drain = SoilMoistureSystem.computeDrainageAdditions
+
+  local function sum(t)
+    local s = 0
+    for i = 1, #t do s = s + t[i] end
+    return s
+  end
+
+  -- A slope with uniform water: relief alone decides the direction.
+  local h, m = {}, {}
+  for i = 1, 20 do h[i] = 100 + i * 1.0; m[i] = 0.50 end
+  local add = drain(h, m, 0.05)
+  T.near("drain.slopeConserves", sum(add), 0, 1e-9)
+  T.ok("drain.lowGroundGains", add[1] > 0)
+  T.ok("drain.highGroundGives", add[20] < 0)
+
+  -- A flat field with uneven water: the water term alone levels it, and still
+  -- conserves. This is the case that must match the cell store's behaviour.
+  local fh, fm = {}, {}
+  for i = 1, 20 do fh[i] = 88.0; fm[i] = 0.30 + (i % 4) * 0.1 end
+  local fadd = drain(fh, fm, 0.05)
+  T.near("drain.flatConserves", sum(fadd), 0, 1e-9)
+  local wettest, driest = 1, 1
+  for i = 2, 20 do
+    if fm[i] > fm[wettest] then wettest = i end
+    if fm[i] < fm[driest] then driest = i end
+  end
+  T.ok("drain.wettestGives", fadd[wettest] < 0)
+  T.ok("drain.driestGains", fadd[driest] > 0)
+
+  -- A hollow: one low block among many, the shape that must not leak.
+  local hh, hm = {}, {}
+  for i = 1, 30 do hh[i] = 120.0; hm[i] = 0.45 end
+  hh[15] = 112.0
+  local hadd = drain(hh, hm, 0.05)
+  T.near("drain.hollowConserves", sum(hadd), 0, 1e-9)
+  T.ok("drain.hollowGains", hadd[15] > 0)
+  T.ok("drain.surroundGives", hadd[1] < 0)
+
+  -- Degenerate inputs refuse rather than divide by zero.
+  T.eq("drain.singleBlockRefuses", drain({1}, {0.5}, 0.05), nil)
+  T.eq("drain.emptyRefuses", drain({}, {}, 0.05), nil)
+  T.eq("drain.mismatchedRefuses", drain({1, 2}, {0.5}, 0.05), nil)
+end
+
 T.summary()
