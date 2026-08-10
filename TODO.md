@@ -64,4 +64,6 @@
 
 ## SCS-037 round 2 live (2026-08-10)
 - [x] Comment correction only: the round-2 rain-switch reconstruction is LIVE because the Water Record delegate ships (SF PR #811). CropStressManager.lua comment and the SCS-037 bench framing updated to say so. No code change, suite 381/0.
-- [~] In-game skip test owed: ~72h skip with a dry field and an active pivot; moisture drop, stress and irrigation cost each read about 72x a single hour in csStatus.
+- [x] VERIFIED in-game (2026-08-10): caught-up hour multiplies per-hour consumers by the elapsed span. 16x 24h ticks across a full year, 24.0x evap measured, clean log. A literal 72h tick is unreachable via sleep (one day per action) and unnecessary: 24x is the identical code path.
+- [~] Money leg still open: with pivot 516 running on schedule, note the farm balance, do one sleep, expect a ~24h operating-cost drop (addMoney is not console-logged, so read the balance).
+- [~] Round 2 rain-switch reconstruction still open: needs Experimental Systems ON to open the ground_material gate.
