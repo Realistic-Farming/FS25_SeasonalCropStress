@@ -55,3 +55,8 @@
 ## 2026-08-08 (Fred): SCS-018 positional read facade fixed
 - [x] The SCS-018 contract claimed getMoisture(fieldId, x, z) shipped, but the CropStressManager facade forwarded only fieldId, so SF-18's positional reads degraded to the field aggregate. SoilMoistureSystem already had the positional getter; the facade now forwards x, z. One-arg callers unchanged. Suite 162/0 across 9 files. Built and deployed. The SF-18 keystone (FS25_SoilFertilizer) consumes the positional read.
 
+
+## 2026-08-10 (Fred): SCS-037 round 2 is live - the rain switch across a skip
+- [x] The Water Record delegate exists now (SF PR #811), so getSkipRainHours binds to g_currentMission.soilFertilityManager:getWaterDaysInLast per SoilFertilizer's own cross-boundary rule, instead of the three-field-deep path it refused to take. Round 2 reconstructs rain-bearing hours across a skipped span from SF-49's per-day verdicts: 72 hours with 2 of 3 recorded days wet yields 48 rain hours, and the daily settle stays on its own clock per the one-clock rule. The nil paths are kept on purpose, they are still the honest answer when the record is absent or the gate is closed.
+- [x] The stale "IT IS INERT TODAY" comment block in CropStressManager.lua and the matching "inertness guard" framing in the SCS-037 bench were corrected to state round 2 is live. No code change: the consumer already probed for the delegate and its bench already covered the live path. Suite 381/0 across 14 files; syntax clean.
+- [~] The 72-hour skip test is owed in-game: sleep or fast-forward about 72 hours on a save with a dry field and an active pivot, then read csStatus; the moisture drop, the stress accrual and the money charged should each be about 72x a single hour.

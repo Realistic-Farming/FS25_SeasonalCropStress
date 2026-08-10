@@ -621,23 +621,17 @@ end
 -- Round 1 holds the sky at its last-known state for the whole span, so a skip
 -- that ends in rain charges the field rain for every skipped hour and a skip that
 -- ends dry charges none. SoilFertilizer's Water Record (SF-49) already freezes ONE
--- VERDICT PER DAY — did water arrive, from any source — which is exactly the
+-- VERDICT PER DAY, did water arrive, from any source, which is exactly the
 -- switch needed to reconstruct those hours instead of guessing them.
 --
--- IT IS INERT TODAY, AND THE REASON IS THE CONTRACT, NOT THE FEATURE.
--- `MaterialWetness:waterDaysInLast(days, throughDay)` exists and works, but it is
--- NOT PUBLISHED: the only path to it from here is
--- `g_currentMission.soilFertilityManager.soilSystem.materialWetness`, three
--- internal field names deep. SoilFertilizer's own cross-boundary rule (its
--- `getCellGrowthInfo` / `getFieldGrowthSummary` delegates, 2026-08-09) is that a
--- consumer binds to a METHOD ON THE MANAGER and nothing else, precisely so a
--- refactor there cannot rename this read out from under us. So we probe for the
--- delegate and take round-1 behaviour until it exists.
---
--- THE ASK, stated so it can be built as one method: a manager-level
--- `getWaterDaysInLast(days, throughDay)` on SoilFertilityManager returning
--- (count, known), nil-safe in every direction, neutral when the Water Record is
--- absent or the ground_material gate is closed.
+-- LIVE since 2026-08-10. The delegate `getWaterDaysInLast(days, throughDay)` is
+-- published on `g_currentMission.soilFertilityManager`, so we bind to a METHOD ON
+-- THE MANAGER and nothing else, per SoilFertilizer's own cross-boundary rule (its
+-- `getCellGrowthInfo` / `getFieldGrowthSummary` delegates, 2026-08-09), so a
+-- refactor there cannot rename this read out from under us. Before the delegate
+-- existed we probed for it and took round-1 behaviour; the nil paths in
+-- `getSkipRainHours` below are kept because they are still the honest answer
+-- when the record is absent or the ground_material gate is closed.
 --
 -- Temperature and humidity stay last-known sky either way; only the rain switch
 -- is reconstructable, because only the rain switch is recorded.

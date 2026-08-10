@@ -158,10 +158,11 @@ do
 end
 
 do
-  -- THE INERTNESS GUARD. SoilFertilizer publishes no manager-level Water Record
-  -- delegate today, so the reader must answer nil and round-1 must hold. This
-  -- assertion is the reason the feature is honest rather than half-wired: when
-  -- somebody publishes `getWaterDaysInLast`, this test is what changes.
+  -- THE NIL-SAFETY GUARD. SoilFertilizer publishes the manager-level delegate
+  -- (`getWaterDaysInLast`, 2026-08-10), but the reader still must answer nil on
+  -- every unknown path: absent SoilFertilizer, no delegate, a throwing delegate,
+  -- and an empty record. nil is the honest answer and round-1 holds; these
+  -- assertions pin that the unknown never masquerades as a dry guess.
   local mgr = setmetatable({}, CropStressManager)
 
   g_currentMission.soilFertilityManager = nil
