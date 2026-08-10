@@ -358,10 +358,20 @@ end
 --- rather than 72 separate sub-step writes that would each floor to nothing.
 ---@param weather table
 ---@param elapsedHours number|nil  hours since the last tick (default 1)
-function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours)
+---@param rainHours number|nil  SCS-037 round 2: how many of those hours brought
+---  rain, reconstructed from SoilFertilizer's Water Record. nil (the normal case)
+---  means the sky is held at its last-known state for the whole span, which is
+---  round-1 behaviour and identical to what shipped.
+function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours)
     if not self.isInitialized then return end
     if weather == nil then return end
     local hours = math.max(1, math.floor(elapsedHours or 1))
+    -- Clamped to the span: the record can never say it rained for more hours than
+    -- the skip actually lasted.
+    local wetHours = hours
+    if rainHours ~= nil then
+        wetHours = math.max(0, math.min(hours, rainHours))
+    end
 
     -- SCS-018 RW unwind: SeasonalCropStress owns its whole moisture simulation.
     -- RealisticWeather remains a read-only WEATHER source through WeatherIntegration
@@ -408,8 +418,9 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours)
             * sfEvapMod
             * hours
 
-        -- Rain gain (modulated by soil absorption)
-        local rainGain  = rainAmount * soilParams.rainAbsorb * hours
+        -- Rain gain (modulated by soil absorption). Charged over `wetHours`, which
+        -- is the whole span unless the Water Record narrowed it (SCS-037 round 2).
+        local rainGain  = rainAmount * soilParams.rainAbsorb * wetHours
         local irrigGain = (self.irrigationGains[fieldId] or 0.0) * hours
 
         local prevMoisture = self:getFieldAggregate(data)
