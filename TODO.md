@@ -61,3 +61,7 @@
 - [x] SCS-018 positional read facade fixed: CropStressManager.getMoisture forwards x, z to SoilMoistureSystem (the 1-arg facade was the uncommitted gap; SF-18 consumes the positional read). Suite 162/0.
 - [~] In-game acceptance owed: hollow stays wetter over dry days; continuity on old saves; skip lands exactly; cell round-trip on both save paths; Irrigate Now survives broadcast on a client; RW map moisture evolves on our model.
 
+
+## SCS-037 round 2 live (2026-08-10)
+- [x] Comment correction only: the round-2 rain-switch reconstruction is LIVE because the Water Record delegate ships (SF PR #811). CropStressManager.lua comment and the SCS-037 bench framing updated to say so. No code change, suite 381/0.
+- [~] In-game skip test owed: ~72h skip with a dry field and an active pivot; moisture drop, stress and irrigation cost each read about 72x a single hour in csStatus.
