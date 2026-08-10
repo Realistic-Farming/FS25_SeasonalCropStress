@@ -131,9 +131,15 @@ end
 -- HOURLY STRESS ACCUMULATION
 -- Called by CropStressManager:onHourlyTick()
 -- ============================================================
-function CropStressModifier:hourlyUpdate()
+--- SCS-037: `elapsedHours` is how many in-game hours this tick stands for. Stress
+--- is a PER-HOUR accrual, so a three-day skip must accrue three days of it rather
+--- than one hour. Defaults to 1, which is arithmetically identical to what shipped.
+---@param elapsedHours number|nil
+function CropStressModifier:hourlyUpdate(elapsedHours)
     if not self.isInitialized then return end
     if g_currentMission == nil or g_currentMission.fieldManager == nil then return end
+
+    local hours = math.max(1, math.floor(tonumber(elapsedHours) or 1))
 
     local soilSystem = self.manager.soilSystem
     if soilSystem == nil then return end
@@ -146,13 +152,14 @@ function CropStressModifier:hourlyUpdate()
     for fieldId, data in pairs(soilSystem.fieldData) do
         local field = fieldById[fieldId]
         if field ~= nil then
-            self:processFieldStress(field, fieldId, data.moisture)
+            self:processFieldStress(field, fieldId, data.moisture, hours)
         end
         -- If field not in map this tick, skip silently — map will be rebuilt on next lateInitialize
     end
 end
 
-function CropStressModifier:processFieldStress(field, fieldId, moisture)
+---@param elapsedHours number|nil  SCS-037: hours this accrual covers (default 1)
+function CropStressModifier:processFieldStress(field, fieldId, moisture, elapsedHours)
     -- FS25 confirmed API: field.fieldState.fruitTypeIndex / field.fieldState.growthState
     -- (field:getFieldState(), field:getGrowthState(), field.fruitType do NOT exist in FS25)
     local fieldState = field.fieldState
@@ -211,18 +218,21 @@ function CropStressModifier:processFieldStress(field, fieldId, moisture)
 
     -- Below critical moisture threshold → accumulate stress
     if moisture < window.criticalMoisture then
+        local hours        = math.max(1, math.floor(tonumber(elapsedHours) or 1))
         local deficit      = window.criticalMoisture - moisture
         local deficitRatio = deficit / window.criticalMoisture
         local rateMultiplier = (self.rateMultiplier or 1.0) * (self.rweMultiplier or 1.0)
-        local stressIncrease = window.stressRatePerHour * deficitRatio * rateMultiplier
+        -- stressRatePerHour is per hour by its own name, so the elapsed count is a
+        -- plain multiply. The min(1.0) cap below still bounds a long catch-up.
+        local stressIncrease = window.stressRatePerHour * deficitRatio * rateMultiplier * hours
 
         local prev = self.fieldStress[fieldId] or 0.0
         self.fieldStress[fieldId] = math.min(1.0, prev + stressIncrease)
 
         if self.manager ~= nil and self.manager.debugMode then
             csLog(string.format(
-                "Stress Field %d (%s stage %d): +%.4f → total %.3f (moisture %.1f%% < %.0f%%)",
-                fieldId, cropName, growthState, stressIncrease,
+                "Stress Field %d (%s stage %d): +%.4f over %dh → total %.3f (moisture %.1f%% < %.0f%%)",
+                fieldId, cropName, growthState, stressIncrease, hours,
                 self.fieldStress[fieldId], moisture * 100, window.criticalMoisture * 100
             ))
         end

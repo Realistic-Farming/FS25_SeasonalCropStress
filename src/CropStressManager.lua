@@ -109,6 +109,38 @@ CropStressManager.RWE_STRESS_MULTIPLIERS = {
     seed_growth_bonus   = 0.85,
 }
 
+-- SCS-037 THE CAUGHT-UP HOUR.
+-- The hourly tick is an EDGE DETECTOR: it fires once when the hour key changes,
+-- however many hours the key jumped. A player sleeping three days used to get ONE
+-- hour of evaporation, rain and irrigation, and the other 71 were discarded on the
+-- line that computed the key. The count is now carried as a parameter and every
+-- PER-HOUR term multiplies by it.
+--
+-- THE CAP is a deliberate ceiling on a single catch-up, not a tuning number: a
+-- week of unattended weather is already a total answer for a field, and an
+-- uncapped delta turns a corrupt or first-ever key into an unbounded simulation
+-- step. One in-game week.
+CropStressManager.MAX_CATCHUP_HOURS = 168
+
+--- Hours elapsed between two hour keys, as the hourly path should charge them.
+--- Pure and static so the bench can drive it without a mission.
+--- Returns 1 (today's behaviour exactly) for the first tick, for a key that did
+--- not advance, and for any key that moved backwards.
+---@param lastKey number|nil  the previously seen key, or -1/nil before the first
+---@param hourKey number      the key just observed
+---@return number hours       1 .. MAX_CATCHUP_HOURS
+function CropStressManager.elapsedHoursFrom(lastKey, hourKey)
+    local last = tonumber(lastKey)
+    local now  = tonumber(hourKey)
+    if last == nil or now == nil or last < 0 then return 1 end
+    local delta = now - last
+    if delta < 1 then return 1 end
+    if delta > CropStressManager.MAX_CATCHUP_HOURS then
+        return CropStressManager.MAX_CATCHUP_HOURS
+    end
+    return math.floor(delta)
+end
+
 
 function CropStressManager.new()
     local self = setmetatable({}, CropStressManager)
@@ -472,8 +504,11 @@ function CropStressManager:update(dt)
     local hourKey = day * 24 + hour
 
     if hourKey ~= self.lastHourKey then
+        -- SCS-037: the delta this detector already holds is the elapsed count.
+        -- Read it BEFORE the key is advanced, or it is gone.
+        local elapsedHours = CropStressManager.elapsedHoursFrom(self.lastHourKey, hourKey)
         self.lastHourKey = hourKey
-        self:onHourlyTick()
+        self:onHourlyTick(elapsedHours)
     end
 
     -- HUD frame update (handles auto-show, input response)
@@ -485,9 +520,24 @@ function CropStressManager:update(dt)
     end
 end
 
-function CropStressManager:onHourlyTick()
+--- SCS-037: `elapsedHours` is how many in-game hours this one tick stands for.
+--- It defaults to 1, which is arithmetically identical to what shipped, so every
+--- caller that does not care (the console heat simulator, any future direct call)
+--- keeps exactly today's behaviour.
+---
+--- WHAT MULTIPLIES AND WHAT DOES NOT. The three PER-HOUR consumers multiply:
+--- evaporation/rain/irrigation gain (SoilMoistureSystem), stress accrual
+--- (CropStressModifier) and irrigation running cost (FinanceIntegration).
+--- The DAILY DRAINAGE SETTLE DOES NOT: it rides its own day accrual and already
+--- honours `boundariesCrossed`, and the one-clock rule says a quantity is charged
+--- by exactly one clock. Weather is polled once and held: temperature and humidity
+--- are last-known sky across the whole span, which is the stated approximation.
+---@param elapsedHours number|nil  hours this tick covers (default 1)
+function CropStressManager:onHourlyTick(elapsedHours)
     -- Respect the player's master on/off toggle
     if not self.settings.enabled then return end
+
+    local hours = math.max(1, math.floor(tonumber(elapsedHours) or 1))
 
     -- Rebuild field map once per in-game day so newly bought/sold fields are tracked
     local env = g_currentMission and g_currentMission.environment
@@ -520,7 +570,10 @@ function CropStressManager:onHourlyTick()
         end
 
         -- 2c. Advance soil moisture simulation
-        self.soilSystem:hourlyUpdate(self.weatherIntegration)
+        -- SCS-037 round 2: when SoilFertilizer's Water Record is reachable, the
+        -- rain switch is reconstructed per skipped day rather than held at the
+        -- last-known sky. nil (the case today) means round-1 behaviour exactly.
+        self.soilSystem:hourlyUpdate(self.weatherIntegration, hours, self:getSkipRainHours(hours))
 
         -- 3. Apply RWE world-event stress multiplier (no-op when RWE not loaded)
         if self.rweManager then
@@ -529,9 +582,9 @@ function CropStressManager:onHourlyTick()
         end
 
         -- 4. Accumulate crop stress where moisture is critical
-        self.stressModifier:hourlyUpdate()
+        self.stressModifier:hourlyUpdate(hours)
 
-        self.financeIntegration:chargeHourlyCosts()
+        self.financeIntegration:chargeHourlyCosts(hours)
 
         -- Push updated moisture/stress to all connected clients. When the
         -- NetworkSync bridge is active the whole field map batches through its 1Hz
@@ -553,12 +606,70 @@ function CropStressManager:onHourlyTick()
         local seasonName = WeatherIntegration.SEASON_NAMES[self.weatherIntegration:getCurrentSeason()]
             or tostring(self.weatherIntegration:getCurrentSeason())
         csLog(string.format(
-            "Hourly tick complete. Season=%s Temp=%.1f Rain=%s",
+            "Hourly tick complete (%dh). Season=%s Temp=%.1f Rain=%s",
+            hours,
             seasonName,
             self.weatherIntegration:getCurrentTemp(),
             tostring(self.weatherIntegration.isRaining)
         ))
     end
+end
+
+-- ============================================================
+-- SCS-037 ROUND 2: THE RAIN SWITCH ACROSS A SKIP
+--
+-- Round 1 holds the sky at its last-known state for the whole span, so a skip
+-- that ends in rain charges the field rain for every skipped hour and a skip that
+-- ends dry charges none. SoilFertilizer's Water Record (SF-49) already freezes ONE
+-- VERDICT PER DAY — did water arrive, from any source — which is exactly the
+-- switch needed to reconstruct those hours instead of guessing them.
+--
+-- IT IS INERT TODAY, AND THE REASON IS THE CONTRACT, NOT THE FEATURE.
+-- `MaterialWetness:waterDaysInLast(days, throughDay)` exists and works, but it is
+-- NOT PUBLISHED: the only path to it from here is
+-- `g_currentMission.soilFertilityManager.soilSystem.materialWetness`, three
+-- internal field names deep. SoilFertilizer's own cross-boundary rule (its
+-- `getCellGrowthInfo` / `getFieldGrowthSummary` delegates, 2026-08-09) is that a
+-- consumer binds to a METHOD ON THE MANAGER and nothing else, precisely so a
+-- refactor there cannot rename this read out from under us. So we probe for the
+-- delegate and take round-1 behaviour until it exists.
+--
+-- THE ASK, stated so it can be built as one method: a manager-level
+-- `getWaterDaysInLast(days, throughDay)` on SoilFertilityManager returning
+-- (count, known), nil-safe in every direction, neutral when the Water Record is
+-- absent or the ground_material gate is closed.
+--
+-- Temperature and humidity stay last-known sky either way; only the rain switch
+-- is reconstructable, because only the rain switch is recorded.
+-- ============================================================
+
+--- Rain-bearing hours within a catch-up span, or nil when unknowable.
+--- nil is the normal answer and means "use `hours`", i.e. round-1 behaviour.
+---@param hours number  the elapsed span this tick covers
+---@return number|nil rainHours
+function CropStressManager:getSkipRainHours(hours)
+    -- A single hour has nothing to reconstruct: the sky IS current.
+    if hours == nil or hours <= 1 then return nil end
+
+    local sfm = g_currentMission ~= nil and g_currentMission.soilFertilityManager
+    if sfm == nil or type(sfm.getWaterDaysInLast) ~= "function" then return nil end
+
+    local env = g_currentMission.environment
+    local throughDay = env ~= nil and (env.currentMonotonicDay or env.currentDay) or nil
+    if throughDay == nil then return nil end
+
+    -- Ceil: a span of 30 hours touches two calendar days, both of which have a verdict.
+    local days = math.ceil(hours / 24)
+
+    local ok, wet, known = pcall(function() return sfm:getWaterDaysInLast(days, throughDay) end)
+    if not ok or type(wet) ~= "number" or type(known) ~= "number" or known <= 0 then
+        return nil
+    end
+
+    -- Scale the span by the fraction of KNOWN days that brought water. Days the
+    -- record does not reach back to are not counted as dry — they are not counted
+    -- at all, which is why the divisor is `known` and not `days`.
+    return hours * (wet / known)
 end
 
 -- ============================================================

@@ -31,10 +31,20 @@ function FinanceIntegration:initialize()
     self.isInitialized = true
 end
 
-function FinanceIntegration:chargeHourlyCosts()
+--- SCS-037: `elapsedHours` is how many in-game hours this tick stands for. The
+--- pump ran for all of them, so the running cost is charged for all of them.
+--- Defaults to 1, which is arithmetically identical to what shipped.
+---
+--- THE WATER AND THE MONEY ARE NOW ON THE SAME CLOCK, which is the point: the
+--- moisture path already multiplied irrigation GAIN by the elapsed count, so
+--- leaving the charge at one hour would hand a player 72 hours of free water.
+---@param elapsedHours number|nil
+function FinanceIntegration:chargeHourlyCosts(elapsedHours)
     if not self.isInitialized then return end
     local irrMgr = self.manager.irrigationManager
     if irrMgr == nil then return end
+
+    local hours = math.max(1, math.floor(tonumber(elapsedHours) or 1))
 
     -- Respect the irrigation costs setting (costsEnabled == false means player disabled costs)
     -- nil means the flag was never set (default = costs enabled); only skip on explicit false.
@@ -45,7 +55,7 @@ function FinanceIntegration:chargeHourlyCosts()
             -- Deduct operational cost via vanilla FS25 fund system.
             -- UsedPlus public API (UsedPlusAPI) does not expose recordExpense() —
             -- confirmed against UsedPlusAPI wiki. Costs always go through vanilla updateFunds.
-            self:deductFundsVanilla(system.operationalCostPerHour)
+            self:deductFundsVanilla((system.operationalCostPerHour or 0) * hours)
 
             -- Update wear level from UsedPlus DNA (if UsedPlus active).
             -- Placeables typically have no DNA entry, so this usually returns 0.0.
