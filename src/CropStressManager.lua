@@ -945,10 +945,19 @@ function CropStressManager:detectOptionalMods()
     -- UsedPlus detection: primary path is g_currentMission.usedPlusAPI (set in UP v2.15.4.96+
     -- onStartMission — the only reliable cross-mod path in FS25's sandboxed environment).
     -- Bare UsedPlusAPI / g_usedPlusManager globals are kept as fallbacks for older versions.
+    --
+    -- F154: THE FINANCE ARM IS GONE. FinanceIntegration no longer reads UsedPlus at
+    -- all, so arming it here would be detecting a mod that nothing reads.
+    --
+    -- THE DETECTION ITSELF SURVIVES ONLY BECAUSE THE MARKETPLACE STILL CONSUMES IT.
+    -- The F154 fix doc names FinanceIntegration as this site's only consumer; it is
+    -- not, and UsedEquipmentMarketplace is a second one that the doc does not
+    -- otherwise scope. Retiring a whole listings feature is a wider decision than
+    -- retiring a dead wear probe, so it is reported rather than taken here. If that
+    -- decision lands as "retire", this whole block goes with it.
     local upApi = (g_currentMission and g_currentMission.usedPlusAPI) or UsedPlusAPI or g_usedPlusManager
     if upApi ~= nil then
-        csLog("FS25_UsedPlus detected — enabling finance integration")
-        self.financeIntegration:enableUsedPlusMode()
+        csLog("FS25_UsedPlus detected — enabling used-equipment marketplace")
         self.usedEquipmentMarketplace:enableUsedPlusMode()
     end
 
@@ -1129,7 +1138,8 @@ function CropStressManager:consoleStatus()
     -- Optional mod integration status
     print("  Optional integrations:")
     print(string.format("    NPCFavor:       %s", tostring(self.npcIntegration and self.npcIntegration.npcFavorActive or false)))
-    print(string.format("    UsedPlus:       %s", tostring(self.financeIntegration and self.financeIntegration.usedPlusActive or false)))
+    -- F154: reports the marketplace, which is now UsedPlus's only consumer here.
+    print(string.format("    UsedPlus:       %s", tostring(self.usedEquipmentMarketplace and self.usedEquipmentMarketplace.usedPlusActive or false)))
     print(string.format("    SoilFertilizer: %s", tostring(self.soilFertilizerIntegration and self.soilFertilizerIntegration.sfActive or false)))
     print(string.format("    CoursePlay:     %s (vehicles active: %d)",
         tostring(self.coursePlayIntegration and self.coursePlayIntegration.cpActive or false),

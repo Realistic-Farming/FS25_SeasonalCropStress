@@ -163,7 +163,6 @@ function IrrigationManager:registerIrrigationSystem(placeable)
         pressureMultiplier     = pressureMultiplier,
         flowRatePerHour        = placeable.flowRatePerHour or 0.018,
         operationalCostPerHour = placeable.operationalCostPerHour or 15,
-        wearLevel              = 0,  -- Phase 4
         schedule = {
             startHour  = placeable.defaultStartHour or 6,
             endHour    = placeable.defaultEndHour   or 10,
@@ -410,8 +409,10 @@ function IrrigationManager:activateSystem(id)
     local system = self.systems[id]
     if system == nil or system.isActive then return end
 
-    local wearFactor    = 1.0 - system.wearLevel * 0.3
-    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier * wearFactor
+    -- F154: the wear factor is gone rather than dormant. It read UsedPlus DNA,
+    -- which never has an entry for a placeable, so it was provably 1.0 at every
+    -- activation this mod has ever performed. NO RATE MOVES.
+    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier
 
     system.effectiveRatePerField = {}
     for _, fieldId in ipairs(system.coveredFields) do
@@ -481,8 +482,8 @@ function IrrigationManager:applyOneTimeIrrigation(systemId)
         return false
     end
 
-    local wearFactor    = 1.0 - system.wearLevel * 0.3
-    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier * wearFactor
+    -- F154: same removal as activateSystem, and the two must always move together.
+    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier
 
     local soilSystem = self.manager and self.manager.soilSystem
     if soilSystem == nil then return false end
@@ -606,12 +607,8 @@ function IrrigationManager:setCostsEnabled(enabled)
     self.costsEnabled = not not enabled
 end
 
--- Update wear level for a specific irrigation system.
--- Called by FinanceIntegration when UsedPlus provides DNA wear data.
--- wearLevel: 0.0 (new) to 1.0 (heavily worn); affects flow rate at next activation.
-function IrrigationManager:updateSystemWearLevel(systemId, wearLevel)
-    local system = self.systems[systemId]
-    if system ~= nil then
-        system.wearLevel = math.max(0.0, math.min(1.0, wearLevel or 0.0))
-    end
-end
+-- F154: `updateSystemWearLevel` is deleted rather than kept as a public setter
+-- for some future wear source. Its only caller was the UsedPlus bridge, so
+-- keeping it would have made it a built-and-uncalled mechanism the moment that
+-- bridge went, and this suite already carries several of those. Build the setter
+-- when a design actually needs it.
