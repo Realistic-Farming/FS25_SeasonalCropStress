@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="105">
     <author>TisonK</author>
-    <version>1.2.5.52</version>
+    <version>1.2.5.65</version>
 
     <title>
         <en>Seasonal Crop Stress &amp; Irrigation Manager</en>
@@ -213,6 +213,8 @@ FUNKTIONER:
         <specialization name="RWSM118RainstarParkingBrake" className="RWSM118RainstarParkingBrake" filename="src/vendor/rwsm/rainstarParkingBrake.lua"/>
         <!-- BUILD 19:27 - suite-owned visible EMP↔Rainstar supply hose (not COBD / not SPS). -->
         <specialization name="ScsPumpHoseConnection" className="ScsPumpHoseConnection" filename="src/ScsPumpHoseConnection.lua"/>
+        <!-- BUILD 22:25 - the EMP pump powers the reel, so no tractor is required to spray. -->
+        <specialization name="ScsRainstarPumpPower" className="ScsRainstarPumpPower" filename="src/ScsRainstarPumpPower.lua"/>
     </specializations>
 
     <vehicleTypes>
@@ -229,6 +231,7 @@ FUNKTIONER:
             <specialization name="RWSM53ChangeObjectByDistance"/>
             <specialization name="RWSM53AutoReel"/>
             <specialization name="RWSM118RainstarParkingBrake"/>
+            <specialization name="ScsRainstarPumpPower"/>
         </type>
         <!-- implement_attacherJointControl (vanilla, verified in dataS/vehicleTypes.xml)
              backs the <attacherJointControl> block the XML already carries. -->

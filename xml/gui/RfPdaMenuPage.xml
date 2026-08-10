@@ -612,9 +612,18 @@
                             <!-- BUILD 16:44d (Vera F1): inline size overrides the profile via loadFromXML, so the
                                  short hands had to be set HERE, not only on the profile. 92px face,
                                  radius 46: arm 31 = 67%, limits 27 = 59%. -->
-                            <Bitmap profile="RF_CsPivotNeedleCur" id="csPivotNeedleCur" position="53px -28px" size="5px 31px"/>
-                            <Bitmap profile="RF_CsPivotNeedleMin" id="csPivotNeedleMin" position="54px -28px" size="4px 27px"/>
-                            <Bitmap profile="RF_CsPivotNeedleMax" id="csPivotNeedleMax" position="54px -28px" size="4px 27px"/>
+                            <!-- BUILD 15:30: hands now BASE on the dial hub instead of hanging from the
+                                 face top, because the rotation origin moved to the bar base (customPivot
+                                 {w/2, 0} in CsRfPdaGuest). Face is 92x92 at 10,-28 so the hub is (56,-74);
+                                 a 31px hand with its base there has its top at -74+31 = -43, and x is
+                                 hub minus half the bar width. Change these three and the pivot maths in
+                                 the guest together - they are one geometry. -->
+                            <Text profile="RF_CsPivotDialLabel" id="csPivotDialLabel" position="10px -14px" size="92px 14px"
+                                  text="$l10n_cs_rf_pda_pivot_dial_position"/>
+                            <Bitmap profile="RF_CsPivotNeedleCur" id="csPivotNeedleCur" position="53.5px -43px" size="5px 31px"/>
+                            <Bitmap profile="RF_CsPivotNeedleMin" id="csPivotNeedleMin" position="54px -47px" size="4px 27px"/>
+                            <Bitmap profile="RF_CsPivotNeedleMax" id="csPivotNeedleMax" position="54px -47px" size="4px 27px"/>
+                            <Bitmap profile="RF_CsPivotHubDot" id="csPivotHubDot" position="53px -71px" size="6px 6px"/>
                             <Text profile="RF_ProductCell" id="csPivotDialCur" position="114px -30px" size="250px 16px" text=""/>
                             <Text profile="RF_ProductCell" id="csPivotDialMin" position="114px -50px" size="250px 16px" text=""/>
                             <Text profile="RF_ProductCell" id="csPivotDialMax" position="114px -70px" size="250px 16px" text=""/>

@@ -294,6 +294,26 @@
          filename is deliberately absent: CsRfPdaGuest resolves the live Reinke mod path
          at runtime, so nothing is redistributed and the face simply does not paint when
          that mod is not installed. -->
+    <!-- BUILD 15:30: the panel prints POSITION above its dial; the UV crop deliberately
+         excludes that word (cropping it in clipped a cardinal), so it is set as text. -->
+    <Profile name="RF_CsPivotDialLabel" extends="fs25_textDefault" with="anchorTopLeft">
+        <textSize value="11px"/>
+        <textBold value="true"/>
+        <textUpperCase value="true"/>
+        <textColor value="0.78 0.80 0.82 1"/>
+        <textAlignment value="center"/>
+        <textVerticalAlignment value="top"/>
+        <textMaxNumLines value="1"/>
+    </Profile>
+
+    <!-- Hub cap: hides where the three bars meet, the way the panel's boss does. -->
+    <Profile name="RF_CsPivotHubDot" extends="baseReference" with="anchorTopLeft pivotTopLeft">
+        <filename value="$dataS/menu/blank.png"/>
+        <imageColor value="0.86 0.87 0.89 1"/>
+        <size value="6px 6px"/>
+        <handleFocus value="false"/>
+    </Profile>
+
     <Profile name="RF_CsPivotDialFace" extends="baseReference" with="anchorTopLeft pivotTopLeft">
         <imageUVs value="288 354 400 400"/>
         <imageColor value="1 1 1 1"/>

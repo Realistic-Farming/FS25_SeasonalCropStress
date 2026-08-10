@@ -1253,8 +1253,25 @@ local function wirePivotChipPaint(container)
     end
 end
 
+--- BUILD 15:30: put the rotation origin on the dial hub.
+---
+--- GuiOverlay.renderOverlay defaults the pivot to the element centre:
+---     local pivotX, pivotY = sizeX / 2, sizeY / 2
+---     if overlay.customPivot ~= nil then pivotX, pivotY = overlay.customPivot[1], [2] end
+--- so a bar rotated by setImageRotation spun about its own middle and swept like a
+--- propeller. customPivot is honoured in the same screen-space units as the render size,
+--- so {width/2, 0} - bottom-centre - makes the bar turn about its base. The page XML
+--- parks each base on the hub; the two halves are one geometry and move together.
+local function setNeedleHubPivot(el)
+    if el == nil or el.overlay == nil then return end
+    local w = el.absSize ~= nil and el.absSize[1] or nil
+    if w == nil or w <= 0 then return end
+    el.overlay.customPivot = { w * 0.5, 0 }
+end
+
 local function rotateNeedle(el, deg)
     if el == nil then return end
+    setNeedleHubPivot(el)
     local rad = math.rad(deg or 0)
     if type(el.setImageRotation) == "function" then
         pcall(function() el:setImageRotation(rad) end)
@@ -1355,12 +1372,22 @@ local function applyDialFace(container)
     local face = findDescendant(container, "csPivotDialFace")
     if face == nil or face._csDialFaceSet then return end
     local path = reinkeDecalPath()
+    local function setDialChrome(visible)
+        for _, id in ipairs({"csPivotDialLabel", "csPivotHubDot"}) do
+            local el = findDescendant(container, id)
+            if el ~= nil and el.setVisible then el:setVisible(visible) end
+        end
+    end
     if path == nil then
         -- Honest empty: no Reinke installed, so no dial face rather than a fake one.
+        -- The POSITION label and hub cap go with it - they are the face's furniture, and
+        -- leaving them floating over nothing would read as a broken dial.
         if face.setVisible then face:setVisible(false) end
+        setDialChrome(false)
         face._csDialFaceSet = true
         return
     end
+    setDialChrome(true)
     if type(face.setImageFilename) == "function" then
         pcall(function() face:setImageFilename(path) end)
         face._csDialFaceSet = true

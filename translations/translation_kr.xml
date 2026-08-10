@@ -301,7 +301,22 @@
     <text name="cs_pda_irrigated_no"           text="No"/>
     <text name="cs_pda_no_fields"             text="No field data yet. Fields appear once the simulation has run for one in-game hour."/>
 
-    <!-- ========== MAP OVERLAY ========== -->
+    <!-- Esc RF PDA guest module -->
+    <text name="cs_rf_pda_module_title"        text="작물 스트레스"/>
+    <text name="cs_rf_pda_blurb"               text="밭 수분, 스트레스, 관개 범위. 관개 일정과 작물 컨설턴트는 Farm Tablet에서 확인하세요."/>
+    <text name="cs_rf_pda_empty"               text="작물 스트레스 데이터가 아직 없습니다. 시뮬레이션 실행 후 밭이 표시됩니다."/>
+
+    
+    <!-- Esc RF PDA content table columns -->
+    <text name="cs_rf_pda_col_field" text="밭"/>
+    <text name="cs_rf_pda_col_crop" text="작물"/>
+    <text name="cs_rf_pda_col_moisture" text="수분"/>
+    <text name="cs_rf_pda_col_stress" text="스트레스"/>
+    <text name="cs_rf_pda_col_irrigated" text="관개"/>
+    <text name="cs_rf_pda_col_status" text="상태"/>
+    <text name="cs_rf_pda_detail_title" text="밭 상세 정보"/>
+    <text name="cs_rf_pda_select_field" text="자세한 내용을 보려면 표에서 밭을 선택하세요."/>
+<!-- ========== MAP OVERLAY ========== -->
     <text name="cs_map_page_title"            text="Crop Moisture"/>
     <text name="cs_map_sidebar_title"         text="MOISTURE LEGEND"/>
     <text name="cs_map_legend_healthy"        text="Healthy  >=40%"/>
@@ -317,149 +332,21 @@
     <text name="cs_ad_water_hint"    text="AutoDrive: %d water destination(s) available — consider a hauling route"/>
     <text name="cs_ad_destinations"  text="AutoDrive: %d destination(s) configured"/>
 
-    
-    <!-- Esc RF PDA greenfield guest (2026-08-02) -->
-    <text name="cs_rf_pda_module_title" text="Crop Stress"/>
-    <text name="cs_rf_pda_blurb" text="Field desk - moisture, stress, irrigation, and pivot controls - all on one page."/>
-    <text name="cs_rf_pda_btn_consultant" text="Crop consultant"/>
-    <text name="cs_rf_pda_btn_field_list" text="Field list"/>
-    <text name="cs_rf_pda_cons_title" text="Alex Chen - Crop Consultant"/>
-    <text name="cs_rf_pda_cons_col_field" text="Field"/>
-    <text name="cs_rf_pda_cons_col_risk" text="Risk"/>
-    <text name="cs_rf_pda_cons_col_moisture" text="Moisture"/>
-    <text name="cs_rf_pda_cons_col_yield" text="Yield keep"/>
-    <text name="cs_rf_pda_cons_rec_title" text="Recommendations"/>
-    <text name="cs_rf_pda_cons_relation" text="With Alex: %d / 100"/>
-    <text name="cs_rf_pda_cons_empty" text="No field data yet - fields appear after the simulation runs."/>
-    <text name="cs_rf_pda_cons_rec_driest" text="Driest now: %s at %d%% moisture - water this one first."/>
-    <text name="cs_rf_pda_cons_rec_forecast" text="3-day outlook for %s: %d%% moisture."/>
-    <text name="cs_rf_pda_cons_rec_systems" text="%d irrigation systems active."/>
-    <text name="cs_rf_pda_cons_rec_nosystems" text="No active irrigation - shop coverage for the driest fields."/>
-    <text name="cs_rf_pda_btn_schedule" text="Irrigation schedule"/>
-    <text name="cs_rf_pda_no_coverage_act" text="No irrigation covers this field - place a system in the shop, then schedule it here."/>
-    <text name="cs_rf_pda_col_field" text="Field"/>
-    <text name="cs_rf_pda_col_crop" text="Crop"/>
-    <text name="cs_rf_pda_col_moisture" text="Moisture"/>
-    <text name="cs_rf_pda_col_stress" text="Stress"/>
-    <text name="cs_rf_pda_col_irrigated" text="Irrigated"/>
-    <text name="cs_rf_pda_col_status" text="Status"/>
-    <text name="cs_rf_pda_empty" text="No crop stress data yet. Fields appear after the simulation runs."/>
-    <text name="cs_rf_pda_detail_title" text="Field Detail"/>
-    <text name="cs_rf_pda_select_field" text="Select a field in the table for details."/>
-    <text name="rf_pda_side_info_soil" text="Soil Fertilizer&#10;&#10;This table lists every field you own. One row = one field.&#10;&#10;Columns: Field #, Area, N/P/K (% of a healthy target), Status (Good / Fair / Poor), Fertilizer need (short cue for what still looks short).&#10;&#10;Click a row. Treatment (below) is the plan for that field:&#10;- PRODUCT = what to buy (first is preferred; &quot;or ...&quot; is an alternate)&#10;- RATE = amount per area / TOTAL = amount for this field&#10;- Selected names the field; Next (under it) says what to do first&#10;&#10;How to apply: dry goods (urea, MAP, potash, lime) go through a fertilizer spreader; liquids go in a sprayer tank. If pH and nutrients both show, fix lime or gypsum first so nutrients can work. Weed, pest, or disease lines mean spray (or weed mechanically) before you expect a full crop.&#10;&#10;Start with the weakest Status, open Treatment, follow Next, then the rest of the list."/>
-    <text name="rf_pda_side_info_crop_stress" text="Crop Stress&#10;&#10;This screen is the Crop Stress desk. Each line is one field you own.&#10;&#10;The table shows Field, Crop, Moisture, Stress, Irrigated, and Status. Moisture is how wet the soil is. Stress is how hard the crop is fighting dry spells. Irrigated says a system can reach this field. Status is Healthy, Warning, or Critical.&#10;&#10;Click a row. Field Detail on the left coaches that field and Next says the first job. AGRONOMIST on the right lists the top risk fields. PIVOT below drives the irrigation system for the selected field.&#10;&#10;On PIVOT, grey remotes are locked until the step before them is done. Open the door, then power, then the rest. An empty seat means no pivot covers this field.&#10;&#10;Start with Critical Status, follow Next, then work up the list.&#10;&#10;Irrigator kit (shop): pump + Rainstar + pull bar. Unfold, pull the gun out, turn it on over a field."/>
-        <!-- Esc RF shared Soil chrome keys (door may be created by CS) 2026-08-02 FAILFIX -->
-    <text name="sf_pda_col_field" text="Field"/>
-    <text name="rf_pda_col_area" text="Area"/>
-    <text name="sf_pda_col_status" text="Status"/>
-    <text name="rf_pda_col_fert" text="Fertilizer"/>
-    <text name="sf_pda_no_fields" text="No field data recorded yet."/>
-    <text name="rf_pda_section_treatment" text="Treatment"/>
-    <text name="rf_pda_treat_products" text="Products"/>
-    <text name="rf_pda_sample_hint" text="Soil sample dates appear here when available."/>
-        <text name="cs_rf_pda_next" text="Next: %s"/>
-    <text name="cs_rf_pda_next_no_crop" text="No crop on this field - nothing to stress; pick another row."/>
-    <text name="cs_rf_pda_next_critical_watering" text="Moisture critical - irrigation is on; wait for moisture to recover, then recheck."/>
-    <text name="cs_rf_pda_next_critical_covered" text="Moisture critical - irrigate now. A system covers this field; confirm it is running."/>
-    <text name="cs_rf_pda_next_critical_uncovered" text="Moisture critical - irrigate now (spray WATER or place / aim coverage)."/>
-    <text name="cs_rf_pda_next_window" text="Sensitive growth window - keep this field watered so stress does not climb."/>
-    <text name="cs_rf_pda_next_window_append" text=" Crop is in a sensitive window."/>
-    <text name="cs_rf_pda_next_stress" text="Stress is high (about %s harvest risk) - water / protect before it gets worse."/>
-    <text name="cs_rf_pda_next_warning_watering" text="Moisture low - irrigation is on; recheck Moisture as it recovers."/>
-    <text name="cs_rf_pda_next_warning_covered" text="Moisture low - irrigate soon. Coverage is on this field; confirm the system is running."/>
-    <text name="cs_rf_pda_next_warning_uncovered" text="Moisture low - irrigate soon (coverage / WATER sprayer)."/>
-    <text name="cs_rf_pda_next_no_coverage" text="No irrigation coverage - add a system, or spray WATER for a temporary boost."/>
-    <text name="cs_rf_pda_next_covered_idle" text="Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
-    <text name="cs_rf_pda_next_looking_good" text="Looking good - recheck later; handle Critical fields first."/>
-    <text name="cs_rf_pda_yield_keep" text="Yield keep: %d%%"/>
-    <text name="cs_rf_pda_heat_clause" text="Air %.0f°C, dry pull %.1f"/>
-    <text name="cs_rf_pda_sched_hours" text="Sched %d–%d"/>
-    <text name="cs_rf_pda_sched_daily" text=" daily"/>
-    <text name="cs_rf_pda_sched_weekdays" text=" weekdays"/>
-    <text name="cs_rf_pda_sched_none" text="no schedule"/>
-    <text name="cs_rf_pda_covered_no_sched" text="Covered · no schedule"/>
-    <text name="cs_rf_pda_no_coverage" text="No coverage"/>
-    <text name="cs_rf_pda_rate_off" text="Rate off"/>
-    <text name="cs_rf_pda_rate_on" text="Rate +%.2f/h"/>
-    <text name="cs_rf_pda_alert_prefix" text="Alert: %s"/>
-    <text name="cs_rf_pda_next_alert_sep" text=" · %s"/>
-    <text name="cs_rf_pda_status_join" text="%s  ·  Status: %s"/>
-
-    <!-- Esc CS PIVOT card (2026-08-09) -->
-    <text name="cs_rf_pda_pivot_title" text="PIVOT"/>
-    <text name="cs_rf_pda_pivot_title_irrig" text="IRRIGATION"/>
-    <text name="cs_rf_pda_pivot_drip_label" text="Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="Cur %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="Min %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="Max %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="Cur —"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="Min —"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="Max —"/>
-    <text name="cs_rf_pda_pivot_coverage" text="Coverage: Fields %s"/>
-    <text name="cs_rf_pda_pivot_coverage_none" text="Coverage: No fields covered"/>
-    <text name="cs_rf_pda_pivot_watering_on" text="Watering now: On"/>
-    <text name="cs_rf_pda_pivot_watering_off" text="Watering now: Off"/>
-    <text name="cs_rf_pda_pivot_pressure" text="Pressure: %d%%"/>
-    <text name="cs_rf_pda_pivot_pressure_na" text="Pressure: —"/>
-    <text name="cs_rf_pda_pivot_rate" text="Rate: +%.3f/h"/>
-    <text name="cs_rf_pda_pivot_rate_na" text="Rate: —"/>
-    <text name="cs_rf_pda_pivot_sched" text="Schedule: %02d:00–%02d:00%s"/>
-    <text name="cs_rf_pda_pivot_sched_none" text="Schedule: No schedule"/>
-    <text name="cs_rf_pda_pivot_warn_none" text="No pivot on this field"/>
-    <text name="cs_rf_pda_pivot_warn_owner" text="Not your pivot"/>
-    <text name="cs_rf_pda_pivot_warn_door" text="Open door for ops"/>
-    <text name="cs_rf_pda_pivot_warn_power" text="Power off"/>
-    <text name="cs_rf_pda_pivot_warn_pump" text="Pump disconnected"/>
-    <text name="cs_rf_pda_pivot_btn_door" text="Door"/>
-    <text name="cs_rf_pda_pivot_btn_power" text="Power"/>
-    <text name="cs_rf_pda_pivot_btn_spray" text="Spray"/>
-    <text name="cs_rf_pda_pivot_btn_endgun" text="End gun"/>
-    <text name="cs_rf_pda_pivot_btn_speed" text="Speed"/>
-    <text name="cs_rf_pda_pivot_btn_start" text="Start"/>
-    <text name="cs_rf_pda_pivot_btn_stop" text="Stop"/>
-    <text name="cs_rf_pda_pivot_btn_min_up" text="Min+"/>
-    <text name="cs_rf_pda_pivot_btn_min_dn" text="Min−"/>
-    <text name="cs_rf_pda_pivot_btn_max_up" text="Max+"/>
-    <text name="cs_rf_pda_pivot_btn_max_dn" text="Max−"/>
-    <text name="cs_rf_pda_pivot_btn_arm_plus" text="Arm+"/>
-    <text name="cs_rf_pda_pivot_btn_arm_minus" text="Arm−"/>
-    <text name="cs_rf_pda_pivot_btn_schedule" text="Schedule"/>
-    <text name="cs_rf_pda_page_fields" text="Fields"/>
-    <text name="cs_rf_pda_page_pivot" text="Pivot"/>
-    <text name="cs_rf_pda_agro_title" text="AGRONOMIST"/>
-    <text name="cs_rf_pda_agro_relation" text="Alex Chen - %d / 100"/>
-    <text name="cs_rf_pda_agro_top_header" text="Top 5 at risk"/>
-    <text name="cs_rf_pda_agro_top_row" text="%s - risk %d%% - moisture %d%%"/>
-    <text name="cs_rf_pda_agro_rec_header" text="Recommendations"/>
-    <text name="cs_rf_pda_agro_empty" text="No field data yet - fields appear once the simulation runs."/>
-    <text name="Motorpump" text="Motor pump"/>
-    <text name="warning_RAINSTAR_HOSE_EXTENDED" text="Move the sprinkler cart back to the reel before switching to transport mode."/>
-    <text name="autoReel" text="Automatic reel"/>
-    <text name="rwsm_hoseExtended" text="Hose extended"/>
-    <text name="rwsm_hoseOnDrum" text="Hose on reel"/>
-    <text name="input_RWSM53_REEL_TOGGLE" text="Toggle automatic hose retraction"/>
-    <text name="action_RAINSTAR_REEL_START" text="Start automatic hose retraction"/>
-    <text name="action_RAINSTAR_REEL_STOP" text="Stop automatic hose retraction"/>
-    <text name="rwsm_hoseAlmostEmpty" text="Warning: very little hose remains on the reel."/>
-    <text name="status_RAINSTAR_REEL_ACTIVE" text="active"/>
-    <text name="status_RAINSTAR_REEL_COMPLETE_SHUTDOWN" text="Hose fully reeled in - cart locked and motor pump switched off."/>
-    <text name="status_RAINSTAR_REEL_READY" text="ready"/>
-    <text name="warning_RAINSTAR_CART_ATTACHED" text="Detach the tractor from the sprinkler cart before starting retraction."/>
-    <text name="warning_RAINSTAR_HOSE_10M" text="Warning: only 10 m of hose remain on the reel."/>
-    <text name="warning_RAINSTAR_HOSE_30M" text="Warning: only 30 m of hose remain on the reel."/>
-    <text name="warning_RAINSTAR_HOSE_MAX" text="Maximum hose length of 220 m reached."/>
-    <text name="warning_RAINSTAR_HOSE_NOT_EXTENDED" text="The sprinkler cart is already at the reel."/>
-    <text name="warning_RAINSTAR_PUMP_NOT_CONNECTED" text="Connect the motor pump to the Rainstar first."/>
-    <text name="warning_RAINSTAR_PUMP_NOT_RUNNING" text="Start the motor pump before retracting the hose."/>
-    <text name="warning_RAINSTAR_SELECT_WORKMODE" text="Select work mode before starting hose retraction."/>
-    <!-- BUILD 19:27 - suite EMP↔Rainstar hose walk-up verbs -->
-    <text name="action_SCS_CONNECT_HOSE" text="Connect hose"/>
-    <text name="action_SCS_DISCONNECT_HOSE" text="Disconnect hose"/>
-    <text name="action_SCS_START_PUMP" text="Start pump"/>
-    <text name="action_SCS_STOP_PUMP" text="Stop pump"/>
-    <text name="scs_playkit_day_teach" text="Tow the reel out on the pull bar, park the cart at the far end, then walk to the pump and start it. Connect the hose at the pump, switch the reel on, and the gun waters as it reels back in. Stop the pump and hitch the bar again to pack up."/>
-    <text name="cs_rainstar_needs_pump" text="Connect the supply hose from the pump and start the pump. This reel runs on pump pressure, not a tractor."/>
-    <text name="cs_playkit_pump_power_teach" text="The pump is the power. Hitch the reel only to tow it: to spray, run the hose from the pump, start the pump, then switch the reel on. Stop the pump or pull the hose and the spray stops."/>
-    <text name="cs_rf_pda_pivot_dial_position" text="POSITION"/>
+        <text name="rf_pda_side_info_crop_stress" text="[EN] Crop Stress&#10;&#10;This table lists every field you own. One row = one field.&#10;&#10;Columns: Field # / Crop, Moisture (how wet the soil is), Stress (how hard the crop is fighting dry spells), Irrigation (water help covering this field), Status (Healthy / Warning / Critical).&#10;&#10;Click a row. The strip below names the field, then Next says what to do first:&#10;- Critical or Warning Moisture → water that field (turn on irrigation if covered, or spray WATER / place coverage)&#10;- High Stress or a sensitive growth window → protect now; stress today cuts harvest later&#10;- Looking fine → recheck later; worse fields first&#10;&#10;Irrigation: Yes means a system can cover this field. Schedules and running systems live deeper on Farm Tablet / Crop Consultant when you need them.&#10;&#10;If Soil Fertilizer is also loaded, check nutrients there too. Dry soil drains faster when soil health is poor.&#10;&#10;Start with Critical Status, follow Next, then work up the list."/>
+    <text name="cs_rf_pda_next" text="[EN] Next: %s"/>
+    <text name="cs_rf_pda_next_no_crop" text="[EN] No crop on this field - nothing to stress; pick another row."/>
+    <text name="cs_rf_pda_next_critical_watering" text="[EN] Moisture critical - irrigation is on; wait for moisture to recover, then recheck."/>
+    <text name="cs_rf_pda_next_critical_covered" text="[EN] Moisture critical - irrigate now. A system covers this field; confirm it is running."/>
+    <text name="cs_rf_pda_next_critical_uncovered" text="[EN] Moisture critical - irrigate now (spray WATER or place / aim coverage)."/>
+    <text name="cs_rf_pda_next_window" text="[EN] Sensitive growth window - keep this field watered so stress does not climb."/>
+    <text name="cs_rf_pda_next_window_append" text="[EN]  Crop is in a sensitive window."/>
+    <text name="cs_rf_pda_next_stress" text="[EN] Stress is high (about %s harvest risk) - water / protect before it gets worse."/>
+    <text name="cs_rf_pda_next_warning_watering" text="[EN] Moisture low - irrigation is on; recheck Moisture as it recovers."/>
+    <text name="cs_rf_pda_next_warning_covered" text="[EN] Moisture low - irrigate soon. Coverage is on this field; confirm the system is running."/>
+    <text name="cs_rf_pda_next_warning_uncovered" text="[EN] Moisture low - irrigate soon (coverage / WATER sprayer)."/>
+    <text name="cs_rf_pda_next_no_coverage" text="[EN] No irrigation coverage - add a system, or spray WATER for a temporary boost."/>
+    <text name="cs_rf_pda_next_covered_idle" text="[EN] Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
+    <text name="cs_rf_pda_next_looking_good" text="[EN] Looking good - recheck later; handle Critical fields first."/>
+    <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
 </texts>
 </l10n>

@@ -168,6 +168,62 @@ end
 
 --- Resolve l10n with English fallback. When CS/WC create the Esc door, MOD_NAME
 --- i18n may lack Soil table keys - also probe Soil modEnv, then g_i18n.
+--- BUILD 21:41 cross-mod resolve for Market Dynamics classes.
+--- The RfPdaMenuPage that actually runs belongs to whichever mod won the NO-HOST door
+--- race, so bare MDMMarketScreenGraph / MdRfPdaGuest are nil in every environment except
+--- MarketDynamics' own - that is why the Prices graph vanished when Dairy hosted the door.
+--- Same shape as the Open Market resolve below: read the bare global in the caller's env
+--- first, then fall back to g_modEnvironments. Never invents a class it cannot find.
+---
+--- BUILD 22:04: this MUST stay above draw/update/onListSelectionChanged. It was defined
+--- near resolveListRowIndex at first, which is ~1900 lines BELOW the draw call, and a Lua
+--- local is nil before its definition - so draw called a nil global once per frame and
+--- took the Esc rail down with it. Kept next to the other cross-mod resolvers so its
+--- ordering requirement is obvious.
+local function mdResolve(bare, name)
+    -- 1. in-env: free when MarketDynamics itself is the host.
+    if bare ~= nil then
+        return bare
+    end
+    -- 2. the named environment. Kept first among the fallbacks because it is the cheapest
+    --    and correct in the common case, but NOT trusted alone - this hardcodes a mod name
+    --    the guest itself never hardcodes (it uses g_currentModName), so a rename or a
+    --    differently-named install slips straight past it. That is what produced
+    --    "GATE graph=false" on the Dairy door.
+    if g_modEnvironments ~= nil then
+        -- BUILD 12:59: owner per name. This belt used to hardcode MarketDynamics, so every
+        -- other suite class fell straight past it to the scan. Crop Stress and the Market
+        -- screen now get the same cheap first-guess Market Dynamics always had.
+        local OWNER = {
+            MdRfPdaGuest = "FS25_MarketDynamics",
+            MDMMarketScreenGraph = "FS25_MarketDynamics",
+            MDMMarketScreen = "FS25_MarketDynamics",
+            CsRfPdaGuest = "FS25_SeasonalCropStress",
+        }
+        local env = g_modEnvironments[OWNER[name] or "FS25_MarketDynamics"]
+        if env ~= nil and env[name] ~= nil then
+            return env[name]
+        end
+        -- 3. key-independent scan: ask every loaded mod environment whether it carries the
+        --    class. No name guessing, so a rename cannot break this belt.
+        for _, e in pairs(g_modEnvironments) do
+            if type(e) == "table" and e[name] ~= nil then
+                return e[name]
+            end
+        end
+    end
+    -- 4. real global table: MarketDynamics publishes here from BUILD 11:43.
+    local okEnv, root = pcall(getfenv, 0)
+    if okEnv and type(root) == "table" and root[name] ~= nil then
+        return root[name]
+    end
+    -- 5. mission handle, same publish.
+    if g_currentMission ~= nil and g_currentMission[name] ~= nil then
+        return g_currentMission[name]
+    end
+    return nil
+end
+
 local function tr(key, fallback)
     local function tryI18n(i18n)
         if i18n == nil then
@@ -557,27 +613,22 @@ function RfPdaMenuPage:initialize()
                 mod.onOpenFullMarket()
                 return
             end
-            if MdRfPdaGuest ~= nil and type(MdRfPdaGuest.onOpenFullMarket) == "function" then
-                print("[MarketDynamics] Open full Market via in-env MdRfPdaGuest")
-                MdRfPdaGuest.onOpenFullMarket()
-                return
-            end
-            local mdEnv = g_modEnvironments ~= nil and g_modEnvironments["FS25_MarketDynamics"] or nil
-            local guest = mdEnv ~= nil and mdEnv.MdRfPdaGuest or nil
+            -- BUILD 12:59: this had its own two-belt resolve (in-env, then the hardcoded
+            -- MarketDynamics env key) and neither of the belts that actually work - the
+            -- getfenv/mission publish. Routed through mdResolve so SPACE and the footer
+            -- button share one implementation and one set of five belts.
+            local guest = (type(mdResolve) == "function")
+                    and mdResolve(MdRfPdaGuest, "MdRfPdaGuest") or MdRfPdaGuest
             if guest ~= nil and type(guest.onOpenFullMarket) == "function" then
-                print("[MarketDynamics] Open full Market via g_modEnvironments MdRfPdaGuest")
-                guest.onOpenFullMarket()
+                print("[MarketDynamics] Open full Market via resolved MdRfPdaGuest")
+                pcall(guest.onOpenFullMarket)
                 return
             end
-            local scr = mdEnv ~= nil and mdEnv.MDMMarketScreen or nil
+            local scr = (type(mdResolve) == "function")
+                    and mdResolve(MDMMarketScreen, "MDMMarketScreen") or MDMMarketScreen
             if scr ~= nil and type(scr.show) == "function" then
-                print("[MarketDynamics] Open full Market via g_modEnvironments MDMMarketScreen")
-                scr.show()
-                return
-            end
-            if MDMMarketScreen ~= nil and type(MDMMarketScreen.show) == "function" then
-                print("[MarketDynamics] Open full Market via in-env MDMMarketScreen")
-                MDMMarketScreen.show()
+                print("[MarketDynamics] Open full Market via resolved MDMMarketScreen")
+                pcall(scr.show)
                 return
             end
             print("[MarketDynamics] Open full Market: no handler available (all resolve paths nil)")
@@ -709,46 +760,149 @@ function RfPdaMenuPage:draw(clipX1, clipY1, clipX2, clipY2)
         local host = self:_getHost()
         local active = host and host.getActivePanel and host:getActivePanel()
         local pageIdx = tonumber(self.mdSubPageIndex) or 1
-        if active ~= nil and active.id == "marketDynamics"
-                and pageIdx == 1
+        local graph = (type(mdResolve) == "function")
+                and mdResolve(MDMMarketScreenGraph, "MDMMarketScreenGraph") or MDMMarketScreenGraph
+        local mdGuest = (type(mdResolve) == "function")
+                and mdResolve(MdRfPdaGuest, "MdRfPdaGuest") or MdRfPdaGuest
+        -- BUILD 00:10: the outer skip log fires BEFORE any gate. The 22:27 log lived
+        -- inside the abs gate, so the one case worth seeing - the gate refusing - printed
+        -- nothing at all. Same failure shape as the bug it was meant to diagnose.
+        local isMdPrices = active ~= nil and active.id == "marketDynamics" and pageIdx == 1
+        if isMdPrices and not self._mdGraphOuterLogged then
+            self._mdGraphOuterLogged = true
+            local a = self.mdGraphArea
+            local b = self.mdPricesBand
+            local function box(el)
+                if el == nil then return "nil-element" end
+                if el.absSize == nil or el.absPosition == nil then return "no-abs" end
+                return string.format("%.4fx%.4f at %.4f,%.4f",
+                    el.absSize[1] or -1, el.absSize[2] or -1,
+                    el.absPosition[1] or -1, el.absPosition[2] or -1)
+            end
+            local before = box(a)
+            if a ~= nil and type(a.updateAbsolutePosition) == "function" then
+                pcall(function() a:updateAbsolutePosition() end)
+            end
+            -- Name the belt that won, so a nil class is immediately attributable rather
+            -- than another round of narrowing.
+            local via = "nil"
+            if graph ~= nil then
+                if MDMMarketScreenGraph ~= nil then
+                    via = "in-env"
+                elseif g_modEnvironments ~= nil and g_modEnvironments["FS25_MarketDynamics"] ~= nil
+                        and g_modEnvironments["FS25_MarketDynamics"].MDMMarketScreenGraph ~= nil then
+                    via = "modEnv-named"
+                else
+                    local okE, rootE = pcall(getfenv, 0)
+                    if okE and type(rootE) == "table" and rootE.MDMMarketScreenGraph ~= nil then
+                        via = "getfenv0"
+                    elseif g_currentMission ~= nil and g_currentMission.MDMMarketScreenGraph ~= nil then
+                        via = "mission"
+                    else
+                        via = "modEnv-scan"
+                    end
+                end
+            end
+            print(string.format(
+                "[MarketDynamics] Esc graph GATE: band=%s area=%s graph=%s via=%s trend=%s draw=%s | area before=%s after=%s | band=%s",
+                tostring(b ~= nil), tostring(a ~= nil), tostring(graph ~= nil), via,
+                tostring(graph ~= nil and type(graph.drawPriceTrend) == "function"),
+                tostring(graph ~= nil and type(graph.draw) == "function"),
+                before, box(a), box(b)))
+        end
+
+        -- BUILD 11:43: accept either entry point, prefer the shared tree. Gating on
+        -- graph.draw alone would refuse a companion that has drawPriceTrend, and the
+        -- shared tree is the one both surfaces are supposed to be using.
+        local hasTrend = graph ~= nil and type(graph.drawPriceTrend) == "function"
+        local hasDraw = graph ~= nil and type(graph.draw) == "function"
+        if isMdPrices
                 and self.mdPricesBand ~= nil
-                and MDMMarketScreenGraph ~= nil and type(MDMMarketScreenGraph.draw) == "function" then
+                and (hasTrend or hasDraw) then
             local area = self.mdGraphArea
-            if area ~= nil and area.absPosition ~= nil and area.absSize ~= nil then
+            -- Abs-size guard: on the first frame after the band becomes visible the area
+            -- can still carry a stale or zero size, which would draw into a degenerate rect.
+            if area ~= nil and (area.absSize == nil or area.absPosition == nil
+                    or (area.absSize[1] or 0) <= 0 or (area.absSize[2] or 0) <= 0) then
+                if type(area.updateAbsolutePosition) == "function" then
+                    pcall(function() area:updateAbsolutePosition() end)
+                end
+            end
+
+            -- BUILD 00:10: if the area is STILL unusable, do not give up silently. Derive a
+            -- rect from mdPricesBand and feed the SAME drawPriceTrend. My 21:41 guard failed
+            -- closed, which turned a layout-timing problem into a permanently blank panel.
+            -- A plot in a slightly generous box is a better answer than no plot, and it is
+            -- still the one shared decision tree - no Esc fork, nothing invented.
+            local useBand = false
+            if area == nil or area.absPosition == nil or area.absSize == nil
+                    or (area.absSize[1] or 0) <= 0 or (area.absSize[2] or 0) <= 0 then
+                local b = self.mdPricesBand
+                if b ~= nil and b.absPosition ~= nil and b.absSize ~= nil
+                        and (b.absSize[1] or 0) > 0 and (b.absSize[2] or 0) > 0 then
+                    useBand = true
+                    if not self._mdGraphBandFallbackLogged then
+                        self._mdGraphBandFallbackLogged = true
+                        print(string.format(
+                            "[MarketDynamics] Esc graph: mdGraphArea unusable, drawing into mdPricesBand rect %.4fx%.4f",
+                            b.absSize[1], b.absSize[2]))
+                    end
+                end
+            end
+
+            if useBand or (area ~= nil and area.absPosition ~= nil and area.absSize ~= nil
+                    and (area.absSize[1] or 0) > 0 and (area.absSize[2] or 0) > 0) then
+                -- Resolve the fill type from the host first, then the guest. Both are asked
+                -- because the host copy is set on full show and the guest owns the live pick.
                 local ft = self.mdSelectedFillType
-                if ft == nil and MdRfPdaGuest ~= nil and type(MdRfPdaGuest.getSelectedFillType) == "function" then
-                    ft = MdRfPdaGuest.getSelectedFillType()
+                if ft == nil and mdGuest ~= nil and type(mdGuest.getSelectedFillType) == "function" then
+                    local okFt, v = pcall(mdGuest.getSelectedFillType)
+                    ft = okFt and v or nil
+                end
+                -- BUILD 23:43: pre-ft skip log. Everything below needs ft, so a nil here is a
+                -- silent no-draw; say so once instead of leaving a blank panel unexplained.
+                if ft == nil and not self._mdGraphFtLogged then
+                    self._mdGraphFtLogged = true
+                    print(string.format(
+                        "[MarketDynamics] Esc graph SKIP: no fill type resolved (host=%s guest=%s useBand=%s)",
+                        tostring(self.mdSelectedFillType), tostring(mdGuest ~= nil), tostring(useBand)))
                 end
                 if ft ~= nil then
-                    local gx = area.absPosition[1]
-                    local gy = area.absPosition[2]
-                    local gw = area.absSize[1]
-                    local gh = area.absSize[2]
-                    local sampleCount = 0
-                    if type(MDMMarketScreenGraph.getSampleCount) == "function" then
-                        sampleCount = MDMMarketScreenGraph.getSampleCount(ft) or 0
+                    local src = useBand and self.mdPricesBand or area
+                    local gx = src.absPosition[1]
+                    local gy = src.absPosition[2]
+                    local gw = src.absSize[1]
+                    local gh = src.absSize[2]
+                    if useBand then
+                        -- Inset the band a little so the plot does not run into its edges.
+                        gx = gx + gw * 0.04
+                        gy = gy + gh * 0.10
+                        gw = gw * 0.92
+                        gh = gh * 0.62
                     end
-                    if sampleCount >= 2 then
-                        MDMMarketScreenGraph.draw(ft, gx, gy, gw, gh)
-                    else
-                        -- Mirror deep MarketScreen: draw from engine history when ring is thin.
-                        local mdm = g_currentMission and g_currentMission.MarketDynamics or g_MarketDynamics
-                        local engine = mdm and mdm.marketEngine
-                        if engine ~= nil and type(engine.getPriceHistory) == "function"
-                                and type(MDMMarketScreenGraph._drawLineChart) == "function" then
-                            local history = engine:getPriceHistory(ft)
-                            if type(history) == "table" and #history >= 2 then
-                                local series = {}
-                                for _, h in ipairs(history) do
-                                    if h ~= nil and type(h.price) == "number" then
-                                        series[#series + 1] = h.price
-                                    end
-                                end
-                                if #series >= 2 then
-                                    MDMMarketScreenGraph._drawLineChart(series, gx, gy, gw, gh)
-                                end
-                            end
-                        end
+                    local sampleCount = 0
+                    if type(graph.getSampleCount) == "function" then
+                        sampleCount = graph.getSampleCount(ft) or 0
+                    end
+                    -- BUILD 23:43: the Esc fork is gone. One shared decision tree lives in
+                    -- MDMMarketScreenGraph.drawPriceTrend and the full Market screen calls the
+                    -- same one, so the two surfaces cannot disagree about the same crop again.
+                    -- The old fork here had no global-sample step and no aggregated-median
+                    -- branch, which is why Esc could be blank while Market plotted.
+                    local branch = "thin"
+                    if type(graph.drawPriceTrend) == "function" then
+                        local okB, b = pcall(graph.drawPriceTrend, ft, gx, gy, gw, gh)
+                        branch = (okB and b) or "thin"
+                    elseif sampleCount >= 2 then
+                        -- Companion older than this build: keep the plot rather than blank it.
+                        graph.draw(ft, gx, gy, gw, gh)
+                        branch = "ring"
+                    end
+                    if not self._mdGraphLogged then
+                        self._mdGraphLogged = true
+                        print(string.format(
+                            "[MarketDynamics] Esc graph: box=%.1fx%.1f at %.3f,%.3f ft=%s samples=%d branch=%s",
+                            gw or -1, gh or -1, gx or -1, gy or -1, tostring(ft), sampleCount, tostring(branch)))
                     end
                 end
             end
@@ -786,18 +940,45 @@ function RfPdaMenuPage:update(dt)
     -- Market Dynamics: light text/graph refresh; never SmoothList thrash.
     if isMd then
         local pageIdx = tonumber(self.mdSubPageIndex) or 1
-        if pageIdx == 1 and MDMMarketScreenGraph ~= nil and type(MDMMarketScreenGraph.update) == "function" then
-            pcall(MDMMarketScreenGraph.update, dt)
+        -- BUILD 21:41: same cross-env resolve as draw. This is the sample ring tick, so
+        -- leaving it bare would have kept getSampleCount at 0 under a foreign host even
+        -- with the draw fixed, and the graph would have limped on engine history alone.
+        local graphUpd = (type(mdResolve) == "function")
+                and mdResolve(MDMMarketScreenGraph, "MDMMarketScreenGraph") or MDMMarketScreenGraph
+        if pageIdx == 1 and graphUpd ~= nil and type(graphUpd.update) == "function" then
+            pcall(graphUpd.update, dt)
         end
         self._mdLiveTimer = (self._mdLiveTimer or 0) + dt
         if self._mdLiveTimer >= REFRESH_INTERVAL then
             self._mdLiveTimer = 0
-            if active ~= nil and type(active.onShow) == "function" then
+            -- BUILD 22:27: was a full onShow(.., true) every 2000ms, which ran three
+            -- updateAbsolutePosition calls, re-seeded the subnav, re-synced visibility and
+            -- re-asserted the selection. Re-laying out the table twice a second is what
+            -- kept nudging the scroll. The guest light tick repaints digits only.
+            local mdGuest = (type(mdResolve) == "function")
+                    and mdResolve(MdRfPdaGuest, "MdRfPdaGuest") or MdRfPdaGuest
+            -- Prefer the registered handler; the direct guest is the belt if it was dropped.
+            local light = (active ~= nil and type(active.onLightTick) == "function")
+                    and active.onLightTick
+                    or (mdGuest ~= nil and mdGuest.onLightTick or nil)
+            if type(light) == "function" then
+                pcall(light, self.rfHostPlaceholder)
+            elseif active ~= nil and type(active.onShow) == "function" then
+                -- Older MarketDynamics without onLightTick: keep the previous behaviour
+                -- rather than silently stop refreshing prices.
                 pcall(active.onShow, self.rfHostPlaceholder, true)
             end
         end
         return
     end
+
+    -- One-shot graph log re-arms whenever Market Dynamics is not the active module, so
+    -- each visit to Prices reports once instead of once per session.
+    self._mdGraphLogged = false
+    self._mdGraphFtLogged = false
+    self._mdGraphOuterLogged = false
+    self._mdGraphBandFallbackLogged = false
+    self._mdGuestBeltLogged = false
 
     -- WC Dashboard/Workers: 500ms text-only live refresh (George FULL PORT ACK).
     if isWc then
@@ -2216,8 +2397,14 @@ local function _csPivotRemote(self, action)
     local active = host and host:getActivePanel()
     if active ~= nil and type(active.onPivotRemote) == "function" then
         pcall(active.onPivotRemote, self.rfHostPlaceholder, action)
-    elseif CsRfPdaGuest ~= nil and type(CsRfPdaGuest.onPivotRemote) == "function" then
-        pcall(CsRfPdaGuest.onPivotRemote, self.rfHostPlaceholder, action)
+    else
+        -- BUILD 12:59: resolved rather than bare, so the CS pivot fallback survives a
+        -- foreign door the same way the MDM paths do.
+        local csGuest = (type(mdResolve) == "function")
+                and mdResolve(CsRfPdaGuest, "CsRfPdaGuest") or CsRfPdaGuest
+        if csGuest ~= nil and type(csGuest.onPivotRemote) == "function" then
+            pcall(csGuest.onPivotRemote, self.rfHostPlaceholder, action)
+        end
     end
 end
 
@@ -2350,11 +2537,23 @@ function RfPdaMenuPage:refreshContent(rebuildLists)
                 self:_ensureWcWageArrowsVisible()
             end
         end
-        if active ~= nil and active.id == "marketDynamics" then
+        -- BUILD 23:43: subnav seed / visibility sync are enter-and-rebuild work. Running
+        -- them on every soft refresh was part of the same churn as the fat onShow.
+        if active ~= nil and active.id == "marketDynamics" and doMdListRebuild then
             self:_seedMdSubnavTexts()
             self:_syncMdSubPageVisibility()
             self:_ensureMdSubnavArrowsVisible()
             self:_ensureSelectorArrowsVisible()
+            -- BUILD 00:10: lay the graph box out on ENTER. draw() only ever retried it
+            -- mid-frame, so a band that had not been positioned yet gave a zero-size area
+            -- and the abs gate refused for as long as that lasted. Enter is a full show,
+            -- so this is the right place for it and it is not on any light path.
+            for _, id in ipairs({"mdPricesBand", "mdGraphArea"}) do
+                local el = self:getDescendantById(id)
+                if el ~= nil and type(el.updateAbsolutePosition) == "function" then
+                    pcall(function() el:updateAbsolutePosition() end)
+                end
+            end
         end
         if active ~= nil and type(active.onShow) == "function" then
             if active.id == "seasonalCropStress" then
@@ -2362,9 +2561,32 @@ function RfPdaMenuPage:refreshContent(rebuildLists)
                 -- Guest onShow paints consultant when entering (default-home lock).
                 pcall(active.onShow, self.rfHostPlaceholder, not doCsListRebuild)
             elseif active.id == "marketDynamics" then
-                -- Full MD commodity reload only on enter / rebuildLists (lightOnly otherwise).
-                -- Soft refreshContent(false) must not forceReload → SmoothList jump (BUILD 10:10).
-                pcall(active.onShow, self.rfHostPlaceholder, not doMdListRebuild)
+                -- BUILD 23:43: a soft refreshContent(false) now runs the guest LIGHT tick, not
+                -- a lightOnly onShow. lightOnly still re-laid out the table, band and graph and
+                -- re-asserted the selection, which is the scroll jump. Enter and explicit
+                -- rebuilds keep the full onShow(false).
+                if doMdListRebuild then
+                    pcall(active.onShow, self.rfHostPlaceholder, false)
+                else
+                    -- BUILD 23:51 belt: prefer the registered handler, but fall back to the
+                    -- guest directly if the registry dropped it. Vera found exactly that -
+                    -- active.onLightTick was nil, so the soft path took the fat onShow and
+                    -- 23:43 changed nothing where it counted. Never the fat onShow while a
+                    -- light tick exists anywhere we can reach it.
+                    local light = active.onLightTick
+                    if type(light) ~= "function" then
+                        local lg = (type(mdResolve) == "function")
+                                and mdResolve(MdRfPdaGuest, "MdRfPdaGuest") or MdRfPdaGuest
+                        if lg ~= nil and type(lg.onLightTick) == "function" then
+                            light = lg.onLightTick
+                        end
+                    end
+                    if type(light) == "function" then
+                        pcall(light, self.rfHostPlaceholder)
+                    else
+                        pcall(active.onShow, self.rfHostPlaceholder, true)
+                    end
+                end
             else
                 pcall(active.onShow, self.rfHostPlaceholder)
             end
@@ -2549,8 +2771,26 @@ function RfPdaMenuPage:onListSelectionChanged(list, section, index)
             self:_refreshGuestDetail()
         end
     elseif list == self.mdCommodityList and index ~= nil and index > 0 then
-        if MdRfPdaGuest ~= nil and type(MdRfPdaGuest.selectCommodityIndex) == "function" then
-            MdRfPdaGuest.selectCommodityIndex(index)
+        -- Keyboard / controller selection routes through the same real handler as a
+        -- click. No highlight-only path on either.
+        --
+        -- BUILD 13:06 (Vera F1): `active` does not exist in this function - I copied the
+        -- registry-first block out of onClickMdCommodityRow, which defines it, and left the
+        -- two lines that produce it behind. Worse than a miss: `type(active.selectCommodityIndex)`
+        -- INDEXES nil, so arrows and list selection threw every time instead of quietly
+        -- falling through. The click path was fine, which is exactly why it read as working.
+        local host = self:_getHost()
+        local active = host and host.getActivePanel and host:getActivePanel()
+        -- Registry first: a guest that registered the callback needs no resolving.
+        if active ~= nil and type(active.selectCommodityIndex) == "function" then
+            pcall(active.selectCommodityIndex, index)
+        else
+            local mdGuest = (type(mdResolve) == "function")
+                    and mdResolve(MdRfPdaGuest, "MdRfPdaGuest") or MdRfPdaGuest
+            self:_mdLogGuestBelt(mdGuest)
+            if mdGuest ~= nil and type(mdGuest.selectCommodityIndex) == "function" then
+                pcall(mdGuest.selectCommodityIndex, index)
+            end
         end
     elseif list == self.moduleList then
         -- Highlight-only: SmoothList ↑↓ must NOT switch modules.
@@ -2673,19 +2913,78 @@ function RfPdaMenuPage:onClickMdCommodityRow(element)
     if index == nil or index < 1 then
         return
     end
-    if self.mdCommodityList and self.mdCommodityList.setSelectedIndex then
-        pcall(function() self.mdCommodityList:setSelectedIndex(index) end)
+    -- BUILD 12:32: the optimistic highlight is gone. SmoothListElement publishes no
+    -- setSelectedIndex (established 21:41), so this call never did anything - but it read
+    -- as if the click were handled even when the real handler was missing, which is
+    -- exactly the wrong impression while the trend was not following the pick.
+    local host = self:_getHost()
+    local active = host and host.getActivePanel and host:getActivePanel()
+    if active ~= nil and type(active.selectCommodityIndex) == "function" then
+        pcall(active.selectCommodityIndex, index)
+        return
     end
-    if MdRfPdaGuest ~= nil and type(MdRfPdaGuest.selectCommodityIndex) == "function" then
-        MdRfPdaGuest.selectCommodityIndex(index)
+    local mdGuest = (type(mdResolve) == "function")
+            and mdResolve(MdRfPdaGuest, "MdRfPdaGuest") or MdRfPdaGuest
+    self:_mdLogGuestBelt(mdGuest)
+    if mdGuest ~= nil and type(mdGuest.selectCommodityIndex) == "function" then
+        pcall(mdGuest.selectCommodityIndex, index)
     end
 end
 
-function RfPdaMenuPage:onClickMdOpenMarket()
-    if MdRfPdaGuest ~= nil and type(MdRfPdaGuest.onOpenFullMarket) == "function" then
-        MdRfPdaGuest.onOpenFullMarket()
-    elseif MDMMarketScreen ~= nil and type(MDMMarketScreen.show) == "function" then
-        MDMMarketScreen.show()
+--- One-shot: name the belt the guest resolved through, or say it did not resolve.
+--- Same shape as the graph GATE line, because the graph turned out to be findable only
+--- once MarketDynamics published it - the guest was one build behind the same lesson.
+function RfPdaMenuPage:_mdLogGuestBelt(mdGuest)
+    if self._mdGuestBeltLogged then
+        return
     end
+    self._mdGuestBeltLogged = true
+    local via = "nil"
+    if mdGuest ~= nil then
+        if MdRfPdaGuest ~= nil then
+            via = "in-env"
+        elseif g_modEnvironments ~= nil and g_modEnvironments["FS25_MarketDynamics"] ~= nil
+                and g_modEnvironments["FS25_MarketDynamics"].MdRfPdaGuest ~= nil then
+            via = "modEnv-named"
+        else
+            local okE, rootE = pcall(getfenv, 0)
+            if okE and type(rootE) == "table" and rootE.MdRfPdaGuest ~= nil then
+                via = "getfenv0"
+            elseif g_currentMission ~= nil and g_currentMission.MdRfPdaGuest ~= nil then
+                via = "mission"
+            else
+                via = "modEnv-scan"
+            end
+        end
+    end
+    print(string.format(
+        "[MarketDynamics] Esc guest: resolved=%s via=%s selectCommodityIndex=%s",
+        tostring(mdGuest ~= nil), via,
+        tostring(mdGuest ~= nil and type(mdGuest.selectCommodityIndex) == "function")))
+end
+
+function RfPdaMenuPage:onClickMdOpenMarket()
+    -- BUILD 12:59: was the last bare cross-mod read in this file. Under a foreign door
+    -- both names were nil, so the button did nothing at all - silently, which is the
+    -- worst version. Registry first, then the resolver, and it cannot throw.
+    local host = self:_getHost()
+    local active = host and host.getActivePanel and host:getActivePanel()
+    if active ~= nil and type(active.onOpenFullMarket) == "function" then
+        pcall(active.onOpenFullMarket)
+        return
+    end
+    local guest = (type(mdResolve) == "function")
+            and mdResolve(MdRfPdaGuest, "MdRfPdaGuest") or MdRfPdaGuest
+    if guest ~= nil and type(guest.onOpenFullMarket) == "function" then
+        pcall(guest.onOpenFullMarket)
+        return
+    end
+    local screen = (type(mdResolve) == "function")
+            and mdResolve(MDMMarketScreen, "MDMMarketScreen") or MDMMarketScreen
+    if screen ~= nil and type(screen.show) == "function" then
+        pcall(screen.show)
+    end
+    -- Companion absent: quiet no-op. "Works alone" means a missing peer is silence,
+    -- not an error out of a click handler.
 end
 
