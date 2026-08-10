@@ -338,13 +338,17 @@ end
 -- ============================================================
 
 function IrrigationScheduleDialog:updatePerformance(system)
-    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier * (1.0 - system.wearLevel * 0.3)
+    -- F154 retired the UsedPlus wear bridge, so `wearLevel` is nil on every
+    -- system and the wear factor is a permanent multiply by one. Read it as
+    -- zero rather than letting a nil crash the dialog on open.
+    local wearLevel = system.wearLevel or 0
+    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier * (1.0 - wearLevel * 0.3)
     local efficiency    = math.floor(system.pressureMultiplier * 100)
     local function t(key, ...) return (g_i18n ~= nil and string.format(g_i18n:getText(key), ...)) or key end
     if self.flowRate   ~= nil then self.flowRate:setText(t("cs_irr_flow_rate_value",   effectiveRate))            end
     if self.efficiency ~= nil then self.efficiency:setText(t("cs_irr_efficiency_value", efficiency))              end
     if self.cost       ~= nil then self.cost:setText(t("cs_irr_cost_value",   system.operationalCostPerHour))     end
-    if self.wear       ~= nil then self.wear:setText(t("cs_irr_wear_value",   math.floor(system.wearLevel * 100))) end
+    if self.wear       ~= nil then self.wear:setText(t("cs_irr_wear_value",   math.floor(wearLevel * 100)))       end
 end
 
 -- ============================================================
