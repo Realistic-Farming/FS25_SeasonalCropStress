@@ -49,6 +49,7 @@ source(modDir .. "src/SoilFertilizerIntegration.lua")
 source(modDir .. "src/CoursePlayIntegration.lua")
 source(modDir .. "src/AutoDriveIntegration.lua")
 source(modDir .. "src/SprayerIntegration.lua")
+source(modDir .. "src/IrrigatorSectorIntegration.lua")
 
 -- Bedrock bridges (optional, delegate-when-present against the four core APIs)
 source(modDir .. "src/integrations/CropStressStateLedgerBridge.lua")
@@ -60,6 +61,7 @@ source(modDir .. "src/events/CropStressSettingsSyncEvent.lua")
 source(modDir .. "src/events/CropStressMoistureInitEvent.lua")
 source(modDir .. "src/events/CropStressIrrigateNowEvent.lua")
 source(modDir .. "src/events/CropStressMoistureRowEvent.lua")
+source(modDir .. "src/events/CropStressPivotRemoteEvent.lua")
 
 -- Persistence
 source(modDir .. "src/SaveLoadHandler.lua")

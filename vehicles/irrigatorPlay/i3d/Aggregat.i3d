@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<i3D name="Fertig" version="1.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://i3d.giants.ch/schema/i3d-1.6.xsd">
+  <Asset>
+    <Export program="GIANTS Editor 64bit" version="8.1.0"/>
+  </Asset>
+
+  <Files>
+    <File fileId="8" filename="../textures/Decal.dds"/>
+    <File fileId="10" filename="../textures/Decal_spec.dds"/>
+    <File fileId="3" filename="../textures/aggregat.dds"/>
+    <File fileId="4" filename="../shaders/vehicleShader.xml"/>
+    <File fileId="9" filename="$data/shared/default_normal.dds"/>
+  </Files>
+
+
+  <Materials>
+    <Material name="UnnamedMaterial" materialId="4" diffuseColor="1 1 1 1">
+    </Material>
+    <Material name="lambert1" materialId="5" diffuseColor="0.494118 0.494118 0.494118 1">
+    </Material>
+    <Material name="lambert2" materialId="7" customShaderId="4">
+      <Texture fileId="8"/>
+      <Normalmap fileId="9"/>
+      <Glossmap fileId="10"/>
+      <CustomParameter name="RDT" value="0 0 0 0"/>
+      <CustomParameter name="dirtColor" value="0.2 0.14 0.08 0"/>
+    </Material>
+    <Material name="lambert1" materialId="6" diffuseColor="0.494118 0.494118 0.494118 1" customShaderId="4" customShaderVariation="colorMask">
+      <Glossmap fileId="3"/>
+      <CustomParameter name="RDT" value="0 0 0 0"/>
+      <CustomParameter name="dirtColor" value="0.2 0.14 0.08 0"/>
+      <CustomParameter name="colorMat0" value="0 0.251 0.156 1"/>
+      <CustomParameter name="colorMat1" value="0.917 0.925 0.905 1"/>
+      <CustomParameter name="colorMat2" value="0.752 0.752 0.752 1"/>
+      <CustomParameter name="colorMat3" value="0 0 0 1"/>
+      <CustomParameter name="colorMat4" value="0 0 0 1"/>
+      <CustomParameter name="colorMat5" value="0.05 0.05 0.05 1"/>
+      <CustomParameter name="colorMat6" value="1 0.1 1 1"/>
+      <CustomParameter name="colorMat7" value="0.1 1 1 1"/>
+    </Material>
+    <Material name="lambert1" materialId="8" diffuseColor="0.486275 0.486275 0.486275 1">
+    </Material>
+  </Materials>
+
+
+  <Shapes externalShapesFile="Aggregat.i3d.shapes">
+  </Shapes>
+
+
+  <Dynamics>
+  </Dynamics>
+
+  <Scene>
+    <Shape shapeId="1" name="Aggregat_main" dynamic="true" compound="true" collisionMask="2171138" density="0.5" clipDistance="300" nodeId="25" materialIds="4" nonRenderable="true" distanceBlending="false">
+      <TransformGroup name="transform" rotation="0 180 0" nodeId="26">
+        <Shape shapeId="2" name="agregatt" translation="0 1.21861 -0.435399" nodeId="27" materialIds="6" castsShadows="true" receiveShadows="true"/>
+        <Shape shapeId="3" name="Decal" translation="3.00123e-05 0.651296 -0.580421" nodeId="28" materialIds="7" castsShadows="true" receiveShadows="true"/>
+        <TransformGroup name="support" nodeId="29">
+          <Shape shapeId="4" name="stuetzfuss" translation="0.002 0.2 -1.541" nodeId="30" materialIds="6" castsShadows="true" receiveShadows="true">
+            <Shape shapeId="5" name="stuetzplatte" translation="0.000431068 -0.247887 0" nodeId="31" materialIds="6" castsShadows="true" receiveShadows="true"/>
+            <TransformGroup name="wheelFront" translation="0 -0.0566451 0" nodeId="32">
+              <TransformGroup name="wheelFrontDN" nodeId="33"/>
+            </TransformGroup>
+          </Shape>
+          <Shape shapeId="6" name="kurbel_vorne" translation="0.000431068 0.906 -1.541" nodeId="34" materialIds="6" castsShadows="true" receiveShadows="true"/>
+        </TransformGroup>
+        <TransformGroup name="workAnim" nodeId="35">
+          <Shape shapeId="7" name="stuetzfuss_links" translation="-0.612 0.17749 0.962" nodeId="36" materialIds="6" castsShadows="true" receiveShadows="true">
+            <TransformGroup name="colSupport2" translation="0 -0.119013 0" nodeId="37">
+              <Shape shapeId="8" name="colPartSupport2" compoundChild="true" collisionMask="2109442" nodeId="38" materialIds="8" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+            </TransformGroup>
+          </Shape>
+          <Shape shapeId="9" name="kurbel_links" translation="-0.641218 0.706257 0.962" nodeId="39" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="10" name="stuetzfuss_rechts" translation="0.612431 0.17749 0.962" nodeId="40" materialIds="6" castsShadows="true" receiveShadows="true">
+            <TransformGroup name="colSupport3" translation="0 -0.119013 0" nodeId="41">
+              <Shape shapeId="8" name="colPartSupport3" compoundChild="true" collisionMask="2109442" nodeId="42" materialIds="8" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+            </TransformGroup>
+          </Shape>
+          <Shape shapeId="11" name="kurbel_rechts" translation="0.645431 0.706257 0.962" nodeId="43" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="12" name="saugleitung" translation="0.000431038 0.464206 1.98286" nodeId="44" materialIds="6" castsShadows="true" receiveShadows="true"/>
+        </TransformGroup>
+        <TransformGroup name="attacherJoint" translation="1.45195e-10 0.683284 -2.2818" rotation="0 -90 0" nodeId="45"/>
+        <TransformGroup name="wheelLeftFront" translation="-0.72 0.364689 0.196931" nodeId="46"/>
+        <TransformGroup name="wheelRightFront" translation="0.72 0.364689 0.196931" nodeId="47"/>
+        <TransformGroup name="exitNode" translation="1.26077 0.367851 0" nodeId="48"/>
+        <TransformGroup name="cameras" nodeId="49">
+          <TransformGroup name="outdoorCameraTarget" translation="0 1.8933 -0.0427863" rotation="-24 180 0" nodeId="50">
+            <Camera name="outdoorCamera1" translation="0 0 14.1323" rotation="0 0 2.41431e-15" nodeId="51" fov="54.4322" nearClip="0.3" farClip="5000" orthographicHeight="1"/>
+          </TransformGroup>
+          <TransformGroup name="cameraRaycastNode1" translation="4.54747e-15 2.1821 5.54083" nodeId="52"/>
+          <TransformGroup name="cameraRaycastNode2" translation="0 4.12888 0.609705" nodeId="53"/>
+          <TransformGroup name="cameraRaycastNode3" translation="0 4.12888 -1.67936" nodeId="54"/>
+        </TransformGroup>
+        <TransformGroup name="exhaustParticle" translation="0.263365 2.20815 0.79736" rotation="90 -86.0437 -90" nodeId="55"/>
+        <TransformGroup name="auspuffklappe" translation="0.266 2.19776 0.726105" nodeId="56">
+          <Shape shapeId="13" name="auspuffklappe_vis" translation="0 0.0122636 0.0580081" nodeId="57" materialIds="6" castsShadows="true" receiveShadows="true"/>
+        </TransformGroup>
+        <Camera name="camera" translation="3.2167 1.44012 1.10635" rotation="168.082 89.1967 180" nodeId="58" fov="60" nearClip="0.1" farClip="10000" orthographicHeight="1"/>
+        <TransformGroup name="attacherJointBeregnung" translation="-0.808 0.658887 2.80303" rotation="0 -100 0" nodeId="59"/>
+        <TransformGroup name="hoseJoint" translation="-8.94935e-09 1.4921 1.0716" rotation="-5 180 0" nodeId="60"/>
+        <TransformGroup name="lights" nodeId="61">
+          <TransformGroup name="rearMultipointLight_03Left" translation="-0.449299 0.523809 0.993579" rotation="90 0 0" nodeId="62"/>
+          <TransformGroup name="rearMultipointLight_03Right" translation="0.449 0.523809 0.993579" rotation="90 0 0" nodeId="63"/>
+        </TransformGroup>
+        <TransformGroup name="ai" nodeId="64">
+          <Shape shapeId="14" name="aiCollisionTrigger" translation="0 1.10138 -0.489935" kinematic="true" compound="true" trigger="true" collisionMask="1056768" nodeId="65" materialIds="5" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+        </TransformGroup>
+        <TransformGroup name="beltCollis" nodeId="66">
+          <Shape shapeId="15" name="beltCol1" translation="-0.0560352 0.670607 -1.54265" rotation="0 -4.6 0" scale="0.1 0.16 1.2" nodeId="67" materialIds="4" nonRenderable="true" distanceBlending="false"/>
+          <Shape shapeId="15" name="beltCol2" translation="0.056 0.670607 -1.54265" rotation="0 4.6 0" scale="0.1 0.16 1.2" nodeId="68" materialIds="4" nonRenderable="true" distanceBlending="false"/>
+          <Shape shapeId="15" name="beltCol3" translation="0 1.13846 0" scale="1.16 1.4 2" nodeId="69" materialIds="4" nonRenderable="true" distanceBlending="false"/>
+          <Shape shapeId="15" name="beltCol4" translation="0.266962 2.13328 0.285218" scale="0.1 0.1 1" nodeId="70" materialIds="4" nonRenderable="true" distanceBlending="false"/>
+        </TransformGroup>
+      </TransformGroup>
+    </Shape>
+  </Scene>
+
+</i3D>

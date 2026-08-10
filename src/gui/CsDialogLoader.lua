@@ -118,6 +118,17 @@ function CsDialogLoader.show(name, dataMethod, ...)
 
     if not ok then
         print("[CropStress] CsDialogLoader ERROR showing '" .. name .. "': " .. tostring(err))
+        -- BUILD 18:15 abort-clean: showDialog pushes the dialog BEFORE onOpen runs,
+        -- so an onOpen throw leaves a half-built shell on the GUI stack. Returning
+        -- false without tearing it down is what left Esc showing a dialog that could
+        -- not be clicked or closed. Close it so the failure is visible in the log
+        -- rather than parked on the player's screen.
+        pcall(function()
+            if g_gui ~= nil and type(g_gui.closeDialog) == "function" then
+                g_gui:closeDialog(entry.instance)
+            end
+        end)
+        pcall(function() entry.instance:close() end)
         return false
     end
 

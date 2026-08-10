@@ -202,6 +202,18 @@ function CsRfPdaGuest.computeGlanceStats()
     }
 end
 
+--- Numeric-safe field id compare (farmland ids may arrive as number or string).
+local function fieldIdEquals(a, b)
+    if a == nil or b == nil then
+        return false
+    end
+    if a == b then
+        return true
+    end
+    local na, nb = tonumber(a), tonumber(b)
+    return na ~= nil and nb ~= nil and na == nb
+end
+
 --- True when a placed irrigation system lists this field in coveredFields.
 --- Distinct from mgr:isFieldIrrigated (rate > 0 / actively watering).
 local function isFieldCovered(fieldId)
@@ -212,7 +224,7 @@ local function isFieldCovered(fieldId)
     for _, sys in pairs(mgr.irrigationManager.systems) do
         if sys.coveredFields ~= nil then
             for _, fid in ipairs(sys.coveredFields) do
-                if fid == fieldId then
+                if fieldIdEquals(fid, fieldId) then
                     return true
                 end
             end
@@ -431,7 +443,13 @@ function CsRfPdaGuest.buildFieldRows()
 
         if owned then
             local fti = field and field.fieldState and field.fieldState.fruitTypeIndex or 0
+            -- Certified getter, not the raw scalar: getMoisture returns the cell
+            -- aggregate once cells exist, so the column cannot go stale again.
             local moisture = entry.moisture or 0
+            if type(soilSystem.getMoisture) == "function" then
+                local okM, mv = pcall(function() return soilSystem:getMoisture(fid) end)
+                if okM and type(mv) == "number" then moisture = mv end
+            end
             local stress = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
             local irrigated = coveredFields[fid] == true
             local statusText, statusColor = moistureStatus(moisture)
@@ -503,6 +521,433 @@ local function findDescendant(root, id)
     end
     return nil
 end
+
+-- ============================================================
+-- ESC ACTIONS - open the existing Consultant / Irrigation dialogs
+-- ============================================================
+-- George GO WITH CONSTRAINTS 2026-08-09: Esc must reopen the EXISTING
+-- MessageDialogs through the CropStress manager. Never bare CsDialogLoader from a
+-- host (it is SCS-env-scoped), never an inline Esc editor, and never
+-- applyOneTimeIrrigation from here - Irrigate Now stays inside the schedule dialog
+-- so CropStressIrrigateNowEvent remains the single write door.
+
+--- Systems whose coveredFields include fieldId.
+--- coveredFields is an ipairs ARRAY (CropStressManager contract) - not a set.
+local function coveringSystems(mgr, fieldId)
+    local out = {}
+    if mgr == nil or fieldId == nil then return out end
+    local irr = mgr.irrigationManager
+    if irr == nil or irr.systems == nil then return out end
+    for id, sys in pairs(irr.systems) do
+        local covered = sys ~= nil and sys.coveredFields or nil
+        if covered ~= nil then
+            for i = 1, #covered do
+                if fieldIdEquals(covered[i], fieldId) then
+                    out[#out + 1] = { id = id, isActive = sys.isActive and true or false }
+                    break
+                end
+            end
+        end
+    end
+    return out
+end
+
+--- Deterministic pick per George section 2: prefer isActive, then lowest id.
+--- Returns nil when nothing covers the field - the caller must NOT open a dialog,
+--- because onOpenIrrigationDialog(nil) falls back to an unordered pairs() first-id.
+local function resolveSystemId(mgr, fieldId)
+    local cands = coveringSystems(mgr, fieldId)
+    if #cands == 0 then return nil end
+    local active = {}
+    for _, c in ipairs(cands) do
+        if c.isActive then active[#active + 1] = c end
+    end
+    local pool = (#active > 0) and active or cands
+    table.sort(pool, function(a, b)
+        local na, nb = tonumber(a.id), tonumber(b.id)
+        if na ~= nil and nb ~= nil then return na < nb end
+        return tostring(a.id) < tostring(b.id)
+    end)
+    return pool[1].id
+end
+
+--- Selected field id for the Esc CS module, or nil.
+local function selectedFieldId(container)
+    local page = getHostPage()
+    if page == nil then return nil end
+    if page.csSelectedFieldId ~= nil then return page.csSelectedFieldId end
+    local rows = page.csFieldData or {}
+    local e = page.csSelectedIndex ~= nil and rows[page.csSelectedIndex] or nil
+    return e ~= nil and e.fieldId or nil
+end
+
+
+-- ============================================================
+-- INLINE CONSULTANT READOUT (Alex Chen desk in the Esc panel)
+-- ============================================================
+-- George GO WITH CONSTRAINTS 2026-08-09: readout only, fixed Texts, manager reads.
+-- NO-GO he named and this honours: no CropConsultantDialog XML nested into the page,
+-- no TextElement.new/addElement rebuild on a tick, no SmoothList, no inline schedule
+-- editor, no Esc applyOneTimeIrrigation. Risk formula is the dialog's own
+-- (CropConsultantDialog.lua:164) rather than a second one invented here.
+
+local function consSetText(container, id, s, visible)
+    local el = findDescendant(container, id)
+    if el == nil then return end
+    if el.setVisible then el:setVisible(visible ~= false) end
+    if visible ~= false and el.setText then el:setText(s or "") end
+end
+
+--- Top owned fields by risk, highest first. Owned-only, same farmland filter as
+--- buildFieldRows so the consultant cannot advise on land the player does not have.
+local function topRiskFields(mgr, limit)
+    local out = {}
+    if mgr == nil then return out end
+    local rows = CsRfPdaGuest.buildFieldRows() or {}
+    for _, r in ipairs(rows) do
+        -- buildFieldRows carries FORMATTED strings (moistureText / stressText), not
+        -- numbers, so the risk maths reads the certified getters the dialog itself
+        -- uses. Reading r.moisture would silently score every field identically.
+        local moisture, stress = 0.5, 0
+        if type(mgr.getMoisture) == "function" then
+            local ok, v = pcall(function() return mgr:getMoisture(r.fieldId) end)
+            if ok and type(v) == "number" then moisture = v end
+        end
+        if type(mgr.getStress) == "function" then
+            local ok, v = pcall(function() return mgr:getStress(r.fieldId) end)
+            if ok and type(v) == "number" then stress = v end
+        end
+        -- dialog formula (CropConsultantDialog.lua:164), not a new one
+        local risk = stress * 0.6 + (1 - moisture) * 0.4
+        out[#out + 1] = {
+            fieldId = r.fieldId, label = r.fieldLabel or r.label,
+            crop = r.cropName, moisture = moisture, stress = stress, risk = risk,
+        }
+    end
+    table.sort(out, function(a, b) return a.risk > b.risk end)
+    while #out > (limit or 5) do table.remove(out) end
+    return out
+end
+
+--- Samantha sit lock: Field Detail + Schedule resolve follow the crowned field
+--- (top-risk on consultant enter; Top-5 row click recrowns).
+local function crownConsultField(container, fieldId)
+    local page = getHostPage()
+    if page == nil then return end
+    page.csSelectedFieldId = fieldId
+    local rows = page.csFieldData or {}
+    local idx = nil
+    if fieldId ~= nil then
+        for i, row in ipairs(rows) do
+            if row.fieldId == fieldId then
+                idx = i
+                break
+            end
+        end
+    end
+    page.csSelectedIndex = idx
+    -- Light refresh only (text/schedule resolve). Call via module table so this
+    -- helper can sit above the local updateDetailBand definition safely.
+    if type(CsRfPdaGuest.onShow) == "function" then
+        CsRfPdaGuest.onShow(container, true)
+    end
+end
+
+--- Destination label on the toggle: consultant home → "Field list"; table → "Crop consultant".
+local function applyConsultToggleLabel(page)
+    if page == nil then
+        return
+    end
+    local btn = page.csBtnConsultant
+    if btn == nil or type(btn.setText) ~= "function" then
+        return
+    end
+    if page._csConsultOpen then
+        btn:setText(tr("cs_rf_pda_btn_field_list", "Field list"))
+    else
+        btn:setText(tr("cs_rf_pda_btn_consultant", "Crop consultant"))
+    end
+end
+
+--- Keep SPACE / button label in sync whenever the host flips consult vs table.
+local function wireConsultViewLabels(page)
+    if page == nil or page._csConsultLabelWired then
+        return
+    end
+    local orig = page.setCsConsultView
+    if type(orig) ~= "function" then
+        return
+    end
+    page._csConsultLabelWired = true
+    function page:setCsConsultView(open)
+        orig(self, open)
+        applyConsultToggleLabel(self)
+    end
+end
+
+--- Top-5 rows are fixed Texts (no Button / SmoothList). Hit-test the row span on
+--- the consultant panel so a click recrowns strip + Schedule without new XML ids.
+local function wireConsultRowHits(container)
+    local page = getHostPage()
+    if page == nil then return end
+    local panel = page.csConsultPanel or findDescendant(container, "csConsultPanel")
+    if panel == nil or panel._csConsHitWired then return end
+    panel._csConsHitWired = true
+    local prevMouse = panel.mouseEvent
+    function panel:mouseEvent(posX, posY, isDown, isUp, button, eventUsed)
+        eventUsed = eventUsed or false
+        if prevMouse ~= nil then
+            local used = prevMouse(self, posX, posY, isDown, isUp, button, eventUsed)
+            if used then eventUsed = true end
+        end
+        if eventUsed or not self.visible then
+            return eventUsed
+        end
+        local mouseUp = isUp and (button == nil or button == Input.MOUSE_BUTTON_LEFT)
+        if not mouseUp then
+            return eventUsed
+        end
+        if not page._csConsultOpen then
+            return eventUsed
+        end
+        local top = page._csConsultTop or {}
+        for i = 1, #top do
+            local fieldEl = findDescendant(self, "csConsRow" .. i .. "Field")
+                or findDescendant(container, "csConsRow" .. i .. "Field")
+            local yieldEl = findDescendant(self, "csConsRow" .. i .. "Yield")
+                or findDescendant(container, "csConsRow" .. i .. "Yield")
+            if fieldEl ~= nil and fieldEl.visible ~= false
+                and fieldEl.absPosition ~= nil and fieldEl.size ~= nil then
+                local x = fieldEl.absPosition[1]
+                local y = fieldEl.absPosition[2]
+                local h = fieldEl.size[2] or 0
+                local w = fieldEl.size[1] or 0
+                if yieldEl ~= nil and yieldEl.absPosition ~= nil and yieldEl.size ~= nil then
+                    w = (yieldEl.absPosition[1] + (yieldEl.size[1] or 0)) - x
+                end
+                local hit = false
+                if GuiUtils ~= nil and type(GuiUtils.checkOverlayOverlap) == "function" then
+                    hit = GuiUtils.checkOverlayOverlap(posX, posY, x, y, w, h)
+                else
+                    hit = posX >= x and posX <= (x + w) and posY >= y and posY <= (y + h)
+                end
+                if hit then
+                    local e = top[i]
+                    if e ~= nil and e.fieldId ~= nil then
+                        page._csConsultPlayerCrown = e.fieldId
+                        crownConsultField(container, e.fieldId)
+                    end
+                    return true
+                end
+            end
+        end
+        return eventUsed
+    end
+end
+
+--- Paint the inline consultant. Called by the host when the toggle opens the view.
+function CsRfPdaGuest.onPaintConsultant(container)
+    local mgr = getMgr()
+    consSetText(container, "csConsTitle", tr("cs_rf_pda_cons_title", "Alex Chen - Crop Consultant"))
+    consSetText(container, "csConsColField",    tr("cs_rf_pda_cons_col_field", "Field"))
+    consSetText(container, "csConsColRisk",     tr("cs_rf_pda_cons_col_risk", "Risk"))
+    consSetText(container, "csConsColMoisture", tr("cs_rf_pda_cons_col_moisture", "Moisture"))
+    consSetText(container, "csConsColYield",    tr("cs_rf_pda_cons_col_yield", "Yield keep"))
+    consSetText(container, "csConsRecTitle",    tr("cs_rf_pda_cons_rec_title", "Recommendations"))
+
+    -- Relationship: shown ONLY when the NPC is really registered. An unregistered
+    -- consultant prints nothing at all rather than a fake 0 / 100.
+    local relShown = false
+    local npc = mgr ~= nil and mgr.npcIntegration or nil
+    if npc ~= nil and npc.isRegistered and type(npc.getRelationshipLevel) == "function" then
+        local ok, rel = pcall(function() return npc:getRelationshipLevel() end)
+        if ok and type(rel) == "number" then
+            consSetText(container, "csConsRelation",
+                string.format(tr("cs_rf_pda_cons_relation", "With Alex: %d / 100"), rel))
+            relShown = true
+        end
+    end
+    if not relShown then consSetText(container, "csConsRelation", nil, false) end
+
+    local top = topRiskFields(mgr, 5)
+    local page = getHostPage()
+    if page ~= nil then
+        page._csConsultTop = top
+    end
+    for i = 1, 5 do
+        local e = top[i]
+        if e == nil then
+            for _, sfx in ipairs({ "Field", "Risk", "Moisture", "Yield" }) do
+                consSetText(container, "csConsRow" .. i .. sfx, nil, false)
+            end
+        else
+            local name = e.label or ("Field " .. tostring(e.fieldId))
+            if e.crop ~= nil and e.crop ~= "" then name = name .. " - " .. tostring(e.crop) end
+            local keep = nil
+            if mgr ~= nil and type(mgr.getYieldKeepFactor) == "function" then
+                local ok, k = pcall(function() return mgr:getYieldKeepFactor(e.fieldId) end)
+                if ok and type(k) == "number" then keep = k end
+            end
+            consSetText(container, "csConsRow" .. i .. "Field", name)
+            consSetText(container, "csConsRow" .. i .. "Risk", string.format("%d%%", math.floor(e.risk * 100 + 0.5)))
+            consSetText(container, "csConsRow" .. i .. "Moisture", string.format("%d%%", math.floor(e.moisture * 100 + 0.5)))
+            consSetText(container, "csConsRow" .. i .. "Yield",
+                keep ~= nil and string.format("%d%%", math.floor(keep * 100 + 0.5)) or "-")
+        end
+    end
+
+    -- Honest empty: no owned field data at all.
+    consSetText(container, "csConsEmpty",
+        tr("cs_rf_pda_cons_empty", "No field data yet - fields appear after the simulation runs."),
+        #top == 0)
+
+    -- Recommendations. Each line is omitted rather than guessed when its source
+    -- has nothing usable to say.
+    local recs = {}
+    if #top > 0 then
+        local t1 = top[1]
+        recs[#recs + 1] = string.format(
+            tr("cs_rf_pda_cons_rec_driest", "Driest now: %s at %d%% moisture - water this one first."),
+            t1.label or ("Field " .. tostring(t1.fieldId)), math.floor(t1.moisture * 100 + 0.5))
+        local wi = mgr ~= nil and mgr.weatherIntegration or nil
+        if wi ~= nil and type(wi.getMoistureForecast) == "function" then
+            local ok, fc = pcall(function() return wi:getMoistureForecast(t1.fieldId, 3) end)
+            if ok and type(fc) == "number" then
+                recs[#recs + 1] = string.format(
+                    tr("cs_rf_pda_cons_rec_forecast", "3-day outlook for %s: %d%% moisture."),
+                    t1.label or ("Field " .. tostring(t1.fieldId)), math.floor(fc * 100 + 0.5))
+            end
+        end
+    end
+    local irr = mgr ~= nil and mgr.irrigationManager or nil
+    local active = 0
+    if irr ~= nil and irr.systems ~= nil then
+        for _, sys in pairs(irr.systems) do
+            if sys ~= nil and sys.isActive then active = active + 1 end
+        end
+    end
+    recs[#recs + 1] = (active > 0)
+        and string.format(tr("cs_rf_pda_cons_rec_systems", "%d irrigation systems active."), active)
+        or tr("cs_rf_pda_cons_rec_nosystems", "No active irrigation - shop coverage for the driest fields.")
+
+    for i = 1, 3 do
+        consSetText(container, "csConsRec" .. i, recs[i], recs[i] ~= nil)
+    end
+
+    -- Selection SoT: keep the table-highlighted field. Only crown top-risk when
+    -- nothing is selected yet (never overwrite Field N with a different Top-5 row).
+    local page2 = getHostPage()
+    if page2 == nil or page2.csSelectedFieldId == nil then
+        if #top > 0 then
+            crownConsultField(container, top[1].fieldId)
+        else
+            crownConsultField(container, nil)
+        end
+    else
+        -- Light refresh detail + PIVOT for the existing selection.
+        if type(CsRfPdaGuest.onShow) == "function" then
+            CsRfPdaGuest.onShow(container, true)
+        end
+    end
+    wireConsultRowHits(container)
+end
+
+--- Crop consultant: farm-wide, always available on the module.
+function CsRfPdaGuest.onOpenConsultant(container)
+    local mgr = getMgr()
+    if mgr == nil or type(mgr.onOpenConsultantDialog) ~= "function" then return end
+    pcall(function() mgr:onOpenConsultantDialog() end)
+end
+
+--- Irrigation schedule for the selected field's covering system.
+--- BUILD 16:44: after the schedule dialog closes, focus was left on the dismissed
+--- dialog, so the Esc Crop Stress page took no clicks until a full Esc out and back
+--- in. Re-assert focus on the first remote that is actually LIVE, in the order the
+--- farmer would reach for: Door, then Power, then ops, with Schedule as the fallback
+--- so focus always lands somewhere real. Only enabled remotes are candidates - a
+--- gated chip is not clickable, so focusing it would repeat the original problem.
+local PIVOT_FOCUS_ORDER = {
+    "csPivotBtnDoor", "csPivotBtnPower", "csPivotBtnSpray", "csPivotBtnEndGun",
+    "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop",
+    "csPivotBtnMinUp", "csPivotBtnMinDn", "csPivotBtnMaxUp", "csPivotBtnMaxDn",
+    "csPivotBtnArmPlus", "csPivotBtnArmMinus", "csBtnSchedule",
+}
+
+local function refocusPivotAfterDialog(container)
+    if FocusManager == nil or type(FocusManager.setFocus) ~= "function" then return end
+    for _, id in ipairs(PIVOT_FOCUS_ORDER) do
+        local el = findDescendant(container, id)
+        if el ~= nil and el.rfPivotChipEnabled and el.disabled ~= true then
+            pcall(function() FocusManager:setFocus(el) end)
+            return
+        end
+    end
+end
+
+function CsRfPdaGuest.onOpenSchedule(container)
+    local mgr = getMgr()
+    if mgr == nil or type(mgr.onOpenIrrigationDialog) ~= "function" then return end
+    local fieldId = selectedFieldId(container)
+    local sysId = resolveSystemId(mgr, fieldId)
+    if sysId == nil then
+        -- 0 covering systems: honest no-open. The strip already carries the copy.
+        return
+    end
+    pcall(function() mgr:onOpenIrrigationDialog(sysId) end)
+
+    -- Wrap this dialog instance's onClose once so the Esc page gets focus back.
+    -- Wrapping the live instance rather than the class keeps it scoped to the
+    -- dialog we just opened and cannot leak onto anything else that reuses it.
+    local dlg = g_gui ~= nil and g_gui.currentGuiName ~= nil and g_gui.currentGui or nil
+    if dlg ~= nil and dlg._csRfReturnFocusWired ~= true and type(dlg.onClose) == "function" then
+        dlg._csRfReturnFocusWired = true
+        local prevClose = dlg.onClose
+        function dlg:onClose(...)
+            prevClose(self, ...)
+            pcall(refocusPivotAfterDialog, container)
+        end
+    end
+end
+
+--- Button chrome for the CS module: consultant toggle always; Schedule lives on
+--- the PIVOT card (enabled only when a covering system exists).
+function CsRfPdaGuest.refreshActionButtons(container, fieldId)
+    local consultBtn = findDescendant(container, "csBtnConsultant")
+    local schedBtn   = findDescendant(container, "csBtnSchedule")
+    local noCovEl    = findDescendant(container, "csDetailNoCoverage")
+    local page = getHostPage()
+
+    if consultBtn ~= nil then
+        -- Destination label: table home → Crop consultant; overlay → Field list.
+        if consultBtn.setText then
+            if page ~= nil and page._csConsultOpen then
+                consultBtn:setText(tr("cs_rf_pda_btn_field_list", "Field list"))
+            else
+                consultBtn:setText(tr("cs_rf_pda_btn_consultant", "Crop consultant"))
+            end
+        end
+        if consultBtn.setVisible then consultBtn:setVisible(true) end
+    end
+
+    local mgr = getMgr()
+    local covered = (fieldId ~= nil) and (#coveringSystems(mgr, fieldId) > 0) or false
+    if schedBtn ~= nil then
+        if schedBtn.setText then schedBtn:setText(tr("cs_rf_pda_pivot_btn_schedule", "Schedule")) end
+        if schedBtn.setVisible then schedBtn:setVisible(true) end
+        if type(schedBtn.setDisabled) == "function" then
+            schedBtn:setDisabled(not covered)
+        end
+    end
+    if noCovEl ~= nil and noCovEl.setVisible then
+        local show = (fieldId ~= nil) and not covered
+        noCovEl:setVisible(show)
+        if show and noCovEl.setText then
+            noCovEl:setText(tr("cs_rf_pda_no_coverage_act",
+                "No irrigation covers this field - place a system in the shop, then schedule it here."))
+        end
+    end
+end
+
 
 local function setHeaderTexts(container)
     local headers = {
@@ -652,6 +1097,555 @@ local function buildStatusLine(fieldId, covered, statusWord, alertHint, alertOnS
     )
 end
 
+-- ============================================================
+-- PIVOT CARD (Soil ROTATION seat) — dial + status + remote
+-- George ENGINE ACK 2026-08-09: live Reinke reads; Event write path.
+-- ============================================================
+
+local PIVOT_ACTION = {
+    DOOR_TOGGLE = 1, POWER_TOGGLE = 2, SPRAY_TOGGLE = 3, END_GUN_TOGGLE = 4,
+    SPEED_CYCLE = 5, AUTO_START = 6, AUTO_STOP = 7,
+    SWEEP_MIN_UP = 8, SWEEP_MIN_DN = 9, SWEEP_MAX_UP = 10, SWEEP_MAX_DN = 11,
+    ARM_STEP_PLUS = 12, ARM_STEP_MINUS = 13,
+}
+
+local function resolvePlaceableById(systemId)
+    if systemId == nil or g_currentMission == nil then return nil end
+    local ps = g_currentMission.placeableSystem
+    if ps == nil or ps.placeables == nil then return nil end
+    for _, p in pairs(ps.placeables) do
+        if p ~= nil and p.id == systemId then return p end
+    end
+    return nil
+end
+
+local function getReinkeSpec(placeable)
+    if placeable == nil then return nil end
+    if ReinkeIrrigationPivot ~= nil and type(ReinkeIrrigationPivot.SPEC_TABLE_NAME) == "string" then
+        return placeable[ReinkeIrrigationPivot.SPEC_TABLE_NAME]
+    end
+    -- Soft-detect across mod env: scan for known Reinke fields.
+    for k, v in pairs(placeable) do
+        if type(k) == "string" and k:find("reinkeIrrigationPivot", 1, true) and type(v) == "table" then
+            if v.armAngle ~= nil or v.autoMinAngleDeg ~= nil then
+                return v
+            end
+        end
+    end
+    return nil
+end
+
+local function isReinke(placeable)
+    if placeable == nil then return false end
+    return type(placeable.toggleMasterPower) == "function"
+        or type(placeable.toggleSprayActive) == "function"
+        or getReinkeSpec(placeable) ~= nil
+end
+
+local function setPivotText(container, id, text, visible)
+    local el = findDescendant(container, id)
+    if el == nil then return end
+    if el.setVisible then el:setVisible(visible ~= false) end
+    if visible ~= false and el.setText then el:setText(text or "") end
+end
+
+--- Remote buttons paint as vanilla ButtonOverlay key chips (BUILD 07:43), so the
+--- label is stored on the element rather than written into its TextElement. Two
+--- things must never draw at once: the TextElement label and the chip. Leaving
+--- setText(label) on gave the DOOR-over-SPACE overlap Wizard was looking at.
+local function setPivotBtn(container, id, label, enabled, dead)
+    local el = findDescendant(container, id)
+    if el == nil then return end
+    if el.setVisible then el:setVisible(true) end
+    if el.setText then el:setText("") end
+    el.rfPivotChipLabel = label
+    el.rfPivotChipEnabled = enabled and true or false
+    -- BUILD 15:26: "dead" means there is no system behind this card at all, which
+    -- is different from a gated remote on a real pivot. Gated still shows a grey
+    -- chip so the farmer can see what is locked; dead paints nothing, because a
+    -- chip on a field with no pivot is pure false confidence.
+    el.rfPivotChipDead = dead and true or false
+    if type(el.setDisabled) == "function" then
+        el:setDisabled(not enabled)
+    end
+end
+
+-- Vanilla wideButton chip tints, from guiProfiles: icon = colorMainHighlight,
+-- icon background = colorGreenDark. Using the same numbers is what makes these
+-- read as base-game chips rather than a suite-coloured lookalike.
+local PIVOT_CHIP_TEXT = { 0.22323, 0.40724, 0.00368 }
+local PIVOT_CHIP_BG   = { 0.00913, 0.01033, 0.00651 }
+-- GATED palette (BUILD 15:26). Deliberately ZERO green: a dimmed green chip still
+-- reads as "live but faint", which is the confusion this build exists to remove.
+local PIVOT_CHIP_GATED_TEXT = { 0.62, 0.64, 0.66 }
+local PIVOT_CHIP_GATED_BG   = { 0.06, 0.06, 0.065 }
+
+local PIVOT_CHIP_IDS = {
+    "csPivotBtnDoor", "csPivotBtnPower", "csPivotBtnSpray", "csPivotBtnEndGun",
+    "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop",
+    "csPivotBtnMinUp", "csPivotBtnMinDn", "csPivotBtnMaxUp", "csPivotBtnMaxDn",
+    "csPivotBtnArmPlus", "csPivotBtnArmMinus", "csBtnSchedule",
+}
+
+--- Paint one remote as a vanilla key chip, centred in its hit box.
+local function renderPivotChip(el, overlay)
+    local label = el.rfPivotChipLabel
+    if label == nil or label == "" then return end
+    if el.absPosition == nil or el.absSize == nil then return end
+    if el.visible == false then return end
+
+    -- Chip height rides the hit box so it scales with resolution without needing
+    -- a px conversion. 0.72 of a 32px row lands on the vanilla 30px icon feel.
+    local height = el.absSize[2] * 0.72
+    if height <= 0 then return end
+
+    -- DEAD: no system on this field. Paint nothing at all - the hit box stays,
+    -- disabled, but an empty seat is more honest than any chip.
+    if el.rfPivotChipDead then return end
+
+    local enabled = el.rfPivotChipEnabled
+    local t, b, ta, ba
+    if enabled then
+        t, b, ta, ba = PIVOT_CHIP_TEXT, PIVOT_CHIP_BG, 1.0, 1.0
+    else
+        -- GATED: real pivot, this tier locked (door / power / ownership / autoRotate).
+        -- Label stays legible so the farmer can see what is locked, but nothing green.
+        t, b, ta, ba = PIVOT_CHIP_GATED_TEXT, PIVOT_CHIP_GATED_BG, 0.45, 0.55
+    end
+    overlay:setColor(t[1], t[2], t[3], ta, b[1], b[2], b[3], ba)
+
+    -- getButtonWidth hugs the label. Schedule's hit box stays 530 and its chip is
+    -- narrower; that is intended, and it is why setMinWidth is not used here. The
+    -- overlay is SHARED with the rest of the game UI, so widening it would follow
+    -- every other key chip on screen.
+    local width = overlay:getButtonWidth(label, height)
+    local x = el.absPosition[1] + (el.absSize[1] - width) * 0.5
+    local y = el.absPosition[2] + (el.absSize[2] - height) * 0.5
+    overlay:renderButton(label, x, y, height, true)
+end
+
+--- Wrap the pivot card's draw once so the chips repaint every frame while the
+--- card is visible. Light tick stays text/enable only; nothing is rebuilt here.
+local function wirePivotChipPaint(container)
+    local card = findDescendant(container, "csPivotCard")
+    if card == nil or card._rfPivotChipWired then return end
+    card._rfPivotChipWired = true
+    local prevDraw = card.draw
+    function card:draw(...)
+        if prevDraw ~= nil then prevDraw(self, ...) end
+        local idm = g_inputDisplayManager
+        if idm == nil or type(idm.getKeyboardKeyOverlay) ~= "function" then return end
+        local overlay = idm:getKeyboardKeyOverlay()
+        if overlay == nil or type(overlay.renderButton) ~= "function" then return end
+        for _, id in ipairs(PIVOT_CHIP_IDS) do
+            local el = findDescendant(self, id) or findDescendant(container, id)
+            if el ~= nil then
+                pcall(renderPivotChip, el, overlay)
+            end
+        end
+        -- renderButton leaves global text state set (bold, centre, middle, colour).
+        -- Vanilla gets away with it because every element sets its own state first;
+        -- this draws outside that order, so put the defaults back.
+        setTextBold(false)
+        setTextAlignment(RenderText.ALIGN_LEFT)
+        setTextVerticalAlignment(RenderText.VERTICAL_ALIGN_BASELINE)
+        setTextColor(1, 1, 1, 1)
+    end
+end
+
+local function rotateNeedle(el, deg)
+    if el == nil then return end
+    local rad = math.rad(deg or 0)
+    if type(el.setImageRotation) == "function" then
+        pcall(function() el:setImageRotation(rad) end)
+    elseif type(el.setRotation) == "function" then
+        pcall(function() el:setRotation(0, 0, rad) end)
+    end
+end
+
+local function formatCoverageFields(sys)
+    if sys == nil or type(sys.coveredFields) ~= "table" or #sys.coveredFields == 0 then
+        return tr("cs_rf_pda_pivot_coverage_none", "Coverage: No fields covered")
+    end
+    local parts = {}
+    for i = 1, math.min(#sys.coveredFields, 6) do
+        parts[#parts + 1] = tostring(sys.coveredFields[i])
+    end
+    local list = table.concat(parts, ", ")
+    if #sys.coveredFields > 6 then
+        list = list .. "…"
+    end
+    return string.format(tr("cs_rf_pda_pivot_coverage", "Coverage: Fields %s"), list)
+end
+
+local function formatScheduleGlance(sys)
+    if sys == nil or sys.schedule == nil then
+        return tr("cs_rf_pda_pivot_sched_none", "Schedule: No schedule")
+    end
+    local s = sys.schedule
+    local startH = tonumber(s.startHour) or 0
+    local endH = tonumber(s.endHour) or 0
+    local tag = scheduleDaysTag(s.activeDays)
+    return string.format(
+        tr("cs_rf_pda_pivot_sched", "Schedule: %02d:00–%02d:00%s"),
+        startH, endH, tag or ""
+    )
+end
+
+local function localFarmOwns(placeable)
+    if placeable == nil or type(placeable.getOwnerFarmId) ~= "function" then
+        return false
+    end
+    local owner = placeable:getOwnerFarmId()
+    if owner == nil or owner == 0 then return false end
+    local mgr = getMgr()
+    local farmId = nil
+    if mgr ~= nil and type(mgr.getLocalFarmId) == "function" then
+        farmId = mgr.getLocalFarmId()
+    elseif g_currentMission ~= nil and g_currentMission.player ~= nil then
+        farmId = g_currentMission.player.farmId
+    end
+    return farmId ~= nil and farmId ~= 0 and farmId == owner
+end
+
+--- Light-tick safe: text + needle angles only. No SmoothList / no element rebuild.
+--- BUILD 16:44c: the Esc dial face is the Reinke pivot panel's own POSITION scale.
+--- The texture is resolved from the LIVE Reinke mod at runtime rather than vendored:
+--- nothing of theirs is redistributed, and if that mod is absent the face simply does
+--- not paint instead of showing a broken or invented dial. The UV crop lives in the
+--- RF_CsPivotDialFace profile (atlas pixel rect 288 354 400 400).
+local REINKE_DECALS = "textures/ControlDecals.dds"
+local reinkeDecalPathCache = nil
+
+local function reinkeDecalPath()
+    if reinkeDecalPathCache ~= nil then
+        return reinkeDecalPathCache ~= "" and reinkeDecalPathCache or nil
+    end
+    reinkeDecalPathCache = ""
+    local function try(dir)
+        if dir == nil or dir == "" then return false end
+        local path = dir
+        if path:sub(-1) ~= "/" then path = path .. "/" end
+        path = path .. REINKE_DECALS
+        if fileExists ~= nil and fileExists(path) then
+            reinkeDecalPathCache = path
+            return true
+        end
+        return false
+    end
+    -- Prefer the mod manager so a renamed or differently-versioned Reinke still resolves.
+    if g_modManager ~= nil and type(g_modManager.getMods) == "function" then
+        local ok, mods = pcall(function() return g_modManager:getMods() end)
+        if ok and type(mods) == "table" then
+            for _, m in pairs(mods) do
+                local name = tostring((type(m) == "table" and (m.modName or m.title)) or "")
+                if name:lower():find("reinke", 1, true) then
+                    if try(type(m) == "table" and (m.modDir or m.directory) or nil) then break end
+                end
+            end
+        end
+    end
+    if reinkeDecalPathCache == "" and g_modsDirectory ~= nil then
+        try(g_modsDirectory .. "FS25_ReinkeA22")
+    end
+    return reinkeDecalPathCache ~= "" and reinkeDecalPathCache or nil
+end
+
+local function applyDialFace(container)
+    local face = findDescendant(container, "csPivotDialFace")
+    if face == nil or face._csDialFaceSet then return end
+    local path = reinkeDecalPath()
+    if path == nil then
+        -- Honest empty: no Reinke installed, so no dial face rather than a fake one.
+        if face.setVisible then face:setVisible(false) end
+        face._csDialFaceSet = true
+        return
+    end
+    if type(face.setImageFilename) == "function" then
+        pcall(function() face:setImageFilename(path) end)
+        face._csDialFaceSet = true
+        if face.setVisible then face:setVisible(true) end
+    end
+end
+
+local function updatePivotCard(container, fieldId)
+    local card = findDescendant(container, "csPivotCard")
+    if card == nil then
+        return
+    end
+    wirePivotChipPaint(container)
+    applyDialFace(container)
+    if card.setVisible then card:setVisible(true) end
+
+    local mgr = getMgr()
+    local sysId = resolveSystemId(mgr, fieldId)
+    local irr = mgr ~= nil and mgr.irrigationManager or nil
+    local sys = (irr ~= nil and irr.systems ~= nil and sysId ~= nil) and irr.systems[sysId] or nil
+    local placeable = sysId ~= nil and resolvePlaceableById(sysId) or nil
+    local reinke = isReinke(placeable)
+    local spec = reinke and getReinkeSpec(placeable) or nil
+    local owned = localFarmOwns(placeable)
+
+    if sysId == nil or sys == nil then
+        setPivotText(container, "csPivotTitle", tr("cs_rf_pda_pivot_title", "PIVOT"))
+        setPivotText(container, "csPivotDialCur", tr("cs_rf_pda_pivot_dial_empty", "Cur —"))
+        setPivotText(container, "csPivotDialMin", tr("cs_rf_pda_pivot_dial_min_empty", "Min —"))
+        setPivotText(container, "csPivotDialMax", tr("cs_rf_pda_pivot_dial_max_empty", "Max —"))
+        setPivotText(container, "csPivotCoverage", tr("cs_rf_pda_pivot_coverage_none", "Coverage: No fields covered"))
+        setPivotText(container, "csPivotWatering", tr("cs_rf_pda_pivot_watering_off", "Watering now: Off"))
+        setPivotText(container, "csPivotPressure", tr("cs_rf_pda_pivot_pressure_na", "Pressure: —"))
+        setPivotText(container, "csPivotRate", tr("cs_rf_pda_pivot_rate_na", "Rate: —"))
+        setPivotText(container, "csPivotSchedule", tr("cs_rf_pda_pivot_sched_none", "Schedule: No schedule"))
+        setPivotText(container, "csPivotWarn",
+            tr("cs_rf_pda_pivot_warn_none", "No pivot on this field"))
+        local dead = {
+            "csPivotBtnDoor", "csPivotBtnPower", "csPivotBtnSpray", "csPivotBtnEndGun",
+            "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop",
+            "csPivotBtnMinUp", "csPivotBtnMinDn", "csPivotBtnMaxUp", "csPivotBtnMaxDn",
+            "csPivotBtnArmPlus", "csPivotBtnArmMinus", "csBtnSchedule",
+        }
+        local labels = {
+            csPivotBtnDoor = tr("cs_rf_pda_pivot_btn_door", "Door"),
+            csPivotBtnPower = tr("cs_rf_pda_pivot_btn_power", "Power"),
+            csPivotBtnSpray = tr("cs_rf_pda_pivot_btn_spray", "Spray"),
+            csPivotBtnEndGun = tr("cs_rf_pda_pivot_btn_endgun", "End gun"),
+            csPivotBtnSpeed = tr("cs_rf_pda_pivot_btn_speed", "Speed"),
+            csPivotBtnStart = tr("cs_rf_pda_pivot_btn_start", "Start"),
+            csPivotBtnStop = tr("cs_rf_pda_pivot_btn_stop", "Stop"),
+            csPivotBtnMinUp = tr("cs_rf_pda_pivot_btn_min_up", "Min+"),
+            csPivotBtnMinDn = tr("cs_rf_pda_pivot_btn_min_dn", "Min−"),
+            csPivotBtnMaxUp = tr("cs_rf_pda_pivot_btn_max_up", "Max+"),
+            csPivotBtnMaxDn = tr("cs_rf_pda_pivot_btn_max_dn", "Max−"),
+            csPivotBtnArmPlus = tr("cs_rf_pda_pivot_btn_arm_plus", "Arm+"),
+            csPivotBtnArmMinus = tr("cs_rf_pda_pivot_btn_arm_minus", "Arm−"),
+            csBtnSchedule = tr("cs_rf_pda_pivot_btn_schedule", "Schedule"),
+        }
+        for _, id in ipairs(dead) do
+            setPivotBtn(container, id, labels[id], false, true)
+        end
+        return
+    end
+
+    -- Title surfaces resolved covering systemId for the selected field (multi-cover honesty).
+    local sysTag = tostring(sysId)
+    if not reinke then
+        -- Drip / non-pivot: honest status, no fake needles.
+        setPivotText(container, "csPivotTitle",
+            string.format("%s #%s", tr("cs_rf_pda_pivot_title_irrig", "IRRIGATION"), sysTag))
+        setPivotText(container, "csPivotDialCur", tr("cs_rf_pda_pivot_drip_label", "Drip line"))
+        setPivotText(container, "csPivotDialMin", "")
+        setPivotText(container, "csPivotDialMax", "")
+    else
+        setPivotText(container, "csPivotTitle",
+            string.format("%s #%s", tr("cs_rf_pda_pivot_title", "PIVOT"), sysTag))
+        local curDeg, minDeg, maxDeg = 0, 0, 0
+        if spec ~= nil then
+            curDeg = math.deg(spec.armAngle or 0) % 360
+            if spec.autoRotate then
+                minDeg = spec.autoMinAngleDeg or 0
+                maxDeg = spec.autoMaxAngleDeg or 360
+            else
+                local tgt = spec.targetAngle or spec.armAngle or 0
+                minDeg = math.deg(tgt) % 360
+                maxDeg = minDeg
+            end
+        end
+        setPivotText(container, "csPivotDialCur",
+            string.format(tr("cs_rf_pda_pivot_dial_cur", "Cur %.0f°"), curDeg))
+        setPivotText(container, "csPivotDialMin",
+            string.format(tr("cs_rf_pda_pivot_dial_min", "Min %.0f°"), minDeg))
+        setPivotText(container, "csPivotDialMax",
+            string.format(tr("cs_rf_pda_pivot_dial_max", "Max %.0f°"), maxDeg))
+        rotateNeedle(findDescendant(container, "csPivotNeedleCur"), curDeg)
+        rotateNeedle(findDescendant(container, "csPivotNeedleMin"), minDeg)
+        rotateNeedle(findDescendant(container, "csPivotNeedleMax"), maxDeg)
+    end
+
+    setPivotText(container, "csPivotCoverage", formatCoverageFields(sys))
+    local watering = sys.isActive == true
+    setPivotText(container, "csPivotWatering", watering
+        and tr("cs_rf_pda_pivot_watering_on", "Watering now: On")
+        or tr("cs_rf_pda_pivot_watering_off", "Watering now: Off"))
+
+    local pressurePct = math.floor((sys.pressureMultiplier or 0) * 100 + 0.5)
+    setPivotText(container, "csPivotPressure",
+        string.format(tr("cs_rf_pda_pivot_pressure", "Pressure: %d%%"), pressurePct))
+
+    local wear = sys.wearLevel or 0
+    local rate = (sys.flowRatePerHour or 0) * (sys.pressureMultiplier or 0) * (1 - wear * 0.3)
+    if rate > 0 then
+        setPivotText(container, "csPivotRate",
+            string.format(tr("cs_rf_pda_pivot_rate", "Rate: +%.3f/h"), rate))
+    else
+        setPivotText(container, "csPivotRate", tr("cs_rf_pda_pivot_rate_na", "Rate: —"))
+    end
+    setPivotText(container, "csPivotSchedule", formatScheduleGlance(sys))
+
+    local warn = ""
+    if not owned then
+        warn = tr("cs_rf_pda_pivot_warn_owner", "Not your pivot")
+    elseif reinke and spec ~= nil and not spec.doorOpen then
+        warn = tr("cs_rf_pda_pivot_warn_door", "Open door for ops")
+    elseif reinke and spec ~= nil and not spec.masterPower then
+        warn = tr("cs_rf_pda_pivot_warn_power", "Power off")
+    elseif (sys.pressureMultiplier or 0) <= 0 then
+        warn = tr("cs_rf_pda_pivot_warn_pump", "Pump disconnected")
+    end
+    setPivotText(container, "csPivotWarn", warn, warn ~= "")
+
+    local doorOpen = spec ~= nil and spec.doorOpen == true
+    local powered = spec ~= nil and spec.masterPower == true
+    local opsOk = owned and reinke and doorOpen and powered
+    local doorOk = owned and reinke
+    local powerOk = owned and reinke and doorOpen
+    local autoRotate = (spec ~= nil and spec.autoRotate) or watering
+    local armOk = opsOk and not autoRotate
+
+    local speedLabel = tr("cs_rf_pda_pivot_btn_speed", "Speed")
+    if spec ~= nil and ReinkeIrrigationPivot ~= nil and ReinkeIrrigationPivot.SPEED_LABELS ~= nil then
+        local lab = ReinkeIrrigationPivot.SPEED_LABELS[spec.speedIndex or 2]
+        if lab ~= nil then
+            speedLabel = tostring(lab)
+        end
+    end
+
+    setPivotBtn(container, "csPivotBtnDoor", tr("cs_rf_pda_pivot_btn_door", "Door"), doorOk)
+    setPivotBtn(container, "csPivotBtnPower", tr("cs_rf_pda_pivot_btn_power", "Power"), powerOk)
+    setPivotBtn(container, "csPivotBtnSpray", tr("cs_rf_pda_pivot_btn_spray", "Spray"), opsOk)
+    setPivotBtn(container, "csPivotBtnEndGun", tr("cs_rf_pda_pivot_btn_endgun", "End gun"), opsOk)
+    setPivotBtn(container, "csPivotBtnSpeed", speedLabel, opsOk)
+    setPivotBtn(container, "csPivotBtnStart", tr("cs_rf_pda_pivot_btn_start", "Start"), owned and (reinke or sys ~= nil))
+    setPivotBtn(container, "csPivotBtnStop", tr("cs_rf_pda_pivot_btn_stop", "Stop"), owned and (reinke or sys ~= nil))
+    setPivotBtn(container, "csPivotBtnMinUp", tr("cs_rf_pda_pivot_btn_min_up", "Min+"), opsOk)
+    setPivotBtn(container, "csPivotBtnMinDn", tr("cs_rf_pda_pivot_btn_min_dn", "Min−"), opsOk)
+    setPivotBtn(container, "csPivotBtnMaxUp", tr("cs_rf_pda_pivot_btn_max_up", "Max+"), opsOk)
+    setPivotBtn(container, "csPivotBtnMaxDn", tr("cs_rf_pda_pivot_btn_max_dn", "Max−"), opsOk)
+    setPivotBtn(container, "csPivotBtnArmPlus", tr("cs_rf_pda_pivot_btn_arm_plus", "Arm+"), armOk)
+    setPivotBtn(container, "csPivotBtnArmMinus", tr("cs_rf_pda_pivot_btn_arm_minus", "Arm−"), armOk)
+    setPivotBtn(container, "csBtnSchedule", tr("cs_rf_pda_pivot_btn_schedule", "Schedule"), true)
+end
+
+
+--- Esc CS breath: upper-right Agronomist card (stacked with Pivot). Fixed Text
+--- only; field table stays visible (George: no table-hiding consult view).
+local function updateAgronomistCard(container, fieldId)
+    local card = findDescendant(container, "csAgronomistCard")
+    if card == nil then
+        return
+    end
+    if card.setVisible then card:setVisible(true) end
+    local mgr = getMgr()
+    setPivotText(container, "csAgroTitle", tr("cs_rf_pda_agro_title", "AGRONOMIST"))
+
+    -- Relationship: only when the NPC is genuinely registered. Never a fake score.
+    local relShown = false
+    local npc = mgr ~= nil and mgr.npcIntegration or nil
+    if npc ~= nil and npc.isRegistered and type(npc.getRelationshipLevel) == "function" then
+        local ok, rel = pcall(function() return npc:getRelationshipLevel() end)
+        if ok and type(rel) == "number" then
+            setPivotText(container, "csAgroRelationship",
+                string.format(tr("cs_rf_pda_agro_relation", "Alex Chen - %d / 100"), rel), true)
+            relShown = true
+        end
+    end
+    if not relShown then
+        setPivotText(container, "csAgroRelationship", "", false)
+    end
+
+    local top = topRiskFields(mgr, 5)
+    setPivotText(container, "csAgroTopHeader", tr("cs_rf_pda_agro_top_header", "Top 5 at risk"), #top > 0)
+    for i = 1, 5 do
+        local e = top[i]
+        if e == nil then
+            setPivotText(container, "csAgroTop" .. i, "", false)
+        else
+            local name = e.label or ("Field " .. tostring(e.fieldId))
+            setPivotText(container, "csAgroTop" .. i, string.format(
+                tr("cs_rf_pda_agro_top_row", "%s - risk %d%% - moisture %d%%"),
+                name,
+                math.floor(e.risk * 100 + 0.5),
+                math.floor(e.moisture * 100 + 0.5)), true)
+        end
+    end
+
+    -- Recommendations: same compose as the certified consultant read.
+    local recs = {}
+    if #top > 0 then
+        local t1 = top[1]
+        recs[#recs + 1] = string.format(
+            tr("cs_rf_pda_cons_rec_driest", "Driest now: %s at %d%% moisture - water this one first."),
+            t1.label or ("Field " .. tostring(t1.fieldId)), math.floor(t1.moisture * 100 + 0.5))
+        local wi = mgr ~= nil and mgr.weatherIntegration or nil
+        if wi ~= nil and type(wi.getMoistureForecast) == "function" then
+            local ok, fc = pcall(function() return wi:getMoistureForecast(t1.fieldId, 3) end)
+            if ok and type(fc) == "number" then
+                recs[#recs + 1] = string.format(
+                    tr("cs_rf_pda_cons_rec_forecast", "3-day outlook for %s: %d%% moisture."),
+                    t1.label or ("Field " .. tostring(t1.fieldId)), math.floor(fc * 100 + 0.5))
+            end
+        end
+    end
+    local irr = mgr ~= nil and mgr.irrigationManager or nil
+    local activeCount = 0
+    if irr ~= nil and irr.systems ~= nil then
+        for _, sys in pairs(irr.systems) do
+            if sys ~= nil and sys.isActive then activeCount = activeCount + 1 end
+        end
+    end
+    recs[#recs + 1] = (activeCount > 0)
+        and string.format(tr("cs_rf_pda_cons_rec_systems", "%d irrigation systems active."), activeCount)
+        or tr("cs_rf_pda_cons_rec_nosystems", "No active irrigation - shop coverage for the driest fields.")
+
+    setPivotText(container, "csAgroRecHeader", tr("cs_rf_pda_agro_rec_header", "Recommendations"), #recs > 0)
+    for i = 1, 3 do
+        setPivotText(container, "csAgroRec" .. i, recs[i] or "", recs[i] ~= nil)
+    end
+
+    -- Honest empty: no owned field data at all, so say that rather than show blanks.
+    setPivotText(container, "csAgroEmpty",
+        tr("cs_rf_pda_agro_empty", "No field data yet - fields appear once the simulation runs."),
+        #top == 0)
+end
+
+--- Esc PIVOT remote: send CropStressPivotRemoteEvent (server authority).
+function CsRfPdaGuest.onPivotRemote(container, actionToken)
+    local A = CropStressPivotRemoteEvent ~= nil and CropStressPivotRemoteEvent.ACTION or PIVOT_ACTION
+    local action = A[actionToken]
+    if action == nil and type(actionToken) == "number" then
+        action = actionToken
+    end
+    -- BUILD 15:26 prove-path: a remote that does nothing must say why. These fire
+    -- on player clicks only, never on the light tick, so the log stays readable.
+    if action == nil then
+        print(string.format("[CropStress] Esc pivot %s IGNORED: unknown action token",
+            tostring(actionToken)))
+        return
+    end
+    local fieldId = selectedFieldId(container)
+    local mgr = getMgr()
+    local sysId = resolveSystemId(mgr, fieldId)
+    if sysId == nil then
+        print(string.format(
+            "[CropStress] Esc pivot %s IGNORED: no system resolved for fieldId=%s",
+            tostring(actionToken), tostring(fieldId)))
+        return
+    end
+    if CropStressPivotRemoteEvent ~= nil and type(CropStressPivotRemoteEvent.sendToServer) == "function" then
+        print(string.format(
+            "[CropStress] Esc pivot %s -> sendToServer(sysId=%s, action=%s) fieldId=%s",
+            tostring(actionToken), tostring(sysId), tostring(action), tostring(fieldId)))
+        CropStressPivotRemoteEvent.sendToServer(sysId, action)
+    else
+        print(string.format(
+            "[CropStress] Esc pivot %s IGNORED: CropStressPivotRemoteEvent.sendToServer unavailable",
+            tostring(actionToken)))
+    end
+    -- Light refresh so Watering now / dial catch listen-server apply quickly.
+    if type(CsRfPdaGuest.onShow) == "function" then
+        CsRfPdaGuest.onShow(container, true)
+    end
+end
+
 --- Fill the bottom info band (csDetailStrip) for the selected field.
 --- Lua-first (no new XML Text): Field | Next | Moisture+Keep | Stress+heat | Sched·Rate·Status.
 --- Text-only: safe on both light tick and full show. No SmoothList, no Soil NPK.
@@ -692,6 +1686,9 @@ local function updateDetailBand(container)
     end
 
     local hasEntry = entry ~= nil
+    -- Action buttons follow the selection: Consultant always, Schedule only when
+    -- a covering system exists (0 coverage paints the honest strip copy instead).
+    CsRfPdaGuest.refreshActionButtons(container, hasEntry and entry.fieldId or nil)
     for _, el in ipairs({ fieldEl, nextEl, moistEl, stressEl, statusEl }) do
         if el and el.setVisible then
             el:setVisible(hasEntry)
@@ -706,6 +1703,8 @@ local function updateDetailBand(container)
         end
     end
     if not hasEntry then
+        updatePivotCard(container, nil)
+        updateAgronomistCard(container, nil)
         return
     end
 
@@ -821,6 +1820,10 @@ local function updateDetailBand(container)
             statusEl:setTextColor(unpack(entry.statusColor))
         end
     end
+
+    -- PIVOT card and AGRONOMIST card follow the same selection SoT as the strip.
+    updatePivotCard(container, fieldId)
+    updateAgronomistCard(container, fieldId)
 end
 
 ---@param container table|nil rfHostPlaceholder from Soil RfPdaMenuPage
@@ -828,8 +1831,8 @@ end
 function CsRfPdaGuest.onShow(container, lightOnly)
     local stats = CsRfPdaGuest.computeGlanceStats()
     local title = tr("cs_rf_pda_module_title", "Crop Stress")
-    local blurb = tr("cs_rf_pda_blurb",
-        "Field moisture, stress, irrigation schedule and rate, and yield keep. Open Farm Tablet to edit systems or open Crop Consultant.")
+    -- Samantha DESIGN 2026-08-09: field table is HOME; no Tablet gate.
+    local blurb = tr("cs_rf_pda_blurb", "Field desk - moisture, stress, irrigation. Pivot is on page 2.")
     local body = formatGlanceBody(stats)
 
     local titleEl = findDescendant(container, "rfHostTitle")
@@ -846,10 +1849,41 @@ function CsRfPdaGuest.onShow(container, lightOnly)
         bodyEl:setText(body)
     end
 
+    local page = getHostPage()
+    wireConsultViewLabels(page)
+
     if not lightOnly then
         reloadHostTable(container)
+        -- Field table is always home on module show. Never auto-open consultant.
+        local entering = page == nil or page._lastShownPanelId ~= "seasonalCropStress"
+        if entering and page ~= nil and type(page.setCsConsultView) == "function" then
+            page:setCsConsultView(false)
+        end
+        -- Selection SoT: if none yet, crown first row so detail + PIVOT agree with highlight.
+        if page ~= nil and page.csSelectedFieldId == nil and page.csFieldData ~= nil and page.csFieldData[1] ~= nil then
+            page.csSelectedIndex = 1
+            page.csSelectedFieldId = page.csFieldData[1].fieldId
+            if page.csFieldOverviewList ~= nil and type(page.csFieldOverviewList.setSelectedIndex) == "function" then
+                pcall(function() page.csFieldOverviewList:setSelectedIndex(1) end)
+            end
+        elseif page ~= nil and page.csSelectedFieldId ~= nil then
+            -- Keep fieldId SoT; re-resolve index after reload so highlight matches strip.
+            local rows = page.csFieldData or {}
+            local idx = nil
+            for i, row in ipairs(rows) do
+                if row.fieldId == page.csSelectedFieldId then
+                    idx = i
+                    break
+                end
+            end
+            page.csSelectedIndex = idx
+            if idx ~= nil and page.csFieldOverviewList ~= nil
+                and type(page.csFieldOverviewList.setSelectedIndex) == "function" then
+                pcall(function() page.csFieldOverviewList:setSelectedIndex(idx) end)
+            end
+        end
     end
-    -- Bottom info band: text-only, allowed on light tick and selection refresh.
+    -- Bottom info band + PIVOT: text/needle only, allowed on light tick.
     updateDetailBand(container)
 end
 
@@ -982,6 +2016,10 @@ function CsRfPdaGuest.tryRegister()
                 return getMgr() ~= nil
             end,
             onShow = CsRfPdaGuest.onShow,
+            onOpenConsultant = CsRfPdaGuest.onOpenConsultant,
+            onPaintConsultant = CsRfPdaGuest.onPaintConsultant,
+            onOpenSchedule = CsRfPdaGuest.onOpenSchedule,
+            onPivotRemote = CsRfPdaGuest.onPivotRemote,
             onHide = CsRfPdaGuest.onHide,
         })
         if ok then
