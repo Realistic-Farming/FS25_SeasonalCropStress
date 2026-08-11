@@ -65,3 +65,8 @@
 ## SCS-037 round 2 live (2026-08-10)
 - [x] Comment correction only: the round-2 rain-switch reconstruction is LIVE because the Water Record delegate ships (SF PR #811). CropStressManager.lua comment and the SCS-037 bench framing updated to say so. No code change, suite 381/0.
 - [~] In-game skip test owed: ~72h skip with a dry field and an active pivot; moisture drop, stress and irrigation cost each read about 72x a single hour in csStatus.
+
+## IrrigationScheduleDialog crash after F154 (2026-08-10)
+- [x] Root cause: system.wearLevel nil (F154 deleted the wear setter) -> updatePerformance threw on nil in onOpen, dialog left visible but dead.
+- [x] Fix: wearLevel or 0 in the two readouts. Suite 382/0, deployed.
+- [~] In-game confirm: open the irrigation schedule dialog and interact/close normally.
