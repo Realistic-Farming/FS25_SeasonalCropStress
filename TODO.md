@@ -67,3 +67,9 @@
 - [x] VERIFIED in-game (2026-08-10): caught-up hour multiplies per-hour consumers by the elapsed span. 16x 24h ticks across a full year, 24.0x evap measured, clean log. A literal 72h tick is unreachable via sleep (one day per action) and unnecessary: 24x is the identical code path.
 - [~] Money leg still open: with pivot 516 running on schedule, note the farm balance, do one sleep, expect a ~24h operating-cost drop (addMoney is not console-logged, so read the balance).
 - [~] Round 2 rain-switch reconstruction still open: needs Experimental Systems ON to open the ground_material gate.
+- [~] In-game skip test owed: ~72h skip with a dry field and an active pivot; moisture drop, stress and irrigation cost each read about 72x a single hour in csStatus.
+
+## IrrigationScheduleDialog crash after F154 (2026-08-10)
+- [x] Root cause: system.wearLevel nil (F154 deleted the wear setter) -> updatePerformance threw on nil in onOpen, dialog left visible but dead.
+- [x] Fix: wearLevel or 0 in the two readouts. Suite 382/0, deployed.
+- [~] In-game confirm: open the irrigation schedule dialog and interact/close normally.

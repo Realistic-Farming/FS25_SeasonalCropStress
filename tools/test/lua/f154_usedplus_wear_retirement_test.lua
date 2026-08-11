@@ -114,6 +114,14 @@ do
   -- And activation does not resurrect it.
   im:activateSystem(5)
   T.eq("gone.activationAddsNoWear", im.systems[5].wearLevel, nil)
+
+  -- THE DIALOG CONSUMER. IrrigationScheduleDialog:updatePerformance reads the
+  -- same field the bridge wrote, so a nil here must read as zero (the wear
+  -- factor is a permanent multiply by one) and must not throw. Same shape as
+  -- the shipped nil-guard: `system.wearLevel or 0`.
+  local wearLevel = s.wearLevel or 0
+  local dialogRate = 0.018 * 1.0 * (1.0 - wearLevel * 0.3)
+  T.near("gone.dialogRateNilIsZero", dialogRate, 0.018, 1e-12)
 end
 
 -- =========================================================

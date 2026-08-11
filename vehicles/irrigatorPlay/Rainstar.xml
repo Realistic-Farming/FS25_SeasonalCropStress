@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<vehicle type="rwsmPlayRainstar" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../shared/xml/schema/vehicle.xsd">
+    <annotation>Original: JD_Power / HoFFi | LS25 conversion: Sherman</annotation>
+
+    <storeData>
+        <name>
+			<en>Rainstar T32</en>
+			<de>Rainstar T32</de>
+		</name>
+        <functions>
+            <function>
+				<en>Irrigation system with galvanized frame and swiveling drum. With 220 m hose length and up to 87 m working radius, large areas can be irrigated.</en>
+				<de>Beregnungssystem mit vollverzinktem Rahmen und schwenkbarer Trommel. Mit 220 m Schlauchlänge und bis zu 87 m Arbeitsradius kann eine große Fläche beregnet werden.</de>
+			</function>
+			<function>
+				<en>Hose-reel irrigator: unfold to Work mode, pull the gun out, reel it back, turn on - Moisture rises in Crop Stress.</en>
+				<de>Schlauchtrommel-Beregner: in den Arbeitsmodus klappen, die Duese herausziehen, wieder aufrollen, einschalten - die Feuchtigkeit in Crop Stress steigt.</de>
+			</function>
+			<!-- BUILD 19:27 - suite hose teach (Samantha). SPS tanker optional later; not required. -->
+			<function>
+				<en>Connect the pump to the Rainstar with the hose, start the pump, turn the Rainstar on — Moisture rises in Crop Stress.</en>
+				<de>Pumpe mit dem Schlauch an den Rainstar anschliessen, Pumpe starten, Rainstar einschalten — die Feuchtigkeit in Crop Stress steigt.</de>
+			</function>
+        </functions>
+		<specs>
+            <combination>SR Range</combination>
+        </specs>
+        <image>vehicles/irrigatorPlay/textures/store_T32.dds</image>
+        <price>19210</price>
+        <lifetime>600</lifetime>
+        <rotation>0</rotation>
+        <brand>BAUER</brand>
+        <category>sprayers</category>
+    </storeData>
+
+    <base>
+        <typeDesc>Rainstar T32</typeDesc>
+        <filename>vehicles/irrigatorPlay/i3d/T32.i3d</filename>
+        <size width="3.5" length="4" />
+        <components>
+            <component centerOfMass="0 0 0" solverIterationCount="10" mass="1338"/>
+			<!-- BUILD 20:43 item 2: cart was 200 kg with CoM at origin, dragged by a hose on a
+             joint the work animation opens to 220 m with no spring or damping. That is the
+             tip driver. 450 kg is a believable loaded sprinkler cart, and CoM below axle
+             height (wheel radius 0.257) resists the roll without fighting any joint. -->
+            <component centerOfMass="0 -0.30 0" solverIterationCount="10" mass="450"/>
+			<component centerOfMass="0 -0.5 0" solverIterationCount="10" mass="20"/>
+			<joint component1="1" component2="2" node="compJoint" rotLimit="0 0 0" transLimit="0 0 0" transLimitSpring="0 0 0" transLimitDamping="0 0 0"/>
+			<joint component1="2" component2="3" node="Pendel_CompJoint" rotLimit="15 0 0" transLimit="0 0 0" />
+        </components>
+        <schemaOverlay name="DEFAULT_IMPLEMENT" attacherJointPosition="0 0"/>
+    </base>
+	
+	<wheels>
+        <wheelConfigurations>
+		<!--
+			<wheelConfiguration name="$l10n_configuration_valueDefault" brand="LIZARD" price="0">
+                <wheels>
+                    <wheel filename="$data/shared/wheels/tires/lizard/implement/190_95R15.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelLeft" forcePointRatio="0.5" initialCompression="0" suspTravel="0.20" spring="30" damper="50" brakeFactor="1" rotationDamping="0.02"/>
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/lizard/implement/190_95R15.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelRight" forcePointRatio="0.5" initialCompression="0" suspTravel="0.20" spring="30" damper="50" brakeFactor="1" rotationDamping="0.02"/>
+                    </wheel>
+					<wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelLeftBack" forcePointRatio="0.5" initialCompression="0" suspTravel="0" spring="50" damper="80" rotationDamping="0.002"/>
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelRightBack" forcePointRatio="0.5" initialCompression="0" suspTravel="0" spring="50" damper="80" rotationDamping="0.002"/>
+                    </wheel>
+                
+                    <wheel>
+                        <physics restLoad="1.35" repr="colSupport0" radius="0.18" width="0.24" mass="0.15" initialCompression="20" suspTravel="0.07" spring="95" damper="70" brakeFactor="1" frictionScale="0.28"/>
+                    </wheel>
+                </wheels>
+            </wheelConfiguration>
+			-->
+			<wheelConfiguration name="$l10n_configuration_valueWheelBroad" brand="LIZARD" price="0">
+                <wheels>
+                    <wheel filename="$data/shared/wheels/tires/lizard/implement/280_55R16.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelLeft" forcePointRatio="0.5" initialCompression="0" suspTravel="0.20" spring="30" damper="50" brakeFactor="1" rotationDamping="0.02"/>
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/lizard/implement/280_55R16.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelRight" forcePointRatio="0.5" initialCompression="0" suspTravel="0.20" spring="30" damper="50" brakeFactor="1" rotationDamping="0.02"/>
+                    </wheel>
+					<wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelLeftBack" driveNode="wheelLeftBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelRightBack" driveNode="wheelRightBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
+                    </wheel>
+					
+					<wheel>
+                        <physics restLoad="1.3" repr="fakeWheel" driveNode="fakeWheelDN" radius="0.257" width="0.68" mass="0.2" initialCompression="50" suspTravel="0.05" spring="70" damper="40" brakeFactor="1" frictionScale="0.1"/>
+                    </wheel>
+                
+                    <wheel>
+                        <physics restLoad="1.35" repr="colSupport0" radius="0.18" width="0.24" mass="0.15" initialCompression="20" suspTravel="0.07" spring="95" damper="70" brakeFactor="1" frictionScale="0.28"/>
+                    </wheel>
+                </wheels>
+            </wheelConfiguration>
+			<wheelConfiguration name="$l10n_configuration_valueDefault" brand="TRELLEBORG" price="350">
+                <wheels>
+                    <wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R15.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelLeft" forcePointRatio="0.5" initialCompression="0" suspTravel="0.20" spring="30" damper="50" brakeFactor="1" rotationDamping="0.02"/>
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R15.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelRight" forcePointRatio="0.5" initialCompression="0" suspTravel="0.20" spring="30" damper="50" brakeFactor="1" rotationDamping="0.02"/>
+                    </wheel>
+					<wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelLeftBack" driveNode="wheelLeftBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelRightBack" driveNode="wheelRightBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
+                    </wheel>
+					
+					<wheel>
+                        <physics restLoad="1.3" repr="fakeWheel" driveNode="fakeWheelDN" radius="0.257" width="0.68" mass="0.2" initialCompression="50" suspTravel="0.05" spring="70" damper="40" brakeFactor="1" frictionScale="0.1"/>
+                    </wheel>
+                
+                    <wheel>
+                        <physics restLoad="1.35" repr="colSupport0" radius="0.18" width="0.24" mass="0.15" initialCompression="20" suspTravel="0.07" spring="95" damper="70" brakeFactor="1" frictionScale="0.28"/>
+                    </wheel>
+                </wheels>
+            </wheelConfiguration>
+			<wheelConfiguration name="$l10n_configuration_valueDefault" brand="MITAS" price="350">
+                <wheels>
+                    <wheel filename="$data/shared/wheels/tires/mitas/FL02/7_R12.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelLeft" forcePointRatio="0.5" initialCompression="0" suspTravel="0.20" spring="30" damper="50" brakeFactor="1" rotationDamping="0.02"/>
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/mitas/FL02/7_R12.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelRight" forcePointRatio="0.5" initialCompression="0" suspTravel="0.20" spring="30" damper="50" brakeFactor="1" rotationDamping="0.02"/>
+                    </wheel>
+					<wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelLeftBack" driveNode="wheelLeftBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
+                        <physics repr="wheelRightBack" driveNode="wheelRightBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
+                    </wheel>
+					
+					<wheel>
+                        <physics restLoad="1.3" repr="fakeWheel" driveNode="fakeWheelDN" radius="0.257" width="0.68" mass="0.2" initialCompression="50" suspTravel="0.05" spring="70" damper="40" brakeFactor="1" frictionScale="0.1"/>
+                    </wheel>
+                
+                    <wheel>
+                        <physics restLoad="1.35" repr="colSupport0" radius="0.18" width="0.24" mass="0.15" initialCompression="20" suspTravel="0.07" spring="95" damper="70" brakeFactor="1" frictionScale="0.28"/>
+                    </wheel>
+                </wheels>
+            </wheelConfiguration>
+        </wheelConfigurations>
+		
+		<rimColor>SHARED_GREY1</rimColor>
+
+        <hubs>
+			<color0>SHARED_BLACK2</color0>
+            <color1>0.078 0.437 0.026 1</color1>
+            <hub linkNode="wheelLeft"  filename="$data/shared/wheels/hubs/hub_n5_1.xml" isLeft="false"  	scale="0.152 0.152 0.152"/>
+            <hub linkNode="wheelRight" filename="$data/shared/wheels/hubs/hub_n5_1.xml" isLeft="true" 		scale="0.152 0.152 0.152"/>
+            <hub linkNode="wheelLeftBack"  filename="$data/shared/wheels/hubs/hub_n5_1.xml" isLeft="true"  	scale="0.152 0.152 0.152" offset="0.015"/>
+            <hub linkNode="wheelRightBack" filename="$data/shared/wheels/hubs/hub_n5_1.xml" isLeft="false" 	scale="0.152 0.152 0.152" offset="0.015"/>
+        </hubs>
+	</wheels>
+	
+	
+	<rimColorConfigurations useDefaultColors="false" price="200">
+        <rimColorConfiguration price="0" color="SHARED_WHITE2"/>
+        <rimColorConfiguration price="400" color="SHARED_GREY1"/>
+    </rimColorConfigurations>
+
+    <attachable>
+		<inputAttacherJoints>
+            <inputAttacherJoint node="attacherF" jointType="trailer" rootNode="RootCol" attacherHeight="0.6"/>
+			<inputAttacherJoint node="attacherR" jointType="trailer" rootNode="RegnerCol"/>
+        </inputAttacherJoints>
+        <brakeForce force="4.0" maxForce="6.0" loweredForce="8.0" maxForceMass="12000"/>
+		<support animationName="moveSupport" />
+		
+		<toolCameras>
+            <toolCamera node="camera01" rotatable="true" rotateNode="camera01Rot" limit="true" useWorldXZRotation="true" rotMinX="-1.4" rotMaxX="1" transMin="3" transMax="40">
+                <raycastNode node="camera01RaycastNode01"/>
+                <raycastNode node="camera01RaycastNode02"/>
+            </toolCamera>
+        </toolCameras>
+    </attachable>
+	
+	<lights>
+		<sharedLight linkNode="yellowRound_021"  filename="$data/shared/assets/reflectors/lizard/yellowRound_02.xml" />
+		<sharedLight linkNode="yellowRound_022"  filename="$data/shared/assets/reflectors/lizard/yellowRound_02.xml" />
+		<sharedLight linkNode="redTriangle_021"  filename="$data/shared/assets/reflectors/lizard/redTriangle_02.xml" />
+		<sharedLight linkNode="redTriangle_022"  filename="$data/shared/assets/reflectors/lizard/redTriangle_02.xml" />
+    </lights>
+	
+	<connectionHoses>
+		<!-- Long native GIANTS hose: guaranteed fallback if the terrain-following visual cannot initialize. -->
+		<localHose>
+            <hose type="hydraulicIn"  node="hoseStart"  length="0.2" realLength="0.2" diameter="0.09" straighteningFactor="10" minCenterPointAngle="10" adapterType="NONE"/>
+            <target attacherJointIndices="1" type="hydraulicIn" node="hoseEnd" length="0.2" straighteningFactor="10"/>
+        </localHose>
+		<localHose>
+            <hose type="hydraulicIn"  node="hoseStart2"  length="0.2" realLength="0.2" diameter="0.09" straighteningFactor="10" minCenterPointAngle="10" adapterType="NONE"/>
+            <target attacherJointIndices="1" type="hydraulicIn" node="hoseEnd2" length="0.2" straighteningFactor="10"/>
+        </localHose>
+		
+    </connectionHoses>
+	
+	
+    <RWSM53ChangeObjectByDistance>
+        <roll CheckNode="hoseStart" CheckNodeRef="hoseEnd" objectToChange="Trommel_vis" maxHoseLenght="220" hoseObjectCount="13" speedScale="1"/>
+    </RWSM53ChangeObjectByDistance>
+
+	<foldable>
+		<foldingConfigurations>
+			<foldingConfiguration>
+				<foldingParts startMoveDirection="1" startAnimTime="1" posDirectionText="Transportmode" negDirectionText="Workmode">
+					<foldingPart animationName="folding" speedScale="1" />
+				</foldingParts>
+			</foldingConfiguration>
+		</foldingConfigurations>
+	</foldable>
+	
+	<animations>
+        <animation name="folding">
+            <!-- Arbeitsmodus: Regnerwagen bis 220 m frei beweglich. Transportmodus: Gelenk wird an der Trommel verriegelt. -->
+            <!-- BUILD 21:13: rigid lock from 21:01 undone. AutoReel needs joint 1 to open
+                 to 220 m in Workmode; locking it at 0 was the stopgap that stopped the
+                 gun being left behind, and it contradicts the reel workflow. Keyframes
+                 restored to the RWSM source values. Transport spawn is unchanged. -->
+            <part startTime="0" endTime="1" componentJointIndex="1" startRotLimit="180 180 180" endRotLimit="0 0 0" startTransLimit="220 220 220" endTransLimit="0 0 0"/>
+			<!--<part startTime="2" endTime="5" componentJointIndex="1" startRotLimit="0 0 40" endRotLimit="0 0 0" startTransLimit="0.3 0.3 0.3" endTransLimit="0 0 0"/>-->
+
+			<part node="Abschaltung_rot" startTime="2" endTime="5" startRot="0 0 43" endRot="0 0 0" />
+			<part node="compJoint" startTime="2" endTime="5" startRot="0 0 -43" endRot="0 0 0" />
+			<part node="Stuetzen_vis" startTime="5" endTime="10" startTrans="-1.615 -0.189 0" endTrans="-1.189 0.106 0" />
+        </animation>
+		
+		<!-- LS19-Einzug: native Gelenkgrenzen-Animation -->
+
+		
+		<animation name="hoseReelLS19">
+        <part startTime="0" endTime="26400"
+
+		
+		          componentJointIndex="1"
+
+		
+		          startTransLimit="220 220 220"
+
+		
+		          endTransLimit="0 220 0"/>
+
+		
+		</animation>
+
+		
+		<animation name="sprayAnim" looping="true">
+            <part node="Pendel_vis" startTime="0" endTime="0.3" startRot="0 0 -25" endRot="0 0 0"/>
+            <part node="Pendel_vis" startTime="0.30001" endTime="1" startRot="0 0 0" endRot="0 0 -25"/>
+        </animation>
+        <animation name="regnerSweepAnim" looping="true">
+            <!-- Approx. 220 degree part-circle rotation around the vertical pivot. -->
+            <!-- The cycle starts at the model's original 90 degree heading to avoid a jump. -->
+            <!-- Approx. 2.2 degrees/second: deliberately slow, smooth field calibration. -->
+            <part node="Regner_vis" startTime="0" endTime="50" startRot="0 90 0" endRot="0 200 0"/>
+            <part node="Regner_vis" startTime="50.0001" endTime="150" startRot="0 200 0" endRot="0 -20 0"/>
+            <part node="Regner_vis" startTime="150.0001" endTime="200" startRot="0 -20 0" endRot="0 90 0"/>
+        </animation>
+		<animation name="moveSupport">
+            <part node="Support_vis" startTime="0" endTime="1" startTrans="0.83 -0.117 0" endTrans="0.83 -0.343 0" />
+			<part node="Kurbel_vis" startTime="0" endTime="1" startRot="0 720 0" endRot="0 0 0" />
+        </animation>
+    </animations>
+	
+	<cylindered>
+        <movingTools>
+			<movingTool node="Abschaltung_rot">
+				<componentJoint index="1" anchorActor="0"/>
+			</movingTool>
+			
+			<movingTool node="wheelRot">
+				<rotation rotationAxis="2" rotMax="90" rotMin="-90"/>
+			</movingTool>
+			
+			<movingTool node="Chassi_vis" playSound="true" >
+                <controls axis="AXIS_FRONTLOADER_TOOL" invertAxis="false" mouseSpeedFactor="1" iconName="ICON_DRUM"/>
+				<rotation rotationAxis="2" rotSpeed="80" rotAcceleration="50" rotMax="180" startRot="90" rotMin="0"/>
+                <componentJoint index="1" />
+            </movingTool>
+			
+			<movingTool node="workAreaWidth" playSound="false" >
+                <controls axis="AXIS_FRONTLOADER_TOOL2" invertAxis="false" mouseSpeedFactor="1" iconName="ICON_WWIDTH"/>
+				<translation transSpeed="3" transAcceleration="70" transMax="87" transMin="55" translationAxis="1"/>
+            </movingTool>
+        </movingTools>
+    </cylindered>
+	
+	<!-- Sprayer -->
+	
+	<powerConsumer ptoRpm="450" neededMinPtoPower="10" neededMaxPtoPower="10" />
+	
+	<workAreas>
+        <workArea type="sprayer" functionName="processSprayerArea" disableBackwards="false" requiresGroundContact="false" >
+            <area startNode="workAreaStart" widthNode="workAreaWidth" heightNode="workAreaHeight" />
+        </workArea>
+    </workAreas>
+	
+	<fillUnit>
+        <fillUnitConfigurations>
+            <fillUnitConfiguration>
+                <fillUnits>
+                    <unloading width="2" offset="1 0 0" />
+                    <fillUnit unitTextOverride="$l10n_unit_literShort" fillTypes="WATER" capacity="12000" startFillLevel="12000" startFillType="WATER" showOnHud="true" showInShop="true"/>
+                </fillUnits>
+            </fillUnitConfiguration>
+        </fillUnitConfigurations>
+    </fillUnit>
+
+    <sprayer fillUnitIndex="1" allowsSpraying="true">
+        <usageScales workingWidth="55.0" scale="0.0001" />
+        <effects>
+            <effectNode effectNode="effectMesh" materialType="WASHER" materialTypeId="1" delay="0" fadeTime="0.15"/>
+        </effects>
+    </sprayer>
+
+    <turnOnVehicle turnOffIfNotAllowed="false" turnedOnByAttacherVehicle="false" requiresMotorTurnOn="false" needsSelection="false">
+        <turnedOnAnimation name="sprayAnim" speedScale="1" turnOnFadeTime="0.05" turnOffFadeTime="0.15"/>
+        <turnedOnAnimation name="regnerSweepAnim" speedScale="1" turnOnFadeTime="0.5" turnOffFadeTime="0.5"/>
+        <sounds>
+            <start file="vehicles/irrigatorPlay/sounds/sprinkler_start.ogg" linkNode="PendelCol" innerRadius="8" outerRadius="85">
+                <volume indoor="0.25" outdoor="0.9"/>
+            </start>
+            <work file="vehicles/irrigatorPlay/sounds/sprinkler_work.ogg" linkNode="PendelCol" innerRadius="12" outerRadius="130">
+                <volume indoor="0.28" outdoor="1.0"/>
+            </work>
+            <stop file="vehicles/irrigatorPlay/sounds/sprinkler_stop.ogg" linkNode="PendelCol" innerRadius="8" outerRadius="85">
+                <volume indoor="0.22" outdoor="0.85"/>
+            </stop>
+        </sounds>
+    </turnOnVehicle>
+	
+	<tensionBeltObject>
+        <meshNodes>
+            <meshNode node="beltCol1"/>
+			<meshNode node="beltCol2"/>
+			<meshNode node="beltCol3"/>
+        </meshNodes>
+    </tensionBeltObject>
+<!--
+-->
+<foliageBending>
+        <bendingNode minX="-1" maxX="1" minZ="-0.088" maxZ="2.4" yOffset="0.26" />
+		<bendingNode minX="-1" maxX="1" minZ="-0.2" maxZ="0.2" yOffset="0.26" node="RegnerCol"/>
+    </foliageBending>
+	
+    <wearable wearDuration="480" workMultiplier="2" fieldMultiplier="2"/>
+<i3dMappings>
+        <i3dMapping id="RootCol" node="0>" />
+        <i3dMapping id="attacherF" node="0>0" />
+        <i3dMapping id="wheels1" node="0>1" />
+        <i3dMapping id="wheelLeft" node="0>1|0" />
+        <i3dMapping id="wheelRight" node="0>1|1" />
+        <i3dMapping id="ai" node="0>2" />
+        <i3dMapping id="aiCollisionTrigger" node="0>2|0" />
+        <i3dMapping id="camera" node="0>3" />
+        <i3dMapping id="Rahmen_vis" node="0>4" />
+        <i3dMapping id="Support_vis" node="0>4|0" />
+        <i3dMapping id="colSupport0" node="0>4|0|0" />
+        <i3dMapping id="Kurbel_vis" node="0>4|1" />
+        <i3dMapping id="beltCollis1" node="0>4|2" />
+        <i3dMapping id="beltCol1" node="0>4|2|0" />
+        <i3dMapping id="beltCol2" node="0>4|2|1" />
+        <i3dMapping id="beltCol3" node="0>4|2|2" />
+        <i3dMapping id="Chassi_vis" node="0>5" />
+        <i3dMapping id="Trommel_vis" node="0>5|0" />
+        <i3dMapping id="Schlauch12_vis" node="0>5|0|0" />
+        <i3dMapping id="Schlauch13_vis" node="0>5|0|1" />
+        <i3dMapping id="Schlauch11_vis" node="0>5|0|2" />
+        <i3dMapping id="Schlauch10_vis" node="0>5|0|3" />
+        <i3dMapping id="Schlauch9_vis" node="0>5|0|4" />
+        <i3dMapping id="Schlauch8_vis" node="0>5|0|5" />
+        <i3dMapping id="Schlauch1_vis" node="0>5|0|6" />
+        <i3dMapping id="Schlauch2_vis" node="0>5|0|7" />
+        <i3dMapping id="Schlauch3_vis" node="0>5|0|8" />
+        <i3dMapping id="Schlauch4_vis" node="0>5|0|9" />
+        <i3dMapping id="Schlauch5_vis" node="0>5|0|10" />
+        <i3dMapping id="Schlauch6_vis" node="0>5|0|11" />
+        <i3dMapping id="Schlauch7_vis" node="0>5|0|12" />
+        <i3dMapping id="Decal1" node="0>5|0|13" />
+        <i3dMapping id="Strebe2_vis" node="0>5|1" />
+        <i3dMapping id="hoseStart" node="0>5|1|0" />
+        <i3dMapping id="hoseStart2" node="0>5|1|1" />
+        <i3dMapping id="hoseEnd2" node="0>5|1|2" />
+        <i3dMapping id="Liftbuegel_vis" node="0>5|2" />
+        <i3dMapping id="Stuetzen_vis" node="0>5|3" />
+        <i3dMapping id="colSupport1" node="0>5|3|0" />
+        <i3dMapping id="colSupport11" node="0>5|3|1" />
+        <i3dMapping id="Abschaltung_rot" node="0>5|4" />
+        <i3dMapping id="compJoint" node="0>5|4|0" />
+        <i3dMapping id="col1" node="0>5|4|1" />
+        <i3dMapping id="lights" node="0>5|5" />
+        <i3dMapping id="yellowRound_021" node="0>5|5|0" />
+        <i3dMapping id="yellowRound_022" node="0>5|5|1" />
+        <i3dMapping id="redTriangle_021" node="0>5|5|2" />
+        <i3dMapping id="redTriangle_022" node="0>5|5|3" />
+        <i3dMapping id="hoseJoint" node="0>5|6" />
+        <i3dMapping id="attacherPump" node="0>5|7" />
+        <i3dMapping id="couplingMarkerRoot" node="0>5|7|0" />
+        <i3dMapping id="HUD" node="0>5|8" />
+        <i3dMapping id="Hud_decal" node="0>5|8|0" />
+        <i3dMapping id="hudPressure" node="0>5|8|1" />
+        <i3dMapping id="HudPressure1" node="0>5|8|1|0" />
+        <i3dMapping id="HudPressure2" node="0>5|8|1|1" />
+        <i3dMapping id="HudLength" node="0>5|8|2" />
+        <i3dMapping id="HudLength1" node="0>5|8|2|0" />
+        <i3dMapping id="HudLength2" node="0>5|8|2|1" />
+        <i3dMapping id="Decal2" node="0>5|9" />
+        <i3dMapping id="RegnerCol" node="1>" />
+        <i3dMapping id="attacherR" node="1>0" />
+        <i3dMapping id="hoseEnd" node="1>1" />
+        <i3dMapping id="wheels2" node="1>2" />
+        <i3dMapping id="wheelLeftBack" node="1>2|0" />
+        <i3dMapping id="wheelLeftBackDrive" node="1>2|0|0" />
+        <i3dMapping id="wheelRightBack" node="1>2|1" />
+        <i3dMapping id="wheelRightBackDrive" node="1>2|1|0" />
+        <i3dMapping id="cameras" node="1>3" />
+        <i3dMapping id="camera01Rot" node="1>3|0" />
+        <i3dMapping id="camera01" node="1>3|0|0" />
+        <i3dMapping id="camera01RaycastNode01" node="1>3|1" />
+        <i3dMapping id="camera01RaycastNode02" node="1>3|2" />
+        <i3dMapping id="Stativ_vis" node="1>4" />
+        <i3dMapping id="col2" node="1>4|0" />
+        <i3dMapping id="col3" node="1>4|1" />
+        <i3dMapping id="col4" node="1>4|2" />
+        <i3dMapping id="col5" node="1>4|3" />
+        <i3dMapping id="col6" node="1>4|4" />
+        <i3dMapping id="wheelRot" node="1>4|5" />
+        <i3dMapping id="fakeWheel" node="1>4|5|0" />
+        <i3dMapping id="fakeWheelDN" node="1>4|5|0|0" />
+        <i3dMapping id="Pendel_CompJoint" node="1>5" />
+        <i3dMapping id="PendelCol" node="2>" />
+        <i3dMapping id="Regner_vis" node="2>0" />
+        <i3dMapping id="workArea" node="2>0|0" />
+        <i3dMapping id="workAreaStart" node="2>0|0|0" />
+        <i3dMapping id="workAreaWidth" node="2>0|0|1" />
+        <i3dMapping id="workAreaHeight" node="2>0|0|2" />
+        <i3dMapping id="effectMesh" node="2>0|1" />
+        <i3dMapping id="dustEmitShape" node="2>0|2" />
+        <i3dMapping id="Pendel_vis" node="2>0|3" />
+        <i3dMapping id="waterNozzle" node="2>0|3|0" />
+        <i3dMapping id="sprayerNozzleOutlet" node="2>0|3|1" />
+        <i3dMapping id="sprayerVisualOrigin" node="2>0|5" />
+        <i3dMapping id="waterArc01" node="2>0|3|2" />
+        <i3dMapping id="waterArc02" node="2>0|3|3" />
+        <i3dMapping id="waterArc03" node="2>0|3|4" />
+        <i3dMapping id="waterArc04" node="2>0|3|5" />
+        <i3dMapping id="waterArc05" node="2>0|3|6" />
+        <i3dMapping id="waterArc06" node="2>0|3|7" />
+        <i3dMapping id="waterArc07" node="2>0|3|8" />
+        <i3dMapping id="waterArc08" node="2>0|3|9" />
+        <i3dMapping id="waterArc09" node="2>0|3|10" />
+        <i3dMapping id="waterArc10" node="2>0|3|11" />
+        <i3dMapping id="waterArc11" node="2>0|3|12" />
+        <i3dMapping id="waterArc12" node="2>0|3|13" />
+        <i3dMapping id="waterGround01" node="2>0|3|14" />
+        <i3dMapping id="waterGround02" node="2>0|3|15" />
+        <i3dMapping id="waterGround03" node="2>0|3|16" />
+        <i3dMapping id="waterGround04" node="2>0|3|17" />
+        <i3dMapping id="waterGround05" node="2>0|3|18" />
+        <i3dMapping id="waterGround06" node="2>0|3|19" />
+        <i3dMapping id="waterGround07" node="2>0|3|20" />
+        <i3dMapping id="waterGround08" node="2>0|3|21" />
+        <i3dMapping id="waterGround09" node="2>0|3|22" />
+        <i3dMapping id="waterGround10" node="2>0|3|23" />
+        <i3dMapping id="waterJet01" node="2>0|3|24" />
+        <i3dMapping id="waterJet02" node="2>0|3|25" />
+        <i3dMapping id="waterJet03" node="2>0|3|26" />
+        <i3dMapping id="waterJet04" node="2>0|3|27" />
+        <i3dMapping id="waterJet05" node="2>0|3|28" />
+        <i3dMapping id="waterJet06" node="2>0|3|29" />
+        <i3dMapping id="waterJet07" node="2>0|3|30" />
+        <i3dMapping id="waterJet08" node="2>0|3|31" />
+        <i3dMapping id="waterJet09" node="2>0|3|32" />
+        <i3dMapping id="waterJet10" node="2>0|3|33" />
+        <i3dMapping id="waterJet11" node="2>0|3|34" />
+        <i3dMapping id="waterJet12" node="2>0|3|35" />
+        <i3dMapping id="waterJet13" node="2>0|3|36" />
+        <i3dMapping id="waterJet14" node="2>0|3|37" />
+        <i3dMapping id="waterJet15" node="2>0|3|38" />
+        <i3dMapping id="waterJet16" node="2>0|3|39" />
+        <i3dMapping id="wetPatchTemplate" node="2>0|4" />
+        <i3dMapping id="Gewicht" node="2>1" />
+	</i3dMappings>
+
+
+    <!-- BUILD 18:08 - SPS intake embed. openTop: the reel's tank is a passive vessel
+         that the Aggregat pumps into, so it must never build or hold pressure. The
+         coupling feeds fillUnitIndex 1, the 12000 L WATER tank. Moisture stays the sole
+         property of IrrigatorSectorIntegration; this block only fills the tank. -->
+    <slurryPipeSystem>
+        <nodeTree filename="i3d/sps_nodes_Rainstar.i3d"/>
+        <pump pumpType="openTop" selfPowered="false"/>
+        <flow litersPerSecond="120"/>
+        <pipeCouplings>
+            <pipeCoupling id="1" mountNodeName="SPS_pipeCouplerRainstar01" valveType="MANUAL"
+                          flowDirection="BOTH" maxPipeLength="8.0" fillUnitIndex="1" connector="male"/>
+        </pipeCouplings>
+    </slurryPipeSystem>
+</vehicle>

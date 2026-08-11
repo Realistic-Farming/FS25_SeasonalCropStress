@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<i3D name="test" version="1.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://i3d.giants.ch/schema/i3d-1.6.xsd">
+  <Asset>
+    <Export program="GIANTS Editor 64bit" version="8.1.0"/>
+  </Asset>
+
+  <Files>
+    <File fileId="9" filename="../textures/Decal2.dds"/>
+    <File fileId="11" filename="../textures/Decal2_spec.dds"/>
+    <File fileId="12" filename="../textures/Ecostar4300.dds"/>
+    <File fileId="2" filename="../textures/T32_normals.dds"/>
+    <File fileId="3" filename="../textures/T32_spec.dds"/>
+    <File fileId="4" filename="../shaders/vehicleShader.xml"/>
+    <File fileId="10" filename="$data/shared/default_normal.dds"/>
+    <File fileId="13" filename="../textures/wetPatch.dds"/>
+    <File fileId="14" filename="../textures/rwsmSprayCore.dds"/>
+    <File fileId="15" filename="../textures/rwsmSprayMist.dds"/>
+    <File fileId="16" filename="../textures/rwsmSprayImpact.dds"/>
+  </Files>
+
+
+  <Materials>
+    <Material name="UnnamedMaterial" materialId="4" diffuseColor="1 1 1 1">
+    </Material>
+    <Material name="lambert2" materialId="5" customShaderId="4">
+      <Texture fileId="9"/>
+      <Normalmap fileId="10"/>
+      <Glossmap fileId="11"/>
+      <CustomParameter name="RDT" value="0 0 0 0"/>
+      <CustomParameter name="dirtColor" value="0.2 0.14 0.08 0"/>
+    </Material>
+    <Material name="numbers2_mat" materialId="8" diffuseColor="0 0 0 0" alphaBlending="true">
+    </Material>
+    <Material name="default" materialId="10">
+      <Texture fileId="12"/>
+    </Material>
+    <Material name="numbers1_mat" materialId="7" diffuseColor="0 0 0 0" alphaBlending="true">
+    </Material>
+    <Material name="lambert1" materialId="6" diffuseColor="0.494118 0.494118 0.494118 1" customShaderId="4" customShaderVariation="colorMask">
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <CustomParameter name="RDT" value="0 0 0 0"/>
+      <CustomParameter name="dirtColor" value="0.2 0.14 0.08 0"/>
+      <CustomParameter name="colorMat0" value="0.09 0.09 0.09 1"/>
+      <CustomParameter name="colorMat1" value="0.317 0.682 0.19 1"/>
+      <CustomParameter name="colorMat2" value="0 0 0 1"/>
+      <CustomParameter name="colorMat3" value="0.61 0.63 0.6 1"/>
+      <CustomParameter name="colorMat4" value="1 1 1 1"/>
+      <CustomParameter name="colorMat5" value="0.05 0.05 0.05 1"/>
+      <CustomParameter name="colorMat6" value="1 0.1 1 1"/>
+      <CustomParameter name="colorMat7" value="0.1 1 1 1"/>
+    </Material>
+    <Material name="waterEffect_mat" materialId="9" diffuseColor="0.50 0.78 1 0.62" alphaBlending="true" alphaTestRef="0.02">
+    </Material>
+    <Material name="rainstarWetGround_mat" materialId="11" diffuseColor="1 1 1 0.90" alphaBlending="true" alphaTestRef="0.005">
+      <Texture fileId="13"/>
+    </Material>
+    <Material name="rwsmWaterCore" materialId="12" diffuseColor="0.92 0.98 1 0.86" alphaBlending="true" alphaTestRef="0.005">
+      <Texture fileId="14"/>
+    </Material>
+    <Material name="rwsmWaterMist" materialId="13" diffuseColor="0.88 0.97 1 0.22" alphaBlending="true" alphaTestRef="0.003">
+      <Texture fileId="15"/>
+    </Material>
+    <Material name="rwsmWaterImpact" materialId="14" diffuseColor="0.88 0.97 1 0.28" alphaBlending="true" alphaTestRef="0.003">
+      <Texture fileId="16"/>
+    </Material>
+    <Material name="rwsmCouplingMarkerGreen" materialId="15" diffuseColor="0.05 1 0.08 1" emissiveColor="0.05 1 0.08 1">
+    </Material>
+  </Materials>
+
+
+  <Shapes externalShapesFile="T32.i3d.shapes">
+  </Shapes>
+
+
+  <Dynamics>
+  </Dynamics>
+
+  <Scene>
+    <Shape shapeId="1" name="RootCol" dynamic="true" compound="true" collisionMask="2171138" density="1" clipDistance="300" nodeId="55" materialIds="6" nonRenderable="true" distanceBlending="false">
+      <TransformGroup name="attacherF" translation="0.13821 0.546752 -1.59488" rotation="0 -90 0" nodeId="56"/>
+      <TransformGroup name="wheels1" nodeId="57">
+        <TransformGroup name="wheelLeft" translation="-0.884111 0.372 1.584" nodeId="58"/>
+        <TransformGroup name="wheelRight" translation="1.17438 0.372 1.584" nodeId="59"/>
+      </TransformGroup>
+      <TransformGroup name="ai" nodeId="60">
+        <Shape shapeId="2" name="aiCollisionTrigger" translation="0 1.10138 -0.489935" kinematic="true" compound="true" trigger="true" collisionMask="1056768" nodeId="61" materialIds="6" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+      </TransformGroup>
+      <Camera name="camera" translation="13.6773 3.79829 2.77682" rotation="175.874 69.4206 180" nodeId="62" fov="60" nearClip="0.1" farClip="10000" orthographicHeight="1"/>
+      <Shape shapeId="3" name="Rahmen_vis" translation="0.140859 0.552795 -0.000181732" nodeId="63" materialIds="6" castsShadows="true" receiveShadows="true">
+        <Shape shapeId="4" name="Support_vis" translation="0.83 -0.343 0.000181725" nodeId="64" materialIds="6" castsShadows="true" receiveShadows="true">
+          <Shape shapeId="5" name="colSupport0" translation="-0.806175 -0.0314744 -0.849573" rotation="0 -9.2002e-05 -9.82314e-05" compoundChild="true" collisionMask="2109442" density="0.001" nodeId="65" materialIds="6" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+        </Shape>
+        <Shape shapeId="6" name="Kurbel_vis" translation="0 0.251247 -0.82928" nodeId="66" materialIds="6" castsShadows="true" receiveShadows="true"/>
+        <TransformGroup name="beltCollis1" nodeId="67">
+          <Shape shapeId="7" name="beltCol1" translation="-0.479387 -0.137729 0.203959" rotation="0 -14.7 0" scale="0.1 0.2 3" nodeId="68" materialIds="4" nonRenderable="true" distanceBlending="false"/>
+          <Shape shapeId="7" name="beltCol2" translation="0.479 -0.137729 0.203959" rotation="0 14.7 0" scale="0.1 0.2 3" nodeId="69" materialIds="4" nonRenderable="true" distanceBlending="false"/>
+          <Shape shapeId="7" name="beltCol3" translation="0 -0.117372 -1.34435" scale="0.2 0.2 0.2" nodeId="70" materialIds="4" nonRenderable="true" distanceBlending="false"/>
+        </TransformGroup>
+      </Shape>
+      <Shape shapeId="8" name="Chassi_vis" translation="0.137 0.572 0.792" rotation="0 90 0" nodeId="71" materialIds="6,5" castsShadows="true" receiveShadows="true">
+        <Shape shapeId="9" name="Trommel_vis" translation="0.000408053 1.16669 0" nodeId="72" materialIds="6" castsShadows="true" receiveShadows="true">
+          <Shape shapeId="10" name="Schlauch12_vis" translation="-0.000403047 0.000420094 0.450795" nodeId="73" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="11" name="Schlauch13_vis" translation="-0.000403047 0.000420094 0.540795" nodeId="74" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="12" name="Schlauch11_vis" translation="-0.000403047 0.000420094 0.360795" nodeId="75" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="13" name="Schlauch10_vis" translation="-0.000403047 0.000420094 0.270795" nodeId="76" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="14" name="Schlauch9_vis" translation="-0.000403047 0.000420094 0.180795" nodeId="77" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="15" name="Schlauch8_vis" translation="-0.000403047 0.000420094 0.0907951" nodeId="78" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="16" name="Schlauch1_vis" translation="-0.000403047 0.000420094 -0.0912049" nodeId="79" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="17" name="Schlauch2_vis" translation="-0.000403047 0.000420094 -0.181205" nodeId="80" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="18" name="Schlauch3_vis" translation="-0.000403047 0.000420094 -0.271205" nodeId="81" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="19" name="Schlauch4_vis" translation="-0.000403047 0.000420094 -0.361205" nodeId="82" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="20" name="Schlauch5_vis" translation="-0.000403047 0.000420094 -0.451205" nodeId="83" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="21" name="Schlauch6_vis" translation="-0.000403047 0.000420094 -0.541205" nodeId="84" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="22" name="Schlauch7_vis" translation="-0.000403047 0.000420094 -0.00120488" nodeId="85" materialIds="6" castsShadows="true" receiveShadows="true"/>
+          <Shape shapeId="23" name="Decal1" translation="-0.00235649 0.00265435 -2.98262e-05" nodeId="86" materialIds="5" castsShadows="true" receiveShadows="true"/>
+        </Shape>
+        <Shape shapeId="24" name="Strebe2_vis" translation="-0.673775 0.413493 0.00276409" nodeId="87" materialIds="6" castsShadows="true" receiveShadows="true">
+          <TransformGroup name="hoseStart" rotation="10 -90 0" nodeId="88"/>
+          <TransformGroup name="hoseStart2" rotation="-10 90 0" nodeId="89"/>
+          <TransformGroup name="hoseEnd2" translation="0.682622 0.357349 2.98384e-08" rotation="30 -90 0" nodeId="90"/>
+        </Shape>
+        <Shape shapeId="25" name="Liftbuegel_vis" translation="-0.946465 0.729198 0.00664495" nodeId="91" materialIds="6" castsShadows="true" receiveShadows="true"/>
+        <Shape shapeId="26" name="Stuetzen_vis" translation="-1.189 0.106 -1.65199e-06" nodeId="92" materialIds="6" castsShadows="true" receiveShadows="true">
+          <Shape shapeId="5" name="colSupport1" translation="-0.437022 -0.131514 -0.778906" rotation="0 -9.2002e-05 -9.82314e-05" compoundChild="true" collisionMask="2109442" density="0.001" nodeId="93" materialIds="6" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+          <Shape shapeId="5" name="colSupport11" translation="-0.437 -0.131514 0.779" rotation="0 -9.2002e-05 -9.82314e-05" compoundChild="true" collisionMask="2109442" density="0.001" nodeId="94" materialIds="6" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+        </Shape>
+        <Shape shapeId="27" name="Abschaltung_rot" translation="-1.3361 0.027035 0.0145197" nodeId="95" materialIds="6" castsShadows="true" receiveShadows="true">
+          <TransformGroup name="compJoint" translation="-0.17463 0.995978 0.172462" nodeId="96"/>
+          <Shape shapeId="28" name="col1" translation="-0.158684 0.991222 -0.217677" rotation="-14.467 90 -9.82314e-05" compoundChild="true" collisionMask="2109442" density="0.001" nodeId="97" materialIds="6" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+        </Shape>
+        <TransformGroup name="lights" nodeId="98">
+          <TransformGroup name="yellowRound_021" translation="-0.338124 0.181866 1.0256" rotation="90 0 0" nodeId="99"/>
+          <TransformGroup name="yellowRound_022" translation="-0.183602 0.272643 -0.806569" rotation="-90 0 0" nodeId="100"/>
+          <TransformGroup name="redTriangle_021" translation="-1.35607 0.132 -0.809146" rotation="90 -90 0" nodeId="101"/>
+          <TransformGroup name="redTriangle_022" translation="-1.35607 0.132 0.808294" rotation="90 -90 0" nodeId="102"/>
+        </TransformGroup>
+        <TransformGroup name="hoseJoint" translation="0.642465 0.341798 0.903288" rotation="-5 90 0" nodeId="103"/>
+        <TransformGroup name="attacherPump" translation="2.7017 0.155 1.20852" rotation="0 180 0" nodeId="104">
+          <TransformGroup name="couplingMarkerRoot" visibility="false" nodeId="187">
+            <Shape shapeId="7" name="couplingMarkerPole" translation="0 1.15 0" scale="0.07 1.15 0.07" clipDistance="250" nodeId="188" materialIds="15" castsShadows="false" receiveShadows="false"/>
+            <Shape shapeId="7" name="couplingMarkerCrossX" translation="0 0.08 0" scale="0.72 0.06 0.06" clipDistance="250" nodeId="189" materialIds="15" castsShadows="false" receiveShadows="false"/>
+            <Shape shapeId="7" name="couplingMarkerCrossZ" translation="0 0.08 0" scale="0.06 0.06 0.72" clipDistance="250" nodeId="190" materialIds="15" castsShadows="false" receiveShadows="false"/>
+            <Shape shapeId="7" name="couplingMarkerTop" translation="0 2.35 0" rotation="0 0 45" scale="0.28 0.28 0.28" clipDistance="250" nodeId="191" materialIds="15" castsShadows="false" receiveShadows="false"/>
+          </TransformGroup>
+        </TransformGroup>
+        <TransformGroup name="HUD" translation="0.41988 0.140138 -0.0259981" rotation="15 0 0" nodeId="105">
+          <Shape shapeId="29" name="Hud_decal" translation="-0.41992 1.05819 0.775419" rotation="75 0 0" nodeId="106" materialIds="10" castsShadows="true" receiveShadows="true" decalLayer="1"/>
+          <TransformGroup name="hudPressure" translation="0.0346327 -0.0041563 0.0033065" nodeId="107">
+            <Shape shapeId="30" name="HudPressure1" translation="0.754734 -0.53779 -0.0033065" rotation="90 -90 0" nodeId="108" materialIds="7" castsShadows="true" receiveShadows="true" visibility="false"/>
+            <Shape shapeId="31" name="HudPressure2" translation="0.754734 -0.53779 -0.0033065" rotation="90 -90 0" nodeId="109" materialIds="8" castsShadows="true" receiveShadows="true" visibility="false"/>
+          </TransformGroup>
+          <TransformGroup name="HudLength" translation="0.0346327 -0.0313962 0.00913508" nodeId="110">
+            <Shape shapeId="30" name="HudLength1" translation="0.754734 -0.53779 -0.0033065" rotation="90 -90 0" nodeId="111" materialIds="7" castsShadows="true" receiveShadows="true" visibility="false"/>
+            <Shape shapeId="31" name="HudLength2" translation="0.754734 -0.53779 -0.0033065" rotation="90 -90 0" nodeId="112" materialIds="8" castsShadows="true" receiveShadows="true" visibility="false"/>
+          </TransformGroup>
+        </TransformGroup>
+        <Shape shapeId="32" name="Decal2" translation="-0.097 0.893 0.09" nodeId="113" materialIds="5" castsShadows="true" receiveShadows="true"/>
+      </Shape>
+    </Shape>
+    <Shape shapeId="33" name="RegnerCol" translation="0.112 0.626735 2.54256" dynamic="true" compound="true" collisionMask="2171138" density="1" clipDistance="300" nodeId="114" materialIds="6" nonRenderable="true" distanceBlending="false">
+      <TransformGroup name="attacherR" translation="0.0501453 0.358689 0.765723" rotation="0 90 0" nodeId="115"/>
+      <TransformGroup name="hoseEnd" translation="0.030 0.060 -1.445" nodeId="116"/>
+      <TransformGroup name="wheels2" nodeId="117">
+        <TransformGroup name="wheelLeftBack" translation="-0.752238 -0.169584 0.0668285" nodeId="118">
+          <TransformGroup name="wheelLeftBackDrive" nodeId="192"/>
+        </TransformGroup>
+        <TransformGroup name="wheelRightBack" translation="0.752409 -0.170671 0.0668285" nodeId="119">
+          <TransformGroup name="wheelRightBackDrive" nodeId="193"/>
+        </TransformGroup>
+      </TransformGroup>
+      <TransformGroup name="cameras" nodeId="120">
+        <TransformGroup name="camera01Rot" translation="1.89043e-16 1 0" rotation="-24 180 0" nodeId="121">
+          <Camera name="camera01" translation="-9.23244e-31 2.84217e-16 7" rotation="0 0 3.53113e-31" nodeId="122" fov="54.4322" nearClip="0.1" farClip="5000" orthographicHeight="1"/>
+        </TransformGroup>
+        <TransformGroup name="camera01RaycastNode01" translation="0 3.46845 1.3214" nodeId="123"/>
+        <TransformGroup name="camera01RaycastNode02" translation="0 2.58514 -2.88195" nodeId="124"/>
+      </TransformGroup>
+      <Shape shapeId="34" name="Stativ_vis" translation="-7.03772e-08 0.10158 -1.61" rotation="0 90 0" scale="1 1.35 1" nodeId="125" materialIds="6" castsShadows="true" receiveShadows="true">
+        <Shape shapeId="28" name="col2" translation="-1.48304 0.68315 0.0181433" rotation="-14.467 90 -9.82314e-05" compoundChild="true" collisionMask="2109442" density="0.001" nodeId="126" materialIds="6" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+        <Shape shapeId="35" name="col3" translation="-1.483 0.403012 0.0324825" rotation="-50.5608 -90 0" compoundChild="true" collisionMask="2109442" density="0.001" nodeId="127" materialIds="6" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+        <Shape shapeId="36" name="col4" translation="-1.86482 0.12532 0.0145503" compoundChild="true" collisionMask="2109442" density="0.001" nodeId="128" materialIds="6" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+        <Shape shapeId="37" name="col5" translation="-2.37604 0.0995058 0.0145503" rotation="0 0 90" compoundChild="true" collisionMask="2109442" density="0.001" nodeId="129" materialIds="6" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+        <Shape shapeId="37" name="col6" translation="-2.34356 0.0347453 0.0145503" rotation="0 0 -15" scale="1 0.3 1" compoundChild="true" collisionMask="2109442" density="0.001" nodeId="130" materialIds="6" castsShadows="true" receiveShadows="true" nonRenderable="true"/>
+        <TransformGroup name="wheelRot" nodeId="131">
+          <TransformGroup name="fakeWheel" translation="-0.352941 0.0918541 1.54275e-08" rotation="0 90 0" nodeId="132">
+            <TransformGroup name="fakeWheelDN" nodeId="133"/>
+          </TransformGroup>
+        </TransformGroup>
+      </Shape>
+      <TransformGroup name="Pendel_CompJoint" translation="0.0501453 1.21676 0.114714" nodeId="134"/>
+    </Shape>
+    <Shape shapeId="38" name="PendelCol" translation="0.130447 1.36202 2.68883" dynamic="true" compound="true" collisionMask="2171138" density="1" clipDistance="300" nodeId="135" materialIds="4" nonRenderable="true" distanceBlending="false">
+      <Shape shapeId="39" name="Regner_vis" translation="-0.003 0.49995 -0.0438187" rotation="0 90 0" nodeId="136" materialIds="6" castsShadows="true" receiveShadows="true">
+        <TransformGroup name="workArea" translation="-0.491267 -1.6587 4.29479e-08" rotation="0 180 0" nodeId="137">
+          <TransformGroup name="workAreaStart" translation="0 0 0.5" rotation="0 180 0" nodeId="138"/>
+          <TransformGroup name="workAreaWidth" translation="55 0 0.5" rotation="0 180 0" nodeId="139"/>
+          <TransformGroup name="workAreaHeight" translation="0 0 -0.5" rotation="0 180 0" nodeId="140"/>
+        </TransformGroup>
+        <Shape shapeId="40" name="effectMesh" translation="-0.905312 0.349532 3.95725e-08" rotation="10.3554 90 0" scale="0.2 5 10" clipDistance="100" nodeId="141" materialIds="9" castsShadows="true" receiveShadows="true"/>
+        <Shape shapeId="41" name="dustEmitShape" translation="0.591264 0.35145 0.00233359" rotation="0 90 0" clipDistance="300" nodeId="142" materialIds="9" castsShadows="true" receiveShadows="true"/>
+        <Shape shapeId="42" name="Pendel_vis" translation="-0.366953 0.190765 -0.00183342" rotation="0 0 -25" nodeId="143" materialIds="6" castsShadows="true" receiveShadows="true">
+        <TransformGroup name="waterNozzle" translation="-0.538359 0.158767 0.001833" rotation="0 90 0" nodeId="145"/>
+        <TransformGroup name="sprayerNozzleOutlet" translation="-0.905312 0.349532 0.001833" rotation="10.3554 90 0" nodeId="185"/>
+        <Shape shapeId="40" name="waterArc01" rotation="0 90 0" clipDistance="300" nodeId="146" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc02" rotation="0 90 0" clipDistance="300" nodeId="147" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc03" rotation="0 90 0" clipDistance="300" nodeId="148" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc04" rotation="0 90 0" clipDistance="300" nodeId="149" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc05" rotation="0 90 0" clipDistance="300" nodeId="150" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc06" rotation="0 90 0" clipDistance="300" nodeId="151" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc07" rotation="0 90 0" clipDistance="300" nodeId="152" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc08" rotation="0 90 0" clipDistance="300" nodeId="153" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc09" rotation="0 90 0" clipDistance="300" nodeId="154" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc10" rotation="0 90 0" clipDistance="300" nodeId="155" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc11" rotation="0 90 0" clipDistance="300" nodeId="156" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterArc12" rotation="0 90 0" clipDistance="300" nodeId="157" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="41" name="waterGround01" rotation="90 0 0" clipDistance="300" nodeId="158" materialIds="14" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="41" name="waterGround02" rotation="90 0 0" clipDistance="300" nodeId="159" materialIds="14" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="41" name="waterGround03" rotation="90 0 0" clipDistance="300" nodeId="160" materialIds="14" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="41" name="waterGround04" rotation="90 0 0" clipDistance="300" nodeId="161" materialIds="14" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="41" name="waterGround05" rotation="90 0 0" clipDistance="300" nodeId="162" materialIds="14" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="41" name="waterGround06" rotation="90 0 0" clipDistance="300" nodeId="163" materialIds="14" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="41" name="waterGround07" rotation="90 0 0" clipDistance="300" nodeId="164" materialIds="14" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="41" name="waterGround08" rotation="90 0 0" clipDistance="300" nodeId="165" materialIds="14" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="41" name="waterGround09" rotation="90 0 0" clipDistance="300" nodeId="166" materialIds="14" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="41" name="waterGround10" rotation="90 0 0" clipDistance="300" nodeId="167" materialIds="14" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet01" clipDistance="300" nodeId="168" materialIds="12" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet02" clipDistance="300" nodeId="169" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet03" clipDistance="300" nodeId="170" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet04" clipDistance="300" nodeId="171" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet05" clipDistance="300" nodeId="172" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet06" clipDistance="300" nodeId="173" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet07" clipDistance="300" nodeId="174" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet08" clipDistance="300" nodeId="175" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet09" clipDistance="300" nodeId="176" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet10" clipDistance="300" nodeId="177" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet11" clipDistance="300" nodeId="178" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet12" clipDistance="300" nodeId="179" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet13" clipDistance="300" nodeId="180" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet14" clipDistance="300" nodeId="181" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet15" clipDistance="300" nodeId="182" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <Shape shapeId="40" name="waterJet16" clipDistance="300" nodeId="183" materialIds="13" castsShadows="false" receiveShadows="false" visibility="false"/>
+      </Shape>
+        <Shape shapeId="40" name="wetPatchTemplate" translation="0 -50 0" rotation="90 0 0" scale="1 1 0.15" clipDistance="220" nodeId="184" materialIds="11" castsShadows="false" receiveShadows="false" visibility="false"/>
+        <TransformGroup name="sprayerVisualOrigin" translation="-0.905312 0.349532 0" rotation="10.3554 90 0" nodeId="186"/>
+      </Shape>
+      <Shape shapeId="43" name="Gewicht" translation="-0.00478704 0.475356 -0.0503552" rotation="-0 90 0" nodeId="144" materialIds="6" castsShadows="true" receiveShadows="true"/>
+    </Shape>
+  </Scene>
+
+</i3D>

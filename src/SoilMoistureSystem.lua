@@ -764,6 +764,12 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
     cell.moisture = math.max(0.0, math.min(1.0, cell.moisture + gain))
     d.cellSum = d.cellSum + gain
     if d.cellSum > d.cellCount then d.cellSum = d.cellCount end
+    -- Vera F1 (BUILD 19:44): keep the field scalar level with the cell aggregate.
+    -- Readers are split: getMoisture/getFieldAggregate compute from cells, but the
+    -- Esc field table and CropStressNetworkSyncBridge:serializeFields both paint
+    -- the raw d.moisture scalar. Without this line water lands, cells rise, and
+    -- every surface the player actually looks at keeps showing the old number.
+    d.moisture = self:getFieldAggregate(d)
 end
 
 -- ============================================================
@@ -1111,6 +1117,9 @@ function SoilMoistureSystem:unpackCells(fieldId, packed)
             d.cellSum = d.cellSum + val / 10000
         end
     end
+    -- Sibling of the F1 path: rebuilding cells on load moves the aggregate, so the
+    -- scalar has to follow or a reloaded save paints the pre-save number.
+    d.moisture = self:getFieldAggregate(d)
 end
 
 -- Returns a sorted list of {fieldId, moisture, soilType} for HUD display

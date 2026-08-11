@@ -77,7 +77,24 @@ function IrrigationScheduleDialog:onOpen()
         print("[CropStress] IrrigationScheduleDialog:onOpen() superClass FAILED: " .. tostring(err))
         return
     end
-    self:populateDisplay()
+    -- BUILD 18:15: populateDisplay was called unguarded. Anything it threw escaped
+    -- onOpen after the dialog was already on the stack, leaving a shell that drew
+    -- but was never wired. Guarded, a future nil degrades to a half-filled but
+    -- fully operable dialog instead of a dead one.
+    local okFill, errFill = pcall(function() self:populateDisplay() end)
+    if not okFill then
+        print("[CropStress] IrrigationScheduleDialog:populateDisplay() FAILED: " .. tostring(errFill))
+    end
+    self:focusFirstDay()
+end
+
+--- Put keyboard/controller focus on the first day toggle so the dialog is
+--  operable without a mouse. Close stays reachable by tab from there.
+function IrrigationScheduleDialog:focusFirstDay()
+    if FocusManager == nil or type(FocusManager.setFocus) ~= "function" then return end
+    local target = self.btnDay1 or self.btnClose
+    if target == nil then return end
+    pcall(function() FocusManager:setFocus(target) end)
 end
 
 -- Called by FS25 GUI system after the dialog has fully closed (cleanup only).
@@ -337,14 +354,29 @@ end
 -- PERFORMANCE DISPLAY
 -- ============================================================
 
+-- BUILD 18:15: every read here is nil-guarded.
+-- F154 removed wearLevel from the system table. This function multiplied it raw,
+-- so opening Schedule threw mid-onOpen, AFTER showDialog had already pushed the
+-- dialog - which is why the shell appeared with nothing clickable rather than
+-- simply failing to open. operationalCostPerHour is guarded for the same reason
+-- even though it never multiplies: it goes straight into string.format, and a nil
+-- there is the same crash one line further down.
 function IrrigationScheduleDialog:updatePerformance(system)
-    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier * (1.0 - system.wearLevel * 0.3)
-    local efficiency    = math.floor(system.pressureMultiplier * 100)
+    if system == nil then return end
+    local flowPerHour = system.flowRatePerHour   or 0
+    local pressure    = system.pressureMultiplier or 1
+    local wear        = system.wearLevel          or 0
+    local costPerHour = system.operationalCostPerHour or 0
+    local effectiveRate = flowPerHour * pressure * (1.0 - wear * 0.3)
+    local efficiency    = math.floor(pressure * 100)
     local function t(key, ...) return (g_i18n ~= nil and string.format(g_i18n:getText(key), ...)) or key end
-    if self.flowRate   ~= nil then self.flowRate:setText(t("cs_irr_flow_rate_value",   effectiveRate))            end
-    if self.efficiency ~= nil then self.efficiency:setText(t("cs_irr_efficiency_value", efficiency))              end
-    if self.cost       ~= nil then self.cost:setText(t("cs_irr_cost_value",   system.operationalCostPerHour))     end
-    if self.wear       ~= nil then self.wear:setText(t("cs_irr_wear_value",   math.floor(system.wearLevel * 100))) end
+    if self.flowRate   ~= nil then self.flowRate:setText(t("cs_irr_flow_rate_value",   effectiveRate)) end
+    if self.efficiency ~= nil then self.efficiency:setText(t("cs_irr_efficiency_value", efficiency))   end
+    if self.cost       ~= nil then self.cost:setText(t("cs_irr_cost_value",             costPerHour))  end
+    -- Wear row is hidden (Samantha 18:12): the system no longer tracks wearLevel,
+    -- so reporting a hard 0% would be inventing a reading rather than omitting one.
+    if self.wear      ~= nil and self.wear.setVisible      ~= nil then self.wear:setVisible(false)      end
+    if self.wearLabel ~= nil and self.wearLabel.setVisible ~= nil then self.wearLabel:setVisible(false) end
 end
 
 -- ============================================================
