@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<vehicle type="rwsmPlayPump" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../shared/xml/schema/vehicle.xsd">
+    <annotation>Original: JD_Power / HoFFi | LS25 conversion: Sherman</annotation>
+	
+	<storeData>
+        <name>
+			<en>SR Range EMP 01 IC-OSR</en>
+			<de>SR Range EMP 01 IC-OSR</de>
+		</name>
+        <functions>
+            <function>
+				<en>Motor pump for irrigation systems</en>
+				<de>Motorpumpe für Bewesserungssysteme</de>
+			</function>
+			<!-- BUILD 19:27 - suite hose teach (Samantha). SPS tanker optional later; not required. -->
+			<function>
+				<en>Connect the pump to the Rainstar with the hose, start the pump, turn the Rainstar on — Moisture rises in Crop Stress.</en>
+				<de>Pumpe mit dem Schlauch an den Rainstar anschliessen, Pumpe starten, Rainstar einschalten — die Feuchtigkeit in Crop Stress steigt.</de>
+			</function>
+        </functions>
+		<specs>
+            <combination>Rainstar T32</combination>
+        </specs>
+        <image>vehicles/irrigatorPlay/textures/store_Aggregat.dds</image>
+        <price>17300</price>
+        <lifetime>600</lifetime>
+        <rotation>0</rotation>
+        <brand>EUROMACCHINE</brand>
+        <category>sprayers</category>
+    </storeData>
+	
+	<base>
+        <typeDesc>$l10n_Motorpump</typeDesc>
+        <filename>vehicles/irrigatorPlay/i3d/Aggregat.i3d</filename>
+        <size width="2.5" length="4.0" />
+        <components>
+            <component centerOfMass="0 0 0" solverIterationCount="4" mass="2000" />
+        </components>
+        <schemaOverlay name="DEFAULT_IMPLEMENT" attacherJointPosition="0 0"/>
+    </base>
+
+	<wheels>
+        <wheelConfigurations>
+            <wheelConfiguration name="AW305" price="0" brand="TRELLEBORG">
+                <wheels autoRotateBackSpeed="2.0">
+                    <wheel filename="$data/shared/wheels/tires/trelleborg/AW305/260_70R15_3.xml" isLeft="false" >
+                        <physics rotSpeed="0" restLoad="4.6" repr="wheelLeftFront"  initialCompression="50" suspTravel="0.16" spring="55" damper="40" />
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/trelleborg/AW305/260_70R15_3.xml" isLeft="true" >
+                        <physics rotSpeed="0" restLoad="4.6" repr="wheelRightFront" initialCompression="50" suspTravel="0.16" spring="55" damper="40" />
+                    </wheel>
+					<wheel>
+                        <physics rotSpeed="1" rotMin="-40" rotMax="40" restLoad="1.3" repr="wheelFront" driveNode="wheelFrontDN" radius="0.257" width="0.68" mass="0.2" initialCompression="50" suspTravel="0.05" spring="70" damper="40" />
+                    </wheel>
+                </wheels>
+            </wheelConfiguration>
+			<wheelConfiguration name="SK800" price="350" brand="TRELLEBORG">
+                <wheels autoRotateBackSpeed="2.0">
+                    <wheel filename="$data/shared/wheels/tires/trelleborg/SK800/27x8_5R15.xml" isLeft="false" >
+                        <physics rotSpeed="0" restLoad="4.6" repr="wheelLeftFront"  initialCompression="50" suspTravel="0.16" spring="55" damper="40" />
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/trelleborg/SK800/27x8_5R15.xml" isLeft="true" >
+                        <physics rotSpeed="0" restLoad="4.6" repr="wheelRightFront" initialCompression="50" suspTravel="0.16" spring="55" damper="40" />
+                    </wheel>
+					<wheel>
+                        <physics rotSpeed="1" rotMin="-40" rotMax="40" restLoad="1.3" repr="wheelFront" driveNode="wheelFrontDN" radius="0.257" width="0.68" mass="0.2" initialCompression="50" suspTravel="0.05" spring="70" damper="40" />
+                    </wheel>
+                </wheels>
+            </wheelConfiguration>
+            <wheelConfiguration name="$l10n_configuration_valueDefault" price="350" brand="LIZARD">
+                <wheels autoRotateBackSpeed="2.0">
+                    <wheel filename="$data/shared/wheels/tires/lizard/implement/190_95R15.xml" isLeft="false" >
+                        <physics rotSpeed="0" restLoad="4.6" repr="wheelLeftFront"  initialCompression="50" suspTravel="0.17" spring="52" damper="40" />
+                    </wheel>
+                    <wheel filename="$data/shared/wheels/tires/lizard/implement/190_95R15.xml" isLeft="true" >
+                        <physics rotSpeed="0" restLoad="4.6" repr="wheelRightFront" initialCompression="50" suspTravel="0.17" spring="52" damper="40" />
+                    </wheel>
+					<wheel>
+                        <physics rotSpeed="1" rotMin="-40" rotMax="40" restLoad="1.3" repr="wheelFront" driveNode="wheelFrontDN" radius="0.257" width="0.68" mass="0.2" initialCompression="50" suspTravel="0.05" spring="70" damper="40" />
+                    </wheel>
+                </wheels>
+            </wheelConfiguration>
+        </wheelConfigurations>
+
+        <ackermannSteeringConfigurations>
+            <ackermannSteering rotSpeed="65" rotMax="40" rotCenterWheel1="1" rotCenterWheel2="2"/>
+        </ackermannSteeringConfigurations>
+
+        <hubs>
+			<color0>SHARED_BLACK2</color0>
+            <color1 useBaseColor="true"/>
+            <hub linkNode="wheelLeftFront"  filename="$data/shared/wheels/hubs/hub_n5_1.xml" isLeft="false" scale="0.152 0.152 0.152" offset="0.026"/>
+            <hub linkNode="wheelRightFront" filename="$data/shared/wheels/hubs/hub_n5_1.xml" isLeft="true" 	scale="0.152 0.152 0.152" offset="0.026"/>
+        </hubs>
+    </wheels>
+	
+	<rimColorConfigurations useDefaultColors="false" price="200">
+        <rimColorConfiguration price="0" color="SHARED_WHITE2"/>
+        <rimColorConfiguration price="400" color="SHARED_GREY1"/>
+    </rimColorConfigurations>
+	
+	<powerConsumer neededMinPtoPower="40" neededMaxPtoPower="50" ptoRpm="1080" />
+
+<motorized>
+		<consumerConfigurations>
+            <consumerConfiguration>
+                <consumer fillUnitIndex="2" usage="5"  fillType="diesel" />  <!-- usage is per hour at max load and max rpm -->
+            </consumerConfiguration>
+        </consumerConfigurations>
+	
+        <differentialConfigurations>
+            <differentialConfiguration>
+                <differentials>
+                    <differential torqueRatio="0.5" maxSpeedRatio="1.0" wheelIndex1="1" wheelIndex2="2" /> <!-- front left-right -->
+                </differentials>
+            </differentialConfiguration>
+        </differentialConfigurations>
+
+        <motorConfigurations>
+            <motorConfiguration name="F32 MNSX 00" hp="101" price="0">
+                <motor torqueScale="0.445" minRpm="850" maxRpm="2200" maxForwardSpeed="5" maxBackwardSpeed="5" brakeForce="1" lowBrakeForceScale="0.22">
+                    <torque normRpm="0.45" torque="0.9"/>
+                    <torque normRpm="0.5"  torque="0.97"/>
+                    <torque normRpm="0.59" torque="1"/>
+                    <torque normRpm="0.72" torque="1"/>
+                    <torque normRpm="0.86" torque="0.88"/>
+                    <torque normRpm="1"    torque="0.72"/>
+                </motor>
+                <transmission minForwardGearRatio="145" maxForwardGearRatio="150" minBackwardGearRatio="145" maxBackwardGearRatio="150" />
+            </motorConfiguration>
+        </motorConfigurations>
+		
+		<exhaustFlap node="auspuffklappe" maxRot="-60"/>
+
+        <motorStartDuration>3000</motorStartDuration>
+    </motorized>
+	
+	<enterable isTabbable="true" >
+        <enterReferenceNode node="exitNode" />
+        <exitPoint node="exitNode" />
+
+        <cameras>
+            <camera node="outdoorCamera1" rotatable="true" rotateNode="outdoorCameraTarget" limit="true" useWorldXZRotation="true" rotMinX="-1.4" rotMaxX="1" transMin="8" transMax="40" />
+        </cameras>
+        <!--<enterAnimation name="enterAnimation"/>-->
+    </enterable>
+	
+	<drivable>
+        <sounds>
+        </sounds>
+    </drivable>
+	
+	<fillUnit>
+        <fillUnitConfigurations>
+            <fillUnitConfiguration>
+                <fillUnits>
+					<fillTrigger>
+                        <fillSound template="DEFAULT_REFUEL_SOUND" linkNode="Aggregat_main"/>
+                    </fillTrigger>
+					<fillUnit unitTextOverride="$l10n_unit_literShort" showOnHud="false" showInShop="false" fillTypes="WATER" capacity="250000" updateMass="false" startFillLevel="250000" startFillType="WATER" canBeUnloaded="false"/>
+					<fillUnit unitTextOverride="$l10n_unit_literShort" showOnHud="false" showInShop="false" fillTypes="diesel" capacity="450" canBeUnloaded="false" exactFillRootNode="Aggregat_main"/>
+                </fillUnits>
+            </fillUnitConfiguration>
+        </fillUnitConfigurations>
+    </fillUnit>
+	
+	<sprayer fillUnitIndex="1" allowsSpraying="false"/>
+	
+    <ai>
+        <agentAttachment width="2.5" height="2.25" length="4.0" lengthOffset="0" hasCollision="true"/>
+    </ai>
+
+    <attachable>
+        <inputAttacherJoints>
+            <inputAttacherJoint jointType="trailer" node="attacherJoint" attacherHeight="0.72"/>
+        </inputAttacherJoints>
+        <brakeForce force="0.55" maxForce="1.2" maxForceMass="12000"/>
+        <support animationName="moveSupport" />
+    </attachable>
+	
+	
+	<foldable>
+		<foldingConfigurations>
+			<foldingConfiguration>
+				<foldingParts startMoveDirection="1" posDirectionText="Transportmode" negDirectionText="Workmode">
+					<foldingPart animationName="folding" speedScale="1" />
+				</foldingParts>
+			</foldingConfiguration>
+		</foldingConfigurations>
+	</foldable>
+	
+	<animations>
+        <animation name="moveSupport" wheelIndices="3">
+            <part node="stuetzfuss" startTime="0" endTime="1" duration="1" startTrans="0.002 0.58 -1.541" endTrans="0.002 0.3 -1.541" />
+			<part node="kurbel_vorne" 	startTime="0" endTime="1" startRot="0 0 0" endRot="0 720 0" />
+        </animation>
+		<animation name="folding">
+            <part node="stuetzfuss_links" startTime="0" endTime="2" duration="1" startTrans="-0.612 0.177 0.962" endTrans="-0.612 0.49 0.962" />
+			<part node="kurbel_links" 	startTime="0" endTime="2" startRot="0 0 0" endRot="720 0 0" />
+			<part node="stuetzfuss_rechts" startTime="0" endTime="2" duration="1" startTrans="0.612 0.177 0.962" endTrans="0.612 0.49 0.962" />
+			<part node="kurbel_rechts" 	startTime="0" endTime="2" startRot="0 0 0" endRot="720 0 0" />
+			<part node="saugleitung" startTime="0"    endTime="0.00001" visibility="true" />
+            <part node="saugleitung" startTime="0.00001" endTime="0.25"  visibility="false" />
+        </animation>
+    </animations>
+	
+	<cylindered>
+        <movingTools>
+            <movingTool node="stuetzfuss" wheelIndices="3"/>
+        </movingTools>
+    </cylindered>
+	
+	<!-- BUILD 20:43 item 4: re-enabled. While this was commented out the only way to run
+	     the pump was to enter the cab and start the motor, because getIsPowered gates
+	     turn-on and nothing offered a turn-on surface. ScsPumpHoseConnection already
+	     accepts turn-on OR motor-started, so the enter+ignition path stays valid. -->
+	<turnOnVehicle turnOffIfNotAllowed="false" >
+        <sounds>
+            <work template="WOOD_CHIPPER_IDLE" linkNode="Aggregat_main" />
+        </sounds>
+    </turnOnVehicle>
+	
+    <foliageBending>
+        <bendingNode minX="-0.55" maxX="0.55" minZ="-1" maxZ="1" yOffset="0.4" />
+    </foliageBending>
+	
+	<tensionBeltObject>
+        <meshNodes>
+            <meshNode node="beltCol1"/>
+			<meshNode node="beltCol2"/>
+			<meshNode node="beltCol3"/>
+			<meshNode node="beltCol4"/>
+        </meshNodes>
+    </tensionBeltObject>
+<!--
+-->
+    <wearable wearDuration="480" workMultiplier="2" fieldMultiplier="2"/>
+
+    <pumpIdleSound>
+        <sounds>
+            <idle file="vehicles/irrigatorPlay/sounds/pump_engine_idle.ogg" linkNode="exhaustParticle" loops="0" innerRadius="25" outerRadius="160">
+                <volume indoor="1.00" outdoor="1.00"/>
+            </idle>
+        </sounds>
+    </pumpIdleSound>
+<i3dMappings>
+        <i3dMapping id="Aggregat_main" node="0>" />
+        <i3dMapping id="transform" node="0>0" />
+        <i3dMapping id="agregatt" node="0>0|0" />
+        <i3dMapping id="Decal" node="0>0|1" />
+        <i3dMapping id="support" node="0>0|2" />
+        <i3dMapping id="stuetzfuss" node="0>0|2|0" />
+        <i3dMapping id="stuetzplatte" node="0>0|2|0|0" />
+        <i3dMapping id="wheelFront" node="0>0|2|0|1" />
+        <i3dMapping id="wheelFrontDN" node="0>0|2|0|1|0" />
+        <i3dMapping id="kurbel_vorne" node="0>0|2|1" />
+        <i3dMapping id="workAnim" node="0>0|3" />
+        <i3dMapping id="stuetzfuss_links" node="0>0|3|0" />
+        <i3dMapping id="colSupport2" node="0>0|3|0|0" />
+        <i3dMapping id="colPartSupport2" node="0>0|3|0|0|0" />
+        <i3dMapping id="kurbel_links" node="0>0|3|1" />
+        <i3dMapping id="stuetzfuss_rechts" node="0>0|3|2" />
+        <i3dMapping id="colSupport3" node="0>0|3|2|0" />
+        <i3dMapping id="colPartSupport3" node="0>0|3|2|0|0" />
+        <i3dMapping id="kurbel_rechts" node="0>0|3|3" />
+        <i3dMapping id="saugleitung" node="0>0|3|4" />
+        <i3dMapping id="attacherJoint" node="0>0|4" />
+        <i3dMapping id="wheelLeftFront" node="0>0|5" />
+        <i3dMapping id="wheelRightFront" node="0>0|6" />
+        <i3dMapping id="exitNode" node="0>0|7" />
+        <i3dMapping id="cameras" node="0>0|8" />
+        <i3dMapping id="outdoorCameraTarget" node="0>0|8|0" />
+        <i3dMapping id="outdoorCamera1" node="0>0|8|0|0" />
+        <i3dMapping id="cameraRaycastNode1" node="0>0|8|1" />
+        <i3dMapping id="cameraRaycastNode2" node="0>0|8|2" />
+        <i3dMapping id="cameraRaycastNode3" node="0>0|8|3" />
+        <i3dMapping id="exhaustParticle" node="0>0|9" />
+        <i3dMapping id="auspuffklappe" node="0>0|10" />
+        <i3dMapping id="auspuffklappe_vis" node="0>0|10|0" />
+        <i3dMapping id="camera" node="0>0|11" />
+        <i3dMapping id="attacherJointBeregnung" node="0>0|12" />
+        <i3dMapping id="hoseJoint" node="0>0|13" />
+        <i3dMapping id="lights" node="0>0|14" />
+        <i3dMapping id="rearMultipointLight_03Left" node="0>0|14|0" />
+        <i3dMapping id="rearMultipointLight_03Right" node="0>0|14|1" />
+        <i3dMapping id="ai" node="0>0|15" />
+        <i3dMapping id="aiCollisionTrigger" node="0>0|15|0" />
+        <i3dMapping id="beltCollis" node="0>0|16" />
+        <i3dMapping id="beltCol1" node="0>0|16|0" />
+        <i3dMapping id="beltCol2" node="0>0|16|1" />
+        <i3dMapping id="beltCol3" node="0>0|16|2" />
+        <i3dMapping id="beltCol4" node="0>0|16|3" />
+	</i3dMappings>
+    <!-- BUILD 18:08 - SPS conduit embed. Inert without SPS: Giants ignores unknown
+         children of <vehicle>, and nothing in SCS reads this block. The pump station
+         semantics George asked for (transfer between chains) rather than a second
+         infinite field nurse. selfPowered is false because its only documented effect
+         is loading <sounds><engineLoop>, which this kit does not ship. -->
+    <slurryPipeSystem>
+        <nodeTree filename="i3d/sps_nodes_Aggregat.i3d"/>
+        <pump pumpType="conduit" selfPowered="false"/>
+        <flow litersPerSecond="120"/>
+        <pipeCouplings>
+            <pipeCoupling id="1" mountNodeName="SPS_pipeCouplerAgg01" valveType="MANUAL"
+                          flowDirection="BOTH" maxPipeLength="8.0" fillUnitIndex="1" connector="male"/>
+            <pipeCoupling id="2" mountNodeName="SPS_pipeCouplerAgg02" valveType="MANUAL"
+                          flowDirection="BOTH" maxPipeLength="8.0" fillUnitIndex="1" connector="male"/>
+        </pipeCouplings>
+    </slurryPipeSystem>
+</vehicle>

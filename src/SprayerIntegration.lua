@@ -40,6 +40,15 @@ function SprayerIntegration.overwrittenProcessSprayerArea(self, superFunc, workA
         return changedArea, totalArea
     end
 
+    -- Sector irrigators (Rainstar play kit) are watered by
+    -- IrrigatorSectorIntegration, which models the real pie sector. Letting the
+    -- rectangle work area ALSO credit moisture would double-count the same water.
+    if IrrigatorSectorIntegration ~= nil
+            and self.typeName ~= nil
+            and IrrigatorSectorIntegration.VEHICLE_TYPES[self.typeName] == true then
+        return changedArea, totalArea
+    end
+
     local spec = self.spec_sprayer
     if spec == nil or spec.workAreaParameters == nil then
         return changedArea, totalArea

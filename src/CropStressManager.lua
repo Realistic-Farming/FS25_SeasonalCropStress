@@ -236,6 +236,12 @@ function CropStressManager.new()
         self.autoDriveIntegration = makeNoop({"initialize","delete","enableAutoDriveMode","hourlyRefresh","isActive","getDestinationCount","getWaterDestinationCount","getCriticalAlertHint"})
     end
 
+    if IrrigatorSectorIntegration ~= nil then
+        self.irrigatorSectorIntegration = IrrigatorSectorIntegration.new(self)
+    else
+        csLog("WARNING: IrrigatorSectorIntegration class not loaded - check main.lua source() order")
+        self.irrigatorSectorIntegration = makeNoop({"initialize","delete","update"})
+    end
     if SprayerIntegration ~= nil then
         self.sprayerIntegration = SprayerIntegration.new(self)
     else
@@ -278,6 +284,7 @@ function CropStressManager:initialize()
     self.coursePlayIntegration:initialize()
     self.autoDriveIntegration:initialize()
     self.sprayerIntegration:initialize()
+    self.irrigatorSectorIntegration:initialize()
 
     -- Persistence handler
     self.saveLoad:initialize()
@@ -492,6 +499,13 @@ function CropStressManager:update(dt)
     -- Returns immediately when the queue is empty, which is the normal case.
     if g_server ~= nil and self.soilSystem ~= nil and self.soilSystem.updateMapSync ~= nil then
         self.soilSystem:updateMapSync()
+    end
+
+    -- Vehicle irrigator sector tick (server only; self-throttled to 500 ms).
+    -- Placed above the environment early-return so a nil environment cannot
+    -- silently stop irrigation while the rest of the mod carries on.
+    if self.irrigatorSectorIntegration ~= nil then
+        self.irrigatorSectorIntegration:update(dt)
     end
 
     local env = g_currentMission.environment
@@ -1078,6 +1092,7 @@ function CropStressManager:delete()
 
     -- Subsystem cleanup (reverse order of init)
     self.sprayerIntegration:delete()
+    self.irrigatorSectorIntegration:delete()
     self.autoDriveIntegration:delete()
     self.coursePlayIntegration:delete()
     self.soilFertilizerIntegration:delete()
