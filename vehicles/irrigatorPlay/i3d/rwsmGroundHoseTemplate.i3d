@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<i3D name="rwsmGroundHoseTemplate.i3d" version="1.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://i3d.giants.ch/schema/i3d-1.6.xsd">
+  <Asset>
+    <Export program="GIANTS Editor 64bit" version="10.0.12"/>
+  </Asset>
+  <Files>
+    <File fileId="21" filename="$data/shaders/vehicleShader.xml"/>
+    <File fileId="14" filename="$data/shared/default_normal.dds"/>
+    <File fileId="15" filename="$data/shared/default_specular.dds"/>
+    <File fileId="47" filename="$data/shared/detailLibrary/calibrated/calibratedPaint_specular.dds"/>
+    <File fileId="48" filename="$data/shared/detailLibrary/calibrated/calibratedPaint_normal.dds"/>
+    <File fileId="49" filename="$data/shared/detailLibrary/calibrated/calibratedPaint_diffuse.dds"/>
+  </Files>
+  <Materials>
+    <Material name="rwsmGroundHoseMaterial" materialId="98" diffuseColor="0.15 0.13 0.11 1" customShaderId="21">
+      <Normalmap fileId="14"/>
+      <Glossmap fileId="15"/>
+      <Custommap name="detailSpecular" fileId="47"/>
+      <Custommap name="detailNormal" fileId="48"/>
+      <Custommap name="detailDiffuse" fileId="49"/>
+      <CustomParameter name="colorScale" value="0 0 0"/>
+      <CustomParameter name="smoothnessScale" value="0"/>
+      <CustomParameter name="metalnessScale" value="0"/>
+      <CustomParameter name="dirtColor" value="0.22 0.17 0.11 0"/>
+    </Material>
+  </Materials>
+  <Shapes externalShapesFile="rwsmGroundHoseTemplate.i3d.shapes">
+  </Shapes>
+  <Scene>
+    <TransformGroup name="rwsmGroundHoseTemplateRoot" nodeId="1">
+      <Shape name="rwsmGroundHoseTemplate" shapeId="188" nodeId="2" clipDistance="700" castsShadows="true" receiveShadows="true" materialIds="98"/>
+    </TransformGroup>
+  </Scene>
+</i3D>
