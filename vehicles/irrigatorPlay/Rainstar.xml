@@ -321,7 +321,13 @@
         </effects>
     </sprayer>
 
-    <turnOnVehicle turnOffIfNotAllowed="false" turnedOnByAttacherVehicle="false" requiresMotorTurnOn="false" needsSelection="false">
+    <!-- BUILD 22:25: turnOffIfNotAllowed flipped to true. TurnOnVehicle:onUpdateTick
+         already turns a vehicle off under this flag when getCanBeTurnedOn goes false,
+         server-side and keyed on getIsPowered, so pulling the hose or stopping the pump
+         now stops the spray on Giants' own tick. No bespoke tick, nothing to fence
+         against thrash. turnedOnByAttacherVehicle stays false: the pump is the power
+         source, not the tow vehicle. -->
+    <turnOnVehicle turnOffIfNotAllowed="true" turnedOnByAttacherVehicle="false" requiresMotorTurnOn="false" needsSelection="false">
         <turnedOnAnimation name="sprayAnim" speedScale="1" turnOnFadeTime="0.05" turnOffFadeTime="0.15"/>
         <turnedOnAnimation name="regnerSweepAnim" speedScale="1" turnOnFadeTime="0.5" turnOffFadeTime="0.5"/>
         <sounds>

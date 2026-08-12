@@ -130,6 +130,14 @@ local function phWaterFillType()
     return nil
 end
 
+--- BUILD 22:25: phIsPumpRunning is a file local, and ScsRainstarPumpPower needs the
+--- same answer to decide whether the reel is powered. Exposed rather than duplicated, so
+--- there is one definition of "the pump is running" for the whole kit. Transfer logic
+--- untouched.
+function ScsPumpHoseConnection.getIsPumpRunning(pump)
+    return phIsPumpRunning(pump)
+end
+
 function ScsPumpHoseConnection.initSpecialization()
 end
 

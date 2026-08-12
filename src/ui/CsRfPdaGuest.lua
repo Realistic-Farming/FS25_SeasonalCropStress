@@ -394,8 +394,8 @@ function CsRfPdaGuest.buildNextStepLine(fieldId)
 end
 
 --- Owned-field rows for Esc content table (Wizard ruling: owned-only).
---- SCS fieldData keys are field ids; ownership is via field.farmland.id then
---- g_farmlandManager:getFarmlandOwner (same RfSoilFrame / Soil RfPda pattern).
+--- Keys are farmland ids (CropStressManager.fieldById / coveredFields contract).
+--- Rows are session farm patches (polygon edge-proximity), not raw field ids.
 --- Spectator (farmId nil/0) returns empty rows — never default to farm 1.
 ---@return table
 function CsRfPdaGuest.buildFieldRows()
@@ -432,39 +432,107 @@ function CsRfPdaGuest.buildFieldRows()
     local yesText = tr("cs_pda_irrigated_yes", "Yes")
     local noText = tr("cs_pda_irrigated_no", "No")
 
-    for fid, entry in pairs(soilSystem.fieldData) do
+    local ownedIds = {}
+    for fid, _ in pairs(soilSystem.fieldData) do
         local field = fieldById[fid]
         local fl = field and field.farmland
-        local farmlandId = fl and fl.id
+        local farmlandId = fl and fl.id or fid
         local owned = false
         if farmlandId ~= nil then
             owned = g_farmlandManager:getFarmlandOwner(farmlandId) == farmId
         end
-
         if owned then
-            local fti = field and field.fieldState and field.fieldState.fruitTypeIndex or 0
-            -- Certified getter, not the raw scalar: getMoisture returns the cell
-            -- aggregate once cells exist, so the column cannot go stale again.
-            local moisture = entry.moisture or 0
-            if type(soilSystem.getMoisture) == "function" then
-                local okM, mv = pcall(function() return soilSystem:getMoisture(fid) end)
-                if okM and type(mv) == "number" then moisture = mv end
+            ownedIds[#ownedIds + 1] = fid
+        end
+    end
+
+    local patchList = nil
+    if FarmPatchUtil ~= nil and type(FarmPatchUtil.buildPatches) == "function" then
+        local ok, result = pcall(function()
+            return FarmPatchUtil.buildPatches(ownedIds, {
+                fieldLookup = function(id) return fieldById[id] end,
+                useDensmapConfirm = true,
+                tr = tr,
+            })
+        end)
+        if ok then
+            patchList = result
+        end
+    end
+
+    local function moistureFor(fid, entry)
+        local moisture = (entry and entry.moisture) or 0
+        if type(soilSystem.getMoisture) == "function" then
+            local okM, mv = pcall(function() return soilSystem:getMoisture(fid) end)
+            if okM and type(mv) == "number" then moisture = mv end
+        end
+        return moisture
+    end
+
+    local function buildOneRow(patchId, members, label)
+        local minMoist = nil
+        local maxStress = 0
+        local anyIrrigated = false
+        local cropName = nil
+        local cropMixed = false
+        for _, fid in ipairs(members) do
+            local entry = soilSystem.fieldData[fid]
+            local moisture = moistureFor(fid, entry)
+            if minMoist == nil or moisture < minMoist then
+                minMoist = moisture
             end
             local stress = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
-            local irrigated = coveredFields[fid] == true
-            local statusText, statusColor = moistureStatus(moisture)
+            if type(mgr.getStress) == "function" then
+                local okS, sv = pcall(function() return mgr:getStress(fid) end)
+                if okS and type(sv) == "number" then stress = sv end
+            end
+            if stress > maxStress then maxStress = stress end
+            if coveredFields[fid] == true then
+                anyIrrigated = true
+            end
+            local field = fieldById[fid]
+            local fti = field and field.fieldState and field.fieldState.fruitTypeIndex or 0
+            local cn = getCropName(fti)
+            if cropName == nil then
+                cropName = cn
+            elseif cn ~= cropName and cn ~= "-" then
+                cropMixed = true
+            end
+        end
+        if minMoist == nil then minMoist = 0 end
+        local statusText, statusColor = moistureStatus(minMoist)
+        local displayCrop = cropMixed and tr("cs_rf_pda_crop_mixed", "Mixed") or (cropName or "-")
+        local displayLabel = label
+        if displayLabel == nil and FarmPatchUtil ~= nil then
+            displayLabel = FarmPatchUtil.formatPatchLabel(members, tr)
+        elseif displayLabel == nil then
+            displayLabel = string.format("%s %s", tr("cs_rf_pda_col_field", "Field"), tostring(patchId))
+        end
 
-            table.insert(rows, {
-                fieldId = fid,
-                fieldLabel = string.format("%s %s", tr("cs_rf_pda_col_field", "Field"), tostring(fid)),
-                cropName = getCropName(fti),
-                moistureText = string.format("%.0f%%", moisture * 100),
-                moistureColor = moistureColor(moisture),
-                stressText = string.format("%.0f%%", stress * 100),
-                irrigatedText = irrigated and yesText or noText,
-                statusText = statusText,
-                statusColor = statusColor,
-            })
+        table.insert(rows, {
+            fieldId = patchId,
+            memberFieldIds = members,
+            fieldLabel = displayLabel,
+            cropName = displayCrop,
+            moistureText = string.format("%.0f%%", minMoist * 100),
+            moistureColor = moistureColor(minMoist),
+            stressText = string.format("%.0f%%", maxStress * 100),
+            irrigatedText = anyIrrigated and yesText or noText,
+            statusText = statusText,
+            statusColor = statusColor,
+            _minMoisture = minMoist,
+            _maxStress = maxStress,
+        })
+    end
+
+    if patchList ~= nil and #patchList > 0 then
+        for _, patch in ipairs(patchList) do
+            local members = patch.memberFieldIds or { patch.patchId }
+            buildOneRow(patch.patchId, members, patch.label)
+        end
+    else
+        for _, fid in ipairs(ownedIds) do
+            buildOneRow(fid, { fid }, nil)
         end
     end
 
@@ -543,7 +611,7 @@ local function coveringSystems(mgr, fieldId)
         if covered ~= nil then
             for i = 1, #covered do
                 if fieldIdEquals(covered[i], fieldId) then
-                    out[#out + 1] = { id = id, isActive = sys.isActive and true or false }
+                    out[#out + 1] = { id = id, isActive = sys.isActive and true or false, sys = sys }
                     break
                 end
             end
@@ -552,11 +620,53 @@ local function coveringSystems(mgr, fieldId)
     return out
 end
 
---- Deterministic pick per George section 2: prefer isActive, then lowest id.
---- Returns nil when nothing covers the field - the caller must NOT open a dialog,
---- because onOpenIrrigationDialog(nil) falls back to an unordered pairs() first-id.
-local function resolveSystemId(mgr, fieldId)
-    local cands = coveringSystems(mgr, fieldId)
+--- Union of covering systems across all patch member farmland ids (ordered by id).
+local function coveringSystemsForMembers(mgr, memberIds)
+    local byId = {}
+    local out = {}
+    for _, mid in ipairs(memberIds or {}) do
+        local cands = coveringSystems(mgr, mid)
+        for _, c in ipairs(cands) do
+            if not byId[c.id] then
+                byId[c.id] = true
+                out[#out + 1] = c
+            end
+        end
+    end
+    table.sort(out, function(a, b)
+        local na, nb = tonumber(a.id), tonumber(b.id)
+        if na ~= nil and nb ~= nil then return na < nb end
+        return tostring(a.id) < tostring(b.id)
+    end)
+    return out
+end
+
+--- Member subset of this patch that a given system covers.
+local function membersCoveredBySystem(sys, memberIds)
+    local hit = {}
+    if sys == nil or type(sys.coveredFields) ~= "table" then
+        return hit
+    end
+    for _, mid in ipairs(memberIds or {}) do
+        for i = 1, #sys.coveredFields do
+            if fieldIdEquals(sys.coveredFields[i], mid) then
+                hit[#hit + 1] = mid
+                break
+            end
+        end
+    end
+    table.sort(hit, function(a, b)
+        local na, nb = tonumber(a), tonumber(b)
+        if na ~= nil and nb ~= nil then return na < nb end
+        return tostring(a) < tostring(b)
+    end)
+    return hit
+end
+
+--- Deterministic pick when switcher is absent / single candidate.
+--- Prefer isActive, then lowest id. Returns nil when nothing covers.
+local function resolveSystemIdSilent(mgr, memberIds)
+    local cands = coveringSystemsForMembers(mgr, memberIds)
     if #cands == 0 then return nil end
     local active = {}
     for _, c in ipairs(cands) do
@@ -579,6 +689,148 @@ local function selectedFieldId(container)
     local rows = page.csFieldData or {}
     local e = page.csSelectedIndex ~= nil and rows[page.csSelectedIndex] or nil
     return e ~= nil and e.fieldId or nil
+end
+
+--- Resolve patch members for the current Esc selection.
+local function selectedMemberIds(container)
+    local page = getHostPage()
+    if page == nil then return nil end
+    local rows = page.csFieldData or {}
+    local entry = nil
+    if page.csSelectedFieldId ~= nil then
+        for _, row in ipairs(rows) do
+            if fieldIdEquals(row.fieldId, page.csSelectedFieldId) then
+                entry = row
+                break
+            end
+        end
+    end
+    if entry == nil and page.csSelectedIndex ~= nil then
+        entry = rows[page.csSelectedIndex]
+    end
+    if entry == nil then
+        local fid = selectedFieldId(container)
+        if fid == nil then return nil end
+        return { fid }
+    end
+    if entry.memberFieldIds ~= nil and #entry.memberFieldIds > 0 then
+        return entry.memberFieldIds
+    end
+    return { entry.fieldId }
+end
+
+--- Esc-bound system id: switcher selection when multi; auto when 0/1.
+--- George veto: no silent resolveSystemId when switcher is present (#cands > 1).
+local function selectedSystemId(container, mgr, memberIds)
+    local page = getHostPage()
+    local cands = coveringSystemsForMembers(mgr, memberIds)
+    if #cands == 0 then
+        if page ~= nil then page.csSelectedSystemId = nil end
+        return nil, cands
+    end
+    if #cands == 1 then
+        if page ~= nil then page.csSelectedSystemId = cands[1].id end
+        return cands[1].id, cands
+    end
+    -- Multi: require explicit page.csSelectedSystemId in the candidate set.
+    if page ~= nil and page.csSelectedSystemId ~= nil then
+        for _, c in ipairs(cands) do
+            if fieldIdEquals(c.id, page.csSelectedSystemId) then
+                return c.id, cands
+            end
+        end
+    end
+    -- First paint after select: seed to first ordered candidate (not silent active prefer).
+    -- Player sees that choice in the switcher; arrows change it. Do not prefer isActive.
+    if page ~= nil then
+        page.csSelectedSystemId = cands[1].id
+    end
+    return cands[1].id, cands
+end
+
+--- Pivot switcher MultiTextOption texts + visibility (detail card only).
+local function refreshPivotSwitcher(container, mgr, memberIds, cands)
+    local page = getHostPage()
+    local sel = findDescendant(container, "csPivotSwitcher")
+    if sel == nil and page ~= nil then
+        sel = page.csPivotSwitcher
+    end
+    if sel == nil then
+        return
+    end
+
+    cands = cands or coveringSystemsForMembers(mgr, memberIds)
+    if #cands <= 1 then
+        if sel.setVisible then sel:setVisible(false) end
+        return
+    end
+
+    local texts = {}
+    local state = 1
+    local selectedId = page ~= nil and page.csSelectedSystemId or nil
+    for i, c in ipairs(cands) do
+        local irr = mgr ~= nil and mgr.irrigationManager or nil
+        local sys = (irr ~= nil and irr.systems ~= nil) and irr.systems[c.id] or c.sys
+        local subset = membersCoveredBySystem(sys, memberIds)
+        local subsetText
+        if FarmPatchUtil ~= nil and FarmPatchUtil.formatFieldIdSubset ~= nil then
+            subsetText = FarmPatchUtil.formatFieldIdSubset(subset)
+        else
+            local parts = {}
+            for _, id in ipairs(subset) do parts[#parts + 1] = tostring(id) end
+            subsetText = table.concat(parts, ", ")
+        end
+        local tpl = tr("cs_rf_pda_pivot_switch", "Pivot %s · covers %s of this block")
+        local ok, label = pcall(string.format, tpl, tostring(c.id), subsetText)
+        texts[i] = ok and label or string.format("Pivot %s · covers %s of this block", tostring(c.id), subsetText)
+        if selectedId ~= nil and fieldIdEquals(c.id, selectedId) then
+            state = i
+        end
+    end
+
+    if sel.setVisible then sel:setVisible(true) end
+    if sel.setTexts then sel:setTexts(texts) end
+    sel.disableButtonsOnSingleText = false
+    if sel.setState then
+        pcall(function() sel:setState(state, true) end)
+    end
+    if page ~= nil then
+        page._csPivotCandIds = {}
+        for i, c in ipairs(cands) do
+            page._csPivotCandIds[i] = c.id
+        end
+    end
+end
+
+-- Forward declare: defined later; Esc switcher click refreshes pivot card only.
+local updatePivotCard
+
+--- Host callback: MultiTextOption arrows changed pivot selection (no list reload).
+function CsRfPdaGuest.onPivotSwitcherChanged(container)
+    local page = getHostPage()
+    local sel = findDescendant(container, "csPivotSwitcher")
+    if sel == nil and page ~= nil then
+        sel = page.csPivotSwitcher
+    end
+    if page == nil or sel == nil then
+        return
+    end
+    local state = 1
+    if sel.getState then
+        local ok, s = pcall(function() return sel:getState() end)
+        if ok and type(s) == "number" then state = s end
+    end
+    local ids = page._csPivotCandIds or {}
+    local sysId = ids[state]
+    if sysId == nil then
+        return
+    end
+    page.csSelectedSystemId = sysId
+    -- Light detail/pivot refresh only — never SmoothList reloadData (George hang fence).
+    if updatePivotCard ~= nil then
+        updatePivotCard(container, page.csSelectedFieldId)
+    end
+    CsRfPdaGuest.refreshActionButtons(container, page.csSelectedFieldId)
 end
 
 
@@ -887,8 +1139,8 @@ end
 function CsRfPdaGuest.onOpenSchedule(container)
     local mgr = getMgr()
     if mgr == nil or type(mgr.onOpenIrrigationDialog) ~= "function" then return end
-    local fieldId = selectedFieldId(container)
-    local sysId = resolveSystemId(mgr, fieldId)
+    local members = selectedMemberIds(container)
+    local sysId = select(1, selectedSystemId(container, mgr, members))
     if sysId == nil then
         -- 0 covering systems: honest no-open. The strip already carries the copy.
         return
@@ -930,7 +1182,11 @@ function CsRfPdaGuest.refreshActionButtons(container, fieldId)
     end
 
     local mgr = getMgr()
-    local covered = (fieldId ~= nil) and (#coveringSystems(mgr, fieldId) > 0) or false
+    local members = selectedMemberIds(container)
+    if (members == nil or #members == 0) and fieldId ~= nil then
+        members = { fieldId }
+    end
+    local covered = (members ~= nil) and (#coveringSystemsForMembers(mgr, members) > 0) or false
     if schedBtn ~= nil then
         if schedBtn.setText then schedBtn:setText(tr("cs_rf_pda_pivot_btn_schedule", "Schedule")) end
         if schedBtn.setVisible then schedBtn:setVisible(true) end
@@ -1395,7 +1651,7 @@ local function applyDialFace(container)
     end
 end
 
-local function updatePivotCard(container, fieldId)
+updatePivotCard = function(container, fieldId)
     local card = findDescendant(container, "csPivotCard")
     if card == nil then
         return
@@ -1405,7 +1661,12 @@ local function updatePivotCard(container, fieldId)
     if card.setVisible then card:setVisible(true) end
 
     local mgr = getMgr()
-    local sysId = resolveSystemId(mgr, fieldId)
+    local members = selectedMemberIds(container)
+    if (members == nil or #members == 0) and fieldId ~= nil then
+        members = { fieldId }
+    end
+    local sysId, cands = selectedSystemId(container, mgr, members)
+    refreshPivotSwitcher(container, mgr, members, cands)
     local irr = mgr ~= nil and mgr.irrigationManager or nil
     local sys = (irr ~= nil and irr.systems ~= nil and sysId ~= nil) and irr.systems[sysId] or nil
     local placeable = sysId ~= nil and resolvePlaceableById(sysId) or nil
@@ -1650,7 +1911,11 @@ function CsRfPdaGuest.onPivotRemote(container, actionToken)
     end
     local fieldId = selectedFieldId(container)
     local mgr = getMgr()
-    local sysId = resolveSystemId(mgr, fieldId)
+    local members = selectedMemberIds(container)
+    if (members == nil or #members == 0) and fieldId ~= nil then
+        members = { fieldId }
+    end
+    local sysId = select(1, selectedSystemId(container, mgr, members))
     if sysId == nil then
         print(string.format(
             "[CropStress] Esc pivot %s IGNORED: no system resolved for fieldId=%s",
@@ -1737,7 +2002,8 @@ local function updateDetailBand(container)
 
     local fieldId = entry.fieldId
     local mgr = getMgr()
-    local covered = isFieldCovered(fieldId)
+    local members = entry.memberFieldIds or { fieldId }
+    local covered = #coveringSystemsForMembers(mgr, members) > 0
 
     -- Line 1: Field (+ crop when known)
     if fieldEl and fieldEl.setText then
