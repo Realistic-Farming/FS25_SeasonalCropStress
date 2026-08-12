@@ -126,7 +126,13 @@ function CropStressNetworkSyncBridge._onReadState(arr)
         if existing ~= nil then
             existing.moisture = entry.moisture
         else
-            mgr.soilSystem.fieldData[fieldId] = { moisture = entry.moisture, soilType = "loamy" }
+            -- [SCS-036] NO soilType key: an absent key is detectable and the
+            -- backfill (enumerateFields) repairs it on the next rebuild. The
+            -- old "loamy" placeholder was the same string as a real answer, so
+            -- no code could tell them apart. The hourly loop already lands
+            -- missing classes on loam, so the join window behaves identically
+            -- to today and the first rebuild makes the value right.
+            mgr.soilSystem.fieldData[fieldId] = { moisture = entry.moisture }
         end
         mgr.stressModifier.fieldStress[fieldId] = fieldStress[fieldId] or 0.0
     end
