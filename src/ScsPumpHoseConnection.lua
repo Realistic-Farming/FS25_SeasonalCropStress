@@ -732,36 +732,6 @@ function ScsPumpHoseConnection.externalPumpUpdate(data, vehicle)
     g_inputBinding:setActionEventActive(data.actionEventId, true)
 end
 
-function ScsPumpHoseConnection.externalHoseRegister(data, vehicle)
-    local action = InputAction.ACTIVATE_OBJECT
-    if action == nil then
-        return
-    end
-    local function onAction(_, actionName, inputValue, callbackState, isAnalog)
-        ScsPumpHoseConnection.toggleHose(vehicle)
-        ScsPumpHoseConnection.externalHoseUpdate(data, vehicle)
-    end
-    local _, actionEventId = g_inputBinding:registerActionEvent(
-        action, data, onAction, false, true, false, true)
-    data.actionEventId = actionEventId
-    if actionEventId ~= nil then
-        g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_VERY_HIGH)
-        g_inputBinding:setActionEventTextVisibility(actionEventId, true)
-    end
-    ScsPumpHoseConnection.externalHoseUpdate(data, vehicle)
-end
-
-function ScsPumpHoseConnection.externalHoseUpdate(data, vehicle)
-    if data == nil or data.actionEventId == nil then
-        return
-    end
-    local active = ScsPumpHoseConnection.hoseOfferActive(vehicle)
-    g_inputBinding:setActionEventActive(data.actionEventId, active)
-    if active then
-        g_inputBinding:setActionEventText(data.actionEventId, ScsPumpHoseConnection.hoseActionText(vehicle))
-    end
-end
-
 -- Vanilla tryStartMotor brings the motor to STARTING. Leave-stop via getRequiresPower.
 function ScsPumpHoseConnection.updatePendingTurnOn(pump, dt)
     local spec = pump ~= nil and pump.spec_scsPumpHose or nil
@@ -925,4 +895,126 @@ function ScsPumpHoseConnection:onUpdateTick(dt, isActiveForInput, isActiveForInp
     end
 end
 
-print("[CropStress] ScsPumpHoseConnection loaded (BUILD 17:16 EVC pump+hose)")
+print("[CropStress] ScsPumpHoseConnection loaded (BUILD 21:42 hose world R + EVC pump K)")
+
+-- ------------------------------------------------------------
+-- Walk-up hose Activatable (vanilla ACTIVATE_OBJECT / R). Hose only.
+-- Do not add a second ACTIVATE_OBJECT peer for Start/Stop.
+-- ------------------------------------------------------------
+
+ScsPumpHoseActivatable = {}
+local ScsPumpHoseActivatable_mt = Class(ScsPumpHoseActivatable)
+
+function ScsPumpHoseActivatable.new(vehicle)
+    local self = setmetatable({}, ScsPumpHoseActivatable_mt)
+    self.vehicle = vehicle
+    self.activateText = phTr("action_SCS_CONNECT_HOSE", "Connect hose")
+    return self
+end
+
+function ScsPumpHoseActivatable:updateActivateText()
+    local spec = self.vehicle ~= nil and self.vehicle.spec_scsPumpHose or nil
+    if spec ~= nil and spec.connected then
+        self.activateText = phTr("action_SCS_DISCONNECT_HOSE", "Disconnect hose")
+    else
+        self.activateText = phTr("action_SCS_CONNECT_HOSE", "Connect hose")
+    end
+    if self.actionEventId ~= nil then
+        g_inputBinding:setActionEventText(self.actionEventId, self.activateText)
+    end
+end
+
+function ScsPumpHoseActivatable:getIsActivatable()
+    local vehicle = self.vehicle
+    local spec = vehicle ~= nil and vehicle.spec_scsPumpHose or nil
+    if spec == nil then
+        return false
+    end
+
+    if g_localPlayer ~= nil and g_localPlayer.getCurrentVehicle ~= nil then
+        local ok, current = pcall(g_localPlayer.getCurrentVehicle, g_localPlayer)
+        if ok and current ~= nil then
+            return false
+        end
+    end
+
+    local partner = spec.connected and spec.partner or spec.candidate
+    if partner == nil then
+        return false
+    end
+    local dist = ScsPumpHoseConnection.getJointDistance(vehicle, partner)
+    if dist == nil or dist > ScsPumpHoseConnection.MAX_RANGE_M then
+        return false
+    end
+
+    local mission = g_currentMission
+    local aos = mission ~= nil and mission.activatableObjectsSystem or nil
+    if aos ~= nil and aos.posX ~= nil then
+        local playerDist = self:getDistance(aos.posX, aos.posY or 0, aos.posZ)
+        if playerDist >= math.huge then
+            return false
+        end
+    end
+
+    self:updateActivateText()
+    return true
+end
+
+function ScsPumpHoseActivatable:getDistance(x, y, z)
+    local vehicle = self.vehicle
+    local spec = vehicle ~= nil and vehicle.spec_scsPumpHose or nil
+    if spec == nil then
+        return math.huge
+    end
+    local partner = spec.connected and spec.partner or spec.candidate
+    local a = phResolveHoseJoint(vehicle)
+    local b = partner ~= nil and phResolveHoseJoint(partner) or nil
+    if a == nil then
+        return math.huge
+    end
+    local ax, ay, az = getWorldTranslation(a)
+    local mx, my, mz = ax, ay, az
+    if b ~= nil then
+        local bx, by, bz = getWorldTranslation(b)
+        mx = (ax + bx) * 0.5
+        my = (ay + by) * 0.5
+        mz = (az + bz) * 0.5
+    end
+    local d = phWorldDistance(x, y, z, mx, my, mz)
+    if d > ScsPumpHoseConnection.ACTIVATE_RANGE_M then
+        return math.huge
+    end
+    return d
+end
+
+function ScsPumpHoseActivatable:registerCustomInput(inputContext)
+    local _, actionEventId = g_inputBinding:registerActionEvent(
+        InputAction.ACTIVATE_OBJECT, self, self.run, false, true, false, true, nil, true, false)
+    g_inputBinding:setActionEventText(actionEventId, self.activateText)
+    g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_VERY_HIGH)
+    g_inputBinding:setActionEventTextVisibility(actionEventId, true)
+    self.actionEventId = actionEventId
+end
+
+function ScsPumpHoseActivatable:removeCustomInput()
+    g_inputBinding:removeActionEventsByTarget(self)
+    self.actionEventId = nil
+end
+
+function ScsPumpHoseActivatable:run()
+    local vehicle = self.vehicle
+    local spec = vehicle ~= nil and vehicle.spec_scsPumpHose or nil
+    if spec == nil then
+        return
+    end
+    if not vehicle.isServer then
+        return
+    end
+    if spec.connected then
+        vehicle:setScsHoseConnected(false)
+    else
+        vehicle:setScsHoseConnected(true)
+    end
+    self:updateActivateText()
+end
+

@@ -1,8 +1,9 @@
 -- =========================================================
 -- ScsRainstarPumpPower
 -- BUILD 22:25 - the EMP pump is the Rainstar's power source.
--- BUILD 17:16 - walk-up Turn on/off via ExternalVehicleControl
---              (scsToggleRainstar + SCS_TOGGLE_PUMP). Soft getIsPowered kept.
+-- BUILD 21:42 - walk-up Turn on/off via ExternalVehicleControl
+--              (scsToggleRainstar + SCS_TOGGLE_PUMP) on a dedicated
+--              controlTrigger Shape. Soft getIsPowered kept.
 --
 -- Why the reel demanded a tractor
 -- ------------------------------
@@ -35,27 +36,6 @@ local function rpTr(key, fallback)
     return fallback
 end
 
-local function rpEnsurePlayerTriggerFlag(node)
-    if node == nil or node == 0 then
-        return
-    end
-    if CollisionFlag == nil or CollisionFlag.PLAYER == nil then
-        return
-    end
-    if CollisionFlag.getHasMaskFlagSet ~= nil
-            and CollisionFlag.getHasMaskFlagSet(node, CollisionFlag.PLAYER) then
-        return
-    end
-    if getCollisionMask == nil or setCollisionMask == nil or bit32 == nil then
-        return
-    end
-    local ok, mask = pcall(getCollisionMask, node)
-    if not ok or mask == nil then
-        return
-    end
-    pcall(setCollisionMask, node, bit32.bor(mask, CollisionFlag.PLAYER))
-end
-
 function ScsRainstarPumpPower.prerequisitesPresent(specializations)
     return true
 end
@@ -71,11 +51,6 @@ function ScsRainstarPumpPower.registerEventListeners(vehicleType)
 end
 
 function ScsRainstarPumpPower:onLoad(savegame)
-    local triggerNode = I3DUtil.indexToObject(self.components, "RootCol", self.i3dMappings)
-    if triggerNode == nil and self.rootNode ~= nil then
-        triggerNode = self.rootNode
-    end
-    rpEnsurePlayerTriggerFlag(triggerNode)
     self.spec_scsRainstarPumpPower = self.spec_scsRainstarPumpPower or {}
 end
 
@@ -205,4 +180,4 @@ function ScsRainstarPumpPower.externalUpdate(data, vehicle)
     g_inputBinding:setActionEventActive(data.actionEventId, true)
 end
 
-print("[CropStress] ScsRainstarPumpPower loaded (BUILD 17:16 EVC turn-on)")
+print("[CropStress] ScsRainstarPumpPower loaded (BUILD 21:42 EVC controlTrigger)")
