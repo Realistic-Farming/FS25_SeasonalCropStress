@@ -1217,16 +1217,12 @@ function RWSM53AutoReel:onRegisterActionEvents(
         data.actionEvents
     )
 
-    -- With the hose-only pump connection, N belongs exclusively to the pump.
-    -- Registering the same action on both independent vehicles can toggle twice
-    -- in one key press (start + immediate stop), which looks like no reaction.
-    local virtualPump = self.rwsmVirtualPump
-    if virtualPump ~= nil and virtualPump.RPC ~= nil
-        and virtualPump.RPC.virtualHoseConnected == true
-        and virtualPump.RPC.virtualRainstar == self then
-        return
-    end
-
+    -- SCS vendor note: the Rainstar always registers N. The old guard handed N
+    -- to the pump whenever the hose was connected, but the suite-owned hose spec
+    -- never claimed it, so connecting the hose simply deleted the binding. The
+    -- pump now registers N as well (ScsPumpHoseConnection), and the double-toggle
+    -- the guard feared cannot happen: both are vehicle action events, and a
+    -- player can only be active for input in one vehicle at a time.
     if isActiveForInputIgnoreSelection then
         local _, actionEventId =
             self:addActionEvent(
