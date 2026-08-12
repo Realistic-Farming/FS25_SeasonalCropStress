@@ -92,10 +92,11 @@ end
 -- Water Source Registration
 -- ============================================================
 function IrrigationManager:registerWaterSource(placeable)
-    local x, _, z = getPlaceablePosition(placeable)
+    local x, y, z = getPlaceablePosition(placeable)
     self.waterSources[placeable.id] = {
         id           = placeable.id,
         x            = x,
+        y            = y,  -- SCS-038: the LIFT term's source height, read once at registration
         z            = z,
         hasWater     = true,  -- Phase 2: always true; Phase 4: could be finite
         flowCapacity = placeable.waterFlowCapacity or 1000,
@@ -138,7 +139,7 @@ end
 -- Irrigation System Registration
 -- ============================================================
 function IrrigationManager:registerIrrigationSystem(placeable)
-    local x, _, z = getPlaceablePosition(placeable)
+    local x, y, z = getPlaceablePosition(placeable)
     local coveredFields = self:detectCoveredFields(placeable, x, z)
 
     -- Find nearest water source within range
@@ -152,6 +153,7 @@ function IrrigationManager:registerIrrigationSystem(placeable)
         id                     = placeable.id,
         type                   = placeable.irrigationType or "pivot",
         x                      = x,
+        y                      = y,   -- SCS-038: the LIFT term's pivot height, read once at registration
         z                      = z,
         radius                 = placeable.radius or 200,
         endX                   = placeable.endX,
@@ -163,6 +165,7 @@ function IrrigationManager:registerIrrigationSystem(placeable)
         pressureMultiplier     = pressureMultiplier,
         flowRatePerHour        = placeable.flowRatePerHour or 0.018,
         operationalCostPerHour = placeable.operationalCostPerHour or 15,
+        liftCoeff              = placeable.liftCoeff or 0.0,
         schedule = {
             startHour  = placeable.defaultStartHour or 6,
             endHour    = placeable.defaultEndHour   or 10,
@@ -400,6 +403,45 @@ function IrrigationManager:hourlyScheduleCheck()
             self:deactivateSystem(id)
         end
     end
+end
+
+-- ============================================================
+-- SCS-038 THE PRICED DRAW
+-- Irrigation's operational cost varies with the water it actually draws.
+-- The effective rate is operationalCostPerHour / pressureMultiplier: at full
+-- pressure (1.0) the rate is exactly the XML number; a distant source costs
+-- more per effective hour because the pressure drop means less water moves
+-- for the same pump time. Nil when there is no source (which already means
+-- no run and no charge). SCS-024's held design consumes the same getter when
+-- it builds; neither edits the other.
+-- ============================================================
+
+--- The effective hourly cost of one irrigation system, in money per hour.
+--- nil when the system has no water source or no pressure (no run, no charge).
+---@param system table an entry of self.systems
+---@return number|nil
+function IrrigationManager:getEffectiveCostPerHour(system)
+    if system == nil then return nil end
+    if system.waterSourceId == nil or system.pressureMultiplier == nil or system.pressureMultiplier <= 0 then
+        return nil
+    end
+    local base = system.operationalCostPerHour or 0
+    if base <= 0 then return 0 end
+    local effCost = base / system.pressureMultiplier
+
+    -- SCS-038 ROUND-2 LIFT TERM, designed-in and NEUTRAL at 0.0: a pivot that
+    -- pumps uphill against the source spends more. effCost = base / pressure *
+    -- (1 + LIFT_COEFF * max(0, pivotY - sourceY) / 10). LIFT_COEFF is an XML
+    -- balance value defaulting to 0.0, so bit-for-bit round-1 until tuned.
+    local liftCoeff = system.liftCoeff or 0.0
+    if liftCoeff ~= 0.0 then
+        local source = self.waterSources and self.waterSources[system.waterSourceId]
+        local pivotY = system.y or 0
+        local sourceY = source and source.y or 0
+        local lift = 1.0 + liftCoeff * math.max(0, pivotY - sourceY) / 10
+        effCost = effCost * lift
+    end
+    return effCost
 end
 
 -- ============================================================
