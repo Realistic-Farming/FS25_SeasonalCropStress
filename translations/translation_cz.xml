@@ -465,5 +465,9 @@
     <text name="rf_farm_patch_block_list" text="Block · fields %s"/>
     <text name="rf_farm_patch_block_list_more" text="Block · fields %s +%d"/>
     <text name="rf_farm_patch_unknown" text="Field ?"/>
-</texts>
+        <!-- BUILD 11:27 F155 Esc RF button labels -->
+        <text name="wc_rf_pda_open_manager" text="Otevřít správce pracovníků" />
+        <text name="sf_pda_btn_rotation_planner" text="Plánovač osevního postupu" />
+        <text name="sf_pda_btn_field_detail" text="Detail pole" />
+    </texts>
 </l10n>
