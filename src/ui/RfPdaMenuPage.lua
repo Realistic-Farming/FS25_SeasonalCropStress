@@ -397,7 +397,6 @@ function RfPdaMenuPage:onGuiSetupFinished()
     self.csDetailNoCoverage = self:getDescendantById("csDetailNoCoverage") or self.csDetailNoCoverage
     self.csConsultPanel = self:getDescendantById("csConsultPanel") or self.csConsultPanel
     self.csPivotCard = self:getDescendantById("csPivotCard") or self.csPivotCard
-    self.csPivotSwitcher = self:getDescendantById("csPivotSwitcher") or self.csPivotSwitcher
     self.csAgronomistCard = self:getDescendantById("csAgronomistCard") or self.csAgronomistCard
     self.csFieldDetailCard = self:getDescendantById("csFieldDetailCard") or self.csFieldDetailCard
     self.mdGraphRegion = self:getDescendantById("mdGraphRegion") or self.mdGraphRegion
@@ -657,14 +656,24 @@ function RfPdaMenuPage:initialize()
             end
         end
     }
-    -- SPACE (MENU_EXTRA_1): Crop Stress consultant is secondary only — never default home.
-    -- EXTRA_1 free on CS (Help is Soil-only). SmoothList would swallow MENU_ACTIVATE.
+    -- Dead candidate: Crop Stress consultant footer chip. Kept constructed so stale
+    -- bindings resolve; never assigned to menuButtonInfo (table-hide path VETO).
     self.btnCsConsultant = {
         inputAction = InputAction.MENU_EXTRA_1,
         showWhenPaused = true,
         text = tr("cs_rf_pda_btn_consultant", "Crop consultant"),
         callback = function()
             self:onClickCsConsultant()
+        end
+    }
+    -- CS footer Help (MENU_EXTRA_1). Soft-detects guest onOpenHelp → CsHelpDialog.
+    -- Do not reuse Soil btnHelp (wrong dialog content).
+    self.btnHelpCs = {
+        inputAction = InputAction.MENU_EXTRA_1,
+        showWhenPaused = true,
+        text = tr("cs_pda_btn_help", "Help"),
+        callback = function()
+            self:onClickHelpCs()
         end
     }
 
@@ -1126,9 +1135,6 @@ function RfPdaMenuPage:refreshPanelSelector(forceRebuildDots)
         -- Module SmoothList: only when panel set actually changes or forced open.
         if (forceRebuildDots or setChanged) and self.moduleList then
             self.moduleList:reloadData()
-        elseif self.moduleList then
-            -- Quiet radio paint (lit iconBg + name) without thrash reload.
-            self:_paintModuleListSelection()
         end
     end)
     self._refreshing = false
@@ -1688,10 +1694,12 @@ function RfPdaMenuPage:_syncHostGuestChrome(activeId)
     elseif isWc and self.btnOpenWorkerManager ~= nil then
         self.menuButtonInfo = { self.btnBack, self.btnOpenWorkerManager }
     elseif isCs then
-        -- BUILD 18:48: SPACE no longer swaps panes. The consultant button owned the
-        -- table-hiding path, so it comes off the CS footer entirely rather than being
-        -- left pointing at a no-op the player can still press.
-        self.menuButtonInfo = { self.btnBack }
+        -- BUILD Help restore 2026-08-12: Back + Help. Consultant chip stays off footer.
+        self.menuButtonInfo = { self.btnBack, self.btnHelpCs }
+        local trFn = self._rfTr
+        if type(trFn) == "function" and self.btnHelpCs ~= nil then
+            self.btnHelpCs.text = trFn("cs_pda_btn_help", "Help")
+        end
     elseif isSoil then
         -- BUILD 18:52: Rotation Planner and Field Detail come off the Soil footer.
         -- Both dialogs stay registered and still open from the PDA/joiner; only the
@@ -2216,6 +2224,21 @@ function RfPdaMenuPage:onClickCsConsultant()
     return
 end
 
+--- Esc CS Help → guest onOpenHelp → CsHelpDialog (inside SCS env). Never bare CsDialogLoader.
+function RfPdaMenuPage:onClickHelpCs()
+    local host = self:_getHost()
+    local active = host and host:getActivePanel()
+    if active ~= nil and type(active.onOpenHelp) == "function" then
+        pcall(active.onOpenHelp, self.rfHostPlaceholder)
+        return
+    end
+    local csGuest = (type(mdResolve) == "function")
+            and mdResolve(CsRfPdaGuest, "CsRfPdaGuest") or CsRfPdaGuest
+    if csGuest ~= nil and type(csGuest.onOpenHelp) == "function" then
+        pcall(csGuest.onOpenHelp, self.rfHostPlaceholder)
+    end
+end
+
 function RfPdaMenuPage:_csPageSel()
     return self.csSubnavSelector
 end
@@ -2392,18 +2415,6 @@ function RfPdaMenuPage:onClickCsSchedule()
     local active = host and host:getActivePanel()
     if active ~= nil and type(active.onOpenSchedule) == "function" then
         pcall(active.onOpenSchedule, self.rfHostPlaceholder)
-    end
-end
-
-function RfPdaMenuPage:onClickCsPivotSwitcher()
-    local host = self:_getHost()
-    local active = host and host:getActivePanel()
-    if active ~= nil and type(active.onPivotSwitcherChanged) == "function" then
-        pcall(active.onPivotSwitcherChanged, self.rfHostPlaceholder)
-        return
-    end
-    if CsRfPdaGuest ~= nil and type(CsRfPdaGuest.onPivotSwitcherChanged) == "function" then
-        pcall(CsRfPdaGuest.onPivotSwitcherChanged, self.rfHostPlaceholder)
     end
 end
 
@@ -2748,19 +2759,14 @@ end
 function RfPdaMenuPage:_populateModuleRow(index, cell)
     local panel = self._panelCache[index]
     if panel == nil then return end
-    -- BUILD 22:25 Map-family rows: name = title; iconBg = radio lit plate.
-    local titleEl = cell:getDescendantByName("name")
-            or cell:getDescendantByName("moduleRowTitle")
-    local iconBg = cell:getDescendantByName("iconBg")
-    local icon = cell:getDescendantByName("icon")
+    local titleEl = cell:getDescendantByName("moduleRowTitle")
     local tagEl = cell:getDescendantByName("moduleRowTag")
     local short = safePanelTitle(panel)
     if panel.id == "soilFertilizer" then
         short = tr("rf_pda_module_soil_short", "Soil")
     end
     if titleEl then titleEl:setText(short) end
-    if tagEl and tagEl.setText then
-        -- Legacy compact-row tag (retired Map anatomy); keep nil-safe if old XML binds.
+    if tagEl then
         if panel.id == "soilFertilizer" then
             tagEl:setText(tr("rf_pda_module_tag_host", "open"))
         else
@@ -2771,40 +2777,6 @@ function RfPdaMenuPage:_populateModuleRow(index, cell)
     local selected = host and host.activeModuleId == panel.id
     if titleEl and titleEl.setTextColor then
         titleEl:setTextColor(unpack(selected and COLOR_LIME_BRIGHT or COLOR_DIM))
-    end
-    -- Radio plate: Map iconBg lit = white overlay; unlit = black (one lit at a time).
-    if iconBg ~= nil and iconBg.setImageColor then
-        if selected then
-            iconBg:setImageColor(1, 1, 1, 1)
-        else
-            iconBg:setImageColor(0, 0, 0, 1)
-        end
-    end
-    -- Icon slot stays blank.png (never nil → purple); no per-module art this pass.
-    if icon ~= nil then
-        if (icon.filename == nil or icon.filename == "") and icon.setImageFilename then
-            pcall(function()
-                icon:setImageFilename("$dataS/menu/blank.png")
-            end)
-        end
-        if icon.setImageColor then
-            icon:setImageColor(0, 0, 0, 0)
-        end
-    end
-end
-
---- Light-only: re-paint visible module cells for radio lit/dim without reloadData.
-function RfPdaMenuPage:_paintModuleListSelection()
-    local list = self.moduleList
-    if list == nil then return end
-    local elements = list.elements
-    if type(elements) ~= "table" then return end
-    for i = 1, #elements do
-        local cell = elements[i]
-        local idx = cell and cell.rowDataIndex
-        if type(idx) == "number" and idx > 0 then
-            self:_populateModuleRow(idx, cell)
-        end
     end
 end
 
@@ -2823,7 +2795,6 @@ function RfPdaMenuPage:onListSelectionChanged(list, section, index)
         if entry ~= nil then
             self.csSelectedIndex = index
             self.csSelectedFieldId = entry.fieldId
-            self.csSelectedSystemId = nil -- re-seed switcher for new patch
             self:_refreshGuestDetail()
         end
     elseif list == self.mdCommodityList and index ~= nil and index > 0 then
@@ -2901,7 +2872,6 @@ function RfPdaMenuPage:onClickCsFieldRow(element)
     if entry == nil then return end
     self.csSelectedIndex = index
     self.csSelectedFieldId = entry.fieldId
-    self.csSelectedSystemId = nil -- re-seed switcher for new patch
     if self.csFieldOverviewList and self.csFieldOverviewList.setSelectedIndex then
         pcall(function() self.csFieldOverviewList:setSelectedIndex(index) end)
     end

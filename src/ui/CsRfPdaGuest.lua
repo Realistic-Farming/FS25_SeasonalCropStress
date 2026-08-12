@@ -1161,24 +1161,36 @@ function CsRfPdaGuest.onOpenSchedule(container)
     end
 end
 
---- Button chrome for the CS module: consultant toggle always; Schedule lives on
---- the PIVOT card (enabled only when a covering system exists).
+--- Esc Help → CsHelpDialog (SCS env only). Never call CsDialogLoader from a Soil-hosted door.
+function CsRfPdaGuest.onOpenHelp(container)
+    if CsDialogLoader == nil or type(CsDialogLoader.show) ~= "function" then
+        return
+    end
+    pcall(function()
+        CsDialogLoader.show("CsHelpDialog")
+    end)
+    -- MessageDialog close can leave focus on the dismissed dialog; re-assert pivot/table.
+    local dlg = g_gui ~= nil and g_gui.currentGuiName ~= nil and g_gui.currentGui or nil
+    if dlg ~= nil and dlg._csRfHelpReturnFocusWired ~= true and type(dlg.onClose) == "function" then
+        dlg._csRfHelpReturnFocusWired = true
+        local prevClose = dlg.onClose
+        function dlg:onClose(...)
+            prevClose(self, ...)
+            pcall(refocusPivotAfterDialog, container)
+        end
+    end
+end
+
+--- Button chrome for the CS module: consultant activate chip stays hidden (XML default);
+--- Schedule lives on the PIVOT card (enabled only when a covering system exists).
 function CsRfPdaGuest.refreshActionButtons(container, fieldId)
     local consultBtn = findDescendant(container, "csBtnConsultant")
     local schedBtn   = findDescendant(container, "csBtnSchedule")
     local noCovEl    = findDescendant(container, "csDetailNoCoverage")
-    local page = getHostPage()
 
-    if consultBtn ~= nil then
-        -- Destination label: table home → Crop consultant; overlay → Field list.
-        if consultBtn.setText then
-            if page ~= nil and page._csConsultOpen then
-                consultBtn:setText(tr("cs_rf_pda_btn_field_list", "Field list"))
-            else
-                consultBtn:setText(tr("cs_rf_pda_btn_consultant", "Crop consultant"))
-            end
-        end
-        if consultBtn.setVisible then consultBtn:setVisible(true) end
+    -- BUILD Help restore 2026-08-12: never re-paint the SPACE Crop consultant chip.
+    if consultBtn ~= nil and consultBtn.setVisible then
+        consultBtn:setVisible(false)
     end
 
     local mgr = getMgr()
@@ -2312,6 +2324,7 @@ function CsRfPdaGuest.tryRegister()
             onOpenConsultant = CsRfPdaGuest.onOpenConsultant,
             onPaintConsultant = CsRfPdaGuest.onPaintConsultant,
             onOpenSchedule = CsRfPdaGuest.onOpenSchedule,
+            onOpenHelp = CsRfPdaGuest.onOpenHelp,
             onPivotRemote = CsRfPdaGuest.onPivotRemote,
             onHide = CsRfPdaGuest.onHide,
         })
