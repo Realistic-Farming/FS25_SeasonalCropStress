@@ -298,7 +298,8 @@
 	<powerConsumer ptoRpm="450" neededMinPtoPower="10" neededMaxPtoPower="10" />
 	
 	<workAreas>
-        <workArea type="sprayer" functionName="processSprayerArea" disableBackwards="false" requiresGroundContact="false" >
+        <!-- BUILD 17:16: owned-farmland default blocked WASHER on test ground. -->
+        <workArea type="sprayer" functionName="processSprayerArea" disableBackwards="false" requiresGroundContact="false" requiresOwnedFarmland="false" >
             <area startNode="workAreaStart" widthNode="workAreaWidth" heightNode="workAreaHeight" />
         </workArea>
     </workAreas>
@@ -330,6 +331,10 @@
     <turnOnVehicle turnOffIfNotAllowed="true" turnedOnByAttacherVehicle="false" requiresMotorTurnOn="false" needsSelection="false">
         <turnedOnAnimation name="sprayAnim" speedScale="1" turnOnFadeTime="0.05" turnOffFadeTime="0.15"/>
         <turnedOnAnimation name="regnerSweepAnim" speedScale="1" turnOnFadeTime="0.5" turnOffFadeTime="0.5"/>
+        <!-- BUILD 17:16: belt WASHER on TurnOn so gun water shows even if sprayer workArea is quiet. -->
+        <effects>
+            <effectNode effectNode="effectMesh" materialType="WASHER" materialTypeId="1" delay="0" fadeTime="0.15"/>
+        </effects>
         <sounds>
             <start file="vehicles/irrigatorPlay/sounds/sprinkler_start.ogg" linkNode="PendelCol" innerRadius="8" outerRadius="85">
                 <volume indoor="0.25" outdoor="0.9"/>
@@ -342,6 +347,13 @@
             </stop>
         </sounds>
     </turnOnVehicle>
+
+	<!-- BUILD 17:16: walk-up Turn on/off Rainstar (SCS_TOGGLE_PUMP). Soft getIsPowered stays in ScsRainstarPumpPower. -->
+	<externalVehicleControl>
+		<trigger node="RootCol">
+			<function name="scsToggleRainstar"/>
+		</trigger>
+	</externalVehicleControl>
 	
 	<tensionBeltObject>
         <meshNodes>

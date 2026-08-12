@@ -352,5 +352,13 @@
         <text name="wc_rf_pda_open_manager" text="Mở trình quản lý công nhân" />
         <text name="sf_pda_btn_rotation_planner" text="Lập kế hoạch luân canh" />
         <text name="sf_pda_btn_field_detail" text="Chi tiết thửa ruộng" />
+    <text name="action_SCS_START_PUMP" text="Start pump"/>
+    <text name="action_SCS_STARTING_PUMP" text="Đang khởi động bơm…"/>
+    <text name="action_SCS_STOP_PUMP" text="Stop pump"/>
+    <text name="input_SCS_TOGGLE_PUMP" text="Start / Stop pump (or Rainstar)"/>
+    <text name="action_SCS_TURN_ON_RAINSTAR" text="Turn on Rainstar"/>
+    <text name="action_SCS_TURN_OFF_RAINSTAR" text="Turn off Rainstar"/>
+    <text name="warning_SCS_RAINSTAR_NEED_HOSE_PUMP" text="Connect hose and start pump first"/>
+    <text name="warning_SCS_EMP_OUT_OF_WATER" text="EMP out of water"/>
 </texts>
 </l10n>

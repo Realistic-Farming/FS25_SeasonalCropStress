@@ -219,6 +219,16 @@
             <work template="WOOD_CHIPPER_IDLE" linkNode="Aggregat_main" />
         </sounds>
     </turnOnVehicle>
+
+	<!-- BUILD 17:16: one EVC activatable registers Start/Stop pump + Connect/Disconnect hose
+	     as two InputActions (no dual ACTIVATE_OBJECT fight). PLAYER flag is OR'd onto
+	     Aggregat_main at runtime before this trigger binds. -->
+	<externalVehicleControl>
+		<trigger node="Aggregat_main">
+			<function name="scsTogglePump"/>
+			<function name="scsHose"/>
+		</trigger>
+	</externalVehicleControl>
 	
     <foliageBending>
         <bendingNode minX="-0.55" maxX="0.55" minZ="-1" maxZ="1" yOffset="0.4" />
