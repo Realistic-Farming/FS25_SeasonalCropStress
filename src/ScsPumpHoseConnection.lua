@@ -25,6 +25,11 @@ ScsPumpHoseConnection.HOSE_SHAPE_NAME = "rwsmGroundHoseTemplate"
 ScsPumpHoseConnection.HOSE_TEMPLATE_LENGTH = 0.5
 ScsPumpHoseConnection.HOSE_SEGMENTS = 3
 ScsPumpHoseConnection.SAG_M = 0.35
+-- The sag is applied to a straight line between two joints that both sit low on
+-- their machines. On level or rising ground the middle of that curve ends up
+-- under the terrain, which is the hose disappearing into the map. Every point is
+-- clamped to at least this far above the ground.
+ScsPumpHoseConnection.GROUND_CLEARANCE_M = 0.08
 
 local function phNormalizePath(path)
     return string.lower(string.gsub(tostring(path or ""), "\\", "/"))
@@ -58,6 +63,18 @@ end
 local function phWorldDistance(ax, ay, az, bx, by, bz)
     local dx, dy, dz = bx - ax, by - ay, bz - az
     return math.sqrt(dx * dx + dy * dy + dz * dz)
+end
+
+local function phGroundHeight(x, z)
+    local terrainNode = g_currentMission ~= nil and g_currentMission.terrainRootNode or g_terrainNode
+    if terrainNode == nil or getTerrainHeightAtWorldPos == nil then
+        return nil
+    end
+    local ok, height = pcall(getTerrainHeightAtWorldPos, terrainNode, x, 0, z)
+    if not ok then
+        return nil
+    end
+    return tonumber(height)
 end
 
 local function phFindNodeByName(node, wantedName)
@@ -103,18 +120,28 @@ local function phIsPumpRunning(pump)
     if pump.spec_turnOnVehicle ~= nil and pump.spec_turnOnVehicle.isTurnedOn == true then
         return true
     end
-    -- Aggregat ships motorized with turnOnVehicle XML commented out; motor start
-    -- is the player-facing "start the pump" gate for this kit.
-    if pump.getIsMotorStarted ~= nil then
-        local ok, value = pcall(pump.getIsMotorStarted, pump)
-        if ok and value == true then
-            return true
-        end
-    end
-    if pump.spec_motorized ~= nil and pump.spec_motorized.isMotorStarted == true then
-        return true
-    end
+    -- A running diesel engine is NOT a running pump. The old motor-started fallback
+    -- here rested on a note that the Aggregat shipped with its turnOnVehicle block
+    -- commented out; it does not (Aggregat.xml:217). The fallback made the walk-up
+    -- prompt read "Stop pump" the moment the engine caught, so the player saw a pump
+    -- that claimed to be running while getIsTurnedOn stayed false, the reel gate kept
+    -- refusing, and pressing the prompt killed the engine instead of stopping a pump
+    -- that had never started. The reel gate and the water transfer both mean this
+    -- state, so this helper has to mean it too.
     return false
+end
+
+-- The connected Rainstar, but only when it actually carries the reel spec.
+local function phGetReelPartner(pump)
+    local spec = pump ~= nil and pump.spec_scsPumpHose or nil
+    if spec == nil or not spec.connected then
+        return nil
+    end
+    local partner = spec.partner
+    if partner == nil or partner.RAR == nil then
+        return nil
+    end
+    return partner
 end
 
 local function phWaterFillType()
@@ -148,6 +175,7 @@ function ScsPumpHoseConnection.registerEventListeners(vehicleType)
     SpecializationUtil.registerEventListener(vehicleType, "onDelete", ScsPumpHoseConnection)
     SpecializationUtil.registerEventListener(vehicleType, "onUpdate", ScsPumpHoseConnection)
     SpecializationUtil.registerEventListener(vehicleType, "onUpdateTick", ScsPumpHoseConnection)
+    SpecializationUtil.registerEventListener(vehicleType, "onRegisterActionEvents", ScsPumpHoseConnection)
 end
 
 function ScsPumpHoseConnection:onLoad(savegame)
@@ -168,6 +196,11 @@ function ScsPumpHoseConnection:onLoad(savegame)
     spec.hoseTemplate = nil
     spec.hoseSegments = {}
     spec.candidate = nil
+    spec.reelActionEvents = {}
+    -- Motor start is asynchronous: getIsPowered() is still false in the frame
+    -- tryStartMotor is called, so the turn-on has to be retried until it takes.
+    spec.pendingTurnOn = false
+    spec.pendingTurnOnTimer = 0
 
     -- Soft path for vendored parking brake / COBD (RPC.virtualHoseConnected).
     if self.RPC == nil then
@@ -413,6 +446,16 @@ function ScsPumpHoseConnection.updateHosePose(vehicle)
         -- Soft mid sag so the short supply hose does not read as a rigid rod.
         local sagFactor = 4 * t * (1 - t)
         y = y - ScsPumpHoseConnection.SAG_M * sagFactor
+        -- A sagging hose lies on the ground, it does not sink through it. Only the
+        -- interior points are lifted: the two ends stay exactly on their couplings,
+        -- so a joint that sits below the sampled terrain height on a slope cannot
+        -- tear the hose visual off the machine it is plugged into.
+        if i > 0 and i < n then
+            local groundY = phGroundHeight(x, z)
+            if groundY ~= nil then
+                y = math.max(y, groundY + ScsPumpHoseConnection.GROUND_CLEARANCE_M)
+            end
+        end
         points[i + 1] = { x, y, z }
     end
 
@@ -484,6 +527,141 @@ function ScsPumpHoseConnection.transferWater(pump, dt)
     rainstar:addFillUnitFillLevel(farmId, fillUnit, actuallyDrained, waterIndex, toolType, nil)
 end
 
+-- ------------------------------------------------------------
+-- Reel toggle (N) on the pump side.
+--
+-- The vendored RWSM53AutoReel used to hand N to "the pump" whenever the hose was
+-- connected, but nothing on this side ever claimed it, so connecting the hose
+-- just deleted the binding. The Rainstar keeps its own N now; this is the second
+-- surface, so the reel can also be started from the machine the player is
+-- standing at when the hose goes on.
+-- ------------------------------------------------------------
+
+function ScsPumpHoseConnection:onRegisterActionEvents(isActiveForInput, isActiveForInputIgnoreSelection)
+    local spec = self.spec_scsPumpHose
+    if not self.isClient or spec == nil or InputAction.RWSM53_REEL_TOGGLE == nil then
+        return
+    end
+
+    self:clearActionEventsTable(spec.reelActionEvents)
+
+    if not isActiveForInputIgnoreSelection then
+        return
+    end
+
+    local _, actionEventId = self:addActionEvent(
+        spec.reelActionEvents,
+        InputAction.RWSM53_REEL_TOGGLE,
+        self,
+        ScsPumpHoseConnection.actionEventReelToggle,
+        false,
+        true,
+        false,
+        true,
+        nil
+    )
+
+    if actionEventId ~= nil then
+        g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+        -- Hidden until a Rainstar is actually on the hose.
+        g_inputBinding:setActionEventActive(actionEventId, false)
+    end
+end
+
+function ScsPumpHoseConnection.updateReelActionEvent(pump)
+    local spec = pump ~= nil and pump.spec_scsPumpHose or nil
+    local action = spec ~= nil and spec.reelActionEvents ~= nil
+        and spec.reelActionEvents[InputAction.RWSM53_REEL_TOGGLE] or nil
+    if action == nil or action.actionEventId == nil then
+        return
+    end
+
+    local partner = phGetReelPartner(pump)
+    g_inputBinding:setActionEventActive(action.actionEventId, partner ~= nil)
+    if partner ~= nil then
+        g_inputBinding:setActionEventText(action.actionEventId, g_i18n:getText(
+            partner.RAR.reelCommandActive
+                and "action_RAINSTAR_REEL_STOP"
+                or "action_RAINSTAR_REEL_START"))
+    end
+end
+
+function ScsPumpHoseConnection.actionEventReelToggle(self, actionName, inputValue, callbackState, isAnalog)
+    local partner = phGetReelPartner(self)
+    print(string.format(
+        "[CropStress] Reel toggle pressed from the pump (partner=%s, reelSpec=%s)",
+        tostring(partner ~= nil),
+        tostring(RWSM53AutoReel ~= nil and RWSM53AutoReel.toggleReel ~= nil)))
+    if partner == nil or RWSM53AutoReel == nil or RWSM53AutoReel.toggleReel == nil then
+        return
+    end
+    RWSM53AutoReel.toggleReel(partner)
+    ScsPumpHoseConnection.updateReelActionEvent(self)
+end
+
+-- Vanilla tryStartMotor only brings the motor to STARTING, and getCanBeTurnedOn
+-- resolves to getIsPowered(), which stays false until the motor has finished
+-- cranking. Turning on in the same frame therefore always declined silently: the
+-- walk-up prompt flipped to "Stop pump" while getIsTurnedOn() stayed false, so
+-- both the reel gate and the spray effect still read the pump as off.
+function ScsPumpHoseConnection.updatePendingTurnOn(pump, dt)
+    local spec = pump ~= nil and pump.spec_scsPumpHose or nil
+    if spec == nil or not spec.pendingTurnOn then
+        return
+    end
+
+    -- Give up if the player stopped the motor again while the start was pending.
+    local motorStarted = true
+    if pump.getIsMotorStarted ~= nil then
+        local ok, value = pcall(pump.getIsMotorStarted, pump)
+        motorStarted = (not ok) or (value == true)
+    end
+    if not motorStarted then
+        spec.pendingTurnOn = false
+        spec.pendingTurnOnTimer = 0
+        return
+    end
+
+    if pump.getIsTurnedOn ~= nil then
+        local ok, value = pcall(pump.getIsTurnedOn, pump)
+        if ok and value == true then
+            spec.pendingTurnOn = false
+            spec.pendingTurnOnTimer = 0
+            print("[CropStress] ScsPumpHose: pump turned on, reel gate is open")
+            return
+        end
+    end
+
+    -- The retry only runs while the pump is getting update ticks, and a pump
+    -- nobody is standing in can drop out of the active list mid-crank.
+    if pump.raiseActive ~= nil then
+        pcall(pump.raiseActive, pump)
+    end
+
+    spec.pendingTurnOnTimer = (spec.pendingTurnOnTimer or 0) + (tonumber(dt) or 0)
+    if spec.pendingTurnOnTimer > 15000 then
+        spec.pendingTurnOn = false
+        spec.pendingTurnOnTimer = 0
+        print("[CropStress] ScsPumpHose: pump turn-on timed out, motor never finished starting")
+        return
+    end
+
+    -- Wait for the motor to finish cranking, then set the state directly. This is
+    -- the walk-up equivalent of what the player does by hand: start the engine,
+    -- then press the turn-on binding. TurnOnVehicle:setIsTurnedOn carries no
+    -- precondition of its own (TurnOnVehicle.lua:282); getCanBeTurnedOn is a guard
+    -- the vanilla ACTION handler applies, and it resolves to getIsPowered, which is
+    -- still false mid-crank. Gating the retry on it was what kept the pump off.
+    local motorFinished = false
+    if pump.getIsMotorStarted ~= nil then
+        local ok, value = pcall(pump.getIsMotorStarted, pump)
+        motorFinished = ok and value == true
+    end
+    if motorFinished and pump.setIsTurnedOn ~= nil then
+        pcall(pump.setIsTurnedOn, pump, true)
+    end
+end
+
 function ScsPumpHoseConnection:onUpdate(dt, isActiveForInput, isActiveForInputIgnoreSelection, isSelected)
     local spec = self.spec_scsPumpHose
     if spec == nil then
@@ -515,6 +693,12 @@ function ScsPumpHoseConnection:onUpdateTick(dt, isActiveForInput, isActiveForInp
     local spec = self.spec_scsPumpHose
     if spec == nil then
         return
+    end
+
+    ScsPumpHoseConnection.updatePendingTurnOn(self, dt)
+
+    if self.isClient then
+        ScsPumpHoseConnection.updateReelActionEvent(self)
     end
 
     if self.isServer and spec.connected then
@@ -783,10 +967,15 @@ function ScsPumpStartActivatable:run()
     if vehicle == nil then
         return
     end
+    local spec = vehicle.spec_scsPumpHose
     local running = phIsPumpRunning(vehicle)
     if running then
         -- Turn-on off first, then stop the motor, so the hose spec sees a clean stop
         -- rather than a turned-on pump with a dead engine.
+        if spec ~= nil then
+            spec.pendingTurnOn = false
+            spec.pendingTurnOnTimer = 0
+        end
         if vehicle.setIsTurnedOn ~= nil then
             pcall(vehicle.setIsTurnedOn, vehicle, false)
         end
@@ -800,18 +989,20 @@ function ScsPumpStartActivatable:run()
         if Motorized ~= nil and type(Motorized.tryStartMotor) == "function" then
             pcall(Motorized.tryStartMotor, vehicle)
         end
-        -- getCanBeTurnedOn wants getIsPowered, which is false until the motor is at least
-        -- STARTING, so this is attempted after the start and is allowed to decline.
-        if vehicle.setIsTurnedOn ~= nil then
-            local canTurnOn = true
-            if vehicle.getCanBeTurnedOn ~= nil then
-                local ok, value = pcall(vehicle.getCanBeTurnedOn, vehicle)
-                canTurnOn = (not ok) or (value ~= false)
-            end
-            if canTurnOn then
-                pcall(vehicle.setIsTurnedOn, vehicle, true)
-            end
+        -- getCanBeTurnedOn resolves to getIsPowered, which is still false while the
+        -- motor is only STARTING. Arm the retry instead of firing one attempt that
+        -- always declines; ScsPumpHoseConnection.updatePendingTurnOn finishes the job
+        -- once the motor reports powered.
+        if spec ~= nil then
+            spec.pendingTurnOn = true
+            spec.pendingTurnOnTimer = 0
         end
+        -- Keep the pump scheduled so the retry actually gets update ticks while the
+        -- player is still standing outside it.
+        if vehicle.raiseActive ~= nil then
+            pcall(vehicle.raiseActive, vehicle)
+        end
+        ScsPumpHoseConnection.updatePendingTurnOn(vehicle, 0)
     end
     self:updateActivateText()
 end
