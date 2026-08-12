@@ -12,13 +12,9 @@
     <GuiElement profile="RF_PageRoot" id="rfPageRoot">
         <GuiElement profile="fs25_subCategorySelectorTabbedContainer" id="rfContentHost" absoluteSizeOffset="0px 0px">
 
-            <!-- Round 2 D2: opaque column fill painted FIRST (x 0..404, full height, behind nest/cards). -->
-            <Bitmap profile="RF_SideColUnderlay"/>
-
-            <!-- LEFT nest glass hidden (round 3): sidebar is one flat RF_SideColUnderlay tone.
-                 Element kept in tree for structure; no Lua re-shows it. -->
-            <ThreePartBitmap profile="RF_SubCategoryContainerBg" visible="false">
-                <Bitmap profile="fs25_subCategoryContainerArrow" visible="false"/>
+            <!-- BUILD 22:25: Map glass shell restored (463 + notch). Flat RF_SideColUnderlay retired. -->
+            <ThreePartBitmap profile="fs25_subCategoryContainerBg" id="rfSideGlass">
+                <Bitmap profile="fs25_subCategoryContainerArrow"/>
             </ThreePartBitmap>
 
             <Bitmap profile="fs25_subCategoryContainer" id="rfFilterBox">
@@ -35,7 +31,7 @@
                 <ThreePartBitmap profile="fs25_lineSeparatorTop" id="rfSideMidSeparator"
                                  position="8px -130px" width="380px" visible="false"/>
 
-                <!-- Soil/CS left info (George: inside rfFilterBox, BEFORE moduleList; Text + blank.png). -->
+                <!-- Soil/CS left info (George: inside rfFilterBox, BEFORE moduleList; glass-back InfoBoxBg). -->
                 <GuiElement profile="RF_SideInfoShell" id="rfSideInfoShell" visible="false" handleFocus="false">
                     <Bitmap profile="RF_InfoBoxBg" handleFocus="false"/>
                     <Text profile="RF_SideInfoBody" id="rfSideInfoBody" position="8px -8px" size="368px 644px"
@@ -46,14 +42,15 @@
                     <Text profile="fs25_textGrey" id="wcSideVersion" visible="false" text=""/>
                     <Bitmap profile="fs25_subCategoryStartClipper" name="rfModListStart"/>
                     <Bitmap profile="fs25_subCategoryStopClipper" name="rfModListEnd"/>
-                    <SmoothList id="moduleList" profile="fs25_subCategoryList"
+                    <!-- Hang fence: GuiElement parent. Map-family RF_MapList* clones (~56px radio rows). -->
+                    <SmoothList id="moduleList" profile="RF_MapList"
                                 startClipperElementName="rfModListStart"
                                 endClipperElementName="rfModListEnd">
-                        <!-- Compact rows (34px) so Soil stays clickable under taller side shell; not vanilla 100px items. -->
-                        <ListItem profile="RF_ModuleListRow" onClick="onClickModuleRow">
-                            <Bitmap profile="RF_ModuleRowBg" name="alternating"/>
-                            <Text profile="RF_ModuleItemText" name="moduleRowTitle"/>
-                            <Text profile="RF_ModuleItemTag" name="moduleRowTag"/>
+                        <ListItem profile="RF_MapListItem" onClick="onClickModuleRow">
+                            <Bitmap profile="RF_MapListItemIconBg" name="iconBg"/>
+                            <Bitmap profile="RF_MapListColorTemplate" name="colorTemplate"/>
+                            <Bitmap profile="RF_MapListItemIcon" name="icon"/>
+                            <Text profile="RF_MapListItemName" name="name"/>
                         </ListItem>
                     </SmoothList>
                     <ThreePartBitmap profile="fs25_subCategoryListSliderBox">
@@ -606,7 +603,13 @@
                         <!-- Pivot (red): full-width bottom band. Dial+status left; remotes across width.
                              Children stay inside 1130×240 (strip clipChildren=true). Prefer 80×32. -->
                         <GuiElement profile="RF_EscCardFrame" id="csPivotCard" position="10px -264px" size="1130px 240px">
-                            <Text profile="RF_ProductsTitle" id="csPivotTitle" position="10px -4px" size="1110px 18px" text=""/>
+                            <Text profile="RF_ProductsTitle" id="csPivotTitle" position="10px -4px" size="560px 18px" text=""/>
+                            <!-- Multi-pivot switcher (George GO: detail card only; no SmoothList thrash). -->
+                            <MultiTextOption profile="RF_CsPivotSwitcher" id="csPivotSwitcher"
+                                             position="580px -2px" size="540px 28px"
+                                             disableButtonsOnSingleText="false"
+                                             visible="false"
+                                             onClick="onClickCsPivotSwitcher"/>
                             <!-- Left band: dial + status. -->
                             <Bitmap profile="RF_CsPivotDialFace" id="csPivotDialFace" position="10px -28px" size="92px 92px"/>
                             <!-- BUILD 16:44d (Vera F1): inline size overrides the profile via loadFromXML, so the
