@@ -49,6 +49,7 @@ function DripIrrigationLine.onLoad(self, savegame)
     self.lineSpacing            = 0.8
     self.flowRatePerHour        = 0.012
     self.operationalCostPerHour = 8
+    self.liftCoeff              = 0.0   -- SCS-038: the LIFT term's XML balance value (0.0 = neutral)
     self.defaultStartHour       = 6
     self.defaultEndHour         = 10
     self.defaultActiveDays      = {true, true, true, true, true, false, false}
@@ -68,6 +69,7 @@ function DripIrrigationLine.onLoad(self, savegame)
         self.lineSpacing            = self.xmlFile:getFloat(base .. "#lineSpacing",            self.lineSpacing)
         self.flowRatePerHour        = self.xmlFile:getFloat(base .. "#flowRatePerHour",        self.flowRatePerHour)
         self.operationalCostPerHour = self.xmlFile:getFloat(base .. "#operationalCostPerHour", self.operationalCostPerHour)
+        self.liftCoeff              = self.xmlFile:getFloat(base .. "#liftCoeff",              self.liftCoeff)
         self.defaultStartHour       = self.xmlFile:getInt(  base .. "#defaultStartHour",       self.defaultStartHour)
         self.defaultEndHour         = self.xmlFile:getInt(  base .. "#defaultEndHour",         self.defaultEndHour)
 
