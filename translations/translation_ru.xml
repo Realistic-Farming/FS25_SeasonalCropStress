@@ -348,5 +348,9 @@
     <text name="cs_rf_pda_next_covered_idle" text="[EN] Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
     <text name="cs_rf_pda_next_looking_good" text="[EN] Looking good - recheck later; handle Critical fields first."/>
     <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
+        <!-- BUILD 11:27 F155 Esc RF button labels -->
+        <text name="wc_rf_pda_open_manager" text="Открыть менеджер работников" />
+        <text name="sf_pda_btn_rotation_planner" text="Планировщик севооборота" />
+        <text name="sf_pda_btn_field_detail" text="Сведения о поле" />
 </texts>
 </l10n>
