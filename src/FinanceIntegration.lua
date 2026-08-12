@@ -58,8 +58,15 @@ function FinanceIntegration:chargeHourlyCosts(elapsedHours)
 
     for _, system in pairs(irrMgr.systems) do
         if system.isActive then
-            -- Deduct operational cost via the vanilla FS25 fund system.
-            self:deductFundsVanilla((system.operationalCostPerHour or 0) * hours)
+            -- [SCS-038] Deduct the PRICED draw: the effective cost varies with
+            -- the water actually drawn (base / pressure, plus the neutral LIFT
+            -- term). Falls back to the flat per-hour number when the getter is
+            -- absent or nil, so an unregistered edge never crashes the charge.
+            local effCost = nil
+            if type(irrMgr.getEffectiveCostPerHour) == "function" then
+                effCost = irrMgr:getEffectiveCostPerHour(system)
+            end
+            self:deductFundsVanilla((effCost or (system.operationalCostPerHour or 0)) * hours)
         end
     end
 end
