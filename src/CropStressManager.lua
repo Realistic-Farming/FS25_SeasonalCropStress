@@ -1137,9 +1137,15 @@ function CropStressManager:consoleStatus()
 
     if self.weatherIntegration ~= nil then
         local seas = WeatherIntegration.SEASON_NAMES[self.weatherIntegration.currentSeason] or "?"
-        print(string.format("  Season: %s  Temp: %.1f°C  Raining: %s",
+        -- [SCS-021] the sky line appends the honesty marker when humidity was
+        -- defaulted (no real data); no log output on the fallback path.
+        local humNote = ""
+        if self.weatherIntegration.currentHumidityDefaulted then
+            humNote = " (humidity defaulted)"
+        end
+        print(string.format("  Season: %s  Temp: %.1f°C  Raining: %s%s",
             seas, self.weatherIntegration.currentTemp,
-            tostring(self.weatherIntegration.isRaining)))
+            tostring(self.weatherIntegration.isRaining), humNote))
     end
 
     print(string.format("  Fields tracked: %d", self.soilSystem:getFieldCount()))
