@@ -2,10 +2,10 @@
 -- ScsPumpHoseConnection.lua
 -- Suite-owned visible EMP (Aggregat) <-> Rainstar supply hose.
 --
--- BUILD 17:16 FROM SCRATCH: R (ACTIVATE_OBJECT) = hose only via
--- ExternalVehicleControl; Start/Stop pump = dedicated SCS_TOGGLE_PUMP
--- (not ENTER_EXIT). Dual ACTIVATE_OBJECT + pickROwner hysteresis gone.
--- Keep getRequiresPower while TurnOn / crank intent; FillUnit WATER
+-- BUILD 21:42: R = world ScsPumpHoseActivatable (ACTIVATE_OBJECT).
+-- Start/Stop pump stays on EVC (SCS_TOGGLE_PUMP / K) with a real
+-- controlTrigger Shape. Do not restore ScsPumpStartActivatable.
+-- Keep getRequiresPower while TurnOn / crank; FillUnit WATER
 -- transfer; ISI untouched.
 -- ============================================================
 
@@ -15,6 +15,7 @@ ScsPumpHoseConnection.modDir = g_currentModDirectory
 ScsPumpHoseConnection.currentModName = g_currentModName
 
 ScsPumpHoseConnection.MAX_RANGE_M = 8.0
+ScsPumpHoseConnection.ACTIVATE_RANGE_M = 4.5
 ScsPumpHoseConnection.DISCONNECT_SLACK_M = 0.75
 ScsPumpHoseConnection.UPDATE_MS = 100
 ScsPumpHoseConnection.TRANSFER_LPS = 120.0
@@ -148,28 +149,6 @@ local function phWaterFillType()
     return nil
 end
 
---- PLAYER bit so ExternalVehicleControl addTrigger sees walk-up foot traffic.
-local function phEnsurePlayerTriggerFlag(node)
-    if node == nil or node == 0 then
-        return
-    end
-    if CollisionFlag == nil or CollisionFlag.PLAYER == nil then
-        return
-    end
-    if CollisionFlag.getHasMaskFlagSet ~= nil
-            and CollisionFlag.getHasMaskFlagSet(node, CollisionFlag.PLAYER) then
-        return
-    end
-    if getCollisionMask == nil or setCollisionMask == nil or bit32 == nil then
-        return
-    end
-    local ok, mask = pcall(getCollisionMask, node)
-    if not ok or mask == nil then
-        return
-    end
-    pcall(setCollisionMask, node, bit32.bor(mask, CollisionFlag.PLAYER))
-end
-
 function ScsPumpHoseConnection.getIsPumpRunning(pump)
     return phIsPumpRunning(pump)
 end
@@ -239,15 +218,16 @@ function ScsPumpHoseConnection:onLoad(savegame)
     spec.hoseSegments = {}
     spec.candidate = nil
     spec.reelActionEvents = {}
+    spec.activatable = ScsPumpHoseActivatable.new(self)
+    spec.activatableRegistered = false
     -- Motor start is asynchronous: tryStartMotor enters STARTING (~3 s crank).
     spec.pendingTurnOn = false
     spec.pendingTurnOnTimer = 0
     spec.sawMotorStart = false
     -- Intentional walk-up start: keeps getRequiresPower true through crank/ON.
     spec.walkUpMotorIntent = false
-    -- EVC control-function handles (update text / active).
+    -- EVC pump-function handle (update text / active). Hose is not on EVC.
     spec.evcPumpData = nil
-    spec.evcHoseData = nil
 
     -- Soft path for vendored parking brake / COBD (RPC.virtualHoseConnected).
     if self.RPC == nil then
@@ -255,13 +235,6 @@ function ScsPumpHoseConnection:onLoad(savegame)
     end
     self.RPC.virtualHoseConnected = false
     self.RPC.virtualRainstar = nil
-
-    -- Before ExternalVehicleControl:onLoadFinished adds the Aggregat_main trigger.
-    local triggerNode = I3DUtil.indexToObject(self.components, "Aggregat_main", self.i3dMappings)
-    if triggerNode == nil and self.rootNode ~= nil then
-        triggerNode = self.rootNode
-    end
-    phEnsurePlayerTriggerFlag(triggerNode)
 end
 
 function ScsPumpHoseConnection:onDelete()
@@ -271,6 +244,11 @@ function ScsPumpHoseConnection:onDelete()
     end
     if spec.connected then
         self:setScsHoseConnected(false, true)
+    end
+    if spec.activatableRegistered and g_currentMission ~= nil
+            and g_currentMission.activatableObjectsSystem ~= nil then
+        g_currentMission.activatableObjectsSystem:removeActivatable(spec.activatable)
+        spec.activatableRegistered = false
     end
     ScsPumpHoseConnection.deleteHoseVisual(self)
 end
@@ -319,6 +297,9 @@ function ScsPumpHoseConnection:setScsHoseConnected(connected, force)
         self.RPC.virtualHoseConnected = true
         self.RPC.virtualRainstar = partner
         ScsPumpHoseConnection.ensureHoseVisual(self)
+        if spec.activatable ~= nil then
+            spec.activatable:updateActivateText()
+        end
     else
         local partner = spec.partner
         spec.connected = false
@@ -331,10 +312,9 @@ function ScsPumpHoseConnection:setScsHoseConnected(connected, force)
             partner.rwsmVirtualPump = nil
         end
         ScsPumpHoseConnection.deleteHoseVisual(self)
-    end
-
-    if spec.evcHoseData ~= nil then
-        ScsPumpHoseConnection.externalHoseUpdate(spec.evcHoseData, self)
+        if spec.activatable ~= nil then
+            spec.activatable:updateActivateText()
+        end
     end
 end
 
@@ -629,7 +609,7 @@ function ScsPumpHoseConnection.actionEventReelToggle(self, actionName, inputValu
 end
 
 -- ------------------------------------------------------------
--- BUILD 17:16 ExternalVehicleControl — pump + hose (one activatable)
+-- BUILD 21:42 ExternalVehicleControl — pump only (K). Hose is world R.
 -- ------------------------------------------------------------
 
 function ScsPumpHoseConnection:onRegisterExternalActionEvents(trigger, name, xmlFile, key)
@@ -640,14 +620,6 @@ function ScsPumpHoseConnection:onRegisterExternalActionEvents(trigger, name, xml
             ScsPumpHoseConnection.externalPumpUpdate)
         if self.spec_scsPumpHose ~= nil then
             self.spec_scsPumpHose.evcPumpData = data
-        end
-    elseif name == "scsHose" then
-        local data = self:registerExternalActionEvent(
-            trigger, name,
-            ScsPumpHoseConnection.externalHoseRegister,
-            ScsPumpHoseConnection.externalHoseUpdate)
-        if self.spec_scsPumpHose ~= nil then
-            self.spec_scsPumpHose.evcHoseData = data
         end
     end
 end
@@ -676,22 +648,6 @@ function ScsPumpHoseConnection.hoseActionText(vehicle)
         return phTr("action_SCS_DISCONNECT_HOSE", "Disconnect hose")
     end
     return phTr("action_SCS_CONNECT_HOSE", "Connect hose")
-end
-
-function ScsPumpHoseConnection.hoseOfferActive(vehicle)
-    local spec = vehicle ~= nil and vehicle.spec_scsPumpHose or nil
-    if spec == nil then
-        return false
-    end
-    if spec.connected and spec.partner ~= nil then
-        return true
-    end
-    local partner = spec.candidate
-    if partner == nil then
-        return false
-    end
-    local dist = ScsPumpHoseConnection.getJointDistance(vehicle, partner)
-    return dist ~= nil and dist <= ScsPumpHoseConnection.MAX_RANGE_M
 end
 
 function ScsPumpHoseConnection.togglePump(vehicle)
@@ -928,9 +884,6 @@ function ScsPumpHoseConnection:onUpdateTick(dt, isActiveForInput, isActiveForInp
         if spec.evcPumpData ~= nil then
             ScsPumpHoseConnection.externalPumpUpdate(spec.evcPumpData, self)
         end
-        if spec.evcHoseData ~= nil then
-            ScsPumpHoseConnection.externalHoseUpdate(spec.evcHoseData, self)
-        end
     end
 
     if self.isServer and spec.connected then
@@ -941,6 +894,34 @@ function ScsPumpHoseConnection:onUpdateTick(dt, isActiveForInput, isActiveForInp
         spec.candidate = ScsPumpHoseConnection.findNearestRainstar(self)
     else
         spec.candidate = spec.partner
+    end
+
+    if g_currentMission == nil or g_currentMission.activatableObjectsSystem == nil then
+        return
+    end
+
+    local shouldOffer = false
+    if spec.candidate ~= nil then
+        local dist = ScsPumpHoseConnection.getJointDistance(self, spec.candidate)
+        if dist ~= nil and dist <= ScsPumpHoseConnection.MAX_RANGE_M then
+            shouldOffer = true
+        end
+    end
+    if spec.connected then
+        shouldOffer = spec.partner ~= nil
+    end
+
+    if shouldOffer then
+        if not spec.activatableRegistered then
+            g_currentMission.activatableObjectsSystem:addActivatable(spec.activatable)
+            spec.activatableRegistered = true
+        end
+        if spec.activatable ~= nil then
+            spec.activatable:updateActivateText()
+        end
+    elseif spec.activatableRegistered then
+        g_currentMission.activatableObjectsSystem:removeActivatable(spec.activatable)
+        spec.activatableRegistered = false
     end
 end
 

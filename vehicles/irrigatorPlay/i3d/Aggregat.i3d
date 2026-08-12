@@ -112,6 +112,7 @@
           <Shape shapeId="15" name="beltCol3" translation="0 1.13846 0" scale="1.16 1.4 2" nodeId="69" materialIds="4" nonRenderable="true" distanceBlending="false"/>
           <Shape shapeId="15" name="beltCol4" translation="0.266962 2.13328 0.285218" scale="0.1 0.1 1" nodeId="70" materialIds="4" nonRenderable="true" distanceBlending="false"/>
         </TransformGroup>
+        <Shape name="controlTrigger" translation="0 1.2 0" shapeId="14" kinematic="true" compound="true" trigger="true" collisionFilterGroup="0x20000000" collisionFilterMask="0x100000" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="5" nodeId="901"/>
       </TransformGroup>
     </Shape>
   </Scene>

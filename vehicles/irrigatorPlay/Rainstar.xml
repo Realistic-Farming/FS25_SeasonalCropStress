@@ -85,6 +85,8 @@
                     </wheel>
 					<wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
                         <physics repr="wheelLeftBack" driveNode="wheelLeftBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
+                        <wheelChock parkingNode="wheelChock01_01"/>
+                        <wheelChock parkingNode="wheelChock01_02" isInverted="true"/>
                     </wheel>
                     <wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
                         <physics repr="wheelRightBack" driveNode="wheelRightBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
@@ -109,6 +111,8 @@
                     </wheel>
 					<wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
                         <physics repr="wheelLeftBack" driveNode="wheelLeftBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
+                        <wheelChock parkingNode="wheelChock01_01"/>
+                        <wheelChock parkingNode="wheelChock01_02" isInverted="true"/>
                     </wheel>
                     <wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
                         <physics repr="wheelRightBack" driveNode="wheelRightBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
@@ -133,6 +137,8 @@
                     </wheel>
 					<wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="true" hasTireTracks="true" hasParticles="true">
                         <physics repr="wheelLeftBack" driveNode="wheelLeftBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
+                        <wheelChock parkingNode="wheelChock01_01"/>
+                        <wheelChock parkingNode="wheelChock01_02" isInverted="true"/>
                     </wheel>
                     <wheel filename="$data/shared/wheels/tires/trelleborg/T510/215_65R8.xml" isLeft="false" hasTireTracks="true" hasParticles="true">
                         <physics repr="wheelRightBack" driveNode="wheelRightBackDrive" forcePointRatio="0.5" useReprDirection="true" initialCompression="5" suspTravel="0.02" spring="65" damper="80" brakeFactor="1" rotationDamping="0.01"/>
@@ -171,8 +177,12 @@
 		<inputAttacherJoints>
             <inputAttacherJoint node="attacherF" jointType="trailer" rootNode="RootCol" attacherHeight="0.6"/>
 			<inputAttacherJoint node="attacherR" jointType="trailer" rootNode="RegnerCol"/>
+            <inputAttacherJoint node="attacherImplement" jointType="implement" rootNode="RegnerCol" topReferenceNode="topReferenceNode" lowerRotLimitScale="0 0 0" upperRotationOffset="3" lowerRotationOffset="0" needsLowering="false">
+                <distanceToGround lower="0.3" upper="0.9" />
+                <bottomArm categories="2" ballType="2" />
+            </inputAttacherJoint>
         </inputAttacherJoints>
-        <brakeForce force="4.0" maxForce="6.0" loweredForce="8.0" maxForceMass="12000"/>
+        <brakeForce force="12.0" maxForce="18.0" loweredForce="22.0" maxForceMass="12000"/>
 		<support animationName="moveSupport" />
 		
 		<toolCameras>
@@ -348,9 +358,9 @@
         </sounds>
     </turnOnVehicle>
 
-	<!-- BUILD 17:16: walk-up Turn on/off Rainstar (SCS_TOGGLE_PUMP). Soft getIsPowered stays in ScsRainstarPumpPower. -->
+	<!-- BUILD 21:42: dedicated G4010-flagged controlTrigger on the reel (not RootCol). -->
 	<externalVehicleControl>
-		<trigger node="RootCol">
+		<trigger node="controlTrigger">
 			<function name="scsToggleRainstar"/>
 		</trigger>
 	</externalVehicleControl>
@@ -378,6 +388,7 @@
         <i3dMapping id="wheelRight" node="0>1|1" />
         <i3dMapping id="ai" node="0>2" />
         <i3dMapping id="aiCollisionTrigger" node="0>2|0" />
+        <i3dMapping id="controlTrigger" node="0>2|1" />
         <i3dMapping id="camera" node="0>3" />
         <i3dMapping id="Rahmen_vis" node="0>4" />
         <i3dMapping id="Support_vis" node="0>4|0" />
@@ -433,6 +444,10 @@
         <i3dMapping id="Decal2" node="0>5|9" />
         <i3dMapping id="RegnerCol" node="1>" />
         <i3dMapping id="attacherR" node="1>0" />
+        <i3dMapping id="attacherImplement" node="1>6" />
+        <i3dMapping id="topReferenceNode" node="1>7" />
+        <i3dMapping id="wheelChock01_01" node="1>2|2" />
+        <i3dMapping id="wheelChock01_02" node="1>2|3" />
         <i3dMapping id="hoseEnd" node="1>1" />
         <i3dMapping id="wheels2" node="1>2" />
         <i3dMapping id="wheelLeftBack" node="1>2|0" />

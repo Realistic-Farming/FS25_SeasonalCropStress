@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="105">
     <author>TisonK</author>
-    <version>1.2.5.69</version>
+    <version>1.2.5.71</version>
 
     <title>
         <en>Seasonal Crop Stress &amp; Irrigation Manager</en>
@@ -169,6 +169,8 @@ FUNKTIONER:
         <action name="CS_OPEN_SETTINGS"/>
         <!-- Reel retract, consumed by the vendored RWSM53AutoReel spec. -->
         <action name="RWSM53_REEL_TOGGLE" category="VEHICLE"/>
+        <!-- Walk-up Start/Stop pump (EMP) and Turn on/off Rainstar. Not E/R/X/N. -->
+        <action name="SCS_TOGGLE_PUMP" category="ONFOOT VEHICLE"/>
     </actions>
 
     <inputBinding>
@@ -179,6 +181,9 @@ FUNKTIONER:
         <actionBinding action="CS_OPEN_SETTINGS" />
         <actionBinding action="RWSM53_REEL_TOGGLE">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_n" axisComponent="+" inputComponent="+" index="1"/>
+        </actionBinding>
+        <actionBinding action="SCS_TOGGLE_PUMP">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_k" axisComponent="+" inputComponent="+" index="1"/>
         </actionBinding>
     </inputBinding>
 

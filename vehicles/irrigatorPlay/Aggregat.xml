@@ -220,13 +220,11 @@
         </sounds>
     </turnOnVehicle>
 
-	<!-- BUILD 17:16: one EVC activatable registers Start/Stop pump + Connect/Disconnect hose
-	     as two InputActions (no dual ACTIVATE_OBJECT fight). PLAYER flag is OR'd onto
-	     Aggregat_main at runtime before this trigger binds. -->
+	<!-- BUILD 21:42: dedicated G4010-flagged controlTrigger Shape. Pump only (K).
+	     Hose is a world Activatable on R, not an EVC function. -->
 	<externalVehicleControl>
-		<trigger node="Aggregat_main">
+		<trigger node="controlTrigger">
 			<function name="scsTogglePump"/>
-			<function name="scsHose"/>
 		</trigger>
 	</externalVehicleControl>
 	
@@ -300,6 +298,7 @@
         <i3dMapping id="beltCol2" node="0>0|16|1" />
         <i3dMapping id="beltCol3" node="0>0|16|2" />
         <i3dMapping id="beltCol4" node="0>0|16|3" />
+        <i3dMapping id="controlTrigger" node="0>0|17" />
 	</i3dMappings>
     <!-- BUILD 18:08 - SPS conduit embed. Inert without SPS: Giants ignores unknown
          children of <vehicle>, and nothing in SCS reads this block. The pump station
