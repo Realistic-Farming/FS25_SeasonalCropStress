@@ -777,12 +777,47 @@ local function rarComplete(vehicle)
     )
 end
 
+-- SCS vendor note: every start gate used to refuse silently, so a player who
+-- could not start the reel had a one-line blinking warning and the log had
+-- nothing at all. Each refusal now names itself and the state it read.
+local function rarRefuse(vehicle, warningKey, reason)
+    if vehicle ~= nil and vehicle.isClient and warningKey ~= nil then
+        rarShowWarning(warningKey)
+    end
+
+    local pump = rarGetConnectedPump(vehicle)
+    print(string.format(
+        "[CropStress] Reel start refused: %s | workMode=%s distance=%.1f m "
+        .. "tractorOnCart=%s virtualPump=%s cobdPump=%s pumpResolved=%s "
+        .. "pumpTurnedOn=%s motorStarted=%s",
+        tostring(reason),
+        tostring(rarIsWorkMode(vehicle)),
+        rarGetDistance(vehicle),
+        tostring(rarIsTractorAttachedToCart(vehicle)),
+        tostring(vehicle ~= nil and vehicle.rwsmVirtualPump ~= nil),
+        tostring(vehicle ~= nil and vehicle.COBD ~= nil and vehicle.COBD.connectedPump ~= nil),
+        tostring(pump ~= nil),
+        tostring(pump ~= nil and pump.getIsTurnedOn ~= nil and pump:getIsTurnedOn() == true),
+        tostring(pump ~= nil and pump.getIsMotorStarted ~= nil and pump:getIsMotorStarted() == true)
+    ))
+    return false
+end
+
+-- Up-vector Y of a component, for the rollover diagnostic. nil when unresolvable.
+local function rarGetComponentUpY(vehicle, componentIndex)
+    local node = rarGetComponentNode(vehicle, componentIndex)
+    if node == nil or localDirectionToWorld == nil then return nil end
+    local ok, _, upY, _ = pcall(localDirectionToWorld, node, 0, 1, 0)
+    if not ok then return nil end
+    return tonumber(upY)
+end
+
 local function rarStart(vehicle)
     local data = vehicle.RAR
 
     if data == nil
         or not data.animationAvailable then
-        return false
+        return rarRefuse(vehicle, nil, "reel animation unavailable")
     end
 
     local distance = rarGetDistance(vehicle)
@@ -795,42 +830,33 @@ local function rarStart(vehicle)
         if vehicle.isServer then
             rarSetJointSpring(vehicle, TIP_SAFETY_SPRING, TIP_SAFETY_DAMPING)
         end
-        return false
+        local up1 = rarGetComponentUpY(vehicle, 1)
+        local up2 = rarGetComponentUpY(vehicle, 2)
+        return rarRefuse(vehicle, nil, string.format(
+            "rollover safety: upY comp1=%s comp2=%s, needs >= %.2f",
+            up1 ~= nil and string.format("%.3f", up1) or "nil",
+            up2 ~= nil and string.format("%.3f", up2) or "nil",
+            ASSEMBLY_TIPPED_UP_DOT))
     end
 
     if not rarIsWorkMode(vehicle) then
-        if vehicle.isClient then
-            rarShowWarning("warning_RAINSTAR_SELECT_WORKMODE")
-        end
-        return false
+        return rarRefuse(vehicle, "warning_RAINSTAR_SELECT_WORKMODE", "not in work mode")
     end
 
     if distance <= STOP_DISTANCE + 0.2 then
-        if vehicle.isClient then
-            rarShowWarning("warning_RAINSTAR_HOSE_NOT_EXTENDED")
-        end
-        return false
+        return rarRefuse(vehicle, "warning_RAINSTAR_HOSE_NOT_EXTENDED", "hose not extended")
     end
 
     if rarIsTractorAttachedToCart(vehicle) then
-        if vehicle.isClient then
-            rarShowWarning("warning_RAINSTAR_CART_ATTACHED")
-        end
-        return false
+        return rarRefuse(vehicle, "warning_RAINSTAR_CART_ATTACHED", "tractor still on the cart")
     end
 
     if not rarIsPumpConnected(vehicle) then
-        if vehicle.isClient then
-            rarShowWarning("warning_RAINSTAR_PUMP_NOT_CONNECTED")
-        end
-        return false
+        return rarRefuse(vehicle, "warning_RAINSTAR_PUMP_NOT_CONNECTED", "pump not connected")
     end
 
     if not rarIsPumpRunning(vehicle) then
-        if vehicle.isClient then
-            rarShowWarning("warning_RAINSTAR_PUMP_NOT_RUNNING")
-        end
-        return false
+        return rarRefuse(vehicle, "warning_RAINSTAR_PUMP_NOT_RUNNING", "pump not running")
     end
 
     local startTime = rarGetStartAnimationTime(vehicle)
@@ -1256,6 +1282,10 @@ function RWSM53AutoReel.actionEventToggle(
     if self.RAR == nil then
         return
     end
+
+    print(string.format(
+        "[CropStress] Reel toggle pressed from the Rainstar (currently %s)",
+        self.RAR.reelCommandActive and "running" or "stopped"))
 
     if self.RAR.reelCommandActive then
         rarStop(self, true)
