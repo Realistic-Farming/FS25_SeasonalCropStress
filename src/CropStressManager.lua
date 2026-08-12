@@ -748,10 +748,10 @@ end
 -- ============================================================
 -- COMPANION READ API
 -- The single, stable read path for a field's moisture / stress. External
--- companions (CropDisease, RandomWorldEvents, MarketDynamics, FarmTablet)
--- and the bedrock bridges call these on g_cropStressManager rather than
--- reaching into the subsystems, so the internal wiring can change without
--- breaking readers. Mirrors SoilFertilizer's getFieldInfo read contract.
+-- companions (CropDisease, RandomWorldEvents, MarketDynamics, FarmTablet,
+-- SoilFertilizer) and the bedrock bridges call these on g_cropStressManager
+-- rather than reaching into the subsystems, so the internal wiring can change
+-- without breaking readers. Mirrors SoilFertilizer's getFieldInfo read contract.
 -- ============================================================
 
 -- Moisture (0.0-1.0) for a field, or nil if the field is not tracked.
@@ -794,6 +794,20 @@ function CropStressManager:getYieldKeepFactor(fieldId)
     if keep < 0.0 then return 0.0 end
     if keep > 1.0 then return 1.0 end
     return keep
+end
+
+-- Soil class for a field: "sandy", "loamy" or "clay", or nil when the field is
+-- not tracked or the class is not yet known on this peer.
+--
+-- NOTE: this value is DERIVED FROM THE FIELD ID, not measured from the terrain.
+-- It is stable per field and across sessions and correlates with nothing a player
+-- can see. A consumer needing real spatial soil truth must wait for the terrain
+-- read (SoilMoistureSystem:detectSoilType step 2), not use this.
+function CropStressManager:getFieldSoilType(fieldId)
+    if self.soilSystem == nil or self.soilSystem.fieldData == nil then return nil end
+    local record = self.soilSystem.fieldData[fieldId]
+    if record == nil then return nil end
+    return record.soilType
 end
 
 -- ── Irrigation & water (B3.2b) ──────────────────────────────

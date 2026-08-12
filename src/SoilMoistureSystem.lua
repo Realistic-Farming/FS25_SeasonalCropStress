@@ -290,7 +290,10 @@ end
 -- g_currentMission.fieldManager:getFields() which can be nil until well after
 -- isMissionStarted fires. Safe to call multiple times — skips fields already
 -- in fieldData to preserve any save data loaded earlier.
--- Returns the number of NEW fields added.
+-- Returns the number of NEW fields added. [SCS-036] The count now ALSO
+-- includes backfilled records (a record that existed without a soilType,
+-- detected and repaired here), so a client that backfills every field and
+-- creates none reports the right work done rather than 0.
 function SoilMoistureSystem:enumerateFields()
     if g_fieldManager == nil or g_fieldManager.fields == nil then
         csLog("SoilMoistureSystem: g_fieldManager unavailable — field enumeration deferred")
@@ -334,6 +337,15 @@ function SoilMoistureSystem:enumerateFields()
                 cellCount   = 0,
                 reliefScan  = false,
             }
+            count = count + 1
+        elseif fid ~= nil and self.fieldData[fid] ~= nil and self.fieldData[fid].soilType == nil then
+            -- [SCS-036] THE BACKFILL: a record that EXISTS but has no soilType
+            -- (a pre-fix client, or a wire handler that joined without one)
+            -- gets one detected and written. The field object is already in
+            -- scope from the same loop, so no new lookup is needed. Idempotent:
+            -- one detection per field per peer per session; every later rebuild
+            -- is a no-op. Counted so the return contract reports the repair.
+            self.fieldData[fid].soilType = self:detectSoilType(field)
             count = count + 1
         end
     end

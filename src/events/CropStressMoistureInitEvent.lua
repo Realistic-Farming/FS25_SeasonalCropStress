@@ -90,8 +90,13 @@ function CropStressMoistureInitEvent:run(connection)
             existing.moisture = entry.moisture
         else
             -- Field not yet enumerated locally — create a minimal entry.
-            -- soilType will be corrected when enumerateFields() runs.
-            mgr.soilSystem.fieldData[fid] = { moisture = entry.moisture, soilType = "loamy" }
+            -- [SCS-036] NO soilType key: an absent key is detectable and the
+            -- backfill (enumerateFields) repairs it on the next rebuild. The old
+            -- "loamy" placeholder was the same string as a real answer, so no
+            -- code could tell them apart; an absent key can. The hourly loop
+            -- already lands missing classes on loam, so the join window behaves
+            -- identically to today and the first rebuild makes the value right.
+            mgr.soilSystem.fieldData[fid] = { moisture = entry.moisture }
         end
         mgr.stressModifier.fieldStress[fid] = self.fieldStress[fid] or 0.0
         applied = applied + 1
