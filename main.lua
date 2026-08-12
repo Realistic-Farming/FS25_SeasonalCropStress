@@ -78,7 +78,9 @@ source(modDir .. "src/ui/RfPdaMenuPage.lua")
 source(modDir .. "src/ui/RfEscBootstrap.lua")
 -- DEV: Esc UIDebugger (F6). Install no-ops if Soil (or another mod) already registered.
 source(modDir .. "src/ui/RfEscUiDebugger.lua")
-source(modDir .. "src/ui/FarmPatchUtil.lua")
+-- FarmPatchUtil is deliberately NOT shipped: Wizard's leftover wave excluded the
+-- farm-patch code (it stays local). CsRfPdaGuest references it nil-guarded, so
+-- this mod works without it. Do not re-add the source line without the file.
 source(modDir .. "src/ui/CsRfPdaGuest.lua")
 source(modDir .. "src/ui/CsHelpDialog.lua")
 
