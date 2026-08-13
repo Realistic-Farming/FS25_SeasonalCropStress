@@ -29,7 +29,11 @@
         <filename>vehicles/irrigatorPlay/i3d/Schiene.i3d</filename>
         <!-- BUILD 22:01 shop framing (George secondary): 1x1 was a placeholder and left the
              shop camera zoomed past the bar. toolbarCat1 is a ~3 m wide 3-point bar. -->
-        <size width="3.0" length="0.8" />
+        <!-- BUILD 18:26: the 3 m figure framed the vanilla toolbar. The adapter is a
+             0.79 x 0.18 station, so the shop camera is retuned to it. Not back to the 1x1
+             placeholder, which zoomed past. base/size is shop and spawn AABB only; it is
+             not attacher math, and MIN_SPAWN_PLACE_WIDTH still floors world spawn at 4 m. -->
+        <size width="0.9" length="0.4" />
         <components>
             <!-- BUILD 20:43 item 1: CoM dropped below the bar so it cannot settle on its side.
              This is a wheelless 50 kg single component, so on detach its resting pose was
@@ -77,7 +81,17 @@
              syntax and resolved to nil, so the i3d loaded and then logged "Unable to
              find node in loaded i3d" and the shop preview stayed empty. Root 0 is the
              "toolbars" group; child 1 is toolbarCat1. -->
-        <dynamicallyLoadedPart node="0|1" linkNode="LoadPoint" filename="$data/shared/assets/toolbars/toolbars.i3d" />
+        <!-- BUILD 18:26: the vanilla toolbarCat1 is a ~3 m CULTIVATOR bar, not a hitch
+             adapter, so no CAT index or recolor could give it the T-frame-and-ball
+             silhouette Wizard asked for. Replaced with mod-local original art. Still a
+             pipe index because this is an external i3d; "0|0" is the single SchieneVis
+             group, which must stay one group because DLP deletes every unlinked sibling. -->
+        <!-- BUILD 18:52 (Vera F1): node was "0|0". The i3dNode handed to DLP is the SCENE,
+             so "0" is one walk to the SchieneVis group and "0|0" is two walks into the
+             first Shape. 1.2.5.80 therefore linked the T-frame and deleted the pins and
+             the ball with the rest of the scene. Vanilla whole-file DLP (pickup2017
+             gooseneck) uses "0" for exactly this topology. -->
+        <dynamicallyLoadedPart node="0" linkNode="LoadPoint" filename="vehicles/irrigatorPlay/i3d/SchieneVis.i3d" />
     </dynamicallyLoadedParts>
 
     <attacherJointControl maxTiltAngle="25">
