@@ -21,6 +21,11 @@
 				<en>Connect the pump to the Rainstar with the hose, start the pump, turn the Rainstar on — Moisture rises in Crop Stress.</en>
 				<de>Pumpe mit dem Schlauch an den Rainstar anschliessen, Pumpe starten, Rainstar einschalten — die Feuchtigkeit in Crop Stress steigt.</de>
 			</function>
+			<!-- BUILD 22:53 - unhitch teach (Samantha DESIGN 22:50): J = Rainstar, not K. -->
+			<function>
+				<en>Unhitch turns the spray off — press J again after dropping the tractor.</en>
+				<de>Abkuppeln schaltet die Beregnung aus — nach dem Abstellen des Traktors erneut J druecken.</de>
+			</function>
         </functions>
 		<specs>
             <combination>SR Range</combination>
@@ -337,8 +342,10 @@
          server-side and keyed on getIsPowered, so pulling the hose or stopping the pump
          now stops the spray on Giants' own tick. No bespoke tick, nothing to fence
          against thrash. turnedOnByAttacherVehicle stays false: the pump is the power
-         source, not the tow vehicle. -->
-    <turnOnVehicle turnOffIfNotAllowed="true" turnedOnByAttacherVehicle="false" requiresMotorTurnOn="false" needsSelection="false">
+         source, not the tow vehicle.
+         BUILD 22:29: turnOffOnDeactivate=false so leave-tractor / deactivateAttachments
+         does not kill spray. onPreDetach still turns off (Giants, unconditional). -->
+    <turnOnVehicle turnOffIfNotAllowed="true" turnOffOnDeactivate="false" turnedOnByAttacherVehicle="false" requiresMotorTurnOn="false" needsSelection="false">
         <turnedOnAnimation name="sprayAnim" speedScale="1" turnOnFadeTime="0.05" turnOffFadeTime="0.15"/>
         <turnedOnAnimation name="regnerSweepAnim" speedScale="1" turnOnFadeTime="0.5" turnOffFadeTime="0.5"/>
         <!-- BUILD 17:16: belt WASHER on TurnOn so gun water shows even if sprayer workArea is quiet. -->

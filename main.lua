@@ -62,6 +62,7 @@ source(modDir .. "src/events/CropStressMoistureInitEvent.lua")
 source(modDir .. "src/events/CropStressIrrigateNowEvent.lua")
 source(modDir .. "src/events/CropStressMoistureRowEvent.lua")
 source(modDir .. "src/events/CropStressPivotRemoteEvent.lua")
+source(modDir .. "src/events/ScsPumpWalkUpIntentEvent.lua")
 
 -- Persistence
 source(modDir .. "src/SaveLoadHandler.lua")

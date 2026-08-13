@@ -174,8 +174,22 @@ local function cobdUpdatePumpState(vehicle)
     spec.configuredPressure = configuredPressure
     spec.configuredWaterFlow = configuredFlow
     spec.applicationDepth = configuredApplication
-    spec.pumpPressure = running and configuredPressure or 0
-    spec.waterFlow = running and configuredFlow or 0
+    -- BUILD 06:22: the readout used to show 0.0 bar while the reel was visibly
+    -- spraying, because `running` is read from the pump and can be false for a tick.
+    --
+    -- Reading it from the reel instead is a SECOND TRUE SOURCE, not an invented number:
+    -- BUILD 22:25 made poweredByPump the gate on the reel's getIsPowered, so the reel
+    -- cannot be turned on unless a hose from a running pump reaches it. "Reel is on" and
+    -- "a pump is running" are the same fact seen from two ends. Nothing here shows
+    -- pressure for a pump that is not running - it only stops denying one that is.
+    local reelOn = false
+    if vehicle.getIsTurnedOn ~= nil then
+        local okOn, onValue = pcall(vehicle.getIsTurnedOn, vehicle)
+        reelOn = okOn and onValue == true
+    end
+    local supplying = running or reelOn
+    spec.pumpPressure = supplying and configuredPressure or 0
+    spec.waterFlow = supplying and configuredFlow or 0
 
     if spec.roll ~= nil and spec.roll.workingWidth2 ~= nil then
         local _, widthY, widthZ = getTranslation(spec.roll.workingWidth2)

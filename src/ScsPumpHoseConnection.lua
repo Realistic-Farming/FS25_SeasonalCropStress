@@ -2,6 +2,9 @@
 -- ScsPumpHoseConnection.lua
 -- Suite-owned visible EMP (Aggregat) <-> Rainstar supply hose.
 --
+-- BUILD 22:53: server-sticky walk-up turn-on (tryStartMotor then
+-- setIsTurnedOn while STARTING/ON so SetTurnedOnEvent lands before
+-- leave-stop); pump raiseActive while getIsTurnedOn; K = pump only.
 -- BUILD 21:42: R = world ScsPumpHoseActivatable (ACTIVATE_OBJECT).
 -- Start/Stop pump stays on EVC (SCS_TOGGLE_PUMP / K) with a real
 -- controlTrigger Shape. Do not restore ScsPumpStartActivatable.
@@ -136,6 +139,23 @@ local function phGetReelPartner(pump)
     return partner
 end
 
+--- BUILD 06:39 (Vera F2): "running" and "settled on" are not the same question.
+--- phIsPumpRunning answers the raw frame. The button text needs the STABLE answer, the
+--- same one the 06:22 latch uses, or the label flickers on reads the latch is busy
+--- absorbing. One definition so the two cannot drift apart again.
+local function phPumpSettledOn(vehicle)
+    if not phIsPumpRunning(vehicle) then
+        return false
+    end
+    local spec = vehicle ~= nil and vehicle.spec_scsPumpHose or nil
+    if spec == nil then
+        return true
+    end
+    -- Settled once the turn-on has held for the latch window, or once the gate has
+    -- already been declared open for this run.
+    return (spec.turnedOnHoldMs or 0) >= 250 or spec.loggedGateOpen == true
+end
+
 local function phWaterFillType()
     if g_fillTypeManager ~= nil then
         local idx = g_fillTypeManager:getFillTypeIndexByName("WATER")
@@ -182,14 +202,10 @@ function ScsPumpHoseConnection:getRequiresPower(superFunc)
                 return true
             end
         end
-        if spec.pendingTurnOn == true then
+        -- Pending / walk-up intent must be sticky on the server for the whole
+        -- crank window (leave-stop ~250 ms). Do not gate intent on motor state.
+        if spec.pendingTurnOn == true or spec.walkUpMotorIntent == true then
             return true
-        end
-        if spec.walkUpMotorIntent == true and self.getMotorState ~= nil and MotorState ~= nil then
-            local ok, state = pcall(self.getMotorState, self)
-            if ok and (state == MotorState.STARTING or state == MotorState.ON) then
-                return true
-            end
         end
     end
     return superFunc(self)
@@ -625,7 +641,9 @@ function ScsPumpHoseConnection:onRegisterExternalActionEvents(trigger, name, xml
 end
 
 function ScsPumpHoseConnection.pumpActionText(vehicle)
-    if phIsPumpRunning(vehicle) then
+    -- BUILD 06:39 (Vera F2): stable latch, not the raw frame. Was phIsPumpRunning here,
+    -- which flickered the label on exactly the reads 06:22 exists to absorb.
+    if phPumpSettledOn(vehicle) then
         return phTr("action_SCS_STOP_PUMP", "Stop pump")
     end
     local spec = vehicle ~= nil and vehicle.spec_scsPumpHose or nil
@@ -661,6 +679,15 @@ function ScsPumpHoseConnection.togglePump(vehicle)
             spec.pendingTurnOnTimer = 0
             spec.sawMotorStart = false
             spec.walkUpMotorIntent = false
+            -- BUILD 06:39 (Vera F3): the hold counters are latch state and must reset
+            -- wherever the latch does. Left standing, a stop-then-start let the previous
+            -- run's turnedOnHoldMs count the very next frame as settled.
+            spec.turnedOnHoldMs = 0
+            spec.motorOffHoldMs = 0
+            spec.loggedGateOpen = false
+        end
+        if ScsPumpWalkUpIntentEvent ~= nil and ScsPumpWalkUpIntentEvent.send ~= nil then
+            ScsPumpWalkUpIntentEvent.send(vehicle, false)
         end
         if vehicle.setIsTurnedOn ~= nil then
             pcall(vehicle.setIsTurnedOn, vehicle, false)
@@ -674,6 +701,9 @@ function ScsPumpHoseConnection.togglePump(vehicle)
     if spec ~= nil and spec.pendingTurnOn == true then
         return
     end
+
+    -- Vanilla EVC order: start motor, then turn-on once STARTING/ON so
+    -- SetTurnedOnEvent is the server leave-stop shield (not client-only pending).
     if Motorized ~= nil and type(Motorized.tryStartMotor) == "function" then
         pcall(Motorized.tryStartMotor, vehicle)
     end
@@ -682,7 +712,31 @@ function ScsPumpHoseConnection.togglePump(vehicle)
         spec.pendingTurnOnTimer = 0
         spec.sawMotorStart = false
         spec.walkUpMotorIntent = true
+        -- Fresh crank, fresh holds (Vera F3).
+        spec.turnedOnHoldMs = 0
+        spec.motorOffHoldMs = 0
+        spec.loggedGateOpen = false
     end
+
+    local motorState = nil
+    if vehicle.getMotorState ~= nil then
+        local ok, state = pcall(vehicle.getMotorState, vehicle)
+        if ok then
+            motorState = state
+        end
+    end
+    if MotorState ~= nil
+            and (motorState == MotorState.STARTING or motorState == MotorState.ON)
+            and vehicle.setIsTurnedOn ~= nil then
+        pcall(vehicle.setIsTurnedOn, vehicle, true)
+    end
+
+    -- Dedicated: mirror intent onto the server so getRequiresPower sticks
+    -- even if SetTurnedOnEvent lags past the 250 ms leave-stop window.
+    if ScsPumpWalkUpIntentEvent ~= nil and ScsPumpWalkUpIntentEvent.send ~= nil then
+        ScsPumpWalkUpIntentEvent.send(vehicle, true)
+    end
+
     if vehicle.raiseActive ~= nil then
         pcall(vehicle.raiseActive, vehicle)
     end
@@ -745,11 +799,25 @@ function ScsPumpHoseConnection.updatePendingTurnOn(pump, dt)
 
     if pump.getIsTurnedOn ~= nil then
         local ok, value = pcall(pump.getIsTurnedOn, pump)
+        -- BUILD 06:22: this used to act on a SINGLE true read. One flickering frame
+        -- dropped the crank intent and flipped the prompt back to Start pump, which is
+        -- the on/off flutter in the report. Require the state to hold before believing it.
         if ok and value == true then
+            spec.turnedOnHoldMs = (spec.turnedOnHoldMs or 0) + (tonumber(dt) or 0)
+        else
+            spec.turnedOnHoldMs = 0
+        end
+        if ok and value == true and (spec.turnedOnHoldMs or 0) >= 250 then
             spec.pendingTurnOn = false
             spec.pendingTurnOnTimer = 0
             spec.sawMotorStart = false
-            print("[CropStress] ScsPumpHose: pump turned on, reel gate is open")
+            -- Turn-on is now the leave-stop shield; clear crank intent.
+            spec.walkUpMotorIntent = false
+            -- Print on the transition only. Per-frame it was pure log spam.
+            if spec.loggedGateOpen ~= true then
+                spec.loggedGateOpen = true
+                print("[CropStress] ScsPumpHose: pump turned on, reel gate is open")
+            end
             if spec.evcPumpData ~= nil then
                 ScsPumpHoseConnection.externalPumpUpdate(spec.evcPumpData, pump)
             end
@@ -773,6 +841,11 @@ function ScsPumpHoseConnection.updatePendingTurnOn(pump, dt)
             spec.pendingTurnOnTimer = 0
             spec.sawMotorStart = false
             spec.walkUpMotorIntent = false
+            spec.turnedOnHoldMs = 0
+            spec.loggedGateOpen = false
+            if ScsPumpWalkUpIntentEvent ~= nil and ScsPumpWalkUpIntentEvent.send ~= nil and pump.isServer then
+                ScsPumpWalkUpIntentEvent.send(pump, false)
+            end
             print("[CropStress] ScsPumpHose: pump turn-on aborted, motor returned to off")
             if spec.evcPumpData ~= nil then
                 ScsPumpHoseConnection.externalPumpUpdate(spec.evcPumpData, pump)
@@ -787,6 +860,9 @@ function ScsPumpHoseConnection.updatePendingTurnOn(pump, dt)
         spec.pendingTurnOnTimer = 0
         spec.sawMotorStart = false
         spec.walkUpMotorIntent = false
+        if ScsPumpWalkUpIntentEvent ~= nil and ScsPumpWalkUpIntentEvent.send ~= nil and pump.isServer then
+            ScsPumpWalkUpIntentEvent.send(pump, false)
+        end
         print("[CropStress] ScsPumpHose: pump turn-on timed out")
         if spec.evcPumpData ~= nil then
             ScsPumpHoseConnection.externalPumpUpdate(spec.evcPumpData, pump)
@@ -835,6 +911,11 @@ function ScsPumpHoseConnection:onUpdateTick(dt, isActiveForInput, isActiveForInp
 
     ScsPumpHoseConnection.updatePendingTurnOn(self, dt)
 
+    -- Mirror Rainstar BUILD 22:29: keep pump in the update loop while turned on.
+    if self.isServer and phIsPumpRunning(self) and self.raiseActive ~= nil then
+        pcall(self.raiseActive, self)
+    end
+
     if spec.walkUpMotorIntent and not spec.pendingTurnOn and not phIsPumpRunning(self) then
         local motorOff = true
         if self.getMotorState ~= nil and MotorState ~= nil then
@@ -843,10 +924,20 @@ function ScsPumpHoseConnection:onUpdateTick(dt, isActiveForInput, isActiveForInp
                 motorOff = false
             end
         end
+        -- BUILD 06:22: same one-frame problem from the other side. A single off read
+        -- between STARTING ticks used to drop the intent mid-crank.
         if motorOff then
+            spec.motorOffHoldMs = (spec.motorOffHoldMs or 0) + (tonumber(dt) or 0)
+        else
+            spec.motorOffHoldMs = 0
+        end
+        if motorOff and (spec.motorOffHoldMs or 0) >= 500 then
             spec.walkUpMotorIntent = false
             spec.sawMotorStart = false
+            spec.motorOffHoldMs = 0
         end
+    else
+        spec.motorOffHoldMs = 0
     end
 
     if self.isClient then
@@ -895,7 +986,7 @@ function ScsPumpHoseConnection:onUpdateTick(dt, isActiveForInput, isActiveForInp
     end
 end
 
-print("[CropStress] ScsPumpHoseConnection loaded (BUILD 21:42 hose world R + EVC pump K)")
+print("[CropStress] ScsPumpHoseConnection loaded (BUILD 22:53 sticky turn-on + pump keep-awake + K pump only)")
 
 -- ------------------------------------------------------------
 -- Walk-up hose Activatable (vanilla ACTIVATE_OBJECT / R). Hose only.

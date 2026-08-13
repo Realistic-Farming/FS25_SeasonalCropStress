@@ -355,7 +355,8 @@
     <text name="action_SCS_START_PUMP" text="Start pump"/>
     <text name="action_SCS_STARTING_PUMP" text="Menyalakan pompa…"/>
     <text name="action_SCS_STOP_PUMP" text="Stop pump"/>
-    <text name="input_SCS_TOGGLE_PUMP" text="Start / Stop pump (or Rainstar)"/>
+        <text name="input_SCS_TOGGLE_PUMP" text="Start / Stop pump"/>
+    <text name="input_SCS_TOGGLE_RAINSTAR" text="[EN] Turn on / off Rainstar"/>
     <text name="action_SCS_TURN_ON_RAINSTAR" text="Turn on Rainstar"/>
     <text name="action_SCS_TURN_OFF_RAINSTAR" text="Turn off Rainstar"/>
     <text name="warning_SCS_RAINSTAR_NEED_HOSE_PUMP" text="Connect hose and start pump first"/>

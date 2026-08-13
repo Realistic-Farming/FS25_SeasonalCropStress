@@ -210,11 +210,9 @@
         </movingTools>
     </cylindered>
 	
-	<!-- BUILD 20:43 item 4: re-enabled. While this was commented out the only way to run
-	     the pump was to enter the cab and start the motor, because getIsPowered gates
-	     turn-on and nothing offered a turn-on surface. ScsPumpHoseConnection already
-	     accepts turn-on OR motor-started, so the enter+ignition path stays valid. -->
-	<turnOnVehicle turnOffIfNotAllowed="false" >
+	<!-- BUILD 22:53: turnOffOnDeactivate=false (mirror Rainstar) so deactivate/cab leave
+	     does not clear pump TurnOn while walk-up leave-stop shield relies on getRequiresPower. -->
+	<turnOnVehicle turnOffIfNotAllowed="false" turnOffOnDeactivate="false">
         <sounds>
             <work template="WOOD_CHIPPER_IDLE" linkNode="Aggregat_main" />
         </sounds>

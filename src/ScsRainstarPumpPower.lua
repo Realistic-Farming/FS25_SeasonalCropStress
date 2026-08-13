@@ -1,9 +1,12 @@
 -- =========================================================
 -- ScsRainstarPumpPower
+-- BUILD 22:53 - EVC uses SCS_TOGGLE_RAINSTAR (J); never SCS_TOGGLE_PUMP.
+-- BUILD 22:29 - raiseActive same frame as setIsTurnedOn(true);
+--              server keep-awake while turned on (WorkArea spray tick).
 -- BUILD 22:25 - the EMP pump is the Rainstar's power source.
 -- BUILD 21:42 - walk-up Turn on/off via ExternalVehicleControl
---              (scsToggleRainstar + SCS_TOGGLE_PUMP) on a dedicated
---              controlTrigger Shape. Soft getIsPowered kept.
+--              (scsToggleRainstar) on a dedicated controlTrigger Shape.
+--              Soft getIsPowered kept.
 --
 -- Why the reel demanded a tractor
 -- ------------------------------
@@ -47,6 +50,7 @@ end
 
 function ScsRainstarPumpPower.registerEventListeners(vehicleType)
     SpecializationUtil.registerEventListener(vehicleType, "onLoad", ScsRainstarPumpPower)
+    SpecializationUtil.registerEventListener(vehicleType, "onUpdateTick", ScsRainstarPumpPower)
     SpecializationUtil.registerEventListener(vehicleType, "onRegisterExternalActionEvents", ScsRainstarPumpPower)
 end
 
@@ -95,7 +99,7 @@ function ScsRainstarPumpPower:getIsPowered(superFunc)
 end
 
 -- ------------------------------------------------------------
--- BUILD 17:16 walk-up Turn on / off (dedicated SCS_TOGGLE_PUMP, not ENTER_EXIT)
+-- BUILD 22:53 walk-up Turn on / off (SCS_TOGGLE_RAINSTAR / J; not pump K)
 -- ------------------------------------------------------------
 
 function ScsRainstarPumpPower:onRegisterExternalActionEvents(trigger, name, xmlFile, key)
@@ -150,11 +154,33 @@ function ScsRainstarPumpPower.toggle(vehicle)
     end
 
     -- Soft power is live; setIsTurnedOn goes through TurnOnVehicle events.
+    -- setIsTurnedOn does not wake the vehicle — raiseActive same frame so
+    -- WorkArea/Sprayer ticks run (visible WASHER) on a parked reel.
     pcall(vehicle.setIsTurnedOn, vehicle, true)
+    if vehicle.raiseActive ~= nil then
+        pcall(vehicle.raiseActive, vehicle)
+    end
+end
+
+-- Dedicated server strips TurnOnVehicle:onUpdate, so looping turnedOnAnimations
+-- do not re-arm raiseActive there. Keep the object in the update loop while on
+-- (mirror rainstarAutoReel reelCommandActive / pump updatePendingTurnOn).
+function ScsRainstarPumpPower:onUpdateTick(dt, isActiveForInput, isActiveForInputIgnoreSelection, isSelected)
+    if not self.isServer then
+        return
+    end
+    local isOn = false
+    if self.getIsTurnedOn ~= nil then
+        local ok, value = pcall(self.getIsTurnedOn, self)
+        isOn = ok and value == true
+    end
+    if isOn and self.raiseActive ~= nil then
+        pcall(self.raiseActive, self)
+    end
 end
 
 function ScsRainstarPumpPower.externalRegister(data, vehicle)
-    local action = InputAction.SCS_TOGGLE_PUMP
+    local action = InputAction.SCS_TOGGLE_RAINSTAR
     if action == nil then
         return
     end
@@ -180,4 +206,4 @@ function ScsRainstarPumpPower.externalUpdate(data, vehicle)
     g_inputBinding:setActionEventActive(data.actionEventId, true)
 end
 
-print("[CropStress] ScsRainstarPumpPower loaded (BUILD 21:42 EVC controlTrigger)")
+print("[CropStress] ScsRainstarPumpPower loaded (BUILD 22:53 J SCS_TOGGLE_RAINSTAR + keep-awake)")

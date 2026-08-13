@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <l10n>
     <texts>
     <!-- ========== HUD OVERLAY ========== -->
@@ -457,12 +457,14 @@
     <text name="action_SCS_START_PUMP" text="Pumpe starten"/>
     <text name="action_SCS_STARTING_PUMP" text="Pumpe wird gestartet…"/>
     <text name="action_SCS_STOP_PUMP" text="Pumpe stoppen"/>
-    <text name="input_SCS_TOGGLE_PUMP" text="Pumpe starten / stoppen (oder Rainstar)"/>
+        <text name="input_SCS_TOGGLE_PUMP" text="Pumpe starten / stoppen"/>
+    <text name="input_SCS_TOGGLE_RAINSTAR" text="Rainstar ein-/ausschalten"/>
     <text name="action_SCS_TURN_ON_RAINSTAR" text="Rainstar einschalten"/>
     <text name="action_SCS_TURN_OFF_RAINSTAR" text="Rainstar ausschalten"/>
     <text name="warning_SCS_RAINSTAR_NEED_HOSE_PUMP" text="Zuerst Schlauch verbinden und Pumpe starten"/>
     <text name="warning_SCS_EMP_OUT_OF_WATER" text="EMP ohne Wasser"/>
     <text name="cs_rainstar_needs_pump" text="[EN] Connect the supply hose from the pump and start the pump. This reel runs on pump pressure, not a tractor."/>
+    <text name="cs_rainstar_unhitch_teach" text="Abkuppeln schaltet die Beregnung aus — nach dem Abstellen des Traktors erneut J druecken."/>
     <text name="cs_playkit_pump_power_teach" text="[EN] The pump is the power. Hitch the reel only to tow it: to spray, run the hose from the pump, start the pump, then switch the reel on. Stop the pump or pull the hose and the spray stops."/>
     <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
         <!-- BUILD 11:27 F155 Esc RF button labels -->
