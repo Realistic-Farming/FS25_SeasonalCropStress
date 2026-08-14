@@ -69,3 +69,8 @@
 - [x] F154 retired the UsedPlus wear bridge and deleted updateSystemWearLevel, leaving system.wearLevel nil on every system. The schedule dialog read that field in updatePerformance and threw on nil during onOpen, leaving the dialog visible with input never initialised (could not be interacted with or closed). Found in-game on the 72h skip test.
 - [x] Fixed by reading wear as system.wearLevel or 0. Per F154 the wear factor is a permanent multiply by one after the retirement, so nil and zero are the same number and no player-observable behaviour changes (F154 invariant 1). F154 bench gains the dialog-consumer assertion. Suite 382/0, syntax clean, built and deployed.
 - [~] Re-open the dialog in-game on the fixed zip to confirm it interacts and closes normally.
+
+## 2026-08-14 (Fred): F158 - the irrigation water bill goes to the system's owner
+- [x] The running cost resolved the farm from the local player: on a dedicated server nothing was billed all season (no local player), on a listen server every system was billed to the host (the farmer paid for his neighbours). The bill now resolves each system's owner from its placeable at charge time (getOwnerFarmId), the base-game water-charge pattern. registerIrrigationSystem holds the placeable; deregister removes it when the placeable goes.
+- [x] scs158_dedi_farm_resolution_test.lua at 12 assertions; suite 448/0; deployed 1.2.5.70.
+- [~] In-game (owed): a dedi with pivots on two farms, each farm billed for its own; a sold-and-rebought pivot billed to the new owner.

@@ -76,3 +76,8 @@
 - [x] Root cause: system.wearLevel nil (F154 deleted the wear setter) -> updatePerformance threw on nil in onOpen, dialog left visible but dead.
 - [x] Fix: wearLevel or 0 in the two readouts. Suite 382/0, deployed.
 - [~] In-game confirm: open the irrigation schedule dialog and interact/close normally.
+
+## F158 irrigation water bill (2026-08-14)
+- [x] Per-system owner charge from the placeable at charge time (dedi + listen-server neighbour fix); unresolvable/spectator owners skipped.
+- [x] 12 assertions; suite 448/0.
+- [~] In-game: two-farm dedi billing; a rebought pivot bills its new owner.
