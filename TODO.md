@@ -91,3 +91,8 @@
 - [x] Compaction modifier on the critical threshold; drought-band nutrient-availability stress scaling; Poor NPK hit harder. Firewall-clean reads only.
 - [x] 8 assertions; suite 480/0.
 - [~] In-game; waterlog mechanism (future refinement at assembly).
+
+## SCS-020 transpiration feedback (2026-08-14)
+- [x] Transpiration share scaled by the family growth summary; soil share never scaled; firewall read-only.
+- [x] 10 assertions; suite 490/0.
+- [~] In-game; the per-cell upgrade rides SCS-018's store (deferred).

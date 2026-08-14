@@ -18,6 +18,29 @@ SoilMoistureSystem.__index = SoilMoistureSystem
 -- At 1.0 modifier: 0.004 = 0.4% per hour → full evap in ~104 hours (~4 game days)
 SoilMoistureSystem.BASE_EVAP_RATE = 0.004
 
+-- SCS-020 TRANSPIRATION FEEDBACK: the share of evapotranspiration attributed to
+-- crop transpiration, scaled by the 2m growth family's condition (SF-52/53's
+-- published getFieldGrowthSummary). The soil-evaporation share (1 - the share) is
+-- never scaled, so a blocked cell keeps its full soil drying; only transpiration
+-- scales with the crop's condition. Dials awaiting the spine (neutral defaults).
+SoilMoistureSystem.TRANSPIRATION_SHARE = 0.5
+SoilMoistureSystem.BLOCKED_WEIGHT       = 0.5
+SoilMoistureSystem.EXCELLENT_WEIGHT     = 0.25
+SoilMoistureSystem.GROWTH_EVAP_MIN      = 0.25
+SoilMoistureSystem.GROWTH_EVAP_MAX      = 1.25
+
+-- SCS-020: the 2m growth family's per-field condition summary, duck-typed and
+-- pull-only. Returns { blockedFrac, excellentFrac } or nil when SF is absent or
+-- the getter is not present, which degrades to the neutral factor 1.0. Never a
+-- write into SF's state (the firewall).
+function SoilMoistureSystem:_growthSummary(fieldId)
+    local sfm = g_currentMission ~= nil and g_currentMission.soilFertilityManager
+    if sfm == nil or sfm.getFieldGrowthSummary == nil then return nil end
+    local ok, summary = pcall(function() return sfm:getFieldGrowthSummary(fieldId) end)
+    if not ok or type(summary) ~= "table" then return nil end
+    return summary
+end
+
 -- Soil type evaporation modifiers and rain absorption coefficients
 SoilMoistureSystem.SOIL_PARAMS = {
     sandy = { evapMod = 1.40, rainAbsorb = 1.25 },
@@ -423,12 +446,34 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours)
         -- Every term below is a PER-HOUR quantity, so each is multiplied by the
         -- elapsed count. At the default of 1 this is arithmetically identical to
         -- what shipped; SCS-037 changes only what arrives in `hours`.
-        local evapLoss = SoilMoistureSystem.BASE_EVAP_RATE
+        local evapPerHour = SoilMoistureSystem.BASE_EVAP_RATE
             * evapMultiplier
             * soilParams.evapMod
             * settingsEvapMult
             * sfEvapMod
-            * hours
+
+        -- SCS-020 TRANSPIRATION FEEDBACK: a field with cells blocked by SF-52's
+        -- viability mask draws less water and stays wetter; a field growing at
+        -- excellent credit draws more and dries faster. Only the transpiration
+        -- share is scaled, never the soil-evaporation share, so a blocked cell
+        -- keeps its full soil drying (the pinned invariant). Duck-typed read of
+        -- SF's getFieldGrowthSummary, neutral 1.0 when absent.
+        local growthEvapMod = 1.0
+        local summary = self:_growthSummary(fieldId)
+        if summary ~= nil then
+            local blocked    = summary.blockedFrac or 0
+            local excellent  = summary.excellentFrac or 0
+            growthEvapMod = SoilMoistureSystem.GROWTH_EVAP_MIN
+            local v = 1 - SoilMoistureSystem.BLOCKED_WEIGHT * blocked
+                     + SoilMoistureSystem.EXCELLENT_WEIGHT * excellent
+            if v > growthEvapMod then growthEvapMod = v end
+            if growthEvapMod > SoilMoistureSystem.GROWTH_EVAP_MAX then
+                growthEvapMod = SoilMoistureSystem.GROWTH_EVAP_MAX
+            end
+        end
+        local soilEvapShare = evapPerHour * (1 - SoilMoistureSystem.TRANSPIRATION_SHARE) * hours
+        local transpShare   = evapPerHour * SoilMoistureSystem.TRANSPIRATION_SHARE * hours
+        local evapLoss = soilEvapShare + transpShare * growthEvapMod
 
         -- Rain gain (modulated by soil absorption). Charged over `wetHours`, which
         -- is the whole span unless the Water Record narrowed it (SCS-037 round 2).
