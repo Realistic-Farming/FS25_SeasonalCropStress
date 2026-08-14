@@ -796,6 +796,17 @@ function CropStressManager:getYieldKeepFactor(fieldId)
     return keep
 end
 
+-- The drilling-window outlook over the next N in-game days. A THIN published
+-- wrapper over WeatherIntegration's sky-reading (cloud coverage + current rain +
+-- rain duration for days 1-2, season priors beyond). ALWAYS approximate: the
+-- result carries `approximate = true` and every consumer must hedge.
+function CropStressManager:getRainOutlook(daysAhead)
+    if self.weatherIntegration == nil or self.weatherIntegration.getRainOutlook == nil then
+        return { likelihood = 0.5, approximate = true }
+    end
+    return self.weatherIntegration:getRainOutlook(daysAhead)
+end
+
 -- Soil class for a field: "sandy", "loamy" or "clay", or nil when the field is
 -- not tracked or the class is not yet known on this peer.
 --
