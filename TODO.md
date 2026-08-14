@@ -76,3 +76,8 @@
 - [x] Root cause: system.wearLevel nil (F154 deleted the wear setter) -> updatePerformance threw on nil in onOpen, dialog left visible but dead.
 - [x] Fix: wearLevel or 0 in the two readouts. Suite 382/0, deployed.
 - [~] In-game confirm: open the irrigation schedule dialog and interact/close normally.
+
+## F160 weekly schedule day index (2026-08-14)
+- [x] Day-of-week derived from the monotonic day modulo 7, ignoring the pinned currentDayInPeriod; TaxMod mirror ships as its own PR.
+- [x] 17 assertions; suite 465/0.
+- [~] In-game: weekend rest + Wednesday-only run on a fresh save.

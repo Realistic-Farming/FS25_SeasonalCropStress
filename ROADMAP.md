@@ -69,3 +69,8 @@
 - [x] F154 retired the UsedPlus wear bridge and deleted updateSystemWearLevel, leaving system.wearLevel nil on every system. The schedule dialog read that field in updatePerformance and threw on nil during onOpen, leaving the dialog visible with input never initialised (could not be interacted with or closed). Found in-game on the 72h skip test.
 - [x] Fixed by reading wear as system.wearLevel or 0. Per F154 the wear factor is a permanent multiply by one after the retirement, so nil and zero are the same number and no player-observable behaviour changes (F154 invariant 1). F154 bench gains the dialog-consumer assertion. Suite 382/0, syntax clean, built and deployed.
 - [~] Re-open the dialog in-game on the fixed zip to confirm it interacts and closes normally.
+
+## 2026-08-14 (Fred): F160 - the weekly irrigation schedule honours the picked days
+- [x] The day-of-week index was read from env.currentDayInPeriod, which the base game pins at 1 on a default save (daysPerPeriod defaults to 1), so a weekday schedule ran every day and unticking day one stopped the pivot forever. IrrigationManager:dayOfWeekIndex now derives the index from the monotonic day modulo 7, so the weekend-off entries are reachable.
+- [x] scs160_schedule_day_index_test.lua at 17 assertions; suite 465/0; deployed 1.2.5.71.
+- [~] In-game (owed): a weekday pivot rests on the weekend and a Wednesday-only schedule runs Wednesdays on a fresh save.
