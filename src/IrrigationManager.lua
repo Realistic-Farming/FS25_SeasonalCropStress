@@ -152,6 +152,11 @@ function IrrigationManager:registerIrrigationSystem(placeable)
     local system = {
         id                     = placeable.id,
         type                   = placeable.irrigationType or "pivot",
+        -- F158: the OWNING PLACEABLE is held so the owner farm can be resolved at
+        -- charge time (a placeable changes hands; a stored farm id would go stale).
+        -- deregisterIrrigationSystem removes this record when the placeable goes,
+        -- so the reference cannot dangle.
+        placeable              = placeable,
         x                      = x,
         y                      = y,   -- SCS-038: the LIFT term's pivot height, read once at registration
         z                      = z,

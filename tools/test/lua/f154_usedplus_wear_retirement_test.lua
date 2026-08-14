@@ -35,6 +35,8 @@ local function addSystem(im, id, flowRate, pressure, fields)
     operationalCostPerHour = 15,
     isActive               = false,
     effectiveRatePerField  = {},
+    -- F158: the charge resolves the owner from the placeable.
+    placeable              = { getOwnerFarmId = function() return 1 end },
   }
   return im.systems[id]
 end

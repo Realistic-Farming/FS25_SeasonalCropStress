@@ -66,16 +66,30 @@ function FinanceIntegration:chargeHourlyCosts(elapsedHours)
             if type(irrMgr.getEffectiveCostPerHour) == "function" then
                 effCost = irrMgr:getEffectiveCostPerHour(system)
             end
-            self:deductFundsVanilla((effCost or (system.operationalCostPerHour or 0)) * hours)
+            -- F158: the water bill goes to the OWNER of the system's placeable,
+            -- resolved at charge time, never the local player. A dedicated server
+            -- has no local player, so the old read billed nobody all season; a
+            -- listen server billed every system on the map to the host, so the
+            -- farmer paid for his neighbours' pivots. The placeable is the truth:
+            -- a pivot belongs to whoever owns it (the base game charges water the
+            -- same way, PlaceableHusbandryWater with self:getOwnerFarmId()).
+            local farmId = nil
+            if system.placeable ~= nil and type(system.placeable.getOwnerFarmId) == "function" then
+                farmId = system.placeable:getOwnerFarmId()
+            end
+            if farmId and farmId ~= 0 then
+                self:deductFundsVanilla((effCost or (system.operationalCostPerHour or 0)) * hours, farmId)
+            end
         end
     end
 end
 
--- Deduct operational cost via the vanilla FS25 fund system.
-function FinanceIntegration:deductFundsVanilla(cost)
+-- Deduct operational cost via the vanilla FS25 fund system, charging the farm
+-- the system belongs to. The farm is always passed in; it is never derived from
+-- the local player (F158).
+function FinanceIntegration:deductFundsVanilla(cost, farmId)
     if g_currentMission == nil then return end
     local moneyType = (MoneyType ~= nil and MoneyType.OTHER) or 0
-    local farmId = g_currentMission.player ~= nil and g_currentMission.player:getOwnerFarmId()
     -- Farm 0 is the spectator farm — addMoney rejects it. Skip if no valid farm.
     if not farmId or farmId == 0 then return end
     g_currentMission:addMoney(-cost, farmId, moneyType, true)

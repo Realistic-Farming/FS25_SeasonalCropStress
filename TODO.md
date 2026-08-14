@@ -81,3 +81,8 @@
 - [x] Day-of-week derived from the monotonic day modulo 7, ignoring the pinned currentDayInPeriod; TaxMod mirror ships as its own PR.
 - [x] 17 assertions; suite 465/0.
 - [~] In-game: weekend rest + Wednesday-only run on a fresh save.
+
+## F158 irrigation water bill (2026-08-14)
+- [x] Per-system owner charge from the placeable at charge time (dedi + listen-server neighbour fix); unresolvable/spectator owners skipped.
+- [x] 12 assertions; suite 448/0.
+- [~] In-game: two-farm dedi billing; a rebought pivot bills its new owner.
