@@ -84,3 +84,8 @@
 - [x] Arrow-2 compaction half: SF compaction read adds a critical-moisture modifier (compacted fields stress/alert earlier on a drying swing). The soil-moisture coupling: drought (<30%) reduces effective nutrient uptake, Poor SF nutrient status hits harder, scaling the drying-deficit stress accrual. All SCS-side reads of SF getFieldInfo, never a write (firewall holds). Waterlog stays a noted future refinement (would break the no-deficit contract).
 - [x] soil_moisture_coupling_test.lua at 8 assertions; suite 480/0; deployed 1.2.5.73.
 - [~] In-game (owed): a compacted field alerts earlier on a dry spell; a drought on poor soil stresses harder than on good soil.
+
+## 2026-08-14 (Fred): SCS-020 transpiration feedback
+- [x] The growth family's condition scales only the transpiration share of evapotranspiration (a blocked cell stays wetter, an excellent cell dries faster); the soil-evaporation share is never scaled. Duck-typed read of SF's getFieldGrowthSummary, neutral 1.0 when absent; SCS remains sole writer of moisture. No new write, no new persistence, no surface.
+- [x] scs020_transpiration_feedback_test.lua at 10 assertions; suite 490/0; deployed 1.2.5.74.
+- [~] In-game (owed): a blocked field stays visibly wetter; an excellent-credit field dries faster over a dry spell.
