@@ -63,7 +63,7 @@ do
   fi.manager = { irrigationManager = {
     costsEnabled = true,
     systems = {
-      { isActive = true, waterSourceId = 1, pressureMultiplier = 0.7, operationalCostPerHour = 15 },
+      { isActive = true, waterSourceId = 1, pressureMultiplier = 0.7, operationalCostPerHour = 15, placeable = { getOwnerFarmId = function() return 1 end } },
     },
     getEffectiveCostPerHour = function(_self, _sys) return 15 / 0.7 end,
   } }
@@ -81,7 +81,7 @@ do
   fi.manager = { irrigationManager = {
     costsEnabled = true,
     systems = {
-      { isActive = true, waterSourceId = 1, pressureMultiplier = 0.7, operationalCostPerHour = 15 },
+      { isActive = true, waterSourceId = 1, pressureMultiplier = 0.7, operationalCostPerHour = 15, placeable = { getOwnerFarmId = function() return 1 end } },
     },
   } }
   fi.deductFundsVanilla = function(_self, cost) charged[#charged + 1] = cost end

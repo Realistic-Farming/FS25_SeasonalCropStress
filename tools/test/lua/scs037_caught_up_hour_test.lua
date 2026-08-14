@@ -290,7 +290,8 @@ local function newFinance(costPerHour, active)
   local fi = FinanceIntegration.new({
     irrigationManager = {
       costsEnabled = true,
-      systems = { [1] = { isActive = active, operationalCostPerHour = costPerHour } },
+      systems = { [1] = { isActive = active, operationalCostPerHour = costPerHour,
+        placeable = { getOwnerFarmId = function() return 1 end } } },
     },
   })
   fi.isInitialized = true
