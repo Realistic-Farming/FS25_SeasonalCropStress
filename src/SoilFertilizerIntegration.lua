@@ -45,6 +45,16 @@ SoilFertilizerIntegration.OM_EVAP_POOR  = 1.18  -- OM < 1%:  poor retention
 SoilFertilizerIntegration.PH_STRESS_ACID  = 0.04  -- pH < 6.0: +4% threshold
 SoilFertilizerIntegration.PH_STRESS_ALK   = 0.02  -- pH > 7.5: +2% threshold
 
+-- Compaction bands → additive critical-moisture modifier (Arrow-2's compaction
+-- half). High compaction reduces the soil's moisture buffer, so a compacted
+-- field's crop stresses and alerts hit earlier on a drying swing. SF's field
+-- compaction is a 0..100 score (MAX_COMPACTION = 100); the bands and magnitudes
+-- are balance-pass numbers.
+SoilFertilizerIntegration.COMPACT_STRESS_HIGH   = 0.05   -- compaction >= 80
+SoilFertilizerIntegration.COMPACT_STRESS_MID    = 0.02   -- compaction >= 50
+SoilFertilizerIntegration.COMPACT_THRESHOLD_HIGH = 80
+SoilFertilizerIntegration.COMPACT_THRESHOLD_MID  = 50
+
 -- Cache TTL: refresh field modifiers every 4 in-game hours at most
 -- (soil chemistry changes slowly; per-hour polling is excessive)
 SoilFertilizerIntegration.CACHE_TTL_HOURS = 4
@@ -152,10 +162,12 @@ function SoilFertilizerIntegration:refreshField(fieldId, hourKey)
 
     local evapMod  = self:computeEvapMod(info.organicMatter)
     local stressMod = self:computeStressMod(info.pH)
+    local compactMod = self:computeCompactMod(info.compaction)
 
     self.fieldCache[fieldId] = {
-        evapMod    = evapMod,
-        stressMod  = stressMod,
+        evapMod     = evapMod,
+        stressMod   = stressMod,
+        compactMod  = compactMod,
         lastHourKey = hourKey or 0,
     }
 end
@@ -184,6 +196,23 @@ function SoilFertilizerIntegration:computeStressMod(pH)
 end
 
 -- ============================================================
+-- COMPUTE COMPACTION MODIFIER
+-- SF field compaction is a 0..100 score. High compaction sharpens the wet/dry
+-- swing (additive to criticalMoisture, so stress and alerts fire earlier on a
+-- drying pass); low compaction is neutral. Nil/unknown degrades to 0.0.
+-- ============================================================
+function SoilFertilizerIntegration:computeCompactMod(compaction)
+    if compaction == nil then return 0.0 end
+    if compaction >= SoilFertilizerIntegration.COMPACT_THRESHOLD_HIGH then
+        return SoilFertilizerIntegration.COMPACT_STRESS_HIGH
+    end
+    if compaction >= SoilFertilizerIntegration.COMPACT_THRESHOLD_MID then
+        return SoilFertilizerIntegration.COMPACT_STRESS_MID
+    end
+    return 0.0
+end
+
+-- ============================================================
 -- PUBLIC ACCESSORS
 -- Return cached values; neutral defaults if cache is empty.
 -- ============================================================
@@ -197,6 +226,12 @@ function SoilFertilizerIntegration:getFieldStressMod(fieldId)
     if not self:isActive() then return 0.0 end
     local cached = self.fieldCache[fieldId]
     return (cached ~= nil) and cached.stressMod or 0.0
+end
+
+function SoilFertilizerIntegration:getFieldCompactMod(fieldId)
+    if not self:isActive() then return 0.0 end
+    local cached = self.fieldCache[fieldId]
+    return (cached ~= nil) and cached.compactMod or 0.0
 end
 
 -- Returns a human-readable summary for the consultant dialog.

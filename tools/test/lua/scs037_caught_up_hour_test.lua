@@ -254,7 +254,10 @@ do
   }
 
   local stage = wheat.stages[1]
-  local moisture = wheat.criticalMoisture * 0.5   -- half the threshold
+  -- Just under the threshold (0.9 x) and above the soil-moisture coupling's
+  -- drought band (0.30), so this bar pins the elapsed-hour arithmetic with the
+  -- coupling neutral rather than entangled with it.
+  local moisture = wheat.criticalMoisture * 0.9
   local deficitRatio = (wheat.criticalMoisture - moisture) / wheat.criticalMoisture
 
   local one = newModifier()
