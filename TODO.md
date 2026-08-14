@@ -86,3 +86,8 @@
 - [x] Per-system owner charge from the placeable at charge time (dedi + listen-server neighbour fix); unresolvable/spectator owners skipped.
 - [x] 12 assertions; suite 448/0.
 - [~] In-game: two-farm dedi billing; a rebought pivot bills its new owner.
+
+## Soil-moisture coupling + Arrow-2 (2026-08-14)
+- [x] Compaction modifier on the critical threshold; drought-band nutrient-availability stress scaling; Poor NPK hit harder. Firewall-clean reads only.
+- [x] 8 assertions; suite 480/0.
+- [~] In-game; waterlog mechanism (future refinement at assembly).
