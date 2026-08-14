@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="105">
     <author>TisonK</author>
-    <version>1.2.5.74</version>
+    <version>1.2.5.75</version>
 
     <title>
         <en>Seasonal Crop Stress &amp; Irrigation Manager</en>
-        <de>Saisonaler Pflanzenstress &amp; BewÃƒÂ¤sserungsmanager</de>
+        <de>Saisonaler Pflanzenstress &amp; BewÃƒÆ’Ã‚Â¤sserungsmanager</de>
         <fr>Stress saisonnier des cultures &amp; gestionnaire d'irrigation</fr>
         <it>Stress stagionale delle colture &amp; Gestore dell'irrigazione</it>
         <nl>Seizoensgebonden gewassstress &amp; irrigatiebeheer</nl>
-        <cz>Seasonal Crop Stress &amp; SprÃƒÂ¡vce zavlaÃ…Â¾ovÃƒÂ¡nÃƒÂ­</cz>
-        <da>SÃƒÂ¦sonbetinget afgrÃƒÂ¸destress &amp; vandingsstyring</da>
+        <cz>Seasonal Crop Stress &amp; SprÃƒÆ’Ã‚Â¡vce zavlaÃƒâ€¦Ã‚Â¾ovÃƒÆ’Ã‚Â¡nÃƒÆ’Ã‚Â­</cz>
+        <da>SÃƒÆ’Ã‚Â¦sonbetinget afgrÃƒÆ’Ã‚Â¸destress &amp; vandingsstyring</da>
     </title>
 
     <description>
@@ -19,133 +19,133 @@
 Each field tracks a soil moisture percentage (0-100%) that rises with rain and falls through evapotranspiration driven by temperature, season, and soil type. When moisture drops below crop-specific thresholds during critical growth windows, yield stress accumulates and reduces your harvest at season's end.
 
 FEATURES:
-Ã¢â‚¬Â¢ Per-field soil moisture simulation driven by real weather
-Ã¢â‚¬Â¢ Seasonal & temperature-adjusted evapotranspiration
-Ã¢â‚¬Â¢ Soil type modifiers: sandy drains fast, clay holds moisture
-Ã¢â‚¬Â¢ Crop-specific critical growth windows (wheat, corn, barley, canola, and more)
-Ã¢â‚¬Â¢ Yield reduction at harvest Ã¢â‚¬â€ up to 60% loss at maximum stress
-Ã¢â‚¬Â¢ Field moisture HUD overlay with 5-day forecast (press Shift+M to toggle)
-Ã¢â‚¬Â¢ Center-pivot and drip irrigation placeables with water pump infrastructure
-Ã¢â‚¬Â¢ Irrigation scheduling dialog Ã¢â‚¬â€ set active days and hourly window (Shift+I)
-Ã¢â‚¬Â¢ Crop Consultant dialog with risk summary and recommendations (Shift+C)
-Ã¢â‚¬Â¢ Optional integration with FS25_NPCFavor (Alex Chen, Agronomist NPC)
-Ã¢â‚¬Â¢ Optional integration with FS25_UsedPlus (used equipment marketplace)
-Ã¢â‚¬Â¢ Full save/load persistence of all field and irrigation state
-Ã¢â‚¬Â¢ Debug console commands (type csHelp in developer console)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Per-field soil moisture simulation driven by real weather
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Seasonal & temperature-adjusted evapotranspiration
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Soil type modifiers: sandy drains fast, clay holds moisture
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Crop-specific critical growth windows (wheat, corn, barley, canola, and more)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Yield reduction at harvest ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â up to 60% loss at maximum stress
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Field moisture HUD overlay with 5-day forecast (press Shift+M to toggle)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Center-pivot and drip irrigation placeables with water pump infrastructure
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Irrigation scheduling dialog ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â set active days and hourly window (Shift+I)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Crop Consultant dialog with risk summary and recommendations (Shift+C)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Optional integration with FS25_NPCFavor (Alex Chen, Agronomist NPC)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Optional integration with FS25_UsedPlus (used equipment marketplace)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Full save/load persistence of all field and irrigation state
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Debug console commands (type csHelp in developer console)
         ]]></en>
-        <de><![CDATA[FÃƒÂ¼gt Bodenfeuchteverfolgung, Pflanzenstresssimulation und BewÃƒÂ¤sserungsmanagement zu Farming Simulator 25 hinzu.
+        <de><![CDATA[FÃƒÆ’Ã‚Â¼gt Bodenfeuchteverfolgung, Pflanzenstresssimulation und BewÃƒÆ’Ã‚Â¤sserungsmanagement zu Farming Simulator 25 hinzu.
 
-Jedes Feld verfolgt einen Bodenfeuchteanteil (0Ã¢â‚¬â€œ100 %), der mit Regen steigt und durch Evapotranspiration (Temperatur, Jahreszeit, Bodentyp) sinkt. Wenn die Feuchte in kritischen Wachstumsphasen unter kultururspezifische Schwellenwerte fÃƒÂ¤llt, akkumuliert sich Trockenstress und reduziert den Ernteertrag am Saisonende.
+Jedes Feld verfolgt einen Bodenfeuchteanteil (0ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“100 %), der mit Regen steigt und durch Evapotranspiration (Temperatur, Jahreszeit, Bodentyp) sinkt. Wenn die Feuchte in kritischen Wachstumsphasen unter kultururspezifische Schwellenwerte fÃƒÆ’Ã‚Â¤llt, akkumuliert sich Trockenstress und reduziert den Ernteertrag am Saisonende.
 
 FUNKTIONEN:
-Ã¢â‚¬Â¢ Bodenfeuchte-Simulation pro Feld, gesteuert durch das Spielwetter
-Ã¢â‚¬Â¢ Saisonale und temperaturbeeinflusste Evapotranspiration
-Ã¢â‚¬Â¢ Bodentyp-Modifikatoren: Sandig trocknet schnell aus, Tonig hÃƒÂ¤lt Feuchte
-Ã¢â‚¬Â¢ Kultuurspezifische kritische Wachstumsphasen (Weizen, Mais, Gerste, Raps u. v. m.)
-Ã¢â‚¬Â¢ Ertragsreduzierung bei der Ernte Ã¢â‚¬â€ bis zu 60 % Verlust bei maximalem Stress
-Ã¢â‚¬Â¢ Bodenfeuchte-HUD-Overlay mit 5-Tage-Prognose (Shift+M zum Ein-/Ausblenden)
-Ã¢â‚¬Â¢ KreisbewÃƒÂ¤sserung und TrÃƒÂ¶pfchenbewÃƒÂ¤sserung mit Wasserpumpen-Infrastruktur
-Ã¢â‚¬Â¢ BewÃƒÂ¤sserungszeitplan-Dialog Ã¢â‚¬â€ Aktivtage und Zeitfenster einstellen (Shift+I)
-Ã¢â‚¬Â¢ Pflanzenbergungs-Dialog mit RisikoÃƒÂ¼bersicht und Empfehlungen (Shift+C)
-Ã¢â‚¬Â¢ Optionale Integration mit FS25_NPCFavor (Alex Chen, Agrarberater-NPC)
-Ã¢â‚¬Â¢ Optionale Integration mit FS25_UsedPlus (Gebrauchtmarkt fÃƒÂ¼r Landmaschinen)
-Ã¢â‚¬Â¢ VollstÃƒÂ¤ndige Speicherung aller Feld- und BewÃƒÂ¤sserungsdaten
-Ã¢â‚¬Â¢ Debug-Konsolenbefehle (csHelp in der Entwicklerkonsole eingeben)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Bodenfeuchte-Simulation pro Feld, gesteuert durch das Spielwetter
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Saisonale und temperaturbeeinflusste Evapotranspiration
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Bodentyp-Modifikatoren: Sandig trocknet schnell aus, Tonig hÃƒÆ’Ã‚Â¤lt Feuchte
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Kultuurspezifische kritische Wachstumsphasen (Weizen, Mais, Gerste, Raps u. v. m.)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Ertragsreduzierung bei der Ernte ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bis zu 60 % Verlust bei maximalem Stress
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Bodenfeuchte-HUD-Overlay mit 5-Tage-Prognose (Shift+M zum Ein-/Ausblenden)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ KreisbewÃƒÆ’Ã‚Â¤sserung und TrÃƒÆ’Ã‚Â¶pfchenbewÃƒÆ’Ã‚Â¤sserung mit Wasserpumpen-Infrastruktur
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ BewÃƒÆ’Ã‚Â¤sserungszeitplan-Dialog ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Aktivtage und Zeitfenster einstellen (Shift+I)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Pflanzenbergungs-Dialog mit RisikoÃƒÆ’Ã‚Â¼bersicht und Empfehlungen (Shift+C)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Optionale Integration mit FS25_NPCFavor (Alex Chen, Agrarberater-NPC)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Optionale Integration mit FS25_UsedPlus (Gebrauchtmarkt fÃƒÆ’Ã‚Â¼r Landmaschinen)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ VollstÃƒÆ’Ã‚Â¤ndige Speicherung aller Feld- und BewÃƒÆ’Ã‚Â¤sserungsdaten
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Debug-Konsolenbefehle (csHelp in der Entwicklerkonsole eingeben)
         ]]></de>
-        <fr><![CDATA[Ajoute un suivi de l'humiditÃƒÂ© du sol, une simulation du stress hydrique et un gestionnaire d'irrigation ÃƒÂ  Farming Simulator 25.
+        <fr><![CDATA[Ajoute un suivi de l'humiditÃƒÆ’Ã‚Â© du sol, une simulation du stress hydrique et un gestionnaire d'irrigation ÃƒÆ’Ã‚Â  Farming Simulator 25.
 
-Chaque parcelle suit un pourcentage d'humiditÃƒÂ© du sol (0Ã¢â‚¬â€œ100 %) qui monte avec les pluies et descend par ÃƒÂ©vapotranspiration selon la tempÃƒÂ©rature, la saison et le type de sol. Lorsque l'humiditÃƒÂ© passe sous les seuils propres ÃƒÂ  chaque culture pendant les pÃƒÂ©riodes critiques de croissance, le stress hydrique s'accumule et rÃƒÂ©duit le rendement en fin de saison.
+Chaque parcelle suit un pourcentage d'humiditÃƒÆ’Ã‚Â© du sol (0ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“100 %) qui monte avec les pluies et descend par ÃƒÆ’Ã‚Â©vapotranspiration selon la tempÃƒÆ’Ã‚Â©rature, la saison et le type de sol. Lorsque l'humiditÃƒÆ’Ã‚Â© passe sous les seuils propres ÃƒÆ’Ã‚Â  chaque culture pendant les pÃƒÆ’Ã‚Â©riodes critiques de croissance, le stress hydrique s'accumule et rÃƒÆ’Ã‚Â©duit le rendement en fin de saison.
 
-FONCTIONNALITÃƒâ€°S :
-Ã¢â‚¬Â¢ Simulation d'humiditÃƒÂ© du sol par parcelle, pilotÃƒÂ©e par la mÃƒÂ©tÃƒÂ©o en temps rÃƒÂ©el
-Ã¢â‚¬Â¢ Ãƒâ€°vapotranspiration ajustÃƒÂ©e ÃƒÂ  la saison et ÃƒÂ  la tempÃƒÂ©rature
-Ã¢â‚¬Â¢ Modificateurs de type de sol : Sableux sÃƒÂ¨che vite, Argileux retient l'humiditÃƒÂ©
-Ã¢â‚¬Â¢ PÃƒÂ©riodes critiques de croissance propres ÃƒÂ  chaque culture (blÃƒÂ©, maÃƒÂ¯s, orge, colza, etc.)
-Ã¢â‚¬Â¢ RÃƒÂ©duction de rendement ÃƒÂ  la rÃƒÂ©colte Ã¢â‚¬â€ jusqu'ÃƒÂ  60 % de perte au stress maximal
-Ã¢â‚¬Â¢ Overlay HUD d'humiditÃƒÂ© du sol avec prÃƒÂ©visions 5 jours (Maj+M pour afficher/masquer)
-Ã¢â‚¬Â¢ Pivot central et goutte-ÃƒÂ -goutte avec infrastructure de pompe ÃƒÂ  eau
-Ã¢â‚¬Â¢ Programme d'irrigation Ã¢â‚¬â€ dÃƒÂ©finissez les jours actifs et la plage horaire (Maj+I)
-Ã¢â‚¬Â¢ Dialogue Conseiller cultural avec rÃƒÂ©sumÃƒÂ© des risques et recommandations (Maj+C)
-Ã¢â‚¬Â¢ IntÃƒÂ©gration optionnelle avec FS25_NPCFavor (Alex Chen, agronome PNJ)
-Ã¢â‚¬Â¢ IntÃƒÂ©gration optionnelle avec FS25_UsedPlus (marchÃƒÂ© de matÃƒÂ©riel d'occasion)
-Ã¢â‚¬Â¢ Sauvegarde complÃƒÂ¨te de l'ÃƒÂ©tat des parcelles et des systÃƒÂ¨mes d'irrigation
-Ã¢â‚¬Â¢ Commandes de dÃƒÂ©bogage en console (taper csHelp dans la console dÃƒÂ©veloppeur)
+FONCTIONNALITÃƒÆ’Ã¢â‚¬Â°S :
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Simulation d'humiditÃƒÆ’Ã‚Â© du sol par parcelle, pilotÃƒÆ’Ã‚Â©e par la mÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â©o en temps rÃƒÆ’Ã‚Â©el
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ÃƒÆ’Ã¢â‚¬Â°vapotranspiration ajustÃƒÆ’Ã‚Â©e ÃƒÆ’Ã‚Â  la saison et ÃƒÆ’Ã‚Â  la tempÃƒÆ’Ã‚Â©rature
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Modificateurs de type de sol : Sableux sÃƒÆ’Ã‚Â¨che vite, Argileux retient l'humiditÃƒÆ’Ã‚Â©
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ PÃƒÆ’Ã‚Â©riodes critiques de croissance propres ÃƒÆ’Ã‚Â  chaque culture (blÃƒÆ’Ã‚Â©, maÃƒÆ’Ã‚Â¯s, orge, colza, etc.)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ RÃƒÆ’Ã‚Â©duction de rendement ÃƒÆ’Ã‚Â  la rÃƒÆ’Ã‚Â©colte ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â jusqu'ÃƒÆ’Ã‚Â  60 % de perte au stress maximal
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Overlay HUD d'humiditÃƒÆ’Ã‚Â© du sol avec prÃƒÆ’Ã‚Â©visions 5 jours (Maj+M pour afficher/masquer)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Pivot central et goutte-ÃƒÆ’Ã‚Â -goutte avec infrastructure de pompe ÃƒÆ’Ã‚Â  eau
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Programme d'irrigation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â dÃƒÆ’Ã‚Â©finissez les jours actifs et la plage horaire (Maj+I)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Dialogue Conseiller cultural avec rÃƒÆ’Ã‚Â©sumÃƒÆ’Ã‚Â© des risques et recommandations (Maj+C)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ IntÃƒÆ’Ã‚Â©gration optionnelle avec FS25_NPCFavor (Alex Chen, agronome PNJ)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ IntÃƒÆ’Ã‚Â©gration optionnelle avec FS25_UsedPlus (marchÃƒÆ’Ã‚Â© de matÃƒÆ’Ã‚Â©riel d'occasion)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Sauvegarde complÃƒÆ’Ã‚Â¨te de l'ÃƒÆ’Ã‚Â©tat des parcelles et des systÃƒÆ’Ã‚Â¨mes d'irrigation
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Commandes de dÃƒÆ’Ã‚Â©bogage en console (taper csHelp dans la console dÃƒÆ’Ã‚Â©veloppeur)
         ]]></fr>
-        <it><![CDATA[Aggiunge il monitoraggio dell'umiditÃƒÂ  del terreno, la simulazione dello stress da siccitÃƒÂ  e la gestione dell'irrigazione a Farming Simulator 25.
+        <it><![CDATA[Aggiunge il monitoraggio dell'umiditÃƒÆ’Ã‚Â  del terreno, la simulazione dello stress da siccitÃƒÆ’Ã‚Â  e la gestione dell'irrigazione a Farming Simulator 25.
 
-Ogni campo tiene traccia di una percentuale di umiditÃƒÂ  del terreno (0Ã¢â‚¬â€œ100 %) che sale con la pioggia e scende per evapotraspirazione in base a temperatura, stagione e tipo di terreno. Quando l'umiditÃƒÂ  scende sotto le soglie specifiche della coltura nelle finestre critiche di crescita, lo stress da siccitÃƒÂ  si accumula e riduce la resa al raccolto.
+Ogni campo tiene traccia di una percentuale di umiditÃƒÆ’Ã‚Â  del terreno (0ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“100 %) che sale con la pioggia e scende per evapotraspirazione in base a temperatura, stagione e tipo di terreno. Quando l'umiditÃƒÆ’Ã‚Â  scende sotto le soglie specifiche della coltura nelle finestre critiche di crescita, lo stress da siccitÃƒÆ’Ã‚Â  si accumula e riduce la resa al raccolto.
 
-FUNZIONALITÃƒâ‚¬:
-Ã¢â‚¬Â¢ Simulazione dell'umiditÃƒÂ  del terreno per campo, guidata dal meteo di gioco
-Ã¢â‚¬Â¢ Evapotraspirazione stagionale e influenzata dalla temperatura
-Ã¢â‚¬Â¢ Modificatori per tipo di terreno: Sabbioso si asciuga rapidamente, Argilloso trattiene l'umiditÃƒÂ 
-Ã¢â‚¬Â¢ Finestre critiche di crescita specifiche per coltura (grano, mais, orzo, colza e altro)
-Ã¢â‚¬Â¢ Riduzione della resa al raccolto Ã¢â‚¬â€ fino al 60 % di perdita allo stress massimo
-Ã¢â‚¬Â¢ Overlay HUD dell'umiditÃƒÂ  del terreno con previsioni a 5 giorni (Maiusc+M per mostrare/nascondere)
-Ã¢â‚¬Â¢ Irrigazione a perno e a goccia con infrastruttura pompa dell'acqua
-Ã¢â‚¬Â¢ Programma irrigazione Ã¢â‚¬â€ imposta i giorni attivi e la finestra oraria (Maiusc+I)
-Ã¢â‚¬Â¢ Dialogo Consulente colturale con riepilogo dei rischi e raccomandazioni (Maiusc+C)
-Ã¢â‚¬Â¢ Integrazione opzionale con FS25_NPCFavor (Alex Chen, agronomo PNG)
-Ã¢â‚¬Â¢ Integrazione opzionale con FS25_UsedPlus (mercato attrezzature usate)
-Ã¢â‚¬Â¢ Salvataggio completo dello stato dei campi e dei sistemi di irrigazione
-Ã¢â‚¬Â¢ Comandi di debug in console (digitare csHelp nella console sviluppatore)
+FUNZIONALITÃƒÆ’Ã¢â€šÂ¬:
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Simulazione dell'umiditÃƒÆ’Ã‚Â  del terreno per campo, guidata dal meteo di gioco
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Evapotraspirazione stagionale e influenzata dalla temperatura
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Modificatori per tipo di terreno: Sabbioso si asciuga rapidamente, Argilloso trattiene l'umiditÃƒÆ’Ã‚Â 
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Finestre critiche di crescita specifiche per coltura (grano, mais, orzo, colza e altro)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Riduzione della resa al raccolto ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fino al 60 % di perdita allo stress massimo
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Overlay HUD dell'umiditÃƒÆ’Ã‚Â  del terreno con previsioni a 5 giorni (Maiusc+M per mostrare/nascondere)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Irrigazione a perno e a goccia con infrastruttura pompa dell'acqua
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Programma irrigazione ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â imposta i giorni attivi e la finestra oraria (Maiusc+I)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Dialogo Consulente colturale con riepilogo dei rischi e raccomandazioni (Maiusc+C)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Integrazione opzionale con FS25_NPCFavor (Alex Chen, agronomo PNG)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Integrazione opzionale con FS25_UsedPlus (mercato attrezzature usate)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Salvataggio completo dello stato dei campi e dei sistemi di irrigazione
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Comandi di debug in console (digitare csHelp nella console sviluppatore)
         ]]></it>
         <nl><![CDATA[Voegt bodemvochtmonitoring, gewassstresssimulatie en irrigatiebeheer toe aan Farming Simulator 25.
 
-Elk veld houdt een bodemvochtpercentage bij (0Ã¢â‚¬â€œ100 %) dat stijgt bij regen en daalt door evapotranspiratie op basis van temperatuur, seizoen en bodemtype. Als de vochtigheid tijdens kritieke groeivensters onder gewasspecifieke drempelwaarden zakt, accumuleert droogtestress en verlaagt de oogstopbrengst aan het einde van het seizoen.
+Elk veld houdt een bodemvochtpercentage bij (0ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“100 %) dat stijgt bij regen en daalt door evapotranspiratie op basis van temperatuur, seizoen en bodemtype. Als de vochtigheid tijdens kritieke groeivensters onder gewasspecifieke drempelwaarden zakt, accumuleert droogtestress en verlaagt de oogstopbrengst aan het einde van het seizoen.
 
 FUNCTIES:
-Ã¢â‚¬Â¢ Bodemvochtsimulatie per veld, aangestuurd door het spelweer
-Ã¢â‚¬Â¢ Seizoens- en temperatuurgecorrigeerde evapotranspiratie
-Ã¢â‚¬Â¢ Bodemtype-modifiers: Zandig droogt snel, Kleiig houdt vochtigheid vast
-Ã¢â‚¬Â¢ Gewasspecifieke kritieke groeivensters (tarwe, maÃƒÂ¯s, gerst, koolzaad en meer)
-Ã¢â‚¬Â¢ Opbrengstreductie bij oogst Ã¢â‚¬â€ tot 60 % verlies bij maximale stress
-Ã¢â‚¬Â¢ HUD-overlay bodemvochtigheid met 5-dagenprognose (Shift+M om in/uit te schakelen)
-Ã¢â‚¬Â¢ Cirkelberegening en druppelbevloeiing met waterpomp-infrastructuur
-Ã¢â‚¬Â¢ Irrigatieschema-dialoog Ã¢â‚¬â€ stel actieve dagen en tijdvenster in (Shift+I)
-Ã¢â‚¬Â¢ Gewasadviseur-dialoog met risicosamenvatting en aanbevelingen (Shift+C)
-Ã¢â‚¬Â¢ Optionele integratie met FS25_NPCFavor (Alex Chen, agronoom-NPC)
-Ã¢â‚¬Â¢ Optionele integratie met FS25_UsedPlus (marktplaats voor gebruikte machines)
-Ã¢â‚¬Â¢ Volledige opslag van veld- en irrigatiestatus
-Ã¢â‚¬Â¢ Debug-consoleopdrachten (typ csHelp in de ontwikkelaarsconsole)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Bodemvochtsimulatie per veld, aangestuurd door het spelweer
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Seizoens- en temperatuurgecorrigeerde evapotranspiratie
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Bodemtype-modifiers: Zandig droogt snel, Kleiig houdt vochtigheid vast
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Gewasspecifieke kritieke groeivensters (tarwe, maÃƒÆ’Ã‚Â¯s, gerst, koolzaad en meer)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Opbrengstreductie bij oogst ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â tot 60 % verlies bij maximale stress
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ HUD-overlay bodemvochtigheid met 5-dagenprognose (Shift+M om in/uit te schakelen)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Cirkelberegening en druppelbevloeiing met waterpomp-infrastructuur
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Irrigatieschema-dialoog ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â stel actieve dagen en tijdvenster in (Shift+I)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Gewasadviseur-dialoog met risicosamenvatting en aanbevelingen (Shift+C)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Optionele integratie met FS25_NPCFavor (Alex Chen, agronoom-NPC)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Optionele integratie met FS25_UsedPlus (marktplaats voor gebruikte machines)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Volledige opslag van veld- en irrigatiestatus
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Debug-consoleopdrachten (typ csHelp in de ontwikkelaarsconsole)
         ]]></nl>
-        <cz><![CDATA[PÃ…â„¢idÃƒÂ¡vÃƒÂ¡ sledovÃƒÂ¡nÃƒÂ­ vlhkosti pÃ…Â¯dy, simulaci stresu plodin a sprÃƒÂ¡vu zavlaÃ…Â¾ovÃƒÂ¡nÃƒÂ­ do Farming Simulator 25.
+        <cz><![CDATA[PÃƒâ€¦Ã¢â€žÂ¢idÃƒÆ’Ã‚Â¡vÃƒÆ’Ã‚Â¡ sledovÃƒÆ’Ã‚Â¡nÃƒÆ’Ã‚Â­ vlhkosti pÃƒâ€¦Ã‚Â¯dy, simulaci stresu plodin a sprÃƒÆ’Ã‚Â¡vu zavlaÃƒâ€¦Ã‚Â¾ovÃƒÆ’Ã‚Â¡nÃƒÆ’Ã‚Â­ do Farming Simulator 25.
             
-KaÃ…Â¾dÃƒÂ© pole sleduje procento vlhkosti pÃ…Â¯dy (0-100%), kterÃƒÂ© stoupÃƒÂ¡ s deÃ…Â¡tÃ„â€ºm a klesÃƒÂ¡ evapotranspiracÃƒÂ­ Ã…â„¢ÃƒÂ­zenou teplotou, roÃ„ÂnÃƒÂ­m obdobÃƒÂ­m a typem pÃ…Â¯dy. KdyÃ…Â¾ vlhkost klesne pod prahovÃƒÂ© hodnoty specifickÃƒÂ© pro danou plodinu bÃ„â€ºhem kritickÃƒÂ½ch rÃ…Â¯stovÃƒÂ½ch oken, hromadÃƒÂ­ se stres vÃƒÂ½nosu a sniÃ…Â¾uje vaÃ…Â¡i sklizeÃ…Ë† na konci sezÃƒÂ³ny.
+KaÃƒâ€¦Ã‚Â¾dÃƒÆ’Ã‚Â© pole sleduje procento vlhkosti pÃƒâ€¦Ã‚Â¯dy (0-100%), kterÃƒÆ’Ã‚Â© stoupÃƒÆ’Ã‚Â¡ s deÃƒâ€¦Ã‚Â¡tÃƒâ€žÃ¢â‚¬Âºm a klesÃƒÆ’Ã‚Â¡ evapotranspiracÃƒÆ’Ã‚Â­ Ãƒâ€¦Ã¢â€žÂ¢ÃƒÆ’Ã‚Â­zenou teplotou, roÃƒâ€žÃ‚ÂnÃƒÆ’Ã‚Â­m obdobÃƒÆ’Ã‚Â­m a typem pÃƒâ€¦Ã‚Â¯dy. KdyÃƒâ€¦Ã‚Â¾ vlhkost klesne pod prahovÃƒÆ’Ã‚Â© hodnoty specifickÃƒÆ’Ã‚Â© pro danou plodinu bÃƒâ€žÃ¢â‚¬Âºhem kritickÃƒÆ’Ã‚Â½ch rÃƒâ€¦Ã‚Â¯stovÃƒÆ’Ã‚Â½ch oken, hromadÃƒÆ’Ã‚Â­ se stres vÃƒÆ’Ã‚Â½nosu a sniÃƒâ€¦Ã‚Â¾uje vaÃƒâ€¦Ã‚Â¡i sklizeÃƒâ€¦Ã‹â€  na konci sezÃƒÆ’Ã‚Â³ny.
 
 FUNKCE:
-Ã¢â‚¬Â¢ Simulace vlhkosti pÃ…Â¯dy pro kaÃ…Â¾dÃƒÂ© pole Ã…â„¢ÃƒÂ­zenÃƒÂ¡ reÃƒÂ¡lnÃƒÂ½m poÃ„ÂasÃƒÂ­m
-Ã¢â‚¬Â¢ SezÃƒÂ³nnÃ„â€º a teplotnÃ„â€º upravenÃƒÂ¡ evapotranspirace
-Ã¢â‚¬Â¢ ModifikÃƒÂ¡tory typu pÃ…Â¯dy: pÃƒÂ­sÃ„ÂitÃƒÂ¡ odvÃƒÂ¡dÃƒÂ­ rychle, jÃƒÂ­lovitÃƒÂ¡ drÃ…Â¾ÃƒÂ­ vlhkost
-Ã¢â‚¬Â¢ KritickÃƒÂ¡ rÃ…Â¯stovÃƒÂ¡ okna specifickÃƒÂ¡ pro plodiny (pÃ…Â¡enice, kukuÃ…â„¢ice, jeÃ„Âmen, Ã…â„¢epka a dalÃ…Â¡ÃƒÂ­)
-Ã¢â‚¬Â¢ SnÃƒÂ­Ã…Â¾enÃƒÂ­ vÃƒÂ½nosu pÃ…â„¢i sklizni Ã¢â‚¬â€ aÃ…Â¾ 60% ztrÃƒÂ¡ta pÃ…â„¢i maximÃƒÂ¡lnÃƒÂ­m stresu
-Ã¢â‚¬Â¢ PÃ…â„¢ekrytÃƒÂ­ HUD vlhkosti pole s 5dennÃƒÂ­ pÃ…â„¢edpovÃ„â€ºdÃƒÂ­ (stisknÃ„â€ºte Shift+M pro pÃ…â„¢epnutÃƒÂ­)
-Ã¢â‚¬Â¢ UmÃƒÂ­stitelnÃƒÂ© stÃ…â„¢edovÃƒÂ© pivoty a kapkovÃƒÂ© zavlaÃ…Â¾ovÃƒÂ¡nÃƒÂ­ s infrastrukturou vodnÃƒÂ­ pumpy
-Ã¢â‚¬Â¢ Dialog plÃƒÂ¡novÃƒÂ¡nÃƒÂ­ zavlaÃ…Â¾ovÃƒÂ¡nÃƒÂ­ Ã¢â‚¬â€ nastavte aktivnÃƒÂ­ dny a hodinovÃƒÂ© okno (Shift+I)
-Ã¢â‚¬Â¢ Dialog poradce pro plodiny s pÃ…â„¢ehledem rizik a doporuÃ„ÂenÃƒÂ­mi (Shift+C)
-Ã¢â‚¬Â¢ VolitelnÃƒÂ¡ integrace s FS25_NPCFavor (Alex Chen, NPC agronom)
-Ã¢â‚¬Â¢ VolitelnÃƒÂ¡ integrace s FS25_UsedPlus (trÃ…Â¾iÃ…Â¡tÃ„â€º pouÃ…Â¾itÃƒÂ©ho vybavenÃƒÂ­)
-Ã¢â‚¬Â¢ ÃƒÅ¡plnÃƒÂ¡ persistence uloÃ…Â¾enÃƒÂ­/naÃ„ÂtenÃƒÂ­ vÃ…Â¡ech stavÃ…Â¯ polÃƒÂ­ a zavlaÃ…Â¾ovÃƒÂ¡nÃƒÂ­
-Ã¢â‚¬Â¢ PÃ…â„¢ÃƒÂ­kazy ladicÃƒÂ­ konzole (napiÃ…Â¡te csHelp do vÃƒÂ½vojÃƒÂ¡Ã…â„¢skÃƒÂ© konzole)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Simulace vlhkosti pÃƒâ€¦Ã‚Â¯dy pro kaÃƒâ€¦Ã‚Â¾dÃƒÆ’Ã‚Â© pole Ãƒâ€¦Ã¢â€žÂ¢ÃƒÆ’Ã‚Â­zenÃƒÆ’Ã‚Â¡ reÃƒÆ’Ã‚Â¡lnÃƒÆ’Ã‚Â½m poÃƒâ€žÃ‚ÂasÃƒÆ’Ã‚Â­m
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ SezÃƒÆ’Ã‚Â³nnÃƒâ€žÃ¢â‚¬Âº a teplotnÃƒâ€žÃ¢â‚¬Âº upravenÃƒÆ’Ã‚Â¡ evapotranspirace
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ModifikÃƒÆ’Ã‚Â¡tory typu pÃƒâ€¦Ã‚Â¯dy: pÃƒÆ’Ã‚Â­sÃƒâ€žÃ‚ÂitÃƒÆ’Ã‚Â¡ odvÃƒÆ’Ã‚Â¡dÃƒÆ’Ã‚Â­ rychle, jÃƒÆ’Ã‚Â­lovitÃƒÆ’Ã‚Â¡ drÃƒâ€¦Ã‚Â¾ÃƒÆ’Ã‚Â­ vlhkost
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ KritickÃƒÆ’Ã‚Â¡ rÃƒâ€¦Ã‚Â¯stovÃƒÆ’Ã‚Â¡ okna specifickÃƒÆ’Ã‚Â¡ pro plodiny (pÃƒâ€¦Ã‚Â¡enice, kukuÃƒâ€¦Ã¢â€žÂ¢ice, jeÃƒâ€žÃ‚Âmen, Ãƒâ€¦Ã¢â€žÂ¢epka a dalÃƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â­)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ SnÃƒÆ’Ã‚Â­Ãƒâ€¦Ã‚Â¾enÃƒÆ’Ã‚Â­ vÃƒÆ’Ã‚Â½nosu pÃƒâ€¦Ã¢â€žÂ¢i sklizni ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â aÃƒâ€¦Ã‚Â¾ 60% ztrÃƒÆ’Ã‚Â¡ta pÃƒâ€¦Ã¢â€žÂ¢i maximÃƒÆ’Ã‚Â¡lnÃƒÆ’Ã‚Â­m stresu
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ PÃƒâ€¦Ã¢â€žÂ¢ekrytÃƒÆ’Ã‚Â­ HUD vlhkosti pole s 5dennÃƒÆ’Ã‚Â­ pÃƒâ€¦Ã¢â€žÂ¢edpovÃƒâ€žÃ¢â‚¬ÂºdÃƒÆ’Ã‚Â­ (stisknÃƒâ€žÃ¢â‚¬Âºte Shift+M pro pÃƒâ€¦Ã¢â€žÂ¢epnutÃƒÆ’Ã‚Â­)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ UmÃƒÆ’Ã‚Â­stitelnÃƒÆ’Ã‚Â© stÃƒâ€¦Ã¢â€žÂ¢edovÃƒÆ’Ã‚Â© pivoty a kapkovÃƒÆ’Ã‚Â© zavlaÃƒâ€¦Ã‚Â¾ovÃƒÆ’Ã‚Â¡nÃƒÆ’Ã‚Â­ s infrastrukturou vodnÃƒÆ’Ã‚Â­ pumpy
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Dialog plÃƒÆ’Ã‚Â¡novÃƒÆ’Ã‚Â¡nÃƒÆ’Ã‚Â­ zavlaÃƒâ€¦Ã‚Â¾ovÃƒÆ’Ã‚Â¡nÃƒÆ’Ã‚Â­ ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â nastavte aktivnÃƒÆ’Ã‚Â­ dny a hodinovÃƒÆ’Ã‚Â© okno (Shift+I)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Dialog poradce pro plodiny s pÃƒâ€¦Ã¢â€žÂ¢ehledem rizik a doporuÃƒâ€žÃ‚ÂenÃƒÆ’Ã‚Â­mi (Shift+C)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ VolitelnÃƒÆ’Ã‚Â¡ integrace s FS25_NPCFavor (Alex Chen, NPC agronom)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ VolitelnÃƒÆ’Ã‚Â¡ integrace s FS25_UsedPlus (trÃƒâ€¦Ã‚Â¾iÃƒâ€¦Ã‚Â¡tÃƒâ€žÃ¢â‚¬Âº pouÃƒâ€¦Ã‚Â¾itÃƒÆ’Ã‚Â©ho vybavenÃƒÆ’Ã‚Â­)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ÃƒÆ’Ã…Â¡plnÃƒÆ’Ã‚Â¡ persistence uloÃƒâ€¦Ã‚Â¾enÃƒÆ’Ã‚Â­/naÃƒâ€žÃ‚ÂtenÃƒÆ’Ã‚Â­ vÃƒâ€¦Ã‚Â¡ech stavÃƒâ€¦Ã‚Â¯ polÃƒÆ’Ã‚Â­ a zavlaÃƒâ€¦Ã‚Â¾ovÃƒÆ’Ã‚Â¡nÃƒÆ’Ã‚Â­
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ PÃƒâ€¦Ã¢â€žÂ¢ÃƒÆ’Ã‚Â­kazy ladicÃƒÆ’Ã‚Â­ konzole (napiÃƒâ€¦Ã‚Â¡te csHelp do vÃƒÆ’Ã‚Â½vojÃƒÆ’Ã‚Â¡Ãƒâ€¦Ã¢â€žÂ¢skÃƒÆ’Ã‚Â© konzole)
         ]]></cz>
-        <da><![CDATA[TilfÃƒÂ¸jer overvÃƒÂ¥gning af jordfugtighed, simulering af afgrÃƒÂ¸destress og styring af vanding til Farming Simulator 25.
+        <da><![CDATA[TilfÃƒÆ’Ã‚Â¸jer overvÃƒÆ’Ã‚Â¥gning af jordfugtighed, simulering af afgrÃƒÆ’Ã‚Â¸destress og styring af vanding til Farming Simulator 25.
 
-Hvert felt overvÃƒÂ¥ger procentdelen af jordfugtighed (0Ã¢â‚¬â€œ100%), som stiger med regn og falder gennem evapotranspiration, der styres af temperatur, ÃƒÂ¥rstid og jordtype. NÃƒÂ¥r fugtigheden falder under afgrÃƒÂ¸despecifikke tÃƒÂ¦rskelvÃƒÂ¦rdier i kritiske vÃƒÂ¦kstperioder, opbygges udbyttestress, som reducerer din hÃƒÂ¸st ved sÃƒÂ¦sonens afslutning.
+Hvert felt overvÃƒÆ’Ã‚Â¥ger procentdelen af jordfugtighed (0ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“100%), som stiger med regn og falder gennem evapotranspiration, der styres af temperatur, ÃƒÆ’Ã‚Â¥rstid og jordtype. NÃƒÆ’Ã‚Â¥r fugtigheden falder under afgrÃƒÆ’Ã‚Â¸despecifikke tÃƒÆ’Ã‚Â¦rskelvÃƒÆ’Ã‚Â¦rdier i kritiske vÃƒÆ’Ã‚Â¦kstperioder, opbygges udbyttestress, som reducerer din hÃƒÆ’Ã‚Â¸st ved sÃƒÆ’Ã‚Â¦sonens afslutning.
 
 FUNKTIONER:
-Ã¢â‚¬Â¢ Simulering af jordfugtighed for hvert felt baseret pÃƒÂ¥ realt vejr
-Ã¢â‚¬Â¢ SÃƒÂ¦son- og temperaturjusteret evapotranspiration
-Ã¢â‚¬Â¢ Jordtype-modifikatorer: sandjord drÃƒÂ¦ner hurtigt, lerjord holder pÃƒÂ¥ fugt
-Ã¢â‚¬Â¢ Kritiske vÃƒÂ¦kstperioder specifikke for afgrÃƒÂ¸der (hvede, majs, byg, raps og flere)
-Ã¢â‚¬Â¢ Udbyttereduktion ved hÃƒÂ¸st Ã¢â‚¬â€ op til 60% tab ved maksimal stress
-Ã¢â‚¬Â¢ HUD-overlay for markfugtighed med 5-dages vejrudsigt (tryk Shift+M for at skifte)
-Ã¢â‚¬Â¢ Placerbare center pivot- og drypvandingssystemer med vandpumpeinfrastruktur
-Ã¢â‚¬Â¢ Dialog til planlÃƒÂ¦gning af vanding Ã¢â‚¬â€ angiv aktive dage og tidsvindue (Shift+I)
-Ã¢â‚¬Â¢ AfgrÃƒÂ¸derÃƒÂ¥dgiver-dialog med risikovurdering og anbefalinger (Shift+C)
-Ã¢â‚¬Â¢ Valgfri integration med FS25_NPCFavor (Alex Chen, NPC agronom)
-Ã¢â‚¬Â¢ Valgfri integration med FS25_UsedPlus (marked for brugt udstyr)
-Ã¢â‚¬Â¢ Fuld persistens ved gem/indlÃƒÂ¦s af alle mark- og vandingsstatusser
-Ã¢â‚¬Â¢ Debug-konsolkommandoer (skriv csHelp i udviklerkonsollen)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Simulering af jordfugtighed for hvert felt baseret pÃƒÆ’Ã‚Â¥ realt vejr
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ SÃƒÆ’Ã‚Â¦son- og temperaturjusteret evapotranspiration
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Jordtype-modifikatorer: sandjord drÃƒÆ’Ã‚Â¦ner hurtigt, lerjord holder pÃƒÆ’Ã‚Â¥ fugt
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Kritiske vÃƒÆ’Ã‚Â¦kstperioder specifikke for afgrÃƒÆ’Ã‚Â¸der (hvede, majs, byg, raps og flere)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Udbyttereduktion ved hÃƒÆ’Ã‚Â¸st ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â op til 60% tab ved maksimal stress
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ HUD-overlay for markfugtighed med 5-dages vejrudsigt (tryk Shift+M for at skifte)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Placerbare center pivot- og drypvandingssystemer med vandpumpeinfrastruktur
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Dialog til planlÃƒÆ’Ã‚Â¦gning af vanding ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â angiv aktive dage og tidsvindue (Shift+I)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ AfgrÃƒÆ’Ã‚Â¸derÃƒÆ’Ã‚Â¥dgiver-dialog med risikovurdering og anbefalinger (Shift+C)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Valgfri integration med FS25_NPCFavor (Alex Chen, NPC agronom)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Valgfri integration med FS25_UsedPlus (marked for brugt udstyr)
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Fuld persistens ved gem/indlÃƒÆ’Ã‚Â¦s af alle mark- og vandingsstatusser
+ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Debug-konsolkommandoer (skriv csHelp i udviklerkonsollen)
         ]]></da>
     </description>
 
@@ -183,7 +183,7 @@ FUNKTIONER:
     </inputBinding>
 
     <!--
-        All strings Ã¢â‚¬â€ including input action descriptions (input_CS_*) Ã¢â‚¬â€
+        All strings ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â including input action descriptions (input_CS_*) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â
         are defined in the external translation files. No inline l10n block
         is needed and none is used.
         NOTE: FS25 only processes the FIRST <l10n> element. Two separate
@@ -211,7 +211,7 @@ FUNKTIONER:
         <specialization name="RWSM53ChangeObjectByDistance" className="RWSM53ChangeObjectByDistance" filename="src/vendor/rwsm/changeObjectByDistance.lua"/>
         <specialization name="RWSM53AutoReel" className="RWSM53AutoReel" filename="src/vendor/rwsm/rainstarAutoReel.lua"/>
         <specialization name="RWSM118RainstarParkingBrake" className="RWSM118RainstarParkingBrake" filename="src/vendor/rwsm/rainstarParkingBrake.lua"/>
-        <!-- BUILD 19:27 - suite-owned visible EMP↔Rainstar supply hose (not COBD / not SPS). -->
+        <!-- BUILD 19:27 - suite-owned visible EMPâ†”Rainstar supply hose (not COBD / not SPS). -->
         <specialization name="ScsPumpHoseConnection" className="ScsPumpHoseConnection" filename="src/ScsPumpHoseConnection.lua"/>
         <!-- BUILD 22:25 - the EMP pump powers the reel, so no tractor is required to spray. -->
         <specialization name="ScsRainstarPumpPower" className="ScsRainstarPumpPower" filename="src/ScsRainstarPumpPower.lua"/>
@@ -266,12 +266,12 @@ FUNKTIONER:
     </storeItems>
 
     <!--
-        In-game help pages accessible from the pause menu Ã¢â€ â€™ Help.
+        In-game help pages accessible from the pause menu ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Help.
         Four categories: Overview, Settings, Tips & Tricks, Mod Information.
     -->
     <helpLines>
 
-        <!-- Ã¢â€â‚¬Ã¢â€â‚¬ Category 1: Overview Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+        <!-- ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Category 1: Overview ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ -->
         <category title="$l10n_helpLine_cs_cat_overview">
 
             <page title="$l10n_helpLine_cs_p1_title" iconSliceId="icon_crops">
@@ -335,7 +335,7 @@ FUNKTIONER:
 
         </category>
 
-        <!-- Ã¢â€â‚¬Ã¢â€â‚¬ Category 2: Settings Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+        <!-- ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Category 2: Settings ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ -->
         <category title="$l10n_helpLine_cs_cat_settings">
 
             <page title="$l10n_helpLine_cs_s1_title" iconSliceId="icon_crops">
@@ -362,7 +362,7 @@ FUNKTIONER:
 
         </category>
 
-        <!-- Ã¢â€â‚¬Ã¢â€â‚¬ Category 3: Tips & Tricks Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+        <!-- ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Category 3: Tips & Tricks ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ -->
         <category title="$l10n_helpLine_cs_cat_tips">
 
             <page title="$l10n_helpLine_cs_p4_title" iconSliceId="icon_crops">
@@ -400,7 +400,7 @@ FUNKTIONER:
 
         </category>
 
-        <!-- Ã¢â€â‚¬Ã¢â€â‚¬ Category 4: Mod Information Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+        <!-- ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Category 4: Mod Information ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ -->
         <category title="$l10n_helpLine_cs_cat_info">
 
             <page title="$l10n_helpLine_cs_i1_title" iconSliceId="icon_info">
