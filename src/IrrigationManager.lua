@@ -152,6 +152,11 @@ function IrrigationManager:registerIrrigationSystem(placeable)
     local system = {
         id                     = placeable.id,
         type                   = placeable.irrigationType or "pivot",
+        -- F158: the OWNING PLACEABLE is held so the owner farm can be resolved at
+        -- charge time (a placeable changes hands; a stored farm id would go stale).
+        -- deregisterIrrigationSystem removes this record when the placeable goes,
+        -- so the reference cannot dangle.
+        placeable              = placeable,
         x                      = x,
         y                      = y,   -- SCS-038: the LIFT term's pivot height, read once at registration
         z                      = z,
@@ -354,6 +359,23 @@ end
 -- ============================================================
 -- Hourly Schedule Check
 -- ============================================================
+
+--- F160: the 1..7 day-of-week index for a schedule's activeDays. Derived from the
+--- MONOTONIC day modulo 7, never read from env.currentDayInPeriod. The base game
+--- computes currentDayInPeriod as (currentDay - 1) % daysPerPeriod + 1 and
+--- daysPerPeriod defaults to 1, so on a default save currentDayInPeriod is ALWAYS
+--- 1: a weekday schedule ran every day (activeDays[1] pinned true) and unticking
+--- day one stopped the pivot forever. Deriving from the monotonic day makes the
+--- index actually advance day to day, so the weekend-off entries are reachable.
+function IrrigationManager:dayOfWeekIndex(env)
+    if env == nil then return 1 end
+    local currentDay = env.currentDay or env.currentMonotonicDay or 1
+    if type(currentDay) ~= "number" or currentDay < 1 then currentDay = 1 end
+    local dow = ((currentDay - 1) % 7) + 1
+    if dow < 1 or dow > 7 then dow = 1 end
+    return dow
+end
+
 function IrrigationManager:hourlyScheduleCheck()
     if not self.isInitialized then return end
     if g_currentMission == nil then return end
@@ -361,20 +383,8 @@ function IrrigationManager:hourlyScheduleCheck()
     local env = g_currentMission.environment
     if env == nil then return end
 
-    -- env.currentHour and env.currentDayInPeriod are direct properties in FS25.
-    -- currentDayInPeriod is 1–7 within the current growth period (matches schedule activeDays).
-    -- IMPORTANT: currentDayInPeriod may be nil on some FS25 builds/map combinations.
-    -- Fallback: derive a 1-7 day index from currentDay (monotonic) so scheduling
-    -- never silently defaults to day 1 and makes schedules appear broken.
-    local hour      = env.currentHour         or 0
-    local dayOfWeek = env.currentDayInPeriod
-    if dayOfWeek == nil then
-        -- env.currentDay is 1-based within the current period; use modulo as fallback
-        local currentDay = env.currentDay or env.currentMonotonicDay or 0
-        dayOfWeek = (currentDay % 7) + 1   -- maps any integer → 1..7
-    end
-    -- Clamp to valid range in case the API returns an unexpected value
-    if dayOfWeek < 1 or dayOfWeek > 7 then dayOfWeek = 1 end
+    local hour      = env.currentHour or 0
+    local dayOfWeek = self:dayOfWeekIndex(env)
 
     for id, system in pairs(self.systems) do
         -- Check if water source is still valid

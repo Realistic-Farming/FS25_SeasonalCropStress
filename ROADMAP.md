@@ -69,3 +69,23 @@
 - [x] F154 retired the UsedPlus wear bridge and deleted updateSystemWearLevel, leaving system.wearLevel nil on every system. The schedule dialog read that field in updatePerformance and threw on nil during onOpen, leaving the dialog visible with input never initialised (could not be interacted with or closed). Found in-game on the 72h skip test.
 - [x] Fixed by reading wear as system.wearLevel or 0. Per F154 the wear factor is a permanent multiply by one after the retirement, so nil and zero are the same number and no player-observable behaviour changes (F154 invariant 1). F154 bench gains the dialog-consumer assertion. Suite 382/0, syntax clean, built and deployed.
 - [~] Re-open the dialog in-game on the fixed zip to confirm it interacts and closes normally.
+
+## 2026-08-14 (Fred): F160 - the weekly irrigation schedule honours the picked days
+- [x] The day-of-week index was read from env.currentDayInPeriod, which the base game pins at 1 on a default save (daysPerPeriod defaults to 1), so a weekday schedule ran every day and unticking day one stopped the pivot forever. IrrigationManager:dayOfWeekIndex now derives the index from the monotonic day modulo 7, so the weekend-off entries are reachable.
+- [x] scs160_schedule_day_index_test.lua at 17 assertions; suite 465/0; deployed 1.2.5.71.
+- [~] In-game (owed): a weekday pivot rests on the weekend and a Wednesday-only schedule runs Wednesdays on a fresh save.
+
+## 2026-08-14 (Fred): F158 - the irrigation water bill goes to the system's owner
+- [x] The running cost resolved the farm from the local player: on a dedicated server nothing was billed all season (no local player), on a listen server every system was billed to the host (the farmer paid for his neighbours). The bill now resolves each system's owner from its placeable at charge time (getOwnerFarmId), the base-game water-charge pattern. registerIrrigationSystem holds the placeable; deregister removes it when the placeable goes.
+- [x] scs158_dedi_farm_resolution_test.lua at 12 assertions; suite 448/0; deployed 1.2.5.70.
+- [~] In-game (owed): a dedi with pivots on two farms, each farm billed for its own; a sold-and-rebought pivot billed to the new owner.
+
+## 2026-08-14 (Fred): soil-moisture coupling + Arrow-2 compaction (SCS-side)
+- [x] Arrow-2 compaction half: SF compaction read adds a critical-moisture modifier (compacted fields stress/alert earlier on a drying swing). The soil-moisture coupling: drought (<30%) reduces effective nutrient uptake, Poor SF nutrient status hits harder, scaling the drying-deficit stress accrual. All SCS-side reads of SF getFieldInfo, never a write (firewall holds). Waterlog stays a noted future refinement (would break the no-deficit contract).
+- [x] soil_moisture_coupling_test.lua at 8 assertions; suite 480/0; deployed 1.2.5.73.
+- [~] In-game (owed): a compacted field alerts earlier on a dry spell; a drought on poor soil stresses harder than on good soil.
+
+## 2026-08-14 (Fred): SCS-020 transpiration feedback
+- [x] The growth family's condition scales only the transpiration share of evapotranspiration (a blocked cell stays wetter, an excellent cell dries faster); the soil-evaporation share is never scaled. Duck-typed read of SF's getFieldGrowthSummary, neutral 1.0 when absent; SCS remains sole writer of moisture. No new write, no new persistence, no surface.
+- [x] scs020_transpiration_feedback_test.lua at 10 assertions; suite 490/0; deployed 1.2.5.74.
+- [~] In-game (owed): a blocked field stays visibly wetter; an excellent-credit field dries faster over a dry spell.

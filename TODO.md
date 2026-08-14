@@ -76,3 +76,23 @@
 - [x] Root cause: system.wearLevel nil (F154 deleted the wear setter) -> updatePerformance threw on nil in onOpen, dialog left visible but dead.
 - [x] Fix: wearLevel or 0 in the two readouts. Suite 382/0, deployed.
 - [~] In-game confirm: open the irrigation schedule dialog and interact/close normally.
+
+## F160 weekly schedule day index (2026-08-14)
+- [x] Day-of-week derived from the monotonic day modulo 7, ignoring the pinned currentDayInPeriod; TaxMod mirror ships as its own PR.
+- [x] 17 assertions; suite 465/0.
+- [~] In-game: weekend rest + Wednesday-only run on a fresh save.
+
+## F158 irrigation water bill (2026-08-14)
+- [x] Per-system owner charge from the placeable at charge time (dedi + listen-server neighbour fix); unresolvable/spectator owners skipped.
+- [x] 12 assertions; suite 448/0.
+- [~] In-game: two-farm dedi billing; a rebought pivot bills its new owner.
+
+## Soil-moisture coupling + Arrow-2 (2026-08-14)
+- [x] Compaction modifier on the critical threshold; drought-band nutrient-availability stress scaling; Poor NPK hit harder. Firewall-clean reads only.
+- [x] 8 assertions; suite 480/0.
+- [~] In-game; waterlog mechanism (future refinement at assembly).
+
+## SCS-020 transpiration feedback (2026-08-14)
+- [x] Transpiration share scaled by the family growth summary; soil share never scaled; firewall read-only.
+- [x] 10 assertions; suite 490/0.
+- [~] In-game; the per-cell upgrade rides SCS-018's store (deferred).

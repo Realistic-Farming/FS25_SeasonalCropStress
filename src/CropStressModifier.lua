@@ -31,6 +31,13 @@ CropStressModifier.__index = CropStressModifier
 -- considered together rather than alone. This is a DEFAULT, not new machinery.
 CropStressModifier.MAX_YIELD_LOSS = 0.30
 
+-- Soil-moisture coupling (B3.5): the moisture-extreme bands and the waterlog
+-- stress rate. Availability is reduced at these extremes (drought < 30%, waterlog
+-- > 90%); the magnitudes are balance-pass numbers.
+CropStressModifier.EXTREME_DROUGHT      = 0.30
+CropStressModifier.EXTREME_WATERLOG     = 0.90
+CropStressModifier.WATERLOG_STRESS_RATE = 0.001
+
 -- Crop stress configuration (matches cropStressDefaults.xml)
 -- key = lowercase fruit type name as returned by FS25 field:getFruitType().name
 CropStressModifier.CROP_WINDOWS = {
@@ -226,6 +233,14 @@ function CropStressModifier:processFieldStress(field, fieldId, moisture, elapsed
         -- plain multiply. The min(1.0) cap below still bounds a long catch-up.
         local stressIncrease = window.stressRatePerHour * deficitRatio * rateMultiplier * hours
 
+        -- Soil-moisture coupling (B3.5): at moisture extremes effective nutrient
+        -- uptake is reduced, so the same deficit stresses the crop harder. The
+        -- availability factor (0.5..1.0, neutral 1.0) divides the accrual.
+        local availability = self:_nutrientAvailability(fieldId, moisture)
+        if availability < 1.0 then
+            stressIncrease = stressIncrease / availability
+        end
+
         local prev = self.fieldStress[fieldId] or 0.0
         self.fieldStress[fieldId] = math.min(1.0, prev + stressIncrease)
 
@@ -237,6 +252,41 @@ function CropStressModifier:processFieldStress(field, fieldId, moisture, elapsed
             ))
         end
     end
+    -- NOTE (waterlog > 90%): the brief names waterlog as an uptake-reducing
+    -- extreme, but the shipped model's contract is "no drying deficit, no
+    -- stress". A standalone waterlog stress term would break that contract, so
+    -- it stays a future refinement at assembly; the coupling here is the
+    -- drought side, where the deficit model already runs.
+end
+
+-- The effective nutrient-availability factor for a field, 0.5..1.0 (neutral 1.0).
+-- The soil-moisture coupling: at moisture extremes (drought < 30%, waterlog >
+-- 90%) uptake is reduced, and a field whose SF nutrient status is Poor is hit
+-- harder. A pull-only read of SF's getFieldInfo; SF absent or a nil read is
+-- neutral, and this never writes SF (the single-writer firewall).
+function CropStressModifier:_nutrientAvailability(fieldId, moisture)
+    local availability = 1.0
+    pcall(function()
+        local sf = g_currentMission ~= nil and g_currentMission.soilFertilityManager
+        if sf == nil or sf.soilSystem == nil or sf.soilSystem.getFieldInfo == nil then return end
+        local info = sf.soilSystem:getFieldInfo(fieldId)
+        if info == nil then return end
+        local poor = 0
+        for _, k in ipairs({ "nitrogen", "phosphorus", "potassium" }) do
+            local v = info[k]
+            if v ~= nil and v.status == "Poor" then poor = poor + 1 end
+        end
+        availability = (poor == 3) and 0.70 or (poor > 0) and 0.85 or 1.0
+    end)
+    -- The moisture-extreme penalty scales the availability down toward its floor.
+    if moisture < CropStressModifier.EXTREME_DROUGHT then
+        local dryness = math.max(0, CropStressModifier.EXTREME_DROUGHT - moisture)
+        availability = availability * (0.5 + 0.5 * (moisture / CropStressModifier.EXTREME_DROUGHT))
+    elseif moisture > CropStressModifier.EXTREME_WATERLOG then
+        availability = availability * 0.75
+    end
+    if availability < 0.5 then availability = 0.5 end
+    return availability
 end
 
 -- ============================================================

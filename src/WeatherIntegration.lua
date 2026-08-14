@@ -462,6 +462,52 @@ end
 -- Projects moisture for a field over the next N in-game days.
 -- ALL RESULTS ARE APPROXIMATE — see API investigation note above.
 -- ============================================================
+
+-- The drilling-window outlook: how likely rain is over the next `daysAhead`
+-- in-game days, 0..1. A THIN published wrapper over the same sky-reading the
+-- moisture forecast uses (cloud coverage + current rain + rain-duration for days
+-- 1-2, season priors beyond). No new model, no new tracking, and the result is
+-- ALWAYS approximate: every consumer must hedge (the forecast law, carried in
+-- the returned approximate flag). The per-day near-term formula below mirrors
+-- getMoistureForecast's nearRainProb exactly; keep the two in lockstep.
+function WeatherIntegration:getRainOutlook(daysAhead)
+    daysAhead = math.max(1, math.floor(daysAhead or 3))
+
+    local cloudCoverage = 0.0
+    local env = g_currentMission and g_currentMission.environment
+    if env ~= nil and env.cloudUpdater ~= nil
+    and type(env.cloudUpdater.getCloudCoverage) == "function" then
+        local ok, val = pcall(env.cloudUpdater.getCloudCoverage, env.cloudUpdater)
+        if ok and val ~= nil then cloudCoverage = val end
+    end
+
+    local baseRainProb = WeatherIntegration.SEASON_RAIN_PROB[self.currentSeason] or 0.25
+
+    local rainDurationBoost = 0.0
+    if self.isRaining then
+        rainDurationBoost = cloudCoverage * 0.15
+    end
+
+    local sum = 0
+    for day = 1, daysAhead do
+        local prob
+        if day <= 2 then
+            if self.isRaining then
+                prob = math.min(0.80, math.max(0.20, cloudCoverage) + rainDurationBoost)
+            else
+                prob = cloudCoverage * 0.40
+            end
+            if day == 2 then
+                prob = prob * 0.65 + baseRainProb * 0.35
+            end
+        else
+            prob = baseRainProb
+        end
+        sum = sum + prob
+    end
+    return { likelihood = sum / daysAhead, approximate = true }
+end
+
 function WeatherIntegration:getMoistureForecast(fieldId, days)
     days = days or 5
 
