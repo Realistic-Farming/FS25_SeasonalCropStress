@@ -492,11 +492,15 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours)
         -- Critical threshold check (12-hour cooldown per field to avoid spam).
         -- Use getCriticalMoisture() so the player's settings value is honoured;
         -- falls back to the class constant if applySettings() hasn't run yet.
-        -- SoilFertilizer pH modifier raises the threshold for acid/alkaline fields
-        -- (crops become moisture-stressed at a higher moisture level when pH is poor).
+        -- SoilFertilizer pH modifier raises the threshold for acid/alkaline fields,
+        -- and the compaction modifier sharpens the swing on compacted ground
+        -- (crops become moisture-stressed at a higher moisture level when pH is
+        -- poor or the soil is compacted). Both are Arrow-2 reads, never a write.
         local sfStressMod = sfHasStress and sfInteg:getFieldStressMod(fieldId) or 0.0
+        local sfCompactMod = (sfInteg ~= nil and type(sfInteg.getFieldCompactMod) == "function")
+            and sfInteg:getFieldCompactMod(fieldId) or 0.0
         local agg = self:getFieldAggregate(data)
-        if agg <= (self:getCriticalMoisture() + sfStressMod) then
+        if agg <= (self:getCriticalMoisture() + sfStressMod + sfCompactMod) then
             local lastAlert = self.criticalAlertCooldown[fieldId] or -999
             if (hourKey - lastAlert) >= 12 then
                 self.criticalAlertCooldown[fieldId] = hourKey
