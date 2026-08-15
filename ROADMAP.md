@@ -89,3 +89,7 @@
 - [x] The growth family's condition scales only the transpiration share of evapotranspiration (a blocked cell stays wetter, an excellent cell dries faster); the soil-evaporation share is never scaled. Duck-typed read of SF's getFieldGrowthSummary, neutral 1.0 when absent; SCS remains sole writer of moisture. No new write, no new persistence, no surface.
 - [x] scs020_transpiration_feedback_test.lua at 10 assertions; suite 490/0; deployed 1.2.5.74.
 - [~] In-game (owed): a blocked field stays visibly wetter; an excellent-credit field dries faster over a dry spell.
+
+## 2026-08-15 (Wizard): Crop Moisture heat sheet + hose-peer log-flood fix
+- [x] CsMoistureMapOverlay now fills each owned farmland with a sampled tile grid (polygon walk + point-in-polygon ported into SCS, no SoilFertilizer dependency), one ramp feeding both the tiles and the legend, display-only (no density-map writes, HUD thresholds untouched). Merged #138; 1.2.5.77.
+- [x] ScsPumpHoseConnection guards every hose-joint read behind phVehicleAlive (component-root liveness) and drops dead peers on the same frame they die, stopping the client log flood and a stale hose prompt after a sale. Merged #137; 1.2.5.77.

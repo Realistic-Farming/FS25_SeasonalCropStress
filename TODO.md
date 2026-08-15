@@ -96,3 +96,7 @@
 - [x] Transpiration share scaled by the family growth summary; soil share never scaled; firewall read-only.
 - [x] 10 assertions; suite 490/0.
 - [~] In-game; the per-cell upgrade rides SCS-018's store (deferred).
+
+## Crop Moisture heat sheet + hose log-flood fix (2026-08-15, Wizard)
+- [x] Moisture heat-sheet overlay (#138) and the hose-peer liveness/log-flood fix (#137), both merged; 1.2.5.77.
+- [~] In-game: the heat sheet paints the wet patch where an irrigator just ran; a sold hose partner clears the prompt and the log goes quiet.
