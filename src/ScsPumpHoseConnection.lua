@@ -46,16 +46,46 @@ local function phIsRainstar(vehicle)
     return string.find(path, "rainstar.xml", 1, true) ~= nil
 end
 
-local function phResolveHoseJoint(vehicle)
+--- Is this vehicle still backed by live engine nodes? A sold vehicle's Lua table outlives its
+--- component entities, so a non-nil partner proves nothing; the component root is the honest
+--- question, because if it is gone every child under it is gone too.
+local function phVehicleAlive(vehicle)
     if vehicle == nil then
+        return false
+    end
+    if vehicle.isDeleted == true then
+        return false
+    end
+    if type(vehicle.getIsBeingDeleted) == "function" and vehicle:getIsBeingDeleted() then
+        return false
+    end
+    local components = vehicle.components
+    if components == nil or components[1] == nil then
+        return false
+    end
+    local root = components[1].node
+    if root == nil or root == 0 or entityExists == nil or not entityExists(root) then
+        return false
+    end
+    return true
+end
+
+--- Resolve a vehicle's hose joint, or nil if there is nothing live to resolve.
+--- This is the ONE place the guard lives: every getWorldTranslation on a hose joint in this
+--- file takes its node from here, so guarding the call sites instead would leave the next one
+--- unguarded. The liveness gate runs BEFORE indexToObject, because that walk reads components
+--- and steps through child nodes itself and is not safe on a destroyed vehicle.
+local function phResolveHoseJoint(vehicle)
+    if not phVehicleAlive(vehicle) then
         return nil
     end
     local node = I3DUtil.indexToObject(vehicle.components, "hoseJoint", vehicle.i3dMappings)
-    if node ~= nil and node ~= 0 then
+    if node ~= nil and node ~= 0 and entityExists(node) then
         return node
     end
-    if vehicle.components ~= nil and vehicle.components[1] ~= nil then
-        return vehicle.components[1].node
+    local root = vehicle.components[1].node
+    if root ~= nil and root ~= 0 and entityExists(root) then
+        return root
     end
     return nil
 end
@@ -223,9 +253,14 @@ function ScsPumpHoseConnection:onDelete()
     if spec == nil then
         return
     end
-    if spec.connected then
-        self:setScsHoseConnected(false, true)
-    end
+    -- Unconditional and idempotent: the old version only disconnected when connected was
+    -- true and only unregistered when the flag said so, which leaves a stale candidate and a
+    -- live prompt in exactly the case that matters.
+    self:setScsHoseConnected(false, true)
+    spec.partner = nil
+    spec.candidate = nil
+    spec.connected = false
+    ScsPumpHoseConnection.releaseHoseActivatable(self)
     if spec.activatableRegistered and g_currentMission ~= nil
             and g_currentMission.activatableObjectsSystem ~= nil then
         g_currentMission.activatableObjectsSystem:removeActivatable(spec.activatable)
@@ -303,6 +338,53 @@ function ScsPumpHoseConnection:setScsHoseConnected(connected, force)
             spec.activatable:updateActivateText()
         end
     end
+end
+
+--- Drop the hose activatable. Unconditional, matching vanilla Dog:delete and
+--- AnimalLoadingTrigger, which call removeActivatable with no registration flag.
+function ScsPumpHoseConnection.releaseHoseActivatable(pump)
+    local spec = pump ~= nil and pump.spec_scsPumpHose or nil
+    if spec == nil then
+        return
+    end
+    local aos = g_currentMission ~= nil and g_currentMission.activatableObjectsSystem or nil
+    if aos ~= nil and spec.activatable ~= nil then
+        aos:removeActivatable(spec.activatable)
+    end
+    spec.activatableRegistered = false
+end
+
+--- Forget a peer whose nodes the engine has destroyed. Guarding the joint reads stops the log
+--- flood; this is the other half, or the pump stays connected to a vehicle that no longer
+--- exists and keeps offering a hose prompt. The disconnect is forced because spec.connected
+--- can already read false while partner is still set.
+function ScsPumpHoseConnection.invalidateDeadPeer(pump)
+    local spec = pump ~= nil and pump.spec_scsPumpHose or nil
+    if spec == nil then
+        return false
+    end
+    local dropped = false
+    if spec.partner ~= nil and not phVehicleAlive(spec.partner) then
+        if pump.setScsHoseConnected ~= nil then
+            pump:setScsHoseConnected(false, true)
+        end
+        spec.partner = nil
+        spec.connected = false
+        dropped = true
+    end
+    if spec.candidate ~= nil and not phVehicleAlive(spec.candidate) then
+        spec.candidate = nil
+        dropped = true
+    end
+    if dropped then
+        if pump.RPC ~= nil then
+            pump.RPC.virtualHoseConnected = false
+            pump.RPC.virtualRainstar = nil
+        end
+        ScsPumpHoseConnection.releaseHoseActivatable(pump)
+        ScsPumpHoseConnection.deleteHoseVisual(pump)
+    end
+    return dropped
 end
 
 function ScsPumpHoseConnection.getJointDistance(pump, rainstar)
@@ -683,6 +765,9 @@ function ScsPumpHoseConnection:onUpdate(dt, isActiveForInput, isActiveForInputIg
     local elapsed = spec.updateTimer
     spec.updateTimer = 0
 
+    -- Ahead of the range check: a sold partner is not an out-of-range partner.
+    ScsPumpHoseConnection.invalidateDeadPeer(self)
+
     if spec.connected then
         local partner = spec.partner
         local dist = partner ~= nil and ScsPumpHoseConnection.getJointDistance(self, partner) or nil
@@ -717,6 +802,10 @@ function ScsPumpHoseConnection:onUpdateTick(dt, isActiveForInput, isActiveForInp
     if g_currentMission == nil or g_currentMission.activatableObjectsSystem == nil then
         return
     end
+
+    -- Before the candidate refresh: while connected, candidate is copied from partner
+    -- below, so a dead partner would be promoted straight back and keep the prompt.
+    ScsPumpHoseConnection.invalidateDeadPeer(self)
 
     if not spec.connected then
         spec.candidate = ScsPumpHoseConnection.findNearestRainstar(self)
@@ -798,6 +887,10 @@ function ScsPumpHoseActivatable:getIsActivatable()
         end
     end
 
+    -- AOS polls this every frame while registered, so it is the first place a sold peer
+    -- shows up, and clearing here is what makes the prompt go on the same frame.
+    ScsPumpHoseConnection.invalidateDeadPeer(vehicle)
+
     local partner = spec.connected and spec.partner or spec.candidate
     if partner == nil then
         return false
@@ -829,6 +922,11 @@ function ScsPumpHoseActivatable:getDistance(x, y, z)
         return math.huge
     end
     local partner = spec.connected and spec.partner or spec.candidate
+    -- No clearing here: getDistance is a query AOS may call mid-iteration. A dead peer just
+    -- stops contributing to the midpoint; getIsActivatable above does the dropping.
+    if partner ~= nil and not phVehicleAlive(partner) then
+        partner = nil
+    end
     local a = phResolveHoseJoint(vehicle)
     local b = partner ~= nil and phResolveHoseJoint(partner) or nil
     if a == nil then
