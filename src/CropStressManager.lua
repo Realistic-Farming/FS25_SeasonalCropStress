@@ -522,7 +522,14 @@ function CropStressManager:update(dt)
         -- Read it BEFORE the key is advanced, or it is gone.
         local elapsedHours = CropStressManager.elapsedHoursFrom(self.lastHourKey, hourKey)
         self.lastHourKey = hourKey
-        self:onHourlyTick(elapsedHours)
+        -- BUILD 19:47: nothing hourly runs until the player has actually entered. During a
+        -- long 4x compile this loop was rebuilding a 122-field map every thirty seconds for
+        -- a world nobody was looking at yet, on the same machine that was trying to finish
+        -- loading. The key is still advanced above, so no hours are lost or double counted
+        -- when the gate opens; only the work is held.
+        if g_currentMission ~= nil and g_currentMission.isMissionStarted == true then
+            self:onHourlyTick(elapsedHours)
+        end
     end
 
     -- HUD frame update (handles auto-show, input response)
@@ -550,6 +557,10 @@ end
 function CropStressManager:onHourlyTick(elapsedHours)
     -- Respect the player's master on/off toggle
     if not self.settings.enabled then return end
+
+    -- BUILD 19:47: belt for the caller gate above. This is public and reachable from more
+    -- than the update loop, and the field-map rebuild below is the expensive half.
+    if not (g_currentMission ~= nil and g_currentMission.isMissionStarted == true) then return end
 
     local hours = math.max(1, math.floor(tonumber(elapsedHours) or 1))
 

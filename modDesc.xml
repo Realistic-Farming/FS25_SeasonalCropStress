@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="105">
     <author>TisonK</author>
-    <version>1.2.5.77</version>
+    <version>1.2.5.94</version>
 
     <title>
         <en>Seasonal Crop Stress &amp; Irrigation Manager</en>
@@ -218,16 +218,22 @@ FUNKTIONER:
     </specializations>
 
     <vehicleTypes>
-        <!-- className/filename omitted on purpose: TypeManager inherits both from the
-             parent type. The old filename="/scripts/vehicles/Vehicle.lua" was resolved
-             against the mod directory and logged "Can't load resource" once per type. -->
-        <type name="rwsmPlayPump" parent="sprayer">
+        <!-- BUILD 18:55: filename is set explicitly, and the $dataS prefix is the whole
+             point of it. An earlier build removed this attribute because the value then in
+             use was "/scripts/vehicles/Vehicle.lua" with no prefix, which the engine resolved
+             against the MOD directory and logged "Can't load resource" once per type. That
+             removal fixed the wrong half: relying on the parent type to supply the script
+             leaves these three with no filename at all on a joining client.
+             "$dataS/..." points at the game's own copy, so it is neither the old broken
+             mod-relative path nor an omission. className stays absent and is still inherited
+             from the parent type. -->
+        <type name="rwsmPlayPump" parent="sprayer" filename="$dataS/scripts/vehicles/Vehicle.lua">
             <specialization name="motorized"/>
             <specialization name="drivable"/>
             <specialization name="enterable"/>
             <specialization name="ScsPumpHoseConnection"/>
         </type>
-        <type name="rwsmPlayRainstar" parent="sprayer">
+        <type name="rwsmPlayRainstar" parent="sprayer" filename="$dataS/scripts/vehicles/Vehicle.lua">
             <specialization name="RWSM53ChangeObjectByDistance"/>
             <specialization name="RWSM53AutoReel"/>
             <specialization name="RWSM118RainstarParkingBrake"/>
@@ -235,7 +241,7 @@ FUNKTIONER:
         </type>
         <!-- implement_attacherJointControl (vanilla, verified in dataS/vehicleTypes.xml)
              backs the <attacherJointControl> block the XML already carries. -->
-        <type name="rwsmPlaySchiene" parent="implement_attacherJointControl"/>
+        <type name="rwsmPlaySchiene" parent="implement_attacherJointControl" filename="$dataS/scripts/vehicles/Vehicle.lua"/>
     </vehicleTypes>
 
     <placeableSpecializations>
