@@ -3089,18 +3089,18 @@
   "2026-08-15": [
     {
       "referrer": "github.com",
-      "count": 456,
-      "uniques": 126
+      "count": 448,
+      "uniques": 133
     },
     {
       "referrer": "Google",
-      "count": 67,
-      "uniques": 43
+      "count": 66,
+      "uniques": 42
     },
     {
       "referrer": "kingmods.net",
-      "count": 20,
-      "uniques": 9
+      "count": 15,
+      "uniques": 7
     },
     {
       "referrer": "Bing",
@@ -3109,7 +3109,7 @@
     },
     {
       "referrer": "yandex.ru",
-      "count": 7,
+      "count": 5,
       "uniques": 3
     },
     {
