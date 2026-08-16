@@ -139,7 +139,10 @@ function CropStressNetworkSyncBridge._onReadState(arr)
 
     -- Rebuild field map only when fields are ready; on MP join the field manager
     -- may not yet be populated. The field-ready updater handles initial enumeration.
-    if mgr.buildFieldMap ~= nil and g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
+    -- BUILD 19:47: same shape as the init event. State above is applied every time; the
+    -- map walk is the part that waits for the player to be in.
+    if g_currentMission ~= nil and g_currentMission.isMissionStarted == true
+        and mgr.buildFieldMap ~= nil and g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
         mgr:buildFieldMap()
     end
 end

@@ -33,6 +33,17 @@ CropStressMoistureRowEvent_mt = Class(CropStressMoistureRowEvent, Event)
 
 InitEventClass(CropStressMoistureRowEvent, "CropStressMoistureRowEvent")
 
+--- BUILD 18:55: the engine's EVENT path calls emptyNew() and then readStream on
+--- what it returns, so an event class without one is a nil call the moment its
+--- packet arrives on a joining client. Vanilla shape, matching
+--- CropStressPivotRemoteEvent: construct and return, nothing else.
+--- No field defaults on purpose. readStream fills the instance, and pre-seeding
+--- here would quietly paper over a short or mismatched read instead of failing.
+function CropStressMoistureRowEvent.emptyNew()
+    local self = Event.new(CropStressMoistureRowEvent_mt)
+    return self
+end
+
 --- @param rowIndex number  map row (0-based)
 --- @param packed table     run-length pairs from CropStressValueMap.packRow
 function CropStressMoistureRowEvent.new(rowIndex, packed)
