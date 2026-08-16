@@ -281,13 +281,13 @@
 			</movingTool>
 			
 			<movingTool node="Chassi_vis" playSound="true" >
-                <controls axis="AXIS_FRONTLOADER_TOOL" invertAxis="false" mouseSpeedFactor="1" iconName="ICON_DRUM"/>
+                <controls axis="AXIS_FRONTLOADER_TOOL" invertAxis="false" mouseSpeedFactor="1"/>
 				<rotation rotationAxis="2" rotSpeed="80" rotAcceleration="50" rotMax="180" startRot="90" rotMin="0"/>
                 <componentJoint index="1" />
             </movingTool>
 			
 			<movingTool node="workAreaWidth" playSound="false" >
-                <controls axis="AXIS_FRONTLOADER_TOOL2" invertAxis="false" mouseSpeedFactor="1" iconName="ICON_WWIDTH"/>
+                <controls axis="AXIS_FRONTLOADER_TOOL2" invertAxis="false" mouseSpeedFactor="1"/>
 				<translation transSpeed="3" transAcceleration="70" transMax="87" transMin="55" translationAxis="1"/>
             </movingTool>
         </movingTools>
