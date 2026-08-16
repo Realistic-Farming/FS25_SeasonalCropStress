@@ -620,6 +620,9 @@ end
 function SoilMoistureSystem:_writeCell(fieldId, cx, cz, newValue)
     local d = self.fieldData[fieldId]
     if d == nil then return nil end
+    if d.cells == nil then d.cells = {} end
+    if d.cellCount == nil then d.cellCount = 0 end
+    if d.cellSum == nil then d.cellSum = 0 end
     newValue = math.max(0.0, math.min(1.0, newValue or 0))
     local row = d.cells[cx]
     if row == nil then
@@ -708,6 +711,9 @@ function SoilMoistureSystem:materialiseRelief(fieldId)
     local d = self.fieldData[fieldId]
     if d == nil or d.reliefScan then return end
     d.reliefScan = true
+    if d.cells == nil then d.cells = {} end
+    if d.cellCount == nil then d.cellCount = 0 end
+    if d.cellSum == nil then d.cellSum = 0 end
     self._reliefScanned[fieldId] = true
 
     local field = nil
