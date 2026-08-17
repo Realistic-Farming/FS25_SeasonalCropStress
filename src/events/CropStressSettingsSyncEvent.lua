@@ -24,6 +24,17 @@ CropStressSettingsSyncEvent_mt = Class(CropStressSettingsSyncEvent, Event)
 
 InitEventClass(CropStressSettingsSyncEvent, "CropStressSettingsSyncEvent")
 
+--- BUILD 18:55: the engine's EVENT path calls emptyNew() and then readStream on
+--- what it returns, so an event class without one is a nil call the moment its
+--- packet arrives on a joining client. Vanilla shape, matching
+--- CropStressPivotRemoteEvent: construct and return, nothing else.
+--- No field defaults on purpose. readStream fills the instance, and pre-seeding
+--- here would quietly paper over a short or mismatched read instead of failing.
+function CropStressSettingsSyncEvent.emptyNew()
+    local self = Event.new(CropStressSettingsSyncEvent_mt)
+    return self
+end
+
 -- Event type constants
 CropStressSettingsSyncEvent.TYPE_SINGLE = 1
 CropStressSettingsSyncEvent.TYPE_BULK = 2

@@ -18,6 +18,29 @@ SoilMoistureSystem.__index = SoilMoistureSystem
 -- At 1.0 modifier: 0.004 = 0.4% per hour → full evap in ~104 hours (~4 game days)
 SoilMoistureSystem.BASE_EVAP_RATE = 0.004
 
+-- SCS-020 TRANSPIRATION FEEDBACK: the share of evapotranspiration attributed to
+-- crop transpiration, scaled by the 2m growth family's condition (SF-52/53's
+-- published getFieldGrowthSummary). The soil-evaporation share (1 - the share) is
+-- never scaled, so a blocked cell keeps its full soil drying; only transpiration
+-- scales with the crop's condition. Dials awaiting the spine (neutral defaults).
+SoilMoistureSystem.TRANSPIRATION_SHARE = 0.5
+SoilMoistureSystem.BLOCKED_WEIGHT       = 0.5
+SoilMoistureSystem.EXCELLENT_WEIGHT     = 0.25
+SoilMoistureSystem.GROWTH_EVAP_MIN      = 0.25
+SoilMoistureSystem.GROWTH_EVAP_MAX      = 1.25
+
+-- SCS-020: the 2m growth family's per-field condition summary, duck-typed and
+-- pull-only. Returns { blockedFrac, excellentFrac } or nil when SF is absent or
+-- the getter is not present, which degrades to the neutral factor 1.0. Never a
+-- write into SF's state (the firewall).
+function SoilMoistureSystem:_growthSummary(fieldId)
+    local sfm = g_currentMission ~= nil and g_currentMission.soilFertilityManager
+    if sfm == nil or sfm.getFieldGrowthSummary == nil then return nil end
+    local ok, summary = pcall(function() return sfm:getFieldGrowthSummary(fieldId) end)
+    if not ok or type(summary) ~= "table" then return nil end
+    return summary
+end
+
 -- Soil type evaporation modifiers and rain absorption coefficients
 SoilMoistureSystem.SOIL_PARAMS = {
     sandy = { evapMod = 1.40, rainAbsorb = 1.25 },
@@ -290,7 +313,10 @@ end
 -- g_currentMission.fieldManager:getFields() which can be nil until well after
 -- isMissionStarted fires. Safe to call multiple times — skips fields already
 -- in fieldData to preserve any save data loaded earlier.
--- Returns the number of NEW fields added.
+-- Returns the number of NEW fields added. [SCS-036] The count now ALSO
+-- includes backfilled records (a record that existed without a soilType,
+-- detected and repaired here), so a client that backfills every field and
+-- creates none reports the right work done rather than 0.
 function SoilMoistureSystem:enumerateFields()
     if g_fieldManager == nil or g_fieldManager.fields == nil then
         csLog("SoilMoistureSystem: g_fieldManager unavailable — field enumeration deferred")
@@ -334,6 +360,15 @@ function SoilMoistureSystem:enumerateFields()
                 cellCount   = 0,
                 reliefScan  = false,
             }
+            count = count + 1
+        elseif fid ~= nil and self.fieldData[fid] ~= nil and self.fieldData[fid].soilType == nil then
+            -- [SCS-036] THE BACKFILL: a record that EXISTS but has no soilType
+            -- (a pre-fix client, or a wire handler that joined without one)
+            -- gets one detected and written. The field object is already in
+            -- scope from the same loop, so no new lookup is needed. Idempotent:
+            -- one detection per field per peer per session; every later rebuild
+            -- is a no-op. Counted so the return contract reports the repair.
+            self.fieldData[fid].soilType = self:detectSoilType(field)
             count = count + 1
         end
     end
@@ -411,12 +446,34 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours)
         -- Every term below is a PER-HOUR quantity, so each is multiplied by the
         -- elapsed count. At the default of 1 this is arithmetically identical to
         -- what shipped; SCS-037 changes only what arrives in `hours`.
-        local evapLoss = SoilMoistureSystem.BASE_EVAP_RATE
+        local evapPerHour = SoilMoistureSystem.BASE_EVAP_RATE
             * evapMultiplier
             * soilParams.evapMod
             * settingsEvapMult
             * sfEvapMod
-            * hours
+
+        -- SCS-020 TRANSPIRATION FEEDBACK: a field with cells blocked by SF-52's
+        -- viability mask draws less water and stays wetter; a field growing at
+        -- excellent credit draws more and dries faster. Only the transpiration
+        -- share is scaled, never the soil-evaporation share, so a blocked cell
+        -- keeps its full soil drying (the pinned invariant). Duck-typed read of
+        -- SF's getFieldGrowthSummary, neutral 1.0 when absent.
+        local growthEvapMod = 1.0
+        local summary = self:_growthSummary(fieldId)
+        if summary ~= nil then
+            local blocked    = summary.blockedFrac or 0
+            local excellent  = summary.excellentFrac or 0
+            growthEvapMod = SoilMoistureSystem.GROWTH_EVAP_MIN
+            local v = 1 - SoilMoistureSystem.BLOCKED_WEIGHT * blocked
+                     + SoilMoistureSystem.EXCELLENT_WEIGHT * excellent
+            if v > growthEvapMod then growthEvapMod = v end
+            if growthEvapMod > SoilMoistureSystem.GROWTH_EVAP_MAX then
+                growthEvapMod = SoilMoistureSystem.GROWTH_EVAP_MAX
+            end
+        end
+        local soilEvapShare = evapPerHour * (1 - SoilMoistureSystem.TRANSPIRATION_SHARE) * hours
+        local transpShare   = evapPerHour * SoilMoistureSystem.TRANSPIRATION_SHARE * hours
+        local evapLoss = soilEvapShare + transpShare * growthEvapMod
 
         -- Rain gain (modulated by soil absorption). Charged over `wetHours`, which
         -- is the whole span unless the Water Record narrowed it (SCS-037 round 2).
@@ -480,11 +537,15 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours)
         -- Critical threshold check (12-hour cooldown per field to avoid spam).
         -- Use getCriticalMoisture() so the player's settings value is honoured;
         -- falls back to the class constant if applySettings() hasn't run yet.
-        -- SoilFertilizer pH modifier raises the threshold for acid/alkaline fields
-        -- (crops become moisture-stressed at a higher moisture level when pH is poor).
+        -- SoilFertilizer pH modifier raises the threshold for acid/alkaline fields,
+        -- and the compaction modifier sharpens the swing on compacted ground
+        -- (crops become moisture-stressed at a higher moisture level when pH is
+        -- poor or the soil is compacted). Both are Arrow-2 reads, never a write.
         local sfStressMod = sfHasStress and sfInteg:getFieldStressMod(fieldId) or 0.0
+        local sfCompactMod = (sfInteg ~= nil and type(sfInteg.getFieldCompactMod) == "function")
+            and sfInteg:getFieldCompactMod(fieldId) or 0.0
         local agg = self:getFieldAggregate(data)
-        if agg <= (self:getCriticalMoisture() + sfStressMod) then
+        if agg <= (self:getCriticalMoisture() + sfStressMod + sfCompactMod) then
             local lastAlert = self.criticalAlertCooldown[fieldId] or -999
             if (hourKey - lastAlert) >= 12 then
                 self.criticalAlertCooldown[fieldId] = hourKey
@@ -559,6 +620,9 @@ end
 function SoilMoistureSystem:_writeCell(fieldId, cx, cz, newValue)
     local d = self.fieldData[fieldId]
     if d == nil then return nil end
+    if d.cells == nil then d.cells = {} end
+    if d.cellCount == nil then d.cellCount = 0 end
+    if d.cellSum == nil then d.cellSum = 0 end
     newValue = math.max(0.0, math.min(1.0, newValue or 0))
     local row = d.cells[cx]
     if row == nil then
@@ -647,6 +711,9 @@ function SoilMoistureSystem:materialiseRelief(fieldId)
     local d = self.fieldData[fieldId]
     if d == nil or d.reliefScan then return end
     d.reliefScan = true
+    if d.cells == nil then d.cells = {} end
+    if d.cellCount == nil then d.cellCount = 0 end
+    if d.cellSum == nil then d.cellSum = 0 end
     self._reliefScanned[fieldId] = true
 
     local field = nil
@@ -764,6 +831,12 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
     cell.moisture = math.max(0.0, math.min(1.0, cell.moisture + gain))
     d.cellSum = d.cellSum + gain
     if d.cellSum > d.cellCount then d.cellSum = d.cellCount end
+    -- Vera F1 (BUILD 19:44): keep the field scalar level with the cell aggregate.
+    -- Readers are split: getMoisture/getFieldAggregate compute from cells, but the
+    -- Esc field table and CropStressNetworkSyncBridge:serializeFields both paint
+    -- the raw d.moisture scalar. Without this line water lands, cells rise, and
+    -- every surface the player actually looks at keeps showing the old number.
+    d.moisture = self:getFieldAggregate(d)
 end
 
 -- ============================================================
@@ -1111,6 +1184,9 @@ function SoilMoistureSystem:unpackCells(fieldId, packed)
             d.cellSum = d.cellSum + val / 10000
         end
     end
+    -- Sibling of the F1 path: rebuilding cells on load moves the aggregate, so the
+    -- scalar has to follow or a reloaded save paints the pre-save number.
+    d.moisture = self:getFieldAggregate(d)
 end
 
 -- Returns a sorted list of {fieldId, moisture, soilType} for HUD display

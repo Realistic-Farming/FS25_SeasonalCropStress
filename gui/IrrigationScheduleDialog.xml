@@ -158,7 +158,7 @@
             <GuiElement profile="csRowContainer" position="0px -242px">
                 <Text profile="csRowLabel"          position="0px 0px"   text="$l10n_cs_irr_cost" />
                 <Text profile="csRowValue" id="cost"    position="190px 0px" text="---" />
-                <Text profile="csRowLabel"          position="390px 0px" text="$l10n_cs_irr_wear" />
+                <Text profile="csRowLabel" id="wearLabel" position="390px 0px" text="$l10n_cs_irr_wear" />
                 <Text profile="csRowValue" id="wear"    position="580px 0px" text="---" />
             </GuiElement>
 

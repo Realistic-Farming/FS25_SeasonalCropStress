@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<l10n>
+    <texts>
+    <!-- ========== HUD OVERLAY ========== -->
+    <text name="cs_hud_title"         text="CROP MOISTURE"/>
+    <text name="cs_hud_healthy"       text="Healthy"/>
+    <text name="cs_hud_warning"       text="Drought Stress"/>
+    <text name="cs_hud_critical"      text="CRITICAL — Irrigate Now!"/>
+    <text name="cs_hud_no_crop"       text="No crop"/>
+    <text name="cs_hud_forecast"      text="5-Day Forecast"/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 loaded. Press Shift+M to open the moisture HUD. New to the mod? Open the Help menu (ESC → Help) and find Seasonal Crop Stress to learn how everything works."/>
+    <text name="cs_hud_click_forecast" text="Click a row for 5-day forecast"/>
+    <text name="cs_hud_vehicle_disabled" text="Overlay disabled in vehicle"/>
+
+    <!-- ========== FIELD STATUS ========== -->
+    <text name="cs_field_moisture"        text="Moisture"/>
+    <text name="cs_field_soil_type"       text="Soil Type"/>
+    <text name="cs_field_stress"          text="Stress Accumulated"/>
+    <text name="cs_field_yield_impact"    text="Est. Yield Impact"/>
+    <text name="cs_field_critical_window" text="Critical Window: NOW"/>
+    <text name="cs_field_nearest_water"   text="Nearest Water"/>
+
+    <!-- ========== SOIL TYPES ========== -->
+    <text name="cs_soil_sandy"  text="Sandy"/>
+    <text name="cs_soil_loamy"  text="Loamy"/>
+    <text name="cs_soil_clay"   text="Clay"/>
+
+    <!-- ========== ALERTS ========== -->
+    <text name="cs_alert_info"     text="Field %d: %s moisture dropping — monitor conditions."/>
+    <text name="cs_alert_warning"  text="Field %d: %s moisture low — irrigation recommended."/>
+    <text name="cs_alert_critical" text="Field %d: %s at drought stress threshold — irrigate NOW!"/>
+
+    <!-- ========== IRRIGATION ========== -->
+    <text name="cs_irr_title"          text="Irrigation System — %s"/>
+    <text name="cs_irr_water_source"   text="Water Source"/>
+    <text name="cs_irr_connected"      text="Connected"/>
+    <text name="cs_irr_disconnected"   text="Disconnected"/>
+    <text name="cs_irr_schedule"       text="Schedule"/>
+    <text name="cs_irr_flow_rate"      text="Flow Rate"/>
+    <text name="cs_irr_efficiency"     text="Efficiency"/>
+    <text name="cs_irr_cost"           text="Est. Cost"/>
+    <text name="cs_irr_wear"           text="Wear Level"/>
+    <text name="cs_irr_covered_fields" text="Covered Fields"/>
+    <text name="cs_irr_irrigate_now"   text="Irrigate Now"/>
+    <text name="cs_irr_save_schedule"  text="Save Schedule"/>
+    <text name="cs_irr_pivot"          text="Center Pivot"/>
+    <text name="cs_irr_drip"           text="Drip Line"/>
+    <text name="cs_irr_pump"           text="Water Pump"/>
+    <text name="cs_irr_start_time"     text="Start Time"/>
+    <text name="cs_irr_end_time"       text="End Time"/>
+    <text name="cs_irr_performance"    text="Performance"/>
+    <text name="cs_irr_started"        text="Irrigation started."/>
+    <text name="cs_irr_open_schedule"  text="Open Irrigation Schedule"/>
+    <text name="cs_schedule_saved"     text="Schedule saved."/>
+
+    <!-- ========== DAY LABELS ========== -->
+    <text name="cs_day_mon" text="M"/>
+    <text name="cs_day_tue" text="T"/>
+    <text name="cs_day_wed" text="W"/>
+    <text name="cs_day_thu" text="T"/>
+    <text name="cs_day_fri" text="F"/>
+    <text name="cs_day_sat" text="S"/>
+    <text name="cs_day_sun" text="S"/>
+
+    <!-- ========== CONSULTANT ========== -->
+    <text name="cs_consultant_name"            text="Alex Chen, Agronomist"/>
+    <text name="cs_consultant_subtitle"        text="Field Status &amp; Recommendations"/>
+    <text name="cs_consultant_relationship"    text="Relationship with Alex:"/>
+    <text name="cs_consultant_field_status"    text="Field Risk Summary (Top 5)"/>
+    <text name="cs_consultant_recommendation"  text="Recommendations"/>
+    <text name="cs_consultant_open_irrigation" text="Open Irrigation Manager"/>
+    <text name="cs_consultant_no_data"         text="No field data available."/>
+
+    <!-- ========== NPC FAVOR QUESTS ========== -->
+    <text name="cs_favor_soil_sample"     text="Take a soil sample from Field %d"/>
+    <text name="cs_favor_irr_check"       text="Inspect the irrigation system near Field %d"/>
+    <text name="cs_favor_emergency_water" text="Irrigate Field %d before sundown!"/>
+    <text name="cs_favor_seasonal_plan"   text="Review the seasonal irrigation plan"/>
+
+    <!-- ========== PLACEABLES ========== -->
+    <text name="cs_pivot_name"     text="Center Pivot Irrigator"/>
+    <text name="cs_pump_name"      text="Water Pump"/>
+    <text name="cs_drip_name"      text="Drip Irrigation Line"/>
+    <text name="cs_pivot_function" text="Large-radius center pivot irrigation. Covers circular field areas. Requires a Water Pump."/>
+    <text name="cs_pump_function"  text="Powers center pivot and drip irrigation systems. Place near a water source."/>
+    <text name="cs_drip_function"  text="Precise low-flow irrigation along field rows. Requires a Water Pump."/>
+
+    <!-- ========== IRRIGATION PERFORMANCE VALUES (dynamic, format strings) ========== -->
+    <text name="cs_irr_flow_rate_value"   text="Flow Rate: %.3f/hr"/>
+    <text name="cs_irr_efficiency_value"  text="Efficiency: %d%%"/>
+    <text name="cs_irr_cost_value"        text="Est. Cost: $%d/hr"/>
+    <text name="cs_irr_wear_value"        text="Wear Level: %d%%"/>
+    <text name="cs_irr_already_active"    text="Irrigation system is already running."/>
+    <text name="cs_irr_no_covered_fields" text="No fields covered by this system."/>
+
+    <!-- ========== CONSULTANT RECOMMENDATIONS (dynamic, format strings) ========== -->
+    <text name="cs_rec_urgent"          text="URGENT: Field %d at %.0f%% moisture — irrigate immediately!"/>
+    <text name="cs_rec_warning"         text="Field %d at %.0f%% moisture — irrigation recommended within 24h."/>
+    <text name="cs_rec_ok"              text="All fields within acceptable moisture range."/>
+    <text name="cs_rec_forecast"        text="Forecast: ~ D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
+    <text name="cs_rec_systems_running" text="%d irrigation system(s) currently running."/>
+    <text name="cs_rec_no_systems"      text="No irrigation systems are currently active."/>
+    <text name="cs_rec_all_healthy"     text="All fields appear healthy."/>
+
+    <!-- ========== SHARED ========== -->
+    <text name="cs_close"                 text="Close"/>
+    <text name="cs_no_irrigation_systems" text="No irrigation systems placed yet"/>
+
+    <!-- ========== INPUT ACTION DESCRIPTIONS ========== -->
+    <text name="input_CS_TOGGLE_HUD"      text="Toggle Moisture HUD"/>
+    <text name="input_CS_OPEN_IRRIGATION" text="Open Irrigation Manager"/>
+    <text name="input_CS_OPEN_CONSULTANT" text="Open Crop Consultant"/>
+    <text name="input_CS_OPEN_SETTINGS"   text="Open Crop Stress Settings"/>
+    <text name="input_CS_EDIT_HUD"        text="Edit/Move Moisture HUD"/>
+
+    <!-- ========== PRECISION FARMING DLC ========== -->
+
+    <!-- ========== SETTINGS ========== -->
+    <text name="cs_settings_section"           text="Seasonal Crop Stress"/>
+    <text name="cs_settings_enabled_short"     text="Enable Mod"/>
+    <text name="cs_settings_enabled_long"      text="Toggle the entire Seasonal Crop Stress system on or off"/>
+    <text name="cs_settings_difficulty_short"  text="Difficulty"/>
+    <text name="cs_settings_difficulty_long"   text="Adjust stress accumulation and evapotranspiration rates"/>
+    <text name="cs_settings_diff_easy"         text="Easy"/>
+    <text name="cs_settings_diff_normal"       text="Normal"/>
+    <text name="cs_settings_diff_hard"         text="Hard"/>
+    <text name="cs_settings_hud_short"         text="HUD Visible"/>
+    <text name="cs_settings_hud_long"          text="Show or hide the moisture overlay on the field list"/>
+    <text name="cs_settings_evap_short"        text="Evapotranspiration"/>
+    <text name="cs_settings_evap_long"         text="Base rate of moisture loss from soil"/>
+    <text name="cs_settings_evap_slow"         text="Slow"/>
+    <text name="cs_settings_evap_normal"       text="Normal"/>
+    <text name="cs_settings_evap_fast"         text="Fast"/>
+    <text name="cs_settings_yield_loss_short"  text="Max Yield Loss"/>
+    <text name="cs_settings_yield_loss_long"   text="Maximum percentage of yield that can be lost to drought stress"/>
+    <text name="cs_settings_threshold_short"   text="Critical Threshold"/>
+    <text name="cs_settings_threshold_long"    text="Moisture level below which stress accumulates"/>
+    <text name="cs_settings_irr_costs_short"   text="Irrigation Costs"/>
+    <text name="cs_settings_irr_costs_long"    text="Enable or disable financial costs for running irrigation systems"/>
+    <text name="cs_settings_alerts_short"      text="Alerts Enabled"/>
+    <text name="cs_settings_alerts_long"       text="Show warning notifications when fields need water"/>
+    <text name="cs_settings_cooldown_short"    text="Alert Cooldown"/>
+    <text name="cs_settings_cooldown_long"     text="Minimum hours between alerts for the same field"/>
+    <text name="cs_settings_debug_short"       text="Debug Mode"/>
+    <text name="cs_settings_debug_long"        text="Enable verbose logging for troubleshooting"/>
+
+    <!-- ========== HELP LINES ========== -->
+    <!-- Legacy key kept for safety -->
+    <text name="helpLine_cs_category"          text="Seasonal Crop Stress"/>
+    <!-- Category titles -->
+    <text name="helpLine_cs_cat_overview"      text="General"/>
+    <text name="helpLine_cs_cat_settings"      text="Settings"/>
+    <text name="helpLine_cs_cat_tips"          text="Tips &amp; Tricks"/>
+    <text name="helpLine_cs_cat_info"          text="Mod Information"/>
+
+    <!-- Overview: Page 1 -->
+    <text name="helpLine_cs_p1_title"          text="Overview"/>
+    <text name="helpLine_cs_p1_intro_title"    text="What This Mod Adds"/>
+    <text name="helpLine_cs_p1_intro_text"     text="Seasonal Crop Stress adds soil moisture simulation to every field. Crops need water during key growth stages. If they don't get it, your harvest will be smaller. Irrigation systems let you take control of your field's water supply."/>
+    <text name="helpLine_cs_p1_start_title"    text="Getting Started"/>
+    <text name="helpLine_cs_p1_start_text"     text="Press Shift+M to open the moisture HUD and see all your fields at a glance. Fields shown in red need water urgently. Green fields are in good shape. Press Shift+C to open the Crop Consultant for detailed advice and field risk scores."/>
+
+    <!-- Overview: Page 2 -->
+    <text name="helpLine_cs_p2_title"          text="Soil Moisture"/>
+    <text name="helpLine_cs_p2_how_title"      text="How Moisture Works"/>
+    <text name="helpLine_cs_p2_how_text"       text="Rain fills your soil and heat drains it. Every field tracks its own moisture level from 0% (bone dry) to 100% (saturated). The rate of drying depends on the weather, the season, and your soil type."/>
+    <text name="helpLine_cs_p2_soil_title"     text="Soil Types"/>
+    <text name="helpLine_cs_p2_soil_text"      text="Sandy soil drains fast and needs frequent irrigation. Clay soil holds water longer but can become waterlogged. Loamy soil is in between and the easiest to manage. Your field's soil type is shown in the HUD and Crop Consultant."/>
+
+    <!-- Overview: Page 3 -->
+    <text name="helpLine_cs_p3_title"          text="Crop Stress &amp; Yield"/>
+    <text name="helpLine_cs_p3_window_title"   text="Critical Growth Windows"/>
+    <text name="helpLine_cs_p3_window_text"    text="Every crop has a period during its growth cycle when it needs water the most. Wheat is most vulnerable in spring, corn suffers during summer heat waves, canola is sensitive in autumn. Low moisture during this window builds up stress on that field."/>
+    <text name="helpLine_cs_p3_yield_title"    text="Yield Reduction at Harvest"/>
+    <text name="helpLine_cs_p3_yield_text"     text="Accumulated stress reduces your harvest. A small amount of stress means a small yield loss. Severe drought can cut your harvest by up to 60%. The Crop Consultant shows your current yield risk per field so you can prioritise irrigation where it matters most."/>
+
+    <!-- Overview: Page 4 (Irrigation) -->
+    <text name="helpLine_cs_p5_title"          text="Irrigation"/>
+    <text name="helpLine_cs_p5_types_title"    text="Irrigation Types"/>
+    <text name="helpLine_cs_p5_types_text"     text="Three irrigation types are available in the build menu. Center Pivot covers a large circular area. Drip Line provides precise coverage along a field row. Water Pump powers your irrigation systems and must be placed near a water source first."/>
+    <text name="helpLine_cs_p5_schedule_title" text="Scheduling &amp; Running"/>
+    <text name="helpLine_cs_p5_schedule_text"  text="Select an irrigation system and press Shift+I to open its schedule. Pick which days of the week to irrigate and set a daily start and end time. You can also press Irrigate Now in the dialog to water the covered fields immediately without waiting for the schedule."/>
+
+    <!-- Overview: Page 5 (Crop Consultant) -->
+    <text name="helpLine_cs_p6_title"          text="Crop Consultant"/>
+    <text name="helpLine_cs_p6_what_title"     text="What the Consultant Shows"/>
+    <text name="helpLine_cs_p6_what_text"      text="Press Shift+C to open the Crop Consultant. It shows your top 5 highest-risk fields ranked by moisture and stress level, along with a plain-language recommendation for the next 24 hours and a 3-day moisture forecast."/>
+    <text name="helpLine_cs_p6_act_title"      text="Acting on Advice"/>
+    <text name="helpLine_cs_p6_act_text"       text="Fields marked CRITICAL need irrigation today to prevent harvest loss. Fields marked WARNING should be irrigated within a day or two. Use the Open Irrigation Manager button inside the Consultant to quickly schedule water for the worst field."/>
+    <text name="helpLine_cs_p6_npc_title"      text="Optional Integrations"/>
+    <text name="helpLine_cs_p6_npc_text"       text="Several optional mods extend the system. FS25_NPCFavor: Alex Chen appears as an Agronomist NPC — complete favors to unlock early drought warnings and specialist irrigation advice. FS25_SoilFertilizer: Soil pH and organic matter modify evapotranspiration per field. FS25_UsedPlus: Irrigation running costs and equipment wear are tracked. CoursePlay: Active vehicle counts appear in stress alerts. AutoDrive: Water destination hints appear in critical alerts. Precision Farming DLC: Soil moisture is shown in the PF map overlay."/>
+
+    <!-- Settings: Page 1 — General Settings -->
+    <text name="helpLine_cs_s1_title"          text="General Settings"/>
+    <text name="helpLine_cs_s1_gen_title"      text="Enabling the Mod"/>
+    <text name="helpLine_cs_s1_gen_text"       text="Open the in-game settings (ESC → Settings → Seasonal Crop Stress). Use Enable Mod to switch the entire system on or off without removing your irrigation infrastructure. The Difficulty setting controls how quickly crops accumulate drought stress — Easy is forgiving, Hard pushes you to irrigate proactively."/>
+    <text name="helpLine_cs_s1_evap_title"     text="Evapotranspiration Rate"/>
+    <text name="helpLine_cs_s1_evap_text"      text="Evapotranspiration controls how quickly soil dries out between rain events. Slow means fields hold moisture well and rain goes a long way. Fast means fields can dry out within a game-day during hot weather — active irrigation management becomes essential."/>
+
+    <!-- Settings: Page 2 — Advanced Settings -->
+    <text name="helpLine_cs_s2_title"          text="Advanced Settings"/>
+    <text name="helpLine_cs_s2_yield_title"    text="Yield Loss &amp; Stress Threshold"/>
+    <text name="helpLine_cs_s2_yield_text"     text="Max Yield Loss caps the percentage of harvest that drought stress can reduce. At the default 60%, a fully stressed field still yields 40% of normal. Critical Threshold is the moisture level below which stress begins to accumulate — raise it to make crops more drought-sensitive, lower it for more tolerance."/>
+    <text name="helpLine_cs_s2_alerts_title"   text="Irrigation Costs &amp; Alerts"/>
+    <text name="helpLine_cs_s2_alerts_text"    text="Irrigation Costs charges an hourly fee for running irrigation systems, adding a financial management layer. Disable this for a simpler experience. Alerts Enabled shows warning notifications when fields need water. Alert Cooldown sets the minimum in-game hours before the same field triggers another alert, preventing notification spam."/>
+
+    <!-- Tips & Tricks: Page 1 (HUD & Controls) -->
+    <text name="helpLine_cs_p4_title"          text="HUD &amp; Controls"/>
+    <text name="helpLine_cs_p4_hud_title"      text="Moisture HUD Overlay"/>
+    <text name="helpLine_cs_p4_hud_text"       text="Press Shift+M to toggle the moisture HUD. It lists every field with its moisture level, crop type, and stress status. A 5-day forecast shows whether moisture is rising or falling so you can plan ahead. You can also drag the panel to any position on screen by clicking and releasing."/>
+    <text name="helpLine_cs_p4_reading_title"  text="Reading a Field Row"/>
+    <text name="helpLine_cs_p4_reading_text"   text="Each row shows: field number (F1), crop name (Wheat), current growth stage (Stage 3), a colour-coded moisture bar, and the moisture percentage. If the row ends with an exclamation mark (!), that field is already building drought stress and yield loss has begun — irrigate it now. Only crops that can suffer drought stress appear in the list."/>
+    <text name="helpLine_cs_p4_status_title"   text="Status Colours"/>
+    <text name="helpLine_cs_p4_status_text"    text="Green means your field is healthy and no action is needed. Yellow is a warning: moisture is dropping and irrigation is advisable soon. Red is critical: the crop is under drought stress and yield loss is already building — irrigate immediately."/>
+    <text name="helpLine_cs_p4_keys_title"     text="Keyboard Shortcuts"/>
+    <text name="helpLine_cs_p4_keys_text"      text="Shift+M toggles the moisture HUD on or off. Shift+I opens the Irrigation Manager for a selected system. Shift+C opens the Crop Consultant with a field risk summary and personalised recommendations."/>
+
+    <!-- Tips & Tricks: Page 2 — Farming Strategies -->
+    <text name="helpLine_cs_t2_title"          text="Farming Strategies"/>
+    <text name="helpLine_cs_t2_sandy_title"    text="Prioritise Sandy Fields"/>
+    <text name="helpLine_cs_t2_sandy_text"     text="Sandy soil dries out twice as fast as loamy soil. If you farm a mix of soil types, place irrigation on sandy fields first. A centre pivot covering a large sandy area is often a better investment than a drip line on a small clay field that holds moisture naturally."/>
+    <text name="helpLine_cs_t2_forecast_title" text="Use the Forecast"/>
+    <text name="helpLine_cs_t2_forecast_text"  text="The 5-day forecast in the HUD shows whether moisture is trending up or down. If rain is forecast within a day or two and your fields are only in the warning range, wait for the rain — you will save money and wear on your equipment. Act early when the forecast shows several dry days ahead during a critical growth window."/>
+
+    <!-- Mod Information: Page 1 — About -->
+    <text name="helpLine_cs_i1_title"           text="About This Mod"/>
+    <text name="helpLine_cs_i1_about_title"     text="Seasonal Crop Stress v1.0.5.0"/>
+    <text name="helpLine_cs_i1_about_text"      text="Created by TisonK. Adds realistic soil moisture simulation, seasonal crop stress accumulation, and irrigation infrastructure management to Farming Simulator 25. Designed to make crop management more strategic — every field, every season, every decision counts."/>
+    <text name="helpLine_cs_i1_community_title" text="Community &amp; Support"/>
+    <text name="helpLine_cs_i1_community_text"  text="Find this mod on Github and KingMods. For questions, bug reports, and updates please visit the github repository."/>
+
+    <!-- Mod Information: Page 2 — Optional Integrations detail -->
+    <text name="helpLine_cs_i2_title"          text="Optional Integrations"/>
+    <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor &amp; FS25_SoilFertilizer"/>
+    <text name="helpLine_cs_i2_npc_text"       text="With FS25_NPCFavor installed, Alex Chen appears as an Agronomist NPC on your farm. Completing favors for Alex builds your relationship and unlocks early drought warnings and specialist irrigation advice. With FS25_SoilFertilizer, each field's soil pH and organic matter content adjusts evapotranspiration — fields with poor soil health dry out faster, making good soil management worthwhile alongside irrigation."/>
+    <text name="helpLine_cs_i2_vehicle_title"  text="CoursePlay, AutoDrive &amp; Precision Farming"/>
+    <text name="helpLine_cs_i2_vehicle_text"   text="When CoursePlay is active, the number of autonomous vehicles working a stressed field is shown in that field's alert. When AutoDrive is detected, critical drought alerts include available water destination counts and a suggestion to set up a hauling route. With FS25_UsedPlus, hourly irrigation running costs are charged and equipment wear accumulates realistically. If the Precision Farming DLC is active, soil moisture data is shown directly in the PF soil map overlay."/>
+
+    <!-- Tips & Tricks: Page 3 — Sprayers & Watering -->
+    <text name="helpLine_cs_t3_title"          text="Sprayers &amp; Watering"/>
+    <text name="helpLine_cs_t3_sprayer_title"  text="Using Sprayers as Irrigation"/>
+    <text name="helpLine_cs_t3_sprayer_text"   text="Standard vehicle-based sprayers can be used as a manual alternative to permanent irrigation systems. If you fill a sprayer with WATER, any area you spray will receive an immediate moisture boost. This is useful for small fields or as a temporary measure until you can afford a centre pivot or drip line."/>
+
+    <!-- ========== PDA SCREEN ========== -->
+    <text name="cs_pda_screen_title"           text="Crop Moisture Monitor"/>
+    <text name="cs_pda_tab_fields"             text="Fields"/>
+    <text name="cs_pda_tab_overview"           text="Overview"/>
+    <text name="cs_pda_tab_irrigation"         text="Irrigation"/>
+    <text name="cs_pda_col_field"              text="Field"/>
+    <text name="cs_pda_col_crop"               text="Crop"/>
+    <text name="cs_pda_col_moisture"           text="Moisture"/>
+    <text name="cs_pda_col_status"             text="Status"/>
+    <text name="cs_pda_col_stress"             text="Stress"/>
+    <text name="cs_pda_col_irrigated"          text="Irrigated"/>
+    <text name="cs_pda_section_farm_overview"  text="Farm Overview"/>
+    <text name="cs_pda_section_moisture"       text="Moisture Status"/>
+    <text name="cs_pda_section_stress"         text="Crop Stress"/>
+    <text name="cs_pda_section_irrigation"     text="Irrigation"/>
+    <text name="cs_pda_section_irrigation_plan" text="Irrigation Priority"/>
+    <text name="cs_pda_fields_tracked"         text="Fields Tracked"/>
+    <text name="cs_pda_fields_owned"           text="Fields Owned"/>
+    <text name="cs_pda_avg_moisture"           text="Average Moisture"/>
+    <text name="cs_pda_fields_healthy"         text="Healthy (>=40%)"/>
+    <text name="cs_pda_fields_warning"         text="Warning (25-40%)"/>
+    <text name="cs_pda_fields_critical"        text="Critical (&lt;25%)"/>
+    <text name="cs_pda_avg_stress"             text="Average Stress"/>
+    <text name="cs_pda_est_yield_loss"         text="Est. Yield Loss"/>
+    <text name="cs_pda_irrigated_fields"       text="Irrigated Fields"/>
+    <text name="cs_pda_irrigation_systems"     text="Active Systems"/>
+    <text name="cs_pda_status_healthy"         text="Healthy"/>
+    <text name="cs_pda_status_warning"         text="Warning"/>
+    <text name="cs_pda_status_critical"        text="Critical"/>
+    <text name="cs_pda_irrigated_yes"          text="Active"/>
+    <text name="cs_pda_no_system_msg"          text="No irrigation system is connected to this field. Place a center pivot or drip line to manage irrigation."/>
+    <text name="cs_pda_btn_irrigation"         text="Irrigation Schedule"/>
+    <text name="cs_pda_btn_consultant"         text="Crop Consultant"/>
+    <text name="cs_pda_btn_help"               text="Help"/>
+    <text name="cs_pda_filter_all"             text="ALL FIELDS"/>
+    <text name="cs_pda_filter_owned"           text="MY FIELDS"/>
+
+    <!-- Help dialog content -->
+    <text name="cs_help_title"       text="Crop Moisture Monitor -- Help"/>
+    <text name="cs_help_ov_hdr"      text="How It Works"/>
+    <text name="cs_help_ov_1"        text="Tracks soil moisture for every field in the game."/>
+    <text name="cs_help_ov_2"        text="Rainfall raises moisture; heat and time reduce it."/>
+    <text name="cs_help_ov_3"        text="Use the filter button to focus on your own fields."/>
+    <text name="cs_help_status_hdr"  text="Moisture Levels"/>
+    <text name="cs_help_status_1"    text="Healthy  &gt;=40%   No action needed."/>
+    <text name="cs_help_status_2"    text="Warning  25-40%  Irrigate soon."/>
+    <text name="cs_help_status_3"    text="Critical &lt;25%   Irrigate now!"/>
+    <text name="cs_help_stress_hdr"  text="Crop Stress"/>
+    <text name="cs_help_stress_1"    text="Builds each hour moisture stays below 40% during growth."/>
+    <text name="cs_help_stress_2"    text="Up to 60% yield loss at max stress. Cannot be reversed."/>
+    <text name="cs_help_irr_hdr"     text="Irrigation"/>
+    <text name="cs_help_irr_1"       text="Place Center Pivots or Drip Lines from the build menu."/>
+    <text name="cs_help_irr_2"       text="Use Irrigation Schedule to set automatic run windows."/>
+    <text name="cs_help_keys_hdr"    text="Monitor Information"/>
+    <text name="cs_help_keys_1"      text="ESC (Pause Menu) → Crop Moisture Monitor"/>
+    <text name="cs_help_keys_2"      text="Tab 1 (Overview) →  Overall field status"/>
+    <text name="cs_help_keys_3"      text="Tab 2 (Irrigation) →  Irrigation management"/>
+    <text name="cs_pda_irrigated_no"           text="No"/>
+    <text name="cs_pda_no_fields"             text="No field data yet. Fields appear once the simulation has run for one in-game hour."/>
+
+    <!-- Esc RF PDA guest module -->
+    <text name="cs_rf_pda_module_title"        text="Estrés de cultivos"/>
+    <text name="cs_rf_pda_blurb"               text="Humedad del campo, estrés y cobertura de riego. Abre Farm Tablet para programas de riego y el consultor de cultivos."/>
+    <text name="cs_rf_pda_empty"               text="Aún no hay datos de estrés de cultivos. Los campos aparecen tras ejecutarse la simulación."/>
+
+    
+    <!-- Esc RF PDA content table columns -->
+    <text name="cs_rf_pda_col_field" text="Campo"/>
+    <text name="cs_rf_pda_col_crop" text="Cultivo"/>
+    <text name="cs_rf_pda_col_moisture" text="Humedad"/>
+    <text name="cs_rf_pda_col_stress" text="Estrés"/>
+    <text name="cs_rf_pda_col_irrigated" text="Regado"/>
+    <text name="cs_rf_pda_col_status" text="Estado"/>
+    <text name="cs_rf_pda_detail_title" text="Detalle del campo"/>
+    <text name="cs_rf_pda_select_field" text="Selecciona un campo en la tabla para ver los detalles."/>
+<!-- ========== MAP OVERLAY ========== -->
+    <text name="cs_map_page_title"            text="Crop Moisture"/>
+    <text name="cs_map_sidebar_title"         text="MOISTURE LEGEND"/>
+    <text name="cs_map_legend_healthy"        text="Healthy  >=40%"/>
+    <text name="cs_map_legend_warning"        text="Warning  25-40%"/>
+    <text name="cs_map_legend_critical"       text="Critical  &lt;25%"/>
+    <text name="cs_map_btn_open_pda"          text="Open Crop PDA"/>
+
+    <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->
+    <!-- CoursePlay context appended to stress alerts -->
+    <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d vehicle working this field"/>
+    <text name="cs_cp_vehicles_on_field" text="CoursePlay: %d vehicles working this field"/>
+    <!-- AutoDrive context appended to CRITICAL alerts -->
+    <text name="cs_ad_water_hint"    text="AutoDrive: %d water destination(s) available — consider a hauling route"/>
+    <text name="cs_ad_destinations"  text="AutoDrive: %d destination(s) configured"/>
+
+        <text name="rf_pda_side_info_crop_stress" text="[EN] Crop Stress&#10;&#10;This table lists every field you own. One row = one field.&#10;&#10;Columns: Field # / Crop, Moisture (how wet the soil is), Stress (how hard the crop is fighting dry spells), Irrigation (water help covering this field), Status (Healthy / Warning / Critical).&#10;&#10;Click a row. The strip below names the field, then Next says what to do first:&#10;- Critical or Warning Moisture → water that field (turn on irrigation if covered, or spray WATER / place coverage)&#10;- High Stress or a sensitive growth window → protect now; stress today cuts harvest later&#10;- Looking fine → recheck later; worse fields first&#10;&#10;Irrigation: Yes means a system can cover this field. Schedules and running systems live deeper on Farm Tablet / Crop Consultant when you need them.&#10;&#10;If Soil Fertilizer is also loaded, check nutrients there too. Dry soil drains faster when soil health is poor.&#10;&#10;Start with Critical Status, follow Next, then work up the list."/>
+    <text name="cs_rf_pda_next" text="[EN] Next: %s"/>
+    <text name="cs_rf_pda_next_no_crop" text="[EN] No crop on this field - nothing to stress; pick another row."/>
+    <text name="cs_rf_pda_next_critical_watering" text="[EN] Moisture critical - irrigation is on; wait for moisture to recover, then recheck."/>
+    <text name="cs_rf_pda_next_critical_covered" text="[EN] Moisture critical - irrigate now. A system covers this field; confirm it is running."/>
+    <text name="cs_rf_pda_next_critical_uncovered" text="[EN] Moisture critical - irrigate now (spray WATER or place / aim coverage)."/>
+    <text name="cs_rf_pda_next_window" text="[EN] Sensitive growth window - keep this field watered so stress does not climb."/>
+    <text name="cs_rf_pda_next_window_append" text="[EN]  Crop is in a sensitive window."/>
+    <text name="cs_rf_pda_next_stress" text="[EN] Stress is high (about %s harvest risk) - water / protect before it gets worse."/>
+    <text name="cs_rf_pda_next_warning_watering" text="[EN] Moisture low - irrigation is on; recheck Moisture as it recovers."/>
+    <text name="cs_rf_pda_next_warning_covered" text="[EN] Moisture low - irrigate soon. Coverage is on this field; confirm the system is running."/>
+    <text name="cs_rf_pda_next_warning_uncovered" text="[EN] Moisture low - irrigate soon (coverage / WATER sprayer)."/>
+    <text name="cs_rf_pda_next_no_coverage" text="[EN] No irrigation coverage - add a system, or spray WATER for a temporary boost."/>
+    <text name="cs_rf_pda_next_covered_idle" text="[EN] Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
+    <text name="cs_rf_pda_next_looking_good" text="[EN] Looking good - recheck later; handle Critical fields first."/>
+    <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
+        <!-- BUILD 11:27 F155 Esc RF button labels -->
+        <text name="wc_rf_pda_open_manager" text="Abrir gestor de trabajadores" />
+        <text name="sf_pda_btn_rotation_planner" text="Planificador de rotación" />
+        <text name="sf_pda_btn_field_detail" text="Detalle del campo" />
+</texts>
+</l10n>

@@ -58,6 +58,7 @@
         radius="200"
         flowRatePerHour="0.018"
         operationalCostPerHour="15"
+        liftCoeff="0.0"
         defaultStartHour="6"
         defaultEndHour="10"
         defaultActiveDays="1,1,1,1,1,0,0"

@@ -1,19 +1,26 @@
 -- ============================================================
 -- FinanceIntegration.lua
--- Handles operational costs for irrigation.
--- Phase 2: simple fund deduction via updateFunds.
--- Phase 4: will integrate with UsedPlus.
+-- Handles operational costs for irrigation. Deduction goes through the vanilla
+-- FS25 fund system and nowhere else.
+--
+-- F154: THE USEDPLUS WEAR BRIDGE IS RETIRED, not deferred. It read equipment
+-- condition out of UsedPlus DNA to scale irrigation flow, and it never returned
+-- anything: DNA tracks vehicles, irrigation systems are placeables, so the read
+-- was always 0.0 and the wear factor was always a multiply by one. The bridge was
+-- correctly built (runtime-detected, read-only, neutral when absent) and that is
+-- exactly why nobody noticed. Not-needed and not-working look identical from
+-- outside a defensive fallback.
+--
+-- Arissani's ruling of 2026-08-08 puts wear, money, repair and repair-button
+-- reads from UsedPlus PERMANENTLY out of scope rather than deferred, with
+-- AdvancedDamageSystem as the intended successor through its own design pass.
+-- NOTHING HERE IS REPOINTED AT IT: repointing a dead probe at a live mod without
+-- that pass is how a fallback chain becomes load-bearing with nobody deciding.
 -- ============================================================
 
 local function csLog(msg)
     if g_logManager ~= nil then g_logManager:devInfo("[CropStress]", msg)
     else print("[CropStress] " .. tostring(msg)) end
-end
-
--- Primary path: g_currentMission.usedPlusAPI (UP v2.15.4.96+ — the only reliable
--- cross-mod path in FS25's sandboxed environment). Bare globals kept as fallbacks.
-local function getUPAPI()
-    return (g_currentMission and g_currentMission.usedPlusAPI) or UsedPlusAPI or g_usedPlusManager
 end
 
 FinanceIntegration = {}
@@ -22,7 +29,6 @@ FinanceIntegration.__index = FinanceIntegration
 function FinanceIntegration.new(manager)
     local self = setmetatable({}, FinanceIntegration)
     self.manager = manager
-    self.usedPlusActive = false  -- set by CropStressManager:detectOptionalMods()
     self.isInitialized  = false
     return self
 end
@@ -50,63 +56,45 @@ function FinanceIntegration:chargeHourlyCosts(elapsedHours)
     -- nil means the flag was never set (default = costs enabled); only skip on explicit false.
     if irrMgr.costsEnabled == false then return end
 
-    for id, system in pairs(irrMgr.systems) do
+    for _, system in pairs(irrMgr.systems) do
         if system.isActive then
-            -- Deduct operational cost via vanilla FS25 fund system.
-            -- UsedPlus public API (UsedPlusAPI) does not expose recordExpense() —
-            -- confirmed against UsedPlusAPI wiki. Costs always go through vanilla updateFunds.
-            self:deductFundsVanilla((system.operationalCostPerHour or 0) * hours)
-
-            -- Update wear level from UsedPlus DNA (if UsedPlus active).
-            -- Placeables typically have no DNA entry, so this usually returns 0.0.
-            -- IrrigationManager:activateSystem() scales flow by (1 - wearLevel * 0.3).
-            if self.usedPlusActive then
-                local wearLevel = self:getEquipmentWearLevel(id)
-                irrMgr:updateSystemWearLevel(id, wearLevel)
+            -- [SCS-038] Deduct the PRICED draw: the effective cost varies with
+            -- the water actually drawn (base / pressure, plus the neutral LIFT
+            -- term). Falls back to the flat per-hour number when the getter is
+            -- absent or nil, so an unregistered edge never crashes the charge.
+            local effCost = nil
+            if type(irrMgr.getEffectiveCostPerHour) == "function" then
+                effCost = irrMgr:getEffectiveCostPerHour(system)
+            end
+            -- F158: the water bill goes to the OWNER of the system's placeable,
+            -- resolved at charge time, never the local player. A dedicated server
+            -- has no local player, so the old read billed nobody all season; a
+            -- listen server billed every system on the map to the host, so the
+            -- farmer paid for his neighbours' pivots. The placeable is the truth:
+            -- a pivot belongs to whoever owns it (the base game charges water the
+            -- same way, PlaceableHusbandryWater with self:getOwnerFarmId()).
+            local farmId = nil
+            if system.placeable ~= nil and type(system.placeable.getOwnerFarmId) == "function" then
+                farmId = system.placeable:getOwnerFarmId()
+            end
+            if farmId and farmId ~= 0 then
+                self:deductFundsVanilla((effCost or (system.operationalCostPerHour or 0)) * hours, farmId)
             end
         end
     end
 end
 
--- Deduct operational cost via the vanilla FS25 fund system.
-function FinanceIntegration:deductFundsVanilla(cost)
+-- Deduct operational cost via the vanilla FS25 fund system, charging the farm
+-- the system belongs to. The farm is always passed in; it is never derived from
+-- the local player (F158).
+function FinanceIntegration:deductFundsVanilla(cost, farmId)
     if g_currentMission == nil then return end
     local moneyType = (MoneyType ~= nil and MoneyType.OTHER) or 0
-    local farmId = g_currentMission.player ~= nil and g_currentMission.player:getOwnerFarmId()
     -- Farm 0 is the spectator farm — addMoney rejects it. Skip if no valid farm.
     if not farmId or farmId == 0 then return end
     g_currentMission:addMoney(-cost, farmId, moneyType, true)
 end
 
-function FinanceIntegration:getEquipmentWearLevel(vehicleId)
-    if not self.usedPlusActive then return 0.0 end
-
-    -- Use getUPAPI() to reach g_currentMission.usedPlusAPI (v2.15.4.96+ primary path)
-    -- with bare globals as fallback. Wrapped in pcall — API signature varies by version.
-    -- Note: UsedPlus DNA tracks vehicles (tractors, combines). Irrigation systems are
-    -- placeables and typically have no DNA entry, so dna will be nil → returns 0.0.
-    local api = getUPAPI()
-    local dna = nil
-    if api ~= nil and api.getVehicleDNA ~= nil then
-        local ok, result = pcall(api.getVehicleDNA, vehicleId)
-        if ok then dna = result end
-    end
-    if dna == nil then return 0.0 end
-
-    -- DNA reliability range: 0.6 (heavily worn) → 1.4 (new)
-    -- Converted to wear level: 0.0 (new) → 1.0 (at limit)
-    local reliability = dna.reliability
-    if reliability == nil then return 0.0 end
-    return math.max(0.0, math.min(1.0, (1.4 - reliability) / 0.8))
-end
-
--- Enable UsedPlus mode - called by CropStressManager after detection.
--- With UsedPlus active: DNA wear tracking enabled (affects flow rate).
--- Operational costs always go through vanilla updateFunds (recordExpense not in public API).
-function FinanceIntegration:enableUsedPlusMode()
-    self.usedPlusActive = true
-    csLog("FinanceIntegration: UsedPlus active — DNA wear tracking enabled")
-end
 
 function FinanceIntegration:delete()
     if self.manager ~= nil and self.manager.eventBus ~= nil then

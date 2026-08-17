@@ -49,6 +49,7 @@ source(modDir .. "src/SoilFertilizerIntegration.lua")
 source(modDir .. "src/CoursePlayIntegration.lua")
 source(modDir .. "src/AutoDriveIntegration.lua")
 source(modDir .. "src/SprayerIntegration.lua")
+source(modDir .. "src/IrrigatorSectorIntegration.lua")
 
 -- Bedrock bridges (optional, delegate-when-present against the four core APIs)
 source(modDir .. "src/integrations/CropStressStateLedgerBridge.lua")
@@ -60,6 +61,7 @@ source(modDir .. "src/events/CropStressSettingsSyncEvent.lua")
 source(modDir .. "src/events/CropStressMoistureInitEvent.lua")
 source(modDir .. "src/events/CropStressIrrigateNowEvent.lua")
 source(modDir .. "src/events/CropStressMoistureRowEvent.lua")
+source(modDir .. "src/events/CropStressPivotRemoteEvent.lua")
 
 -- Persistence
 source(modDir .. "src/SaveLoadHandler.lua")
@@ -76,6 +78,9 @@ source(modDir .. "src/ui/RfPdaMenuPage.lua")
 source(modDir .. "src/ui/RfEscBootstrap.lua")
 -- DEV: Esc UIDebugger (F6). Install no-ops if Soil (or another mod) already registered.
 source(modDir .. "src/ui/RfEscUiDebugger.lua")
+-- FarmPatchUtil is deliberately NOT shipped: Wizard's leftover wave excluded the
+-- farm-patch code (it stays local). CsRfPdaGuest references it nil-guarded, so
+-- this mod works without it. Do not re-add the source line without the file.
 source(modDir .. "src/ui/CsRfPdaGuest.lua")
 source(modDir .. "src/ui/CsHelpDialog.lua")
 

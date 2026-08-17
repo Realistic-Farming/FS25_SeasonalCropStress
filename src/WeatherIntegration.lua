@@ -30,6 +30,34 @@ WeatherIntegration.SEASON_WINTER = 3
 WeatherIntegration.SEASON_NAMES = { [0]="Spring", [1]="Summer", [2]="Autumn", [3]="Winter" }
 
 -- ============================================================
+-- SCS-021 THE DRYING MODEL LEARNS WHAT HUMIDITY IS
+-- The VPD multiplier: a hot dry wind takes moisture out faster than a
+-- hot still muggy day. Constants, not settings; the future Agronomy
+-- dial routes through the Option-Scaling Spine when it merges (the
+-- EmergencyLoan.lua:26-29 pattern; neutral default until then).
+-- Magnus-Tetens constants 17.27 and 237.3.
+-- ============================================================
+WeatherIntegration.VPD_EXPONENT = 0.40
+WeatherIntegration.VPD_MOD_MIN  = 0.40
+WeatherIntegration.VPD_MOD_MAX  = 2.20
+WeatherIntegration.VPD_REF      = 0.6108 * math.exp(17.27 * 15.0 / (15.0 + 237.3)) * (1.0 - 0.65)  -- 15 C / 65 percent reference
+
+--- The VPD multiplier (SCS-021, SDS 4g). Tetens SVP, vpd = svp * (1 - humidity),
+--- mod = (vpd / VPD_REF) ^ VPD_EXPONENT, clamped to the bands. Clamp AFTER the
+--- exponent, BEFORE any composition. Pure, no guard logic inside.
+---@param tempC number degrees Celsius
+---@param humidityFrac number 0..1 (normalized once at the point of read)
+---@return number
+function WeatherIntegration.computeVPDMultiplier(tempC, humidityFrac)
+    local svp  = 0.6108 * math.exp(17.27 * tempC / (tempC + 237.3))
+    local vpd  = svp * (1.0 - humidityFrac)
+    local mod  = (vpd / WeatherIntegration.VPD_REF) ^ WeatherIntegration.VPD_EXPONENT
+    if mod < WeatherIntegration.VPD_MOD_MIN then return WeatherIntegration.VPD_MOD_MIN end
+    if mod > WeatherIntegration.VPD_MOD_MAX then return WeatherIntegration.VPD_MOD_MAX end
+    return mod
+end
+
+-- ============================================================
 -- LOGGING HELPER
 -- ============================================================
 local function csLog(msg)
@@ -48,6 +76,7 @@ function WeatherIntegration.new(manager)
     self.currentTemp     = 15.0   -- degrees Celsius
     self.currentSeason   = WeatherIntegration.SEASON_SPRING
     self.currentHumidity = 0.5    -- 0.0-1.0
+    self.currentHumidityDefaulted = true  -- [SCS-021] until a real read proves otherwise
 
     -- Rain state: rainScale is the FS25 normalized rain intensity (0.0-1.0)
     self.rainScale        = 0.0
@@ -127,7 +156,9 @@ function WeatherIntegration:update()
     self.currentTemp = self:getTemperatureFromWeather()
 
     -- Humidity (optional — used for extended forecast; fall back gracefully)
-    self.currentHumidity = self:getHumidity()
+    -- [SCS-021] unpacks both returns: the fraction and whether it was defaulted.
+    -- currentHumidityDefaulted is never persisted; recomputed every tick.
+    self.currentHumidity, self.currentHumidityDefaulted = self:getHumidity()
 
     -- Rain intensity
     self.rainScale, self.isRaining = self:getRainFromWeather()
@@ -218,6 +249,21 @@ function WeatherIntegration:getTemperatureFromWeather()
 end
 
 function WeatherIntegration:getHumidity()
+    -- [SCS-021] WeatherGuard FIRST, when present: the certified humidity route
+    -- with its honest defaulted flag. sky.humidity and sky.humidityDefaulted are
+    -- table fields, never positional. Normalize ONCE at the point of read (a
+    -- percent value lands as a fraction), and return (humidityFrac, defaulted).
+    -- A nil sky or nil flag falls through to the existing chain untouched.
+    local wg = g_currentMission and g_currentMission.weatherGuard
+    if wg ~= nil and type(wg.getCurrentSky) == "function" then
+        local ok, sky = pcall(function() return wg:getCurrentSky() end)
+        if ok and sky and type(sky.humidity) == "number" then
+            local h = sky.humidity
+            if h > 1.0 then h = h / 100.0 end
+            return h, (sky.humidityDefaulted == true)
+        end
+    end
+
     -- Try RealisticWeather first if active.
     if self.realisticWeatherActive then
         local rw = g_realisticWeather or g_weatherSystem
@@ -230,7 +276,7 @@ function WeatherIntegration:getHumidity()
             elseif rw.relativeHumidity ~= nil then
                 val = rw.relativeHumidity
             end
-            if val ~= nil then return val end
+            if val ~= nil then return val, true end
         end
     end
 
@@ -240,21 +286,21 @@ function WeatherIntegration:getHumidity()
         -- FS25 primary weather system
         if env.weatherSystem ~= nil then
             if type(env.weatherSystem.getHumidity) == "function" then
-                return env.weatherSystem:getHumidity()
+                return env.weatherSystem:getHumidity(), true
             elseif env.weatherSystem.relativeHumidity ~= nil then
-                return env.weatherSystem.relativeHumidity
+                return env.weatherSystem.relativeHumidity, true
             elseif env.weatherSystem.humidity ~= nil then
-                return env.weatherSystem.humidity
+                return env.weatherSystem.humidity, true
             end
         end
 
         -- Legacy access
         if env.weather ~= nil and env.weather.relativeHumidity ~= nil then
-            return env.weather.relativeHumidity
+            return env.weather.relativeHumidity, true
         end
     end
 
-    return 0.5
+    return 0.5, true
 end
 
 function WeatherIntegration:getRainFromWeather()
@@ -315,14 +361,34 @@ end
 -- Evaporation multiplier for the current hour, combining temperature and season.
 -- Returns a float (typically 0.2 – 2.5). Used by SoilMoistureSystem.
 function WeatherIntegration:getHourlyEvapMultiplier()
-    -- Temperature component: +3% per °C above 15°C
-    local tempMod = 1.0 + math.max(0.0, (self.currentTemp - 15.0) * 0.03)
+    -- [SCS-021] THE HONESTY GUARD: absent real humidity data, this feature IS
+    -- the shipped behaviour, bit for bit. Only with a live (non-defaulted) read
+    -- does the VPD term replace the temperature-only linear term.
+    if self.currentHumidityDefaulted then
+        -- Temperature component: +3% per °C above 15°C
+        local tempMod = 1.0 + math.max(0.0, (self.currentTemp - 15.0) * 0.03)
 
-    -- Season component
+        -- Season component
+        local seasonMods = { [0]=0.80, [1]=1.40, [2]=0.90, [3]=0.20 }
+        local seasonMod  = seasonMods[self.currentSeason] or 1.0
+
+        local multiplier = tempMod * seasonMod
+
+        -- Significant reduction during rain (90% lower evaporation)
+        if self.isRaining then
+            multiplier = multiplier * 0.10
+        end
+
+        return multiplier
+    end
+
+    -- The VPD term, on the same season and rain frame. The helper is fed the
+    -- current temperature and the live humidity; the season lookup and the rain
+    -- switch move NOT AT ALL.
     local seasonMods = { [0]=0.80, [1]=1.40, [2]=0.90, [3]=0.20 }
     local seasonMod  = seasonMods[self.currentSeason] or 1.0
 
-    local multiplier = tempMod * seasonMod
+    local multiplier = WeatherIntegration.computeVPDMultiplier(self.currentTemp, self.currentHumidity) * seasonMod
 
     -- Significant reduction during rain (90% lower evaporation)
     if self.isRaining then
@@ -396,6 +462,52 @@ end
 -- Projects moisture for a field over the next N in-game days.
 -- ALL RESULTS ARE APPROXIMATE — see API investigation note above.
 -- ============================================================
+
+-- The drilling-window outlook: how likely rain is over the next `daysAhead`
+-- in-game days, 0..1. A THIN published wrapper over the same sky-reading the
+-- moisture forecast uses (cloud coverage + current rain + rain-duration for days
+-- 1-2, season priors beyond). No new model, no new tracking, and the result is
+-- ALWAYS approximate: every consumer must hedge (the forecast law, carried in
+-- the returned approximate flag). The per-day near-term formula below mirrors
+-- getMoistureForecast's nearRainProb exactly; keep the two in lockstep.
+function WeatherIntegration:getRainOutlook(daysAhead)
+    daysAhead = math.max(1, math.floor(daysAhead or 3))
+
+    local cloudCoverage = 0.0
+    local env = g_currentMission and g_currentMission.environment
+    if env ~= nil and env.cloudUpdater ~= nil
+    and type(env.cloudUpdater.getCloudCoverage) == "function" then
+        local ok, val = pcall(env.cloudUpdater.getCloudCoverage, env.cloudUpdater)
+        if ok and val ~= nil then cloudCoverage = val end
+    end
+
+    local baseRainProb = WeatherIntegration.SEASON_RAIN_PROB[self.currentSeason] or 0.25
+
+    local rainDurationBoost = 0.0
+    if self.isRaining then
+        rainDurationBoost = cloudCoverage * 0.15
+    end
+
+    local sum = 0
+    for day = 1, daysAhead do
+        local prob
+        if day <= 2 then
+            if self.isRaining then
+                prob = math.min(0.80, math.max(0.20, cloudCoverage) + rainDurationBoost)
+            else
+                prob = cloudCoverage * 0.40
+            end
+            if day == 2 then
+                prob = prob * 0.65 + baseRainProb * 0.35
+            end
+        else
+            prob = baseRainProb
+        end
+        sum = sum + prob
+    end
+    return { likelihood = sum / daysAhead, approximate = true }
+end
+
 function WeatherIntegration:getMoistureForecast(fieldId, days)
     days = days or 5
 
@@ -436,18 +548,17 @@ function WeatherIntegration:getMoistureForecast(fieldId, days)
         irrigPerHour = self.manager.irrigationManager:getIrrigationRateForField(fieldId)
     end
 
-    -- ── Projected evaporation uses season daily-mean temperature, not a snapshot.
-    -- Snapshot temp (e.g. captured at 6am or 2pm) causes systematic bias across
-    -- all projected days. Season mean gives a stable, representative daily value.
+    -- ── Projected evaporation uses the drying window WHOLE (SCS-021, 4e):
+    -- the same VPD helper, fed the forecast day's own humidity from WeatherGuard
+    -- and the season's mean temperature. A nil forecast humidity keeps the
+    -- linear term for that day, silently. WeatherGuard is resolved exactly as
+    -- getTemperatureFromWeather does; nil from either keeps the linear term.
     local meanTemp       = WeatherIntegration.SEASON_MEAN_TEMP[season] or 15.0
     local tempModMean    = 1.0 + math.max(0.0, (meanTemp - 15.0) * 0.03)
     local seasonMods     = { [0]=0.80, [1]=1.40, [2]=0.90, [3]=0.20 }
     local seasonEvapMod  = seasonMods[season] or 1.0
-    local projEvapMult   = tempModMean * seasonEvapMod  -- no rain reduction: projection spans whole day
 
-    local evapPerHour = SoilMoistureSystem.BASE_EVAP_RATE
-        * projEvapMult
-        * soilParams.evapMod
+    local forecastWg = g_currentMission and g_currentMission.weatherGuard
 
     -- ── Rain duration heuristic for near-term signal (day 1-2).
     -- If it has been raining for a while AND cloud coverage is high, persistence
@@ -487,6 +598,22 @@ function WeatherIntegration:getMoistureForecast(fieldId, days)
             -- Medium/far-term (day 3+): seasonal probability baseline only.
             rainPerHour = typicalRainPerHour * baseRainProb
         end
+
+        -- [SCS-021] The per-day evap term: VPD multiplier over the drying
+        -- window's own humidity when WeatherGuard has a forecast for that day;
+        -- otherwise the linear term exactly as before. nil from either keeps the
+        -- linear term for that day, silently (spec claim 6).
+        local projEvapMult = tempModMean * seasonEvapMod  -- no rain reduction: projection spans whole day
+        if forecastWg ~= nil and type(forecastWg.getForecastHumidity) == "function" then
+            local okH, forecastHumidity = pcall(forecastWg.getForecastHumidity, forecastWg, day)
+            if okH and type(forecastHumidity) == "number" then
+                projEvapMult = WeatherIntegration.computeVPDMultiplier(meanTemp, forecastHumidity) * seasonEvapMod
+            end
+        end
+
+        local evapPerHour = SoilMoistureSystem.BASE_EVAP_RATE
+            * projEvapMult
+            * soilParams.evapMod
 
         local rainGain  = rainPerHour * soilParams.rainAbsorb
         local netHourly = rainGain + irrigPerHour - evapPerHour

@@ -28,6 +28,17 @@ CropStressMoistureInitEvent_mt = Class(CropStressMoistureInitEvent, Event)
 
 InitEventClass(CropStressMoistureInitEvent, "CropStressMoistureInitEvent")
 
+--- BUILD 18:55: the engine's EVENT path calls emptyNew() and then readStream on
+--- what it returns, so an event class without one is a nil call the moment its
+--- packet arrives on a joining client. Vanilla shape, matching
+--- CropStressPivotRemoteEvent: construct and return, nothing else.
+--- No field defaults on purpose. readStream fills the instance, and pre-seeding
+--- here would quietly paper over a short or mismatched read instead of failing.
+function CropStressMoistureInitEvent.emptyNew()
+    local self = Event.new(CropStressMoistureInitEvent_mt)
+    return self
+end
+
 -- fieldData   : soilSystem.fieldData   (farmlandId -> {moisture=float, ...})
 -- fieldStress : stressModifier.fieldStress (farmlandId -> float)
 function CropStressMoistureInitEvent.new(fieldData, fieldStress)
@@ -90,8 +101,13 @@ function CropStressMoistureInitEvent:run(connection)
             existing.moisture = entry.moisture
         else
             -- Field not yet enumerated locally — create a minimal entry.
-            -- soilType will be corrected when enumerateFields() runs.
-            mgr.soilSystem.fieldData[fid] = { moisture = entry.moisture, soilType = "loamy" }
+            -- [SCS-036] NO soilType key: an absent key is detectable and the
+            -- backfill (enumerateFields) repairs it on the next rebuild. The old
+            -- "loamy" placeholder was the same string as a real answer, so no
+            -- code could tell them apart; an absent key can. The hourly loop
+            -- already lands missing classes on loam, so the join window behaves
+            -- identically to today and the first rebuild makes the value right.
+            mgr.soilSystem.fieldData[fid] = { moisture = entry.moisture }
         end
         mgr.stressModifier.fieldStress[fid] = self.fieldStress[fid] or 0.0
         applied = applied + 1
@@ -102,7 +118,11 @@ function CropStressMoistureInitEvent:run(connection)
     -- be fully populated yet. The field-ready updater installFieldReadyUpdater()
     -- handles the initial enumeration and field map build when fields become
     -- available, so it's safe to skip here.
-    if g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
+    -- BUILD 19:47: the moisture numbers above are applied unconditionally, because a join
+    -- packet has to be fully read whenever it lands. Only the field-map walk waits for the
+    -- player to be in; the field-ready updater rebuilds it afterwards either way.
+    if g_currentMission ~= nil and g_currentMission.isMissionStarted == true
+        and g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
         mgr:buildFieldMap()
     end
 

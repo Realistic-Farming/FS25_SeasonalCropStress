@@ -59,6 +59,7 @@
         lineSpacing="0.8"
         flowRatePerHour="0.012"
         operationalCostPerHour="8"
+        liftCoeff="0.0"
         defaultStartHour="6"
         defaultEndHour="10"
         defaultActiveDays="1,1,1,1,1,0,0"

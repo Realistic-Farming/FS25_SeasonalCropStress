@@ -92,10 +92,11 @@ end
 -- Water Source Registration
 -- ============================================================
 function IrrigationManager:registerWaterSource(placeable)
-    local x, _, z = getPlaceablePosition(placeable)
+    local x, y, z = getPlaceablePosition(placeable)
     self.waterSources[placeable.id] = {
         id           = placeable.id,
         x            = x,
+        y            = y,  -- SCS-038: the LIFT term's source height, read once at registration
         z            = z,
         hasWater     = true,  -- Phase 2: always true; Phase 4: could be finite
         flowCapacity = placeable.waterFlowCapacity or 1000,
@@ -138,7 +139,7 @@ end
 -- Irrigation System Registration
 -- ============================================================
 function IrrigationManager:registerIrrigationSystem(placeable)
-    local x, _, z = getPlaceablePosition(placeable)
+    local x, y, z = getPlaceablePosition(placeable)
     local coveredFields = self:detectCoveredFields(placeable, x, z)
 
     -- Find nearest water source within range
@@ -151,7 +152,13 @@ function IrrigationManager:registerIrrigationSystem(placeable)
     local system = {
         id                     = placeable.id,
         type                   = placeable.irrigationType or "pivot",
+        -- F158: the OWNING PLACEABLE is held so the owner farm can be resolved at
+        -- charge time (a placeable changes hands; a stored farm id would go stale).
+        -- deregisterIrrigationSystem removes this record when the placeable goes,
+        -- so the reference cannot dangle.
+        placeable              = placeable,
         x                      = x,
+        y                      = y,   -- SCS-038: the LIFT term's pivot height, read once at registration
         z                      = z,
         radius                 = placeable.radius or 200,
         endX                   = placeable.endX,
@@ -163,7 +170,7 @@ function IrrigationManager:registerIrrigationSystem(placeable)
         pressureMultiplier     = pressureMultiplier,
         flowRatePerHour        = placeable.flowRatePerHour or 0.018,
         operationalCostPerHour = placeable.operationalCostPerHour or 15,
-        wearLevel              = 0,  -- Phase 4
+        liftCoeff              = placeable.liftCoeff or 0.0,
         schedule = {
             startHour  = placeable.defaultStartHour or 6,
             endHour    = placeable.defaultEndHour   or 10,
@@ -352,6 +359,23 @@ end
 -- ============================================================
 -- Hourly Schedule Check
 -- ============================================================
+
+--- F160: the 1..7 day-of-week index for a schedule's activeDays. Derived from the
+--- MONOTONIC day modulo 7, never read from env.currentDayInPeriod. The base game
+--- computes currentDayInPeriod as (currentDay - 1) % daysPerPeriod + 1 and
+--- daysPerPeriod defaults to 1, so on a default save currentDayInPeriod is ALWAYS
+--- 1: a weekday schedule ran every day (activeDays[1] pinned true) and unticking
+--- day one stopped the pivot forever. Deriving from the monotonic day makes the
+--- index actually advance day to day, so the weekend-off entries are reachable.
+function IrrigationManager:dayOfWeekIndex(env)
+    if env == nil then return 1 end
+    local currentDay = env.currentDay or env.currentMonotonicDay or 1
+    if type(currentDay) ~= "number" or currentDay < 1 then currentDay = 1 end
+    local dow = ((currentDay - 1) % 7) + 1
+    if dow < 1 or dow > 7 then dow = 1 end
+    return dow
+end
+
 function IrrigationManager:hourlyScheduleCheck()
     if not self.isInitialized then return end
     if g_currentMission == nil then return end
@@ -359,20 +383,8 @@ function IrrigationManager:hourlyScheduleCheck()
     local env = g_currentMission.environment
     if env == nil then return end
 
-    -- env.currentHour and env.currentDayInPeriod are direct properties in FS25.
-    -- currentDayInPeriod is 1–7 within the current growth period (matches schedule activeDays).
-    -- IMPORTANT: currentDayInPeriod may be nil on some FS25 builds/map combinations.
-    -- Fallback: derive a 1-7 day index from currentDay (monotonic) so scheduling
-    -- never silently defaults to day 1 and makes schedules appear broken.
-    local hour      = env.currentHour         or 0
-    local dayOfWeek = env.currentDayInPeriod
-    if dayOfWeek == nil then
-        -- env.currentDay is 1-based within the current period; use modulo as fallback
-        local currentDay = env.currentDay or env.currentMonotonicDay or 0
-        dayOfWeek = (currentDay % 7) + 1   -- maps any integer → 1..7
-    end
-    -- Clamp to valid range in case the API returns an unexpected value
-    if dayOfWeek < 1 or dayOfWeek > 7 then dayOfWeek = 1 end
+    local hour      = env.currentHour or 0
+    local dayOfWeek = self:dayOfWeekIndex(env)
 
     for id, system in pairs(self.systems) do
         -- Check if water source is still valid
@@ -404,14 +416,55 @@ function IrrigationManager:hourlyScheduleCheck()
 end
 
 -- ============================================================
+-- SCS-038 THE PRICED DRAW
+-- Irrigation's operational cost varies with the water it actually draws.
+-- The effective rate is operationalCostPerHour / pressureMultiplier: at full
+-- pressure (1.0) the rate is exactly the XML number; a distant source costs
+-- more per effective hour because the pressure drop means less water moves
+-- for the same pump time. Nil when there is no source (which already means
+-- no run and no charge). SCS-024's held design consumes the same getter when
+-- it builds; neither edits the other.
+-- ============================================================
+
+--- The effective hourly cost of one irrigation system, in money per hour.
+--- nil when the system has no water source or no pressure (no run, no charge).
+---@param system table an entry of self.systems
+---@return number|nil
+function IrrigationManager:getEffectiveCostPerHour(system)
+    if system == nil then return nil end
+    if system.waterSourceId == nil or system.pressureMultiplier == nil or system.pressureMultiplier <= 0 then
+        return nil
+    end
+    local base = system.operationalCostPerHour or 0
+    if base <= 0 then return 0 end
+    local effCost = base / system.pressureMultiplier
+
+    -- SCS-038 ROUND-2 LIFT TERM, designed-in and NEUTRAL at 0.0: a pivot that
+    -- pumps uphill against the source spends more. effCost = base / pressure *
+    -- (1 + LIFT_COEFF * max(0, pivotY - sourceY) / 10). LIFT_COEFF is an XML
+    -- balance value defaulting to 0.0, so bit-for-bit round-1 until tuned.
+    local liftCoeff = system.liftCoeff or 0.0
+    if liftCoeff ~= 0.0 then
+        local source = self.waterSources and self.waterSources[system.waterSourceId]
+        local pivotY = system.y or 0
+        local sourceY = source and source.y or 0
+        local lift = 1.0 + liftCoeff * math.max(0, pivotY - sourceY) / 10
+        effCost = effCost * lift
+    end
+    return effCost
+end
+
+-- ============================================================
 -- Activation / Deactivation
 -- ============================================================
 function IrrigationManager:activateSystem(id)
     local system = self.systems[id]
     if system == nil or system.isActive then return end
 
-    local wearFactor    = 1.0 - system.wearLevel * 0.3
-    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier * wearFactor
+    -- F154: the wear factor is gone rather than dormant. It read UsedPlus DNA,
+    -- which never has an entry for a placeable, so it was provably 1.0 at every
+    -- activation this mod has ever performed. NO RATE MOVES.
+    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier
 
     system.effectiveRatePerField = {}
     for _, fieldId in ipairs(system.coveredFields) do
@@ -481,8 +534,8 @@ function IrrigationManager:applyOneTimeIrrigation(systemId)
         return false
     end
 
-    local wearFactor    = 1.0 - system.wearLevel * 0.3
-    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier * wearFactor
+    -- F154: same removal as activateSystem, and the two must always move together.
+    local effectiveRate = system.flowRatePerHour * system.pressureMultiplier
 
     local soilSystem = self.manager and self.manager.soilSystem
     if soilSystem == nil then return false end
@@ -606,12 +659,8 @@ function IrrigationManager:setCostsEnabled(enabled)
     self.costsEnabled = not not enabled
 end
 
--- Update wear level for a specific irrigation system.
--- Called by FinanceIntegration when UsedPlus provides DNA wear data.
--- wearLevel: 0.0 (new) to 1.0 (heavily worn); affects flow rate at next activation.
-function IrrigationManager:updateSystemWearLevel(systemId, wearLevel)
-    local system = self.systems[systemId]
-    if system ~= nil then
-        system.wearLevel = math.max(0.0, math.min(1.0, wearLevel or 0.0))
-    end
-end
+-- F154: `updateSystemWearLevel` is deleted rather than kept as a public setter
+-- for some future wear source. Its only caller was the UsedPlus bridge, so
+-- keeping it would have made it a built-and-uncalled mechanism the moment that
+-- bridge went, and this suite already carries several of those. Build the setter
+-- when a design actually needs it.

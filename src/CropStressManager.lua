@@ -236,6 +236,12 @@ function CropStressManager.new()
         self.autoDriveIntegration = makeNoop({"initialize","delete","enableAutoDriveMode","hourlyRefresh","isActive","getDestinationCount","getWaterDestinationCount","getCriticalAlertHint"})
     end
 
+    if IrrigatorSectorIntegration ~= nil then
+        self.irrigatorSectorIntegration = IrrigatorSectorIntegration.new(self)
+    else
+        csLog("WARNING: IrrigatorSectorIntegration class not loaded - check main.lua source() order")
+        self.irrigatorSectorIntegration = makeNoop({"initialize","delete","update"})
+    end
     if SprayerIntegration ~= nil then
         self.sprayerIntegration = SprayerIntegration.new(self)
     else
@@ -278,6 +284,7 @@ function CropStressManager:initialize()
     self.coursePlayIntegration:initialize()
     self.autoDriveIntegration:initialize()
     self.sprayerIntegration:initialize()
+    self.irrigatorSectorIntegration:initialize()
 
     -- Persistence handler
     self.saveLoad:initialize()
@@ -494,6 +501,13 @@ function CropStressManager:update(dt)
         self.soilSystem:updateMapSync()
     end
 
+    -- Vehicle irrigator sector tick (server only; self-throttled to 500 ms).
+    -- Placed above the environment early-return so a nil environment cannot
+    -- silently stop irrigation while the rest of the mod carries on.
+    if self.irrigatorSectorIntegration ~= nil then
+        self.irrigatorSectorIntegration:update(dt)
+    end
+
     local env = g_currentMission.environment
     if env == nil then return end
 
@@ -508,7 +522,14 @@ function CropStressManager:update(dt)
         -- Read it BEFORE the key is advanced, or it is gone.
         local elapsedHours = CropStressManager.elapsedHoursFrom(self.lastHourKey, hourKey)
         self.lastHourKey = hourKey
-        self:onHourlyTick(elapsedHours)
+        -- BUILD 19:47: nothing hourly runs until the player has actually entered. During a
+        -- long 4x compile this loop was rebuilding a 122-field map every thirty seconds for
+        -- a world nobody was looking at yet, on the same machine that was trying to finish
+        -- loading. The key is still advanced above, so no hours are lost or double counted
+        -- when the gate opens; only the work is held.
+        if g_currentMission ~= nil and g_currentMission.isMissionStarted == true then
+            self:onHourlyTick(elapsedHours)
+        end
     end
 
     -- HUD frame update (handles auto-show, input response)
@@ -536,6 +557,10 @@ end
 function CropStressManager:onHourlyTick(elapsedHours)
     -- Respect the player's master on/off toggle
     if not self.settings.enabled then return end
+
+    -- BUILD 19:47: belt for the caller gate above. This is public and reachable from more
+    -- than the update loop, and the field-map rebuild below is the expensive half.
+    if not (g_currentMission ~= nil and g_currentMission.isMissionStarted == true) then return end
 
     local hours = math.max(1, math.floor(tonumber(elapsedHours) or 1))
 
@@ -621,23 +646,17 @@ end
 -- Round 1 holds the sky at its last-known state for the whole span, so a skip
 -- that ends in rain charges the field rain for every skipped hour and a skip that
 -- ends dry charges none. SoilFertilizer's Water Record (SF-49) already freezes ONE
--- VERDICT PER DAY — did water arrive, from any source — which is exactly the
+-- VERDICT PER DAY, did water arrive, from any source, which is exactly the
 -- switch needed to reconstruct those hours instead of guessing them.
 --
--- IT IS INERT TODAY, AND THE REASON IS THE CONTRACT, NOT THE FEATURE.
--- `MaterialWetness:waterDaysInLast(days, throughDay)` exists and works, but it is
--- NOT PUBLISHED: the only path to it from here is
--- `g_currentMission.soilFertilityManager.soilSystem.materialWetness`, three
--- internal field names deep. SoilFertilizer's own cross-boundary rule (its
--- `getCellGrowthInfo` / `getFieldGrowthSummary` delegates, 2026-08-09) is that a
--- consumer binds to a METHOD ON THE MANAGER and nothing else, precisely so a
--- refactor there cannot rename this read out from under us. So we probe for the
--- delegate and take round-1 behaviour until it exists.
---
--- THE ASK, stated so it can be built as one method: a manager-level
--- `getWaterDaysInLast(days, throughDay)` on SoilFertilityManager returning
--- (count, known), nil-safe in every direction, neutral when the Water Record is
--- absent or the ground_material gate is closed.
+-- LIVE since 2026-08-10. The delegate `getWaterDaysInLast(days, throughDay)` is
+-- published on `g_currentMission.soilFertilityManager`, so we bind to a METHOD ON
+-- THE MANAGER and nothing else, per SoilFertilizer's own cross-boundary rule (its
+-- `getCellGrowthInfo` / `getFieldGrowthSummary` delegates, 2026-08-09), so a
+-- refactor there cannot rename this read out from under us. Before the delegate
+-- existed we probed for it and took round-1 behaviour; the nil paths in
+-- `getSkipRainHours` below are kept because they are still the honest answer
+-- when the record is absent or the ground_material gate is closed.
 --
 -- Temperature and humidity stay last-known sky either way; only the rain switch
 -- is reconstructable, because only the rain switch is recorded.
@@ -740,10 +759,10 @@ end
 -- ============================================================
 -- COMPANION READ API
 -- The single, stable read path for a field's moisture / stress. External
--- companions (CropDisease, RandomWorldEvents, MarketDynamics, FarmTablet)
--- and the bedrock bridges call these on g_cropStressManager rather than
--- reaching into the subsystems, so the internal wiring can change without
--- breaking readers. Mirrors SoilFertilizer's getFieldInfo read contract.
+-- companions (CropDisease, RandomWorldEvents, MarketDynamics, FarmTablet,
+-- SoilFertilizer) and the bedrock bridges call these on g_cropStressManager
+-- rather than reaching into the subsystems, so the internal wiring can change
+-- without breaking readers. Mirrors SoilFertilizer's getFieldInfo read contract.
 -- ============================================================
 
 -- Moisture (0.0-1.0) for a field, or nil if the field is not tracked.
@@ -786,6 +805,31 @@ function CropStressManager:getYieldKeepFactor(fieldId)
     if keep < 0.0 then return 0.0 end
     if keep > 1.0 then return 1.0 end
     return keep
+end
+
+-- The drilling-window outlook over the next N in-game days. A THIN published
+-- wrapper over WeatherIntegration's sky-reading (cloud coverage + current rain +
+-- rain duration for days 1-2, season priors beyond). ALWAYS approximate: the
+-- result carries `approximate = true` and every consumer must hedge.
+function CropStressManager:getRainOutlook(daysAhead)
+    if self.weatherIntegration == nil or self.weatherIntegration.getRainOutlook == nil then
+        return { likelihood = 0.5, approximate = true }
+    end
+    return self.weatherIntegration:getRainOutlook(daysAhead)
+end
+
+-- Soil class for a field: "sandy", "loamy" or "clay", or nil when the field is
+-- not tracked or the class is not yet known on this peer.
+--
+-- NOTE: this value is DERIVED FROM THE FIELD ID, not measured from the terrain.
+-- It is stable per field and across sessions and correlates with nothing a player
+-- can see. A consumer needing real spatial soil truth must wait for the terrain
+-- read (SoilMoistureSystem:detectSoilType step 2), not use this.
+function CropStressManager:getFieldSoilType(fieldId)
+    if self.soilSystem == nil or self.soilSystem.fieldData == nil then return nil end
+    local record = self.soilSystem.fieldData[fieldId]
+    if record == nil then return nil end
+    return record.soilType
 end
 
 -- ── Irrigation & water (B3.2b) ──────────────────────────────
@@ -945,10 +989,19 @@ function CropStressManager:detectOptionalMods()
     -- UsedPlus detection: primary path is g_currentMission.usedPlusAPI (set in UP v2.15.4.96+
     -- onStartMission — the only reliable cross-mod path in FS25's sandboxed environment).
     -- Bare UsedPlusAPI / g_usedPlusManager globals are kept as fallbacks for older versions.
+    --
+    -- F154: THE FINANCE ARM IS GONE. FinanceIntegration no longer reads UsedPlus at
+    -- all, so arming it here would be detecting a mod that nothing reads.
+    --
+    -- THE DETECTION ITSELF SURVIVES ONLY BECAUSE THE MARKETPLACE STILL CONSUMES IT.
+    -- The F154 fix doc names FinanceIntegration as this site's only consumer; it is
+    -- not, and UsedEquipmentMarketplace is a second one that the doc does not
+    -- otherwise scope. Retiring a whole listings feature is a wider decision than
+    -- retiring a dead wear probe, so it is reported rather than taken here. If that
+    -- decision lands as "retire", this whole block goes with it.
     local upApi = (g_currentMission and g_currentMission.usedPlusAPI) or UsedPlusAPI or g_usedPlusManager
     if upApi ~= nil then
-        csLog("FS25_UsedPlus detected — enabling finance integration")
-        self.financeIntegration:enableUsedPlusMode()
+        csLog("FS25_UsedPlus detected — enabling used-equipment marketplace")
         self.usedEquipmentMarketplace:enableUsedPlusMode()
     end
 
@@ -1075,6 +1128,7 @@ function CropStressManager:delete()
 
     -- Subsystem cleanup (reverse order of init)
     self.sprayerIntegration:delete()
+    self.irrigatorSectorIntegration:delete()
     self.autoDriveIntegration:delete()
     self.coursePlayIntegration:delete()
     self.soilFertilizerIntegration:delete()
@@ -1119,9 +1173,15 @@ function CropStressManager:consoleStatus()
 
     if self.weatherIntegration ~= nil then
         local seas = WeatherIntegration.SEASON_NAMES[self.weatherIntegration.currentSeason] or "?"
-        print(string.format("  Season: %s  Temp: %.1f°C  Raining: %s",
+        -- [SCS-021] the sky line appends the honesty marker when humidity was
+        -- defaulted (no real data); no log output on the fallback path.
+        local humNote = ""
+        if self.weatherIntegration.currentHumidityDefaulted then
+            humNote = " (humidity defaulted)"
+        end
+        print(string.format("  Season: %s  Temp: %.1f°C  Raining: %s%s",
             seas, self.weatherIntegration.currentTemp,
-            tostring(self.weatherIntegration.isRaining)))
+            tostring(self.weatherIntegration.isRaining), humNote))
     end
 
     print(string.format("  Fields tracked: %d", self.soilSystem:getFieldCount()))
@@ -1129,7 +1189,8 @@ function CropStressManager:consoleStatus()
     -- Optional mod integration status
     print("  Optional integrations:")
     print(string.format("    NPCFavor:       %s", tostring(self.npcIntegration and self.npcIntegration.npcFavorActive or false)))
-    print(string.format("    UsedPlus:       %s", tostring(self.financeIntegration and self.financeIntegration.usedPlusActive or false)))
+    -- F154: reports the marketplace, which is now UsedPlus's only consumer here.
+    print(string.format("    UsedPlus:       %s", tostring(self.usedEquipmentMarketplace and self.usedEquipmentMarketplace.usedPlusActive or false)))
     print(string.format("    SoilFertilizer: %s", tostring(self.soilFertilizerIntegration and self.soilFertilizerIntegration.sfActive or false)))
     print(string.format("    CoursePlay:     %s (vehicles active: %d)",
         tostring(self.coursePlayIntegration and self.coursePlayIntegration.cpActive or false),

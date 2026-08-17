@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<vehicle type="rwsmPlaySchiene">
+    <annotation>Copyright by HoFFi</annotation>
+	
+	<storeData>
+        <name>
+			<en>Pull bar</en>
+			<de>Zugschiene</de>
+		</name>
+        <functions>
+            <function>
+				<en>Pull bar for irrigation systems</en>
+				<de>Zugschiene für Bewesserungssysteme</de>
+			</function>
+        </functions>
+		<specs>
+            <combination>Rainstar T32</combination>
+        </specs>
+        <image>vehicles/irrigatorPlay/textures/store_Schiene.dds</image>
+        <price>17300</price>
+        <lifetime>600</lifetime>
+        <rotation>0</rotation>
+        <brand>LIZARD</brand>
+        <category>sprayers</category>
+    </storeData>
+	
+	<base>
+        <typeDesc>Schiene</typeDesc>
+        <filename>vehicles/irrigatorPlay/i3d/Schiene.i3d</filename>
+        <!-- BUILD 22:01 shop framing (George secondary): 1x1 was a placeholder and left the
+             shop camera zoomed past the bar. toolbarCat1 is a ~3 m wide 3-point bar. -->
+        <size width="3.0" length="0.8" />
+        <components>
+            <!-- BUILD 20:43 item 1: CoM dropped below the bar so it cannot settle on its side.
+             This is a wheelless 50 kg single component, so on detach its resting pose was
+             whatever physics chose. A flipped bar puts AttacherJoint2 outside the ~19.6 deg
+             MAX_ATTACH_ANGLE forever, which is what "one-use attach" actually is. Mass is
+             left honest at 50 kg per George; the lever here is CoM, not weight. -->
+        <component centerOfMass="0 -0.15 0" solverIterationCount="4" mass="50" />
+        </components>
+        <schemaOverlay attacherJointPosition="0 0">
+            <default name="DEFAULT_IMPLEMENT"/>
+            <turnedOn name="DEFAULT_IMPLEMENT_ON"/>
+            <selected name="DEFAULT_IMPLEMENT_SELECTED"/>
+            <turnedOnSelected name="DEFAULT_IMPLEMENT_SELECTED_ON"/>
+        </schemaOverlay>
+    </base>
+	
+	<attachable>
+        <inputAttacherJointConfigurations>
+            <inputAttacherJointConfiguration name="$l10n_configuration_inputAttacher3Point" price="0">
+                <inputAttacherJoint node="AttacherJoint" jointType="implement" isControllable="true" upperRotationOffset="0" lowerRotLimitScale="0 0 0" upperRotLimitScale="0 0 0" lowerTransLimitScale="0 0 0" upperTransLimitScale="0 0 0">
+					<distanceToGround lower="0" upper="2" />
+				</inputAttacherJoint>
+            </inputAttacherJointConfiguration>
+        </inputAttacherJointConfigurations>
+    </attachable>
+	
+	<attacherJoints>
+        <attacherJoint node="AttacherJoint2" jointType="trailer" lowerRotLimit="10 55 55" upperRotationOffset="0" allowsJointLimitMovement="false" canTurnOnImplement="false">
+            <schema position="1 0" rotation="0" invertX="false"/>
+        </attacherJoint>
+        <sounds>
+        </sounds>
+    </attacherJoints>
+	
+	<dynamicallyLoadedParts>
+        <!-- BUILD 21:01: the original path $data/shared/assets/toolbar.i3d does not exist
+             in FS25 1.20 (verified against the live install AND the client log:
+             "Error: i3d 'data/shared/assets/toolbar.i3d' could not be found").
+             The real vanilla asset is toolbars/toolbars.i3d, plural and one folder
+             deeper, holding five renderable variants toolbarCat0..4. node="0>1"
+             picks toolbarCat1. Referenced rather than vendored so no Giants art is
+             redistributed; swapping to a bespoke bar later is a one-line change. -->
+        <!-- BUILD 22:01 (Vera/George FAILFIX): the selector was "0>1". On an EXTERNAL i3d,
+             DynamicallyLoadedParts walks CHILD indices with a pipe; ">" is component
+             syntax and resolved to nil, so the i3d loaded and then logged "Unable to
+             find node in loaded i3d" and the shop preview stayed empty. Root 0 is the
+             "toolbars" group; child 1 is toolbarCat1. -->
+        <dynamicallyLoadedPart node="0|1" linkNode="LoadPoint" filename="$data/shared/assets/toolbars/toolbars.i3d" />
+    </dynamicallyLoadedParts>
+
+    <attacherJointControl maxTiltAngle="25">
+        <control controlFunction="controlAttacherJointHeight" controlAxis="AXIS_HYDRAULICATTACHER1" invertControlAxis="true" mouseSpeedFactor="0.3" iconName="IMPLEMENT_ATTACHER_TRANS"/>
+
+        <sounds>
+            <hydraulic template="DEFAULT_HYDRAULIC_SOUND" linkNode="AckerschieneCol" />
+        </sounds>
+    </attacherJointControl>
+
+	<!--
+	<baseMaterial>
+        <material name="lambert1" baseNode="AckerschieneCol">
+            <shaderParameter name="colorMat0" value="0.9 0.9 0.9 4" material="4"/>
+        </material>
+    </baseMaterial>
+	-->
+
+    <wearable wearDuration="480" workMultiplier="5" fieldMultiplier="2"/>
+    <washable dirtDuration="90" washDuration="1" workMultiplier="6" fieldMultiplier="2"/>
+
+    <i3dMappings>
+        <i3dMapping id="AckerschieneCol" node="0>" />
+        <i3dMapping id="AttacherJoint" node="0>0" />
+        <i3dMapping id="LoadPoint" node="0>1" />
+        <i3dMapping id="AttacherJoint2" node="0>2" />
+    </i3dMappings>
+</vehicle>

@@ -158,10 +158,11 @@ do
 end
 
 do
-  -- THE INERTNESS GUARD. SoilFertilizer publishes no manager-level Water Record
-  -- delegate today, so the reader must answer nil and round-1 must hold. This
-  -- assertion is the reason the feature is honest rather than half-wired: when
-  -- somebody publishes `getWaterDaysInLast`, this test is what changes.
+  -- THE NIL-SAFETY GUARD. SoilFertilizer publishes the manager-level delegate
+  -- (`getWaterDaysInLast`, 2026-08-10), but the reader still must answer nil on
+  -- every unknown path: absent SoilFertilizer, no delegate, a throwing delegate,
+  -- and an empty record. nil is the honest answer and round-1 holds; these
+  -- assertions pin that the unknown never masquerades as a dry guess.
   local mgr = setmetatable({}, CropStressManager)
 
   g_currentMission.soilFertilityManager = nil
@@ -253,7 +254,10 @@ do
   }
 
   local stage = wheat.stages[1]
-  local moisture = wheat.criticalMoisture * 0.5   -- half the threshold
+  -- Just under the threshold (0.9 x) and above the soil-moisture coupling's
+  -- drought band (0.30), so this bar pins the elapsed-hour arithmetic with the
+  -- coupling neutral rather than entangled with it.
+  local moisture = wheat.criticalMoisture * 0.9
   local deficitRatio = (wheat.criticalMoisture - moisture) / wheat.criticalMoisture
 
   local one = newModifier()
@@ -289,7 +293,8 @@ local function newFinance(costPerHour, active)
   local fi = FinanceIntegration.new({
     irrigationManager = {
       costsEnabled = true,
-      systems = { [1] = { isActive = active, operationalCostPerHour = costPerHour } },
+      systems = { [1] = { isActive = active, operationalCostPerHour = costPerHour,
+        placeable = { getOwnerFarmId = function() return 1 end } } },
     },
   })
   fi.isInitialized = true

@@ -126,14 +126,23 @@ function CropStressNetworkSyncBridge._onReadState(arr)
         if existing ~= nil then
             existing.moisture = entry.moisture
         else
-            mgr.soilSystem.fieldData[fieldId] = { moisture = entry.moisture, soilType = "loamy" }
+            -- [SCS-036] NO soilType key: an absent key is detectable and the
+            -- backfill (enumerateFields) repairs it on the next rebuild. The
+            -- old "loamy" placeholder was the same string as a real answer, so
+            -- no code could tell them apart. The hourly loop already lands
+            -- missing classes on loam, so the join window behaves identically
+            -- to today and the first rebuild makes the value right.
+            mgr.soilSystem.fieldData[fieldId] = { moisture = entry.moisture }
         end
         mgr.stressModifier.fieldStress[fieldId] = fieldStress[fieldId] or 0.0
     end
 
     -- Rebuild field map only when fields are ready; on MP join the field manager
     -- may not yet be populated. The field-ready updater handles initial enumeration.
-    if mgr.buildFieldMap ~= nil and g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
+    -- BUILD 19:47: same shape as the init event. State above is applied every time; the
+    -- map walk is the part that waits for the player to be in.
+    if g_currentMission ~= nil and g_currentMission.isMissionStarted == true
+        and mgr.buildFieldMap ~= nil and g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
         mgr:buildFieldMap()
     end
 end

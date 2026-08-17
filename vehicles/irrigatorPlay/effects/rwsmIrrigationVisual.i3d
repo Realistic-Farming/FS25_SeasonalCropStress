@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<i3D name="RWSMRealisticIrrigationVisual" version="1.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://i3d.giants.ch/schema/i3d-1.6.xsd">
+  <Asset><Export program="RWSM" version="0.62"/></Asset>
+  <Files>
+    <File fileId="1" filename="../textures/rwsmSprayCore.dds"/>
+    <File fileId="2" filename="../textures/rwsmSprayMist.dds"/>
+    <File fileId="3" filename="../textures/rwsmSprayImpact.dds"/>
+  </Files>
+  <Materials>
+    <Material name="rwsmWaterCore" materialId="1" diffuseColor="0.82 0.94 1 0.88" alphaBlending="true" alphaTestRef="0.005">
+      <Texture fileId="1"/>
+    </Material>
+    <Material name="rwsmWaterMist" materialId="2" diffuseColor="0.78 0.92 1 0.52" alphaBlending="true" alphaTestRef="0.003">
+      <Texture fileId="2"/>
+    </Material>
+    <Material name="rwsmWaterImpact" materialId="3" diffuseColor="0.72 0.90 1 0.55" alphaBlending="true" alphaTestRef="0.003">
+      <Texture fileId="3"/>
+    </Material>
+  </Materials>
+  <Shapes externalShapesFile="../i3d/T32.i3d.shapes"/>
+  <Scene>
+    <TransformGroup name="rwsmIrrigationVisual" nodeId="1" visibility="false">
+      <TransformGroup name="sprayMistRoot" translation="0.10 0 0" nodeId="2">
+        <Shape name="sprayMistA" shapeId="40" rotation="0 90 0" scale="0.10 0.55 0.12" clipDistance="250" nodeId="3" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        <Shape name="sprayMistB" shapeId="40" rotation="90 90 0" scale="0.10 0.55 0.12" clipDistance="250" nodeId="4" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        <Shape name="sprayMistC" shapeId="40" rotation="45 90 0" scale="0.08 0.48 0.09" clipDistance="250" nodeId="5" materialIds="2" castsShadows="false" receiveShadows="false"/>
+      </TransformGroup>
+      <TransformGroup name="streamRoot" nodeId="6">
+        <TransformGroup name="streamSegment01" nodeId="7">
+          <Shape name="streamCore01" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="8" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist01A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="9" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist01B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="10" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment02" nodeId="11">
+          <Shape name="streamCore02" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="12" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist02A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="13" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist02B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="14" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment03" nodeId="15">
+          <Shape name="streamCore03" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="16" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist03A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="17" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist03B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="18" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment04" nodeId="19">
+          <Shape name="streamCore04" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="20" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist04A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="21" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist04B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="22" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment05" nodeId="23">
+          <Shape name="streamCore05" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="24" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist05A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="25" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist05B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="26" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment06" nodeId="27">
+          <Shape name="streamCore06" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="28" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist06A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="29" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist06B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="30" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment07" nodeId="31">
+          <Shape name="streamCore07" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="32" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist07A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="33" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist07B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="34" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment08" nodeId="35">
+          <Shape name="streamCore08" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="36" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist08A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="37" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist08B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="38" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment09" nodeId="39">
+          <Shape name="streamCore09" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="40" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist09A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="41" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist09B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="42" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment10" nodeId="43">
+          <Shape name="streamCore10" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="44" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist10A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="45" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist10B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="46" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment11" nodeId="47">
+          <Shape name="streamCore11" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="48" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist11A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="49" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist11B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="50" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment12" nodeId="51">
+          <Shape name="streamCore12" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="52" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist12A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="53" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist12B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="54" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment13" nodeId="55">
+          <Shape name="streamCore13" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="56" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist13A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="57" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist13B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="58" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment14" nodeId="59">
+          <Shape name="streamCore14" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="60" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist14A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="61" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist14B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="62" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment15" nodeId="63">
+          <Shape name="streamCore15" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="64" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist15A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="65" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist15B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="66" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+        <TransformGroup name="streamSegment16" nodeId="67">
+          <Shape name="streamCore16" shapeId="40" rotation="0 90 0" scale="0.055 0.65 0.055" clipDistance="350" nodeId="68" materialIds="1" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist16A" shapeId="40" rotation="28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="69" materialIds="2" castsShadows="false" receiveShadows="false"/>
+          <Shape name="streamMist16B" shapeId="40" rotation="-28 90 0" scale="0.12 0.72 0.12" clipDistance="350" nodeId="70" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        </TransformGroup>
+      </TransformGroup>
+      <TransformGroup name="impactRoot" nodeId="100">
+        <Shape name="impactGround" shapeId="40" rotation="90 0 0" scale="2.8 2.8 0.2" clipDistance="350" nodeId="101" materialIds="3" castsShadows="false" receiveShadows="false"/>
+        <Shape name="impactMistA" shapeId="40" rotation="0 90 0" scale="0.35 1.5 0.55" clipDistance="350" nodeId="102" materialIds="2" castsShadows="false" receiveShadows="false"/>
+        <Shape name="impactMistB" shapeId="40" rotation="90 90 0" scale="0.35 1.5 0.55" clipDistance="350" nodeId="103" materialIds="2" castsShadows="false" receiveShadows="false"/>
+      </TransformGroup>
+    </TransformGroup>
+  </Scene>
+</i3D>

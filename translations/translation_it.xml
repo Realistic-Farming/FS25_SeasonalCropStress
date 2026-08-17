@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?>
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <l10n>
     <texts>
     <!-- ========== HUD OVERLAY ========== -->
@@ -317,7 +317,23 @@
     
     <!-- Esc RF PDA greenfield guest (2026-08-02) -->
     <text name="cs_rf_pda_module_title" text="Crop Stress"/>
-    <text name="cs_rf_pda_blurb" text="Field moisture, stress, irrigation schedule and rate, and yield keep. Open Farm Tablet to edit systems or open Crop Consultant."/>
+    <text name="cs_rf_pda_blurb" text="[EN] Field desk - moisture, stress, irrigation, and pivot controls - all on one page."/>
+    <text name="cs_rf_pda_btn_consultant" text="[EN] Crop consultant"/>
+    <text name="cs_rf_pda_btn_field_list" text="[EN] Field list"/>
+    <text name="cs_rf_pda_cons_title" text="[EN] Alex Chen - Crop Consultant"/>
+    <text name="cs_rf_pda_cons_col_field" text="[EN] Field"/>
+    <text name="cs_rf_pda_cons_col_risk" text="[EN] Risk"/>
+    <text name="cs_rf_pda_cons_col_moisture" text="[EN] Moisture"/>
+    <text name="cs_rf_pda_cons_col_yield" text="[EN] Yield keep"/>
+    <text name="cs_rf_pda_cons_rec_title" text="[EN] Recommendations"/>
+    <text name="cs_rf_pda_cons_relation" text="[EN] With Alex: %d / 100"/>
+    <text name="cs_rf_pda_cons_empty" text="[EN] No field data yet - fields appear after the simulation runs."/>
+    <text name="cs_rf_pda_cons_rec_driest" text="[EN] Driest now: %s at %d%% moisture - water this one first."/>
+    <text name="cs_rf_pda_cons_rec_forecast" text="[EN] 3-day outlook for %s: %d%% moisture."/>
+    <text name="cs_rf_pda_cons_rec_systems" text="[EN] %d irrigation systems active."/>
+    <text name="cs_rf_pda_cons_rec_nosystems" text="[EN] No active irrigation - shop coverage for the driest fields."/>
+    <text name="cs_rf_pda_btn_schedule" text="[EN] Irrigation schedule"/>
+    <text name="cs_rf_pda_no_coverage_act" text="[EN] No irrigation covers this field - place a system in the shop, then schedule it here."/>
     <text name="cs_rf_pda_col_field" text="Field"/>
     <text name="cs_rf_pda_col_crop" text="Crop"/>
     <text name="cs_rf_pda_col_moisture" text="Moisture"/>
@@ -328,7 +344,7 @@
     <text name="cs_rf_pda_detail_title" text="Field Detail"/>
     <text name="cs_rf_pda_select_field" text="Select a field in the table for details."/>
     <text name="rf_pda_side_info_soil" text="[EN] Soil Fertilizer&#10;&#10;This table lists every field you own. One row = one field.&#10;&#10;Columns: Field #, Area, N/P/K (% of a healthy target), Status (Good / Fair / Poor), Fertilizer need (short cue for what still looks short).&#10;&#10;Click a row. Treatment (below) is the plan for that field:&#10;- PRODUCT = what to buy (first is preferred; &quot;or ...&quot; is an alternate)&#10;- RATE = amount per area / TOTAL = amount for this field&#10;- Selected names the field; Next (under it) says what to do first&#10;&#10;How to apply: dry goods (urea, MAP, potash, lime) go through a fertilizer spreader; liquids go in a sprayer tank. If pH and nutrients both show, fix lime or gypsum first so nutrients can work. Weed, pest, or disease lines mean spray (or weed mechanically) before you expect a full crop.&#10;&#10;Start with the weakest Status, open Treatment, follow Next, then the rest of the list."/>
-    <text name="rf_pda_side_info_crop_stress" text="[EN] Crop Stress&#10;&#10;This table lists every field you own. One row = one field.&#10;&#10;Columns: Field # / Crop, Moisture (how wet the soil is), Stress (how hard the crop is fighting dry spells), Irrigation (water help covering this field), Status (Healthy / Warning / Critical).&#10;&#10;Click a row. The strip below names the field, then Next says what to do first:&#10;- Critical or Warning Moisture → water that field (turn on irrigation if covered, or spray WATER / place coverage)&#10;- High Stress or a sensitive growth window → protect now; stress today cuts harvest later&#10;- Looking fine → recheck later; worse fields first&#10;&#10;Irrigation: Yes means a system can cover this field. The strip under the table shows this field's schedule, water rate, yield keep, and air dry-pull. Edit systems on Farm Tablet / Crop Consultant when you need to change them.&#10;&#10;If Soil Fertilizer is also loaded, check nutrients there too. Dry soil drains faster when soil health is poor.&#10;&#10;Start with Critical Status, follow Next, then work up the list."/>
+    <text name="rf_pda_side_info_crop_stress" text="[EN] Crop Stress&#10;&#10;This screen is the Crop Stress desk. Each line is one field you own.&#10;&#10;The table shows Field, Crop, Moisture, Stress, Irrigated, and Status. Moisture is how wet the soil is. Stress is how hard the crop is fighting dry spells. Irrigated says a system can reach this field. Status is Healthy, Warning, or Critical.&#10;&#10;Click a row. Field Detail on the left coaches that field and Next says the first job. AGRONOMIST on the right lists the top risk fields. PIVOT below drives the irrigation system for the selected field.&#10;&#10;On PIVOT, grey remotes are locked until the step before them is done. Open the door, then power, then the rest. An empty seat means no pivot covers this field.&#10;&#10;Start with Critical Status, follow Next, then work up the list.&#10;&#10;Irrigator kit (shop): pump + Rainstar + pull bar. Unfold, pull the gun out, turn it on over a field."/>
 
         <!-- Esc RF shared Soil chrome keys (door may be created by CS) 2026-08-02 FAILFIX -->
     <text name="sf_pda_col_field" text="[EN] Field"/>
@@ -366,5 +382,82 @@
     <text name="cs_rf_pda_alert_prefix" text="[EN] Alert: %s"/>
     <text name="cs_rf_pda_next_alert_sep" text=" · %s"/>
     <text name="cs_rf_pda_status_join" text="[EN] %s  ·  Status: %s"/>
+    <!-- Esc CS PIVOT card (2026-08-09) -->
+    <text name="cs_rf_pda_pivot_title" text="[EN] PIVOT"/>
+    <text name="cs_rf_pda_pivot_title_irrig" text="[EN] IRRIGATION"/>
+    <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0f°"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0f°"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0f°"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur —"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min —"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max —"/>
+    <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
+    <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
+    <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
+    <text name="cs_rf_pda_pivot_watering_off" text="[EN] Watering now: Off"/>
+    <text name="cs_rf_pda_pivot_pressure" text="[EN] Pressure: %d%%"/>
+    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: —"/>
+    <text name="cs_rf_pda_pivot_rate" text="[EN] Rate: +%.3f/h"/>
+    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: —"/>
+    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00–%02d:00%s"/>
+    <text name="cs_rf_pda_pivot_sched_none" text="[EN] Schedule: No schedule"/>
+    <text name="cs_rf_pda_pivot_warn_none" text="[EN] No pivot on this field"/>
+    <text name="cs_rf_pda_pivot_warn_owner" text="[EN] Not your pivot"/>
+    <text name="cs_rf_pda_pivot_warn_door" text="[EN] Open door for ops"/>
+    <text name="cs_rf_pda_pivot_warn_power" text="[EN] Power off"/>
+    <text name="cs_rf_pda_pivot_warn_pump" text="[EN] Pump disconnected"/>
+    <text name="cs_rf_pda_pivot_btn_door" text="[EN] Door"/>
+    <text name="cs_rf_pda_pivot_btn_power" text="[EN] Power"/>
+    <text name="cs_rf_pda_pivot_btn_spray" text="[EN] Spray"/>
+    <text name="cs_rf_pda_pivot_btn_endgun" text="[EN] End gun"/>
+    <text name="cs_rf_pda_pivot_btn_speed" text="[EN] Speed"/>
+    <text name="cs_rf_pda_pivot_btn_start" text="[EN] Start"/>
+    <text name="cs_rf_pda_pivot_btn_stop" text="[EN] Stop"/>
+    <text name="cs_rf_pda_pivot_btn_min_up" text="[EN] Min+"/>
+    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Min−"/>
+    <text name="cs_rf_pda_pivot_btn_max_up" text="[EN] Max+"/>
+    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Max−"/>
+    <text name="cs_rf_pda_pivot_btn_arm_plus" text="[EN] Arm+"/>
+    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Arm−"/>
+    <text name="cs_rf_pda_pivot_btn_schedule" text="[EN] Schedule"/>
+    <text name="cs_rf_pda_page_fields" text="[EN] Fields"/>
+    <text name="cs_rf_pda_page_pivot" text="[EN] Pivot"/>
+    <text name="cs_rf_pda_agro_title" text="[EN] AGRONOMIST"/>
+    <text name="cs_rf_pda_agro_relation" text="[EN] Alex Chen - %d / 100"/>
+    <text name="cs_rf_pda_agro_top_header" text="[EN] Top 5 at risk"/>
+    <text name="cs_rf_pda_agro_top_row" text="[EN] %s - risk %d%% - moisture %d%%"/>
+    <text name="cs_rf_pda_agro_rec_header" text="[EN] Recommendations"/>
+    <text name="cs_rf_pda_agro_empty" text="[EN] No field data yet - fields appear once the simulation runs."/>
+    <text name="Motorpump" text="[EN] Motor pump"/>
+    <text name="warning_RAINSTAR_HOSE_EXTENDED" text="[EN] Move the sprinkler cart back to the reel before switching to transport mode."/>
+    <text name="autoReel" text="[EN] Automatic reel"/>
+    <text name="rwsm_hoseExtended" text="[EN] Hose extended"/>
+    <text name="rwsm_hoseOnDrum" text="[EN] Hose on reel"/>
+    <text name="input_RWSM53_REEL_TOGGLE" text="[EN] Toggle automatic hose retraction"/>
+    <text name="action_RAINSTAR_REEL_START" text="[EN] Start automatic hose retraction"/>
+    <text name="action_RAINSTAR_REEL_STOP" text="[EN] Stop automatic hose retraction"/>
+    <text name="rwsm_hoseAlmostEmpty" text="[EN] Warning: very little hose remains on the reel."/>
+    <text name="status_RAINSTAR_REEL_ACTIVE" text="[EN] active"/>
+    <text name="status_RAINSTAR_REEL_COMPLETE_SHUTDOWN" text="[EN] Hose fully reeled in - cart locked and motor pump switched off."/>
+    <text name="status_RAINSTAR_REEL_READY" text="[EN] ready"/>
+    <text name="warning_RAINSTAR_CART_ATTACHED" text="[EN] Detach the tractor from the sprinkler cart before starting retraction."/>
+    <text name="warning_RAINSTAR_HOSE_10M" text="[EN] Warning: only 10 m of hose remain on the reel."/>
+    <text name="warning_RAINSTAR_HOSE_30M" text="[EN] Warning: only 30 m of hose remain on the reel."/>
+    <text name="warning_RAINSTAR_HOSE_MAX" text="[EN] Maximum hose length of 220 m reached."/>
+    <text name="warning_RAINSTAR_HOSE_NOT_EXTENDED" text="[EN] The sprinkler cart is already at the reel."/>
+    <text name="warning_RAINSTAR_PUMP_NOT_CONNECTED" text="[EN] Connect the motor pump to the Rainstar first."/>
+    <text name="warning_RAINSTAR_PUMP_NOT_RUNNING" text="[EN] Start the motor pump before retracting the hose."/>
+    <text name="warning_RAINSTAR_SELECT_WORKMODE" text="[EN] Select work mode before starting hose retraction."/>
+    <!-- BUILD 19:27 - suite EMP-Rainstar hose walk-up verbs -->
+    <text name="action_SCS_CONNECT_HOSE" text="[EN] Connect hose"/>
+    <text name="action_SCS_DISCONNECT_HOSE" text="[EN] Disconnect hose"/>
+    <text name="cs_rainstar_needs_pump" text="[EN] Connect the supply hose from the pump and start the pump. This reel runs on pump pressure, not a tractor."/>
+    <text name="cs_playkit_pump_power_teach" text="[EN] The pump is the power. Hitch the reel only to tow it: to spray, run the hose from the pump, start the pump, then switch the reel on. Stop the pump or pull the hose and the spray stops."/>
+    <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
+        <!-- BUILD 11:27 F155 Esc RF button labels -->
+        <text name="wc_rf_pda_open_manager" text="Apri gestore operai" />
+        <text name="sf_pda_btn_rotation_planner" text="Pianificatore rotazioni" />
+        <text name="sf_pda_btn_field_detail" text="Dettaglio campo" />
 </texts>
 </l10n>

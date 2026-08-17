@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<i3D name="sps_nodes_Aggregat" version="1.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://i3d.giants.ch/schema/i3d-1.6.xsd">
+  <Files/>
+  <Materials/>
+  <Shapes/>
+  <Scene>
+    <TransformGroup name="spsRoot" nodeId="1">
+      <TransformGroup name="spsCouplerGroup" nodeId="2">
+        <TransformGroup name="hoseJoint" nodeId="3">
+          <TransformGroup name="SPS_pipeCouplerAgg01" translation="-0.55 -0.60 0.75" nodeId="4">
+            <TransformGroup name="inNode"  translation="0 0 0" nodeId="5"/>
+            <TransformGroup name="outNode" translation="0 0 0.12" nodeId="6"/>
+          </TransformGroup>
+          <TransformGroup name="SPS_pipeCouplerAgg02" translation="0.55 -0.60 0.75" nodeId="7">
+            <TransformGroup name="inNode"  translation="0 0 0" nodeId="8"/>
+            <TransformGroup name="outNode" translation="0 0 0.12" nodeId="9"/>
+          </TransformGroup>
+        </TransformGroup>
+      </TransformGroup>
+    </TransformGroup>
+  </Scene>
+</i3D>
