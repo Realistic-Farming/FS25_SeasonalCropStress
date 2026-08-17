@@ -22,6 +22,7 @@
 - [x] CRITICAL (house rule): PF integration mode active on detection - RESOLVED. No PF code path remains after 77b3064; nothing left to stand down.
 - [x] SCS-001: created overlay handle in `initialize()`, replaced bare `drawFilledRect` calls (fixed, merged to main).
 - [x] SCS-002 / SCS-003: additional SeasonalCropStress bugs fixed in 2026-07-26 bug sweep, merged to main.
+- [x] MP join d.cells nil crash (PR #140, 2026-08-16): SoilMoistureSystem.lua d.cells/d.cellCount/d.cellSum nil when field data arrives via MP sync events before initFieldData builds the full structure. Nil-init guards in materialiseRelief and _writeCell. Wizard diagnosed the exact bug shape in the ledger.
 
 ## Features / enhancements
 - [x] Release gate (2026-08-04): `ReleaseGate.lua` with the `cs_89_rebuild` and `moisture_coupling` rows, both noted "not built yet; locks when it lands" (Arissani 2026-08-03). F93 ships stable and is not in the registry. `experimentalSystems` opt-in (default false, orthogonal to difficulty) through `CropStressSettings` defaults/load/save/validate, the MP bulk sync (count 10 to 11), the SettingsHub mirror and a settings-panel row. `csRelease` status command. 23 assertions in release_gate_test.lua.
