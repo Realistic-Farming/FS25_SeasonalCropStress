@@ -215,9 +215,9 @@
 	     turn-on and nothing offered a turn-on surface. ScsPumpHoseConnection already
 	     accepts turn-on OR motor-started, so the enter+ignition path stays valid. -->
 	<turnOnVehicle turnOffIfNotAllowed="false" >
-        <sounds>
-            <work template="WOOD_CHIPPER_IDLE" linkNode="Aggregat_main" />
-        </sounds>
+        <!-- No work sound here: the kit's own pump idle plays through pumpIdleSound
+             below, and the old WOOD_CHIPPER_IDLE reference was a leftover template
+             the game does not have (load-time error). -->
     </turnOnVehicle>
 	
     <foliageBending>
