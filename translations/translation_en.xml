@@ -308,6 +308,23 @@
     <text name="cs_map_legend_warning"        text="Warning  25-40%"/>
     <text name="cs_map_legend_critical"       text="Critical  &lt;25%"/>
     <text name="cs_map_btn_open_pda"          text="Open Crop PDA"/>
+    <!-- Map sidebar draw-text (2026-08-18): status rows, legend labels, average card, info box -->
+    <text name="cs_map_status_dry"            text="Dry fields"/>
+    <text name="cs_map_status_good"           text="Good fields"/>
+    <text name="cs_map_status_wet"            text="Wet fields"/>
+    <text name="cs_map_density"               text="Detail"/>
+    <text name="cs_map_density_low"           text="Low"/>
+    <text name="cs_map_density_med"           text="Medium"/>
+    <text name="cs_map_density_high"          text="High"/>
+    <text name="cs_map_legend_dry"            text="Dry"/>
+    <text name="cs_map_legend_good"           text="Good"/>
+    <text name="cs_map_legend_wet"            text="Wet"/>
+    <text name="cs_map_avg_title"             text="Average Field Moisture"/>
+    <text name="cs_map_avg_ok"                text="OK"/>
+    <text name="cs_map_avg_irrigate"          text="Irrigate"/>
+    <text name="cs_map_avg_toowet"            text="Too wet"/>
+    <text name="cs_map_info_title"            text="Crop Moisture"/>
+    <text name="cs_map_info_line"             text="Spot readings, not field averages. Detail sets the sample step."/>
 
     <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->
     <!-- CoursePlay context appended to stress alerts -->
