@@ -360,6 +360,7 @@
     <text name="cs_rf_pda_col_stress" text="Stress"/>
     <text name="cs_rf_pda_col_irrigated" text="Irrigated"/>
     <text name="cs_rf_pda_col_status" text="Status"/>
+    <text name="cs_rf_pda_crop_mixed" text="Mixed"/>
     <text name="cs_rf_pda_empty" text="No crop stress data yet. Fields appear after the simulation runs."/>
     <text name="cs_rf_pda_detail_title" text="Field Detail"/>
     <text name="cs_rf_pda_select_field" text="Select a field in the table for details."/>
@@ -405,6 +406,7 @@
     <!-- Esc CS PIVOT card (2026-08-09) -->
     <text name="cs_rf_pda_pivot_title" text="PIVOT"/>
     <text name="cs_rf_pda_pivot_title_irrig" text="IRRIGATION"/>
+    <text name="cs_rf_pda_pivot_switch" text="Pivot %s · covers %s of this block"/>
     <text name="cs_rf_pda_pivot_drip_label" text="Drip line"/>
     <text name="cs_rf_pda_pivot_dial_cur" text="Cur %.0f°"/>
     <text name="cs_rf_pda_pivot_dial_min" text="Min %.0f°"/>
