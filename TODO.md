@@ -35,6 +35,7 @@
 - [ ] Read by CropDisease (moisture), RandomWorldEvents (stress), MarketDynamics, FarmTablet.
 
 ## Docs / localization
+- [x] SCS PDA localization completeness (2026-08-18): every `cs_pda_*` / `cs_rf_pda_*` key now exists in all 26 language files. English gained `cs_rf_pda_crop_mixed` + `cs_rf_pda_pivot_switch` (used only as fallbacks before); the 17 languages missing the whole Esc `cs_rf_pda_*` block were filled with `[EN]` placeholder values, matching the existing convention, so no PDA string can render as a raw key in any language. The hardcoded CROP CONSULTANT text on the legacy PDA now reads `cs_pda_btn_consultant`.
 - [ ] Keep all 26 languages in step for any new setting.
 - [ ] Update README/version on each release.
 

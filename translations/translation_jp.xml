@@ -348,6 +348,83 @@
     <text name="cs_rf_pda_next_covered_idle" text="[EN] Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
     <text name="cs_rf_pda_next_looking_good" text="[EN] Looking good - recheck later; handle Critical fields first."/>
     <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
+    <text name="cs_rf_pda_btn_consultant" text="[EN] Crop consultant"/>
+    <text name="cs_rf_pda_btn_field_list" text="[EN] Field list"/>
+    <text name="cs_rf_pda_cons_title" text="[EN] Alex Chen - Crop Consultant"/>
+    <text name="cs_rf_pda_cons_col_field" text="[EN] Field"/>
+    <text name="cs_rf_pda_cons_col_risk" text="[EN] Risk"/>
+    <text name="cs_rf_pda_cons_col_moisture" text="[EN] Moisture"/>
+    <text name="cs_rf_pda_cons_col_yield" text="[EN] Yield keep"/>
+    <text name="cs_rf_pda_cons_rec_title" text="[EN] Recommendations"/>
+    <text name="cs_rf_pda_cons_relation" text="[EN] With Alex: %d / 100"/>
+    <text name="cs_rf_pda_cons_empty" text="[EN] No field data yet - fields appear after the simulation runs."/>
+    <text name="cs_rf_pda_cons_rec_driest" text="[EN] Driest now: %s at %d%% moisture - water this one first."/>
+    <text name="cs_rf_pda_cons_rec_forecast" text="[EN] 3-day outlook for %s: %d%% moisture."/>
+    <text name="cs_rf_pda_cons_rec_systems" text="[EN] %d irrigation systems active."/>
+    <text name="cs_rf_pda_cons_rec_nosystems" text="[EN] No active irrigation - shop coverage for the driest fields."/>
+    <text name="cs_rf_pda_btn_schedule" text="[EN] Irrigation schedule"/>
+    <text name="cs_rf_pda_no_coverage_act" text="[EN] No irrigation covers this field - place a system in the shop, then schedule it here."/>
+    <text name="cs_rf_pda_crop_mixed" text="[EN] Mixed"/>
+    <text name="cs_rf_pda_yield_keep" text="[EN] Yield keep: %d%%"/>
+    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0f°C, dry pull %.1f"/>
+    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %d–%d"/>
+    <text name="cs_rf_pda_sched_daily" text="[EN]  daily"/>
+    <text name="cs_rf_pda_sched_weekdays" text="[EN]  weekdays"/>
+    <text name="cs_rf_pda_sched_none" text="[EN] no schedule"/>
+    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered · no schedule"/>
+    <text name="cs_rf_pda_no_coverage" text="[EN] No coverage"/>
+    <text name="cs_rf_pda_rate_off" text="[EN] Rate off"/>
+    <text name="cs_rf_pda_rate_on" text="[EN] Rate +%.2f/h"/>
+    <text name="cs_rf_pda_alert_prefix" text="[EN] Alert: %s"/>
+    <text name="cs_rf_pda_next_alert_sep" text="[EN]  · %s"/>
+    <text name="cs_rf_pda_status_join" text="[EN] %s  ·  Status: %s"/>
+    <text name="cs_rf_pda_pivot_title" text="[EN] PIVOT"/>
+    <text name="cs_rf_pda_pivot_title_irrig" text="[EN] IRRIGATION"/>
+    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s · covers %s of this block"/>
+    <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0f°"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0f°"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0f°"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur —"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min —"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max —"/>
+    <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
+    <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
+    <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
+    <text name="cs_rf_pda_pivot_watering_off" text="[EN] Watering now: Off"/>
+    <text name="cs_rf_pda_pivot_pressure" text="[EN] Pressure: %d%%"/>
+    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: —"/>
+    <text name="cs_rf_pda_pivot_rate" text="[EN] Rate: +%.3f/h"/>
+    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: —"/>
+    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00–%02d:00%s"/>
+    <text name="cs_rf_pda_pivot_sched_none" text="[EN] Schedule: No schedule"/>
+    <text name="cs_rf_pda_pivot_warn_none" text="[EN] No pivot on this field"/>
+    <text name="cs_rf_pda_pivot_warn_owner" text="[EN] Not your pivot"/>
+    <text name="cs_rf_pda_pivot_warn_door" text="[EN] Open door for ops"/>
+    <text name="cs_rf_pda_pivot_warn_power" text="[EN] Power off"/>
+    <text name="cs_rf_pda_pivot_warn_pump" text="[EN] Pump disconnected"/>
+    <text name="cs_rf_pda_pivot_btn_door" text="[EN] Door"/>
+    <text name="cs_rf_pda_pivot_btn_power" text="[EN] Power"/>
+    <text name="cs_rf_pda_pivot_btn_spray" text="[EN] Spray"/>
+    <text name="cs_rf_pda_pivot_btn_endgun" text="[EN] End gun"/>
+    <text name="cs_rf_pda_pivot_btn_speed" text="[EN] Speed"/>
+    <text name="cs_rf_pda_pivot_btn_start" text="[EN] Start"/>
+    <text name="cs_rf_pda_pivot_btn_stop" text="[EN] Stop"/>
+    <text name="cs_rf_pda_pivot_btn_min_up" text="[EN] Min+"/>
+    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Min−"/>
+    <text name="cs_rf_pda_pivot_btn_max_up" text="[EN] Max+"/>
+    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Max−"/>
+    <text name="cs_rf_pda_pivot_btn_arm_plus" text="[EN] Arm+"/>
+    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Arm−"/>
+    <text name="cs_rf_pda_pivot_btn_schedule" text="[EN] Schedule"/>
+    <text name="cs_rf_pda_page_fields" text="[EN] Fields"/>
+    <text name="cs_rf_pda_page_pivot" text="[EN] Pivot"/>
+    <text name="cs_rf_pda_agro_title" text="[EN] AGRONOMIST"/>
+    <text name="cs_rf_pda_agro_relation" text="[EN] Alex Chen - %d / 100"/>
+    <text name="cs_rf_pda_agro_top_header" text="[EN] Top 5 at risk"/>
+    <text name="cs_rf_pda_agro_top_row" text="[EN] %s - risk %d%% - moisture %d%%"/>
+    <text name="cs_rf_pda_agro_rec_header" text="[EN] Recommendations"/>
+    <text name="cs_rf_pda_agro_empty" text="[EN] No field data yet - fields appear once the simulation runs."/>
         <!-- BUILD 11:27 F155 Esc RF button labels -->
         <text name="wc_rf_pda_open_manager" text="作業員マネージャーを開く" />
         <text name="sf_pda_btn_rotation_planner" text="輪作プランナー" />
