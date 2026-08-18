@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-08-18T06:31:29Z
-**Days tracked:** 110 | **Download snapshots:** 697 (hourly)
+**Last updated:** 2026-08-18T12:31:41Z
+**Days tracked:** 110 | **Download snapshots:** 701 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 712 | 212 |
-| Git Clones | 602 | 183 |
+| Page Views | 745 | 212 |
+| Git Clones | 637 | 173 |
 
-> **Engagement:** 3.3 pages per visitor (14-day avg)
+> **Engagement:** 3.5 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 1230 of 212 visitors cloned or downloaded (**580.1%**)
+> **14-day conversion:** 1227 of 212 visitors cloned or downloaded (**578.7%**)
 >
-> Unique cloners: 183 | Release downloads: 1047
+> Unique cloners: 173 | Release downloads: 1054
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 1047 |
-| Git Clones (14-day) | 602 |
-| **Total Acquisitions** | **1649** |
+| Zip Downloads | 1054 |
+| Git Clones (14-day) | 637 |
+| **Total Acquisitions** | **1691** |
 
 ---
 
@@ -54,13 +54,13 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 439 | 124 |
-| Google | 68 | 41 |
-| kingmods.net | 13 | 7 |
-| Bing | 10 | 2 |
-| yandex.ru | 5 | 3 |
-| realisticfarming.com | 3 | 3 |
-| chatgpt.com | 1 | 1 |
+| github.com | 407 | 125 |
+| Google | 64 | 39 |
+| Bing | 11 | 3 |
+| kingmods.net | 8 | 6 |
+| realisticfarming.com | 5 | 4 |
+| yandex.ru | 5 | 2 |
+| chatgpt.com | 2 | 2 |
 | l.facebook.com | 1 | 1 |
 
 ---
@@ -73,7 +73,7 @@
 |--------|---------|
 | Stars | 24 |
 | Forks | 3 |
-| Watchers | 6 |
+| Watchers | 5 |
 
 ---
 
@@ -81,16 +81,16 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_SeasonalCropStress` | 398 | 191 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.5.0` | 69 | 52 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases` | 68 | 42 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.4.0` | 26 | 16 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/issues` | 22 | 16 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/branches` | 16 | 2 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/issues/69` | 10 | 10 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/pull/111` | 6 | 5 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/pulls` | 6 | 3 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/pull/103` | 4 | 4 |
+| `/Realistic-Farming/FS25_SeasonalCropStress` | 401 | 193 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.5.0` | 79 | 59 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases` | 61 | 46 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/issues` | 22 | 15 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/branches` | 14 | 2 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/issues/69` | 8 | 8 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.4.0` | 7 | 6 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/pull/111` | 7 | 5 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/pull/106` | 7 | 3 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/pull/109` | 6 | 4 |
 
 ---
 
