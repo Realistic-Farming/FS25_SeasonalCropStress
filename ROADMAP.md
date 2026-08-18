@@ -94,3 +94,6 @@
 ## 2026-08-15 (Wizard): Crop Moisture heat sheet + hose-peer log-flood fix
 - [x] CsMoistureMapOverlay now fills each owned farmland with a sampled tile grid (polygon walk + point-in-polygon ported into SCS, no SoilFertilizer dependency), one ramp feeding both the tiles and the legend, display-only (no density-map writes, HUD thresholds untouched). Merged #138; 1.2.5.77.
 - [x] ScsPumpHoseConnection guards every hose-joint read behind phVehicleAlive (component-root liveness) and drops dead peers on the same frame they die, stopping the client log flood and a stale hose prompt after a sale. Merged #137; 1.2.5.77.
+
+## 2026-08-16 (Tyson): MP join d.cells nil crash fix
+- [x] SoilMoistureSystem.lua: nil-init guards for d.cells, d.cellCount, d.cellSum in both materialiseRelief and _writeCell. Field data entries created via MP moisture sync events before the full structure was built caused cascading packetReceived errors (540+ in 8 seconds). Merged #140; 1.2.5.95.
