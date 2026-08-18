@@ -64,8 +64,17 @@ local function tr(key, fallback)
     local i18n = (modEnv and modEnv.i18n) or g_i18n
     if i18n then
         local ok, text = pcall(function() return i18n:getText(key) end)
-        if ok and text and text ~= "" and text ~= ("$l10n_" .. key) then
-            return text
+        if ok and type(text) == "string" and text ~= "" then
+            -- Reject unresolved keys the engine can hand back: the raw key, the
+            -- $l10n_ literal, or "MISSING ..." variants. A missing key must fall
+            -- back to the English default, never render as a raw string.
+            local lower = text:lower()
+            if lower ~= tostring(key):lower()
+               and text ~= ("$l10n_" .. key)
+               and not lower:find("^missing%s")
+               and not lower:find("^missing_") then
+                return text
+            end
         end
     end
     return fallback or key
@@ -494,6 +503,9 @@ function CsMoistureMapOverlay:onDrawHud(frame)
     local _, btnH    = getNormalizedScreenValues(0, 30)
     local _, barH    = getNormalizedScreenValues(0, 24)
     local _, gap     = getNormalizedScreenValues(0, 4)
+    -- Breathing room between the panel blocks (legend, average card, info box) so the
+    -- stack reads as separate cards rather than one packed column.
+    local _, cardGap = getNormalizedScreenValues(0, 18)
     local _, txtSz   = getNormalizedScreenValues(0, 14)
     local _, tickSz  = getNormalizedScreenValues(0, 11)
     local _, bigSz   = getNormalizedScreenValues(0, 22)
@@ -582,7 +594,7 @@ function CsMoistureMapOverlay:onDrawHud(frame)
         x1 = panelX, y1 = y, x2 = panelX + panelWidth, y2 = y + btnH,
         action = "openPDA",
     })
-    y = y - btnH - gap * 2
+    y = y - btnH - cardGap
 
     -- ── Legend slot, at the BOTTOM of the stack ───────────
     -- Swept from rampColor, the same function the tiles use, so the bar cannot describe a
@@ -618,7 +630,7 @@ function CsMoistureMapOverlay:onDrawHud(frame)
     renderText(barX + barW * CsMoistureMapOverlay.HAIR_GOOD_WET, y, tickSz,
                string.format("%d%%", math.floor(CsMoistureMapOverlay.HAIR_GOOD_WET * 100 + 0.5)))
     setTextAlignment(RenderText.ALIGN_LEFT)
-    y = y - rowH * 0.80 - gap
+    y = y - rowH * 0.80 - cardGap
 
     -- ── Average field moisture card ───────────────────────
     local avg = stats.avg
@@ -658,7 +670,7 @@ function CsMoistureMapOverlay:onDrawHud(frame)
         drawFilledRect(mkX + mkW * math.min(math.max(avg, 0), 1) - bW, y + gap, bW * 2, mkH,
                        0.98, 0.98, 0.98, 1.0)
     end
-    y = y - cardH - gap * 2
+    y = y - cardH - cardGap
 
     -- ── Info box ──────────────────────────────────────────
     local _, infoH = getNormalizedScreenValues(0, 56)

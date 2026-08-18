@@ -266,6 +266,22 @@
     <text name="cs_map_legend_warning"        text="Warning  25-40%"/>
     <text name="cs_map_legend_critical"       text="Critical  &lt;25%"/>
     <text name="cs_map_btn_open_pda"          text="Open Crop PDA"/>
+    <text name="cs_map_status_dry"            text="[EN] Dry fields"/>
+    <text name="cs_map_status_good"            text="[EN] Good fields"/>
+    <text name="cs_map_status_wet"            text="[EN] Wet fields"/>
+    <text name="cs_map_density"            text="[EN] Detail"/>
+    <text name="cs_map_density_low"            text="[EN] Low"/>
+    <text name="cs_map_density_med"            text="[EN] Medium"/>
+    <text name="cs_map_density_high"            text="[EN] High"/>
+    <text name="cs_map_legend_dry"            text="[EN] Dry"/>
+    <text name="cs_map_legend_good"            text="[EN] Good"/>
+    <text name="cs_map_legend_wet"            text="[EN] Wet"/>
+    <text name="cs_map_avg_title"            text="[EN] Average Field Moisture"/>
+    <text name="cs_map_avg_ok"            text="[EN] OK"/>
+    <text name="cs_map_avg_irrigate"            text="[EN] Irrigate"/>
+    <text name="cs_map_avg_toowet"            text="[EN] Too wet"/>
+    <text name="cs_map_info_title"            text="[EN] Crop Moisture"/>
+    <text name="cs_map_info_line"            text="[EN] Spot readings, not field averages. Detail sets the sample step."/>
 
     <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->
     <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d транспортний засіб працює на цьому полі"/>
