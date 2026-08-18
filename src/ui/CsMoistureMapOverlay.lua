@@ -7,14 +7,23 @@
 -- is the wet patch where the irrigator has just been: a sub-area read is invisible when the
 -- whole field is one dot.
 --
--- It now fills each owned farmland with a grid of sampled tiles, the same shape Soil's map
--- overlay uses. The helpers are PORTED, not required: SCS must not depend on
+-- 2026-08-18: the primary render path is now the engine density-map visualization (DMV)
+-- overlay, the same pipeline Soil's PDA uses: a dedicated 4-bit display bitvector is
+-- band-painted per field polygon and rendered as a crisp per-pixel overlay. The sampled
+-- tile grid below is the engine-absent fallback and is kept bit for bit.
+--
+-- The display map is SEPARATE from CropStressValueMap on purpose: the sim map encodes
+-- moisture linearly over 254 raw steps, where the driest pixels land in DMV state 0 (the
+-- off-field transparent band). Band-painting a dedicated map floors every field at band 1
+-- so a bone-dry field stays visible, and it never touches the persisted sim data.
+--
+-- The helpers are PORTED, not required: SCS must not depend on
 -- FS25_SoilFertilizer being installed, so the polygon walk and the point-in-polygon test
 -- live here in full rather than being reached across a mod boundary.
 --
--- ONE ramp function feeds both the tiles and the legend swatch. That is deliberate: a
--- legend drawn from a second colour table is a legend that can quietly stop describing the
--- map, which is exactly the kind of drift this suite keeps paying for.
+-- ONE ramp function feeds the tiles, the DMV bands and the legend swatch. That is
+-- deliberate: a legend drawn from a second colour table is a legend that can quietly stop
+-- describing the map, which is exactly the kind of drift this suite keeps paying for.
 --
 -- Read only. Nothing here writes a densmap, and the HUD alert thresholds are untouched:
 -- this is a display ramp, not a change to what counts as dry.
@@ -56,6 +65,12 @@ CsMoistureMapOverlay.DENSITY_POINTS       = {8000, 20000, 40000}
 -- actually reads, so each level carries its own.
 CsMoistureMapOverlay.DENSITY_STEPS        = {13, 10, 6}
 CsMoistureMapOverlay.DENSITY_DEFAULT      = 2
+
+-- DMV (density-map visualization) primary path. Rebuild cadence while the page is open,
+-- and the number of discrete colour bands the display map paints (state 0 stays
+-- transparent for off-field, bands 1..15 carry the moisture ramp).
+CsMoistureMapOverlay.PDA_DMV_REBUILD_MS = 3000
+CsMoistureMapOverlay.PDA_DMV_BANDS      = 15
 
 local CS_MAP_MOD_NAME = g_currentModName
 
@@ -158,6 +173,20 @@ function CsMoistureMapOverlay.new(manager)
     self.density        = CsMoistureMapOverlay.DENSITY_DEFAULT
     self.sampleStep     = CsMoistureMapOverlay.DENSITY_STEPS[CsMoistureMapOverlay.DENSITY_DEFAULT]
     self.stats          = {dry = 0, good = 0, wet = 0, avg = nil, fields = 0}
+
+    -- PDA DMV double-buffer overlay (async density-map visualization, Soil pattern).
+    self._pdaDMVAvailable  = false
+    self._pdaOverlays      = {nil, nil}
+    self._pdaShowIdx       = 1
+    self._pdaBuildIdx      = 2
+    self._pdaBuildInFlight = false
+    self._pdaBuildHandle   = nil
+    self._pdaHasShownOnce  = false
+    self._pdaUsingDMV      = false
+    self._pdaNextBuildMs   = 0
+    self._pdaDataSig       = nil   -- fingerprint of last painted field state
+    self._pdaDisplayMap    = nil   -- dedicated 4-bit display bitvector
+    self._pdaDisplayMod    = nil   -- its terrain-bound modifier
     return self
 end
 
@@ -165,7 +194,48 @@ function CsMoistureMapOverlay:initialize()
     if createImageOverlay then
         self.mapDotOverlay = createImageOverlay("dataS/menu/base/graph_pixel.dds")
     end
-    print("[CropStress] CsMoistureMapOverlay initialized (heat sheet)")
+    self:_pdaCreateOverlays()
+    print("[CropStress] CsMoistureMapOverlay initialized (DMV heatmap, tile fallback)")
+end
+
+--- Create the double-buffer DMV overlays and the band-paint display map. Mirror of the
+--- Soil PDA overlay creation; engine-absent stays available=false so onDraw keeps tiles.
+function CsMoistureMapOverlay:_pdaCreateOverlays()
+    if createDensityMapVisualizationOverlay == nil or g_dedicatedServer then return end
+    if createBitVectorMap == nil or loadBitVectorMapNew == nil then return end
+    if DensityMapModifier == nil or DensityMapModifier.new == nil then return end
+
+    local resX, resY = 1024, 1024
+    local mog = g_currentMission and g_currentMission.mapOverlayGenerator
+    if mog and MapOverlayGenerator and MapOverlayGenerator.OVERLAY_RESOLUTION then
+        local fsRes = MapOverlayGenerator.OVERLAY_RESOLUTION.FOLIAGE_STATE
+        if fsRes and fsRes[1] and fsRes[2] then resX, resY = fsRes[1], fsRes[2] end
+    end
+
+    local ok, err = pcall(function()
+        self._pdaOverlays[1] = createDensityMapVisualizationOverlay("CS_PDAHeatmapA", resX, resY)
+        self._pdaOverlays[2] = createDensityMapVisualizationOverlay("CS_PDAHeatmapB", resX, resY)
+    end)
+    if not ok or self._pdaOverlays[1] == nil or self._pdaOverlays[2] == nil then
+        self._pdaOverlays = {nil, nil}
+        return
+    end
+    self._pdaDMVAvailable = true
+
+    ok, err = pcall(function()
+        -- 8-channel map, same shape Soil's value maps use; the DMV reads the low 4 bits
+        -- (firstChannel=0, numChannels=4), so band 1..15 lands in states 1..15.
+        self._pdaDisplayMap = createBitVectorMap("CS_PDA_MoistureDisplay")
+        loadBitVectorMapNew(self._pdaDisplayMap, resX, resY, 8, false)
+        self._pdaDisplayMod = DensityMapModifier.new(self._pdaDisplayMap, 0, 8, g_terrainNode)
+    end)
+    if not ok or self._pdaDisplayMap == nil or self._pdaDisplayMap == 0 or self._pdaDisplayMod == nil then
+        self._pdaDisplayMap = nil
+        self._pdaDisplayMod = nil
+        self._pdaDMVAvailable = false
+        self._pdaOverlays = {nil, nil}
+        return
+    end
 end
 
 function CsMoistureMapOverlay:delete()
@@ -173,6 +243,14 @@ function CsMoistureMapOverlay:delete()
         delete(self.mapDotOverlay)
         self.mapDotOverlay = nil
     end
+    if self._pdaDisplayMap and self._pdaDisplayMap ~= 0 and delete then
+        pcall(delete, self._pdaDisplayMap)
+    end
+    self._pdaDisplayMap    = nil
+    self._pdaDisplayMod    = nil
+    self._pdaOverlays      = {nil, nil}
+    self._pdaBuildInFlight = false
+    self._pdaBuildHandle   = nil
     self.samplePoints = {}
     self.fieldPolyCache = {}
 end
@@ -182,12 +260,217 @@ function CsMoistureMapOverlay:getDefaultFilterState()  return {} end
 
 function CsMoistureMapOverlay:requestRefresh()
     self.nextSampleTime = 0
+    self._pdaNextBuildMs = 0
+    self._pdaDataSig     = nil   -- force a repaint on the next build
 end
 
 --- Kept for callers that still ask for a banded colour; it now answers from the ramp so a
 --- second palette cannot drift away from the sheet.
 function CsMoistureMapOverlay:getMoistureColor(moisture)
     return CsMoistureMapOverlay.rampColor(moisture)
+end
+
+-- ── PDA DMV overlay (density-map visualization) ───────────
+
+--- Poll the async overlay build. When the engine reports the back buffer ready, swap the
+--- buffers so the freshly generated frame becomes the one that draws (Soil pattern).
+function CsMoistureMapOverlay:_pdaPollBuildFinished()
+    if not self._pdaBuildInFlight or not self._pdaBuildHandle then return end
+    if getIsDensityMapVisualizationOverlayReady == nil then return end
+    if getIsDensityMapVisualizationOverlayReady(self._pdaBuildHandle) then
+        self._pdaShowIdx, self._pdaBuildIdx = self._pdaBuildIdx, self._pdaShowIdx
+        self._pdaBuildInFlight = false
+        self._pdaBuildHandle   = nil
+        self._pdaHasShownOnce  = true
+    end
+end
+
+--- Every field polygon (not farmland patch) with its farmland's moisture, for the band
+--- paint. One farmland may own several fields; the moisture scalar is per farmland, so it
+--- is cached per fid and every polygon of that farmland gets the same band.
+function CsMoistureMapOverlay:_pdaCollectFieldPolygons()
+    local out = {}
+    if g_fieldManager == nil or g_fieldManager.fields == nil then return out end
+    local mgr = self.manager
+    local soilSystem = mgr and mgr.soilSystem
+    if soilSystem == nil or soilSystem.fieldData == nil then return out end
+
+    local moistCache = {}
+    for _, f in ipairs(g_fieldManager.fields) do
+        if f and f.farmland and f.farmland.id and f.farmland.id > 0 then
+            local fid = f.farmland.id
+            if moistCache[fid] == nil then
+                local entry = soilSystem.fieldData[fid]
+                moistCache[fid] = (entry and entry.moisture) or -1   -- -1 = no sim data yet
+            end
+            local moisture = moistCache[fid]
+            if moisture >= 0 then
+                local vx, vz = {}, {}
+                if f.polygonPoints then
+                    for i = 1, #f.polygonPoints do
+                        local nodeId = f.polygonPoints[i]
+                        if nodeId and nodeId ~= 0 then
+                            local okW, wx, _, wz = pcall(getWorldTranslation, nodeId)
+                            if okW and wx then
+                                vx[#vx + 1] = wx
+                                vz[#vz + 1] = wz
+                            end
+                        end
+                    end
+                end
+                if #vx >= 3 then
+                    out[#out + 1] = { fid = fid, vx = vx, vz = vz, moisture = moisture }
+                end
+            end
+        end
+    end
+    return out
+end
+
+--- Cheap fingerprint of the field moisture state. Repainting the display map is skipped
+--- while this is unchanged, so the open map idles without churning the bitvector.
+function CsMoistureMapOverlay:_pdaBuildDataSignature(polys)
+    local sig = 0
+    for _, p in ipairs(polys) do
+        sig = sig + math.floor(p.moisture * 1000) * 31 + p.fid * 7
+    end
+    return sig
+end
+
+--- Band counts for the sidebar legend, computed from the DMV polygon pass so the status
+--- rows stay live when the DMV path (not updateSamplePoints) drives the page.
+function CsMoistureMapOverlay:_pdaComputeStats(polys)
+    local stats = {dry = 0, good = 0, wet = 0, avg = nil, fields = 0}
+    local sum = 0
+    local seenFarms = {}
+    for _, p in ipairs(polys) do
+        if not seenFarms[p.fid] then
+            seenFarms[p.fid] = true
+            local band = CsMoistureMapOverlay.classifyMoisture(p.moisture)
+            if band ~= nil then
+                stats[band] = stats[band] + 1
+                stats.fields = stats.fields + 1
+                sum = sum + p.moisture
+            end
+        end
+    end
+    if stats.fields > 0 then stats.avg = sum / stats.fields end
+    self.stats = stats
+end
+
+--- Repaint the dedicated display map: clear everything, then band-paint every field
+--- polygon. Band 0 stays for off-field (DMV state 0 = transparent); each field lands on
+--- band 1..15 so even a bone-dry field is visible.
+function CsMoistureMapOverlay:_pdaPaintDisplayMap(polys)
+    local m = self._pdaDisplayMod
+    if m == nil then return false end
+    local half = ((g_currentMission and g_currentMission.terrainSize) or 2048) * 0.5
+
+    local okClear = pcall(function()
+        m:setParallelogramWorldCoords(-half, -half, half, -half, -half, half,
+                                      DensityCoordType.POINT_POINT_POINT)
+        m:executeSet(0)
+    end)
+    if not okClear then return false end
+
+    for _, p in ipairs(polys) do
+        local band = math.max(1, math.min(CsMoistureMapOverlay.PDA_DMV_BANDS,
+                                          math.ceil(p.moisture * CsMoistureMapOverlay.PDA_DMV_BANDS)))
+        local okP = pcall(function()
+            m:clearPolygonPoints()
+            for i = 1, #p.vx do
+                m:addPolygonPointWorldCoords(p.vx[i], p.vz[i])
+            end
+        end)
+        if okP then
+            pcall(function() m:executeSet(band) end)
+        end
+    end
+    return true
+end
+
+--- Kick an async DMV build. Repaints the display map only when the moisture state moved;
+--- the state colours are a fixed ramp so the regenerate alone would not change anything.
+--- Engine-absent or value-map-absent leaves _pdaUsingDMV false so onDraw keeps tiles.
+function CsMoistureMapOverlay:_pdaKickBuild()
+    local ov = self._pdaOverlays[self._pdaBuildIdx]
+    if not ov then return end
+    self._pdaUsingDMV = false
+
+    local polys = self:_pdaCollectFieldPolygons()
+    local sig   = self:_pdaBuildDataSignature(polys)
+    if sig ~= (self._pdaDataSig or -1) then
+        self:_pdaComputeStats(polys)
+        if self:_pdaPaintDisplayMap(polys) then
+            self._pdaDataSig = sig
+        end
+    end
+
+    local map = self._pdaDisplayMap
+    if map == nil then return end
+
+    if resetDensityMapVisualizationOverlay then
+        resetDensityMapVisualizationOverlay(ov)
+    end
+    -- State 0 (off-field band 0) stays transparent; states 1..15 follow the ramp.
+    setDensityMapVisualizationOverlayStateColor(ov, map, 0, 0, 0, 4, 0, 0, 0, 0, 0)
+    for i = 1, CsMoistureMapOverlay.PDA_DMV_BANDS do
+        local r, g, b = CsMoistureMapOverlay.rampColor(i / CsMoistureMapOverlay.PDA_DMV_BANDS)
+        setDensityMapVisualizationOverlayStateColor(ov, map, 0, 0, 0, 4, i, r, g, b, 1.0)
+    end
+    self._pdaUsingDMV = true
+    generateDensityMapVisualizationOverlay(ov)
+    self._pdaBuildHandle   = ov
+    self._pdaBuildInFlight = true
+end
+
+--- Draw the engine DMV overlay stretched over the map rect. Returns true when the DMV
+--- overlay was drawn, so the caller skips the sampled tiles entirely.
+function CsMoistureMapOverlay:_pdaDrawDMV(ingameMap, mapX, mapY, mapWidth, mapHeight)
+    if not self._pdaDMVAvailable then return false end
+
+    local now = (g_currentMission and g_currentMission.time) or g_time or 0
+    self:_pdaPollBuildFinished()
+
+    local wantBuild = not self._pdaBuildInFlight
+        and (not self._pdaHasShownOnce or now >= self._pdaNextBuildMs)
+    if wantBuild then
+        self:_pdaKickBuild()
+        self._pdaNextBuildMs = now + CsMoistureMapOverlay.PDA_DMV_REBUILD_MS
+    end
+
+    if not self._pdaUsingDMV then return false end
+    if not self._pdaHasShownOnce then return false end   -- tiles until the first build lands
+
+    local ov = self._pdaOverlays[self._pdaShowIdx]
+    if not ov then return false end
+
+    -- Terrain rect in screen space via the shared world→screen projection.
+    local half = ((g_currentMission and g_currentMission.terrainSize) or 2048) * 0.5
+    local ax, ay = self:worldToScreenPosition(ingameMap, -half, -half)
+    local bx, by = self:worldToScreenPosition(ingameMap, half, half)
+    if not ax or not bx then return false end
+
+    local x1, x2 = math.min(ax, bx), math.max(ax, bx)
+    local y1, y2 = math.min(ay, by), math.max(ay, by)
+    if x1 == x2 or y1 == y2 then return false end
+
+    -- Clip to the visible map area and pick the matching UV slice.
+    local rx1 = math.max(x1, mapX);          local ry1 = math.max(y1, mapY)
+    local rx2 = math.min(x2, mapX + mapWidth);   local ry2 = math.min(y2, mapY + mapHeight)
+    if (rx2 - rx1) <= 0 or (ry2 - ry1) <= 0 then return false end
+
+    local uL = (rx1 - x1) / (x2 - x1); local vT = (ry1 - y1) / (y2 - y1)
+    local uR = (rx2 - x1) / (x2 - x1); local vB = (ry2 - y1) / (y2 - y1)
+
+    setOverlayUVs(ov, uL, vT, uL, vB, uR, vT, uR, vB)
+    setOverlayColor(ov, 1, 1, 1, CsMoistureMapOverlay.ALPHA)
+    renderOverlay(ov, rx1, ry1, rx2 - rx1, ry2 - ry1)
+
+    if Overlay ~= nil and Overlay.DEFAULT_UVS ~= nil then
+        setOverlayUVs(ov, unpack(Overlay.DEFAULT_UVS))
+    end
+    return true
 end
 
 -- ── Farmland fill points (ported from the Soil overlay) ───
@@ -420,11 +703,23 @@ end
 -- ── Draw the sheet ────────────────────────────────────────
 
 function CsMoistureMapOverlay:onDraw(frame, mapElement, ingameMap, pageIndex)
-    self:updateSamplePoints(false)
-    if #self.samplePoints == 0 then return end
-
     local mapX, mapY, mapWidth, mapHeight = self:getMapRenderBounds(frame, ingameMap)
     if mapX == nil then return end
+
+    -- REFINED primary path: engine density-map visualization overlay. When it is
+    -- driving this page, never fall through to the sampled tiles (the "old grid
+    -- flashes before the map appears" artifact).
+    if self:_pdaDrawDMV(ingameMap, mapX, mapY, mapWidth, mapHeight) then
+        return
+    end
+    if self._pdaUsingDMV then
+        return
+    end
+
+    -- Legacy fallback: the sampled tile grid. Only reachable when the engine has no
+    -- DMV support or the value-map backing is absent.
+    self:updateSamplePoints(false)
+    if #self.samplePoints == 0 then return end
     local mapMaxX = mapX + mapWidth
     local mapMaxY = mapY + mapHeight
 
