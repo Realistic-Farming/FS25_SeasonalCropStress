@@ -158,7 +158,9 @@
                         <fillSound template="DEFAULT_REFUEL_SOUND" linkNode="Aggregat_main"/>
                     </fillTrigger>
 					<fillUnit unitTextOverride="$l10n_unit_literShort" showOnHud="false" showInShop="false" fillTypes="WATER" capacity="250000" updateMass="false" startFillLevel="250000" startFillType="WATER" canBeUnloaded="false"/>
-					<fillUnit unitTextOverride="$l10n_unit_literShort" showOnHud="false" showInShop="false" fillTypes="diesel" capacity="450" canBeUnloaded="false" exactFillRootNode="Aggregat_main"/>
+					<fillUnit unitTextOverride="$l10n_unit_literShort" showOnHud="false" showInShop="false" fillTypes="diesel" capacity="450" canBeUnloaded="false">
+						<exactFillRootNode node="Aggregat_main"/>
+					</fillUnit>
                 </fillUnits>
             </fillUnitConfiguration>
         </fillUnitConfigurations>
