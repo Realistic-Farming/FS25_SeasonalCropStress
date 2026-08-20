@@ -447,7 +447,10 @@ function CropStressManager:buildFieldMap()
         end
     end
 
-    csLog(string.format("buildFieldMap: %d fields mapped by fieldId", count))
+    if count ~= (self._lastFieldMapCount or -1) then
+        csLog(string.format("buildFieldMap: %d fields mapped by fieldId", count))
+        self._lastFieldMapCount = count
+    end
     return count
 end
 
