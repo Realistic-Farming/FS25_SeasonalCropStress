@@ -23,39 +23,52 @@
 -- All values are normalized screen fractions (0.0–1.0).
 -- ============================================================
 
-HUDOverlay = {}
+-- BUILD 17:57 + ATTN 18:02 (Wizard hot-reload law, FS25-HotReload-Guide.md Part 1):
+-- reuse the existing class table on Ctrl+R reload so updated methods land on the
+-- table live metatables already reference, instead of orphaning it.
+HUDOverlay = HUDOverlay or {}
 HUDOverlay.__index = HUDOverlay
 
 -- ── Main panel layout ──────────────────────────────────────
--- BUILD 06:43 (Sam DESIGN 06:42): fresh-save home is middle-LEFT (0.02, 0.45) in
--- the suite's staggered default layout - clear of the vanilla minimap corner the
--- old (0.010, 0.175) default crowded. A saved layout still wins (settings
+-- BUILD 15:47 (Sam DESIGN 15:46): fresh-save home is LEFT at (0.010, 0.180), panel
+-- narrowed to 0.160 wide, rows capped at 4 - top edge 0.312, under Favors at 0.370.
+-- The 5-day forecast strip moved from BELOW the panel to its RIGHT (see the
+-- FORECAST constants and the draw call). A saved layout still wins (settings
 -- hudPanelX/Y override these on load; their DEFAULTS mirror these values).
-HUDOverlay.PANEL_X          = 0.02
-HUDOverlay.PANEL_Y          = 0.45
-HUDOverlay.PANEL_W          = 0.230
+HUDOverlay.PANEL_X          = 0.010
+HUDOverlay.PANEL_Y          = 0.180
+HUDOverlay.PANEL_W          = 0.160
 HUDOverlay.ROW_H            = 0.024
 HUDOverlay.HEADER_H         = 0.028
 HUDOverlay.PADDING          = 0.004
-HUDOverlay.BAR_W            = 0.080
+-- BUILD 15:47: bar narrowed with the panel (was 0.080 in the 0.230-wide layout) so
+-- the row label keeps proportional room; drawFieldRow also clips the label so it
+-- can never run under the bar in the narrow layout.
+HUDOverlay.BAR_W            = 0.055
 HUDOverlay.BAR_H            = 0.012
 HUDOverlay.TEXT_SIZE         = 0.013
 HUDOverlay.HEADER_TEXT_SIZE  = 0.014
-HUDOverlay.MAX_FIELDS        = 6
+-- BUILD 14:39 (Sam DESIGN 14:20): 6 -> 4 visible rows so the panel's box tops out
+-- at ~0.320 in the suite layout. Every consumer (row paint, panel height, scroll
+-- clamps) derives from this one constant, and scrolling still reaches the rest.
+HUDOverlay.MAX_FIELDS        = 4
 
 -- ── Forecast strip layout ──────────────────────────────────
--- Layout sections from bottom to top:
---   PADDING | PCT_ROW | BAR_AREA | PADDING | LABEL_ROW | PADDING | HEADER
--- Total = 0.004+0.018+0.032+0.004+0.014+0.004+0.022 = 0.098 → 0.100
-HUDOverlay.FORECAST_H        = 0.100   -- total height of the forecast panel
-HUDOverlay.FORECAST_HEADER_H = 0.022
-HUDOverlay.FORECAST_BAR_AREA = 0.032   -- height of vertical bars
-HUDOverlay.FORECAST_ROW_H    = 0.018   -- pct text row below bars
-HUDOverlay.FORECAST_LABEL_H  = 0.014   -- day label row above bars
+-- BUILD 15:47 (Sam DESIGN 15:46): the strip renders to the RIGHT of the main panel
+-- (bottom-aligned with it, so at factory it sits at 0.180/0.180 with its top edge
+-- at 0.260 - it never draws below py). It now has its OWN width (it used to borrow
+-- PANEL_W), and the interior compressed to fit Sam's 0.100 x 0.080 box:
+--   PADDING | PCT_ROW | BAR_AREA | PADDING | LABEL | HEADER  ≈ 0.080
+HUDOverlay.FORECAST_W        = 0.100   -- strip width (no longer PANEL_W)
+HUDOverlay.FORECAST_H        = 0.080   -- total height of the forecast panel
+HUDOverlay.FORECAST_HEADER_H = 0.016
+HUDOverlay.FORECAST_BAR_AREA = 0.026   -- height of vertical bars
+HUDOverlay.FORECAST_ROW_H    = 0.014   -- pct text row below bars
+HUDOverlay.FORECAST_LABEL_H  = 0.012   -- day label row above bars
 HUDOverlay.FORECAST_COLS     = 5
-HUDOverlay.FORECAST_COL_W    = 0.040   -- width per forecast column
+HUDOverlay.FORECAST_COL_W    = 0.018   -- width per forecast column
 HUDOverlay.FORECAST_BAR_H    = 0.010
-HUDOverlay.FORECAST_TEXT_SZ  = 0.011
+HUDOverlay.FORECAST_TEXT_SZ  = 0.009
 
 -- ── Scale & resize ─────────────────────────────────────────
 HUDOverlay.MIN_SCALE          = 0.6
@@ -399,12 +412,15 @@ function HUDOverlay:isPointerOverHUD(posX, posY)
     if posX >= px and posX <= px + pw and posY >= py and posY <= py + ph then
         return true
     end
-    -- Also include forecast strip
+    -- Also include forecast strip - BUILD 15:47: it sits to the RIGHT of the panel
+    -- now (bottom-aligned), so the hit rect moved with the paint.
     if self.forecastCache ~= nil then
-        local s    = self.scale
-        local stripH = HUDOverlay.FORECAST_H * s + HUDOverlay.PADDING * s
-        if posX >= px and posX <= px + pw
-        and posY >= py - stripH and posY <= py then
+        local s      = self.scale
+        local pad    = HUDOverlay.PADDING * s
+        local stripW = HUDOverlay.FORECAST_W * s
+        local stripH = HUDOverlay.FORECAST_H * s
+        if posX >= px + pw and posX <= px + pw + pad + stripW
+        and posY >= py and posY <= py + stripH then
             return true
         end
     end
@@ -736,9 +752,12 @@ function HUDOverlay:draw()
         end
     end
 
-    -- Forecast strip BELOW the main panel
+    -- BUILD 15:47 (Sam DESIGN 15:46): forecast strip to the RIGHT of the main panel,
+    -- bottom-aligned with it - at factory that is (0.180, 0.180), top edge 0.260,
+    -- and it never draws below py. The relative form keeps the strip attached when
+    -- the player drags the panel.
     if self.forecastCache ~= nil then
-        self:drawForecastStrip(px, py - HUDOverlay.FORECAST_H * s - pad)
+        self:drawForecastStrip(px + panelW + pad, py)
     end
 
     -- Drop shadow
@@ -874,6 +893,13 @@ function HUDOverlay:drawFieldRow(row, px, rowY, s)
     local cropLabel = row.cropName or "?"
     local stageStr  = row.growthStage and (" S" .. tostring(row.growthStage)) or ""
     local label     = string.format("F%d · %s%s", row.fieldId, cropLabel, stageStr)
+    -- BUILD 15:47: in the 0.160-wide layout the label column holds ~13 glyphs before
+    -- the bar; clip so a long crop name can never run under it. The cap is in
+    -- characters, which is scale-stable (text and space both scale with s), and the
+    -- stress "!" is appended AFTER the clip so it always survives.
+    if string.len(label) > 13 then
+        label = string.sub(label, 1, 13)
+    end
     local stressStr = (row.inStressWindow and stress > 0.15) and " !" or ""
 
     setTextColor(unpack(HUDOverlay.COLOR_TEXT))
@@ -935,7 +961,8 @@ function HUDOverlay:drawForecastStrip(px, py)
     local fieldId     = self.forecastCache.fieldId
     local fH          = HUDOverlay.FORECAST_H * s
     local pad         = HUDOverlay.PADDING * s
-    local panelW      = HUDOverlay.PANEL_W * s
+    -- BUILD 15:47: the strip has its own width now; it no longer borrows PANEL_W.
+    local panelW      = HUDOverlay.FORECAST_W * s
     local textSz      = HUDOverlay.FORECAST_TEXT_SZ * s
 
     -- Drop shadow
@@ -1366,3 +1393,16 @@ function HUDOverlay:delete()
     self.isInitialized   = false
 end
 
+
+-- =========================================================
+-- BUILD 17:57 + ATTN 18:02 (hot-reload guide Part 2): force-patch the live
+-- instance after a Ctrl+R reload - g_cropStressManager or mission.cropStressManager; holds .hudOverlay.
+local __hrMgr = g_cropStressManager or (g_currentMission ~= nil and g_currentMission.cropStressManager or nil)
+if __hrMgr ~= nil and __hrMgr.hudOverlay ~= nil then
+    local inst = __hrMgr.hudOverlay
+    for k, v in pairs(HUDOverlay) do
+        if type(v) == "function" then
+            inst[k] = v
+        end
+    end
+end
