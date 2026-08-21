@@ -19,7 +19,9 @@ end
 -- ============================================================
 -- CROP STRESS SETTINGS CLASS
 -- ============================================================
-CropStressSettings = {}
+-- Wizard hot-reload law Part 1: reuse the existing class table on reload so
+-- updated methods land on the table live metatables already reference.
+CropStressSettings = CropStressSettings or {}
 CropStressSettings.__index = CropStressSettings
 
 -- Default values matching the current hardcoded constants
@@ -36,8 +38,22 @@ local DEFAULTS = {
     debugMode = false,
     -- Release-gate opt-in (default false), orthogonal to difficulty. See ReleaseGate.lua.
     experimentalSystems = false,
-    hudPanelX = 0.01,    -- matches HUDOverlay.PANEL_X (BUILD 15:47 left default)
-    hudPanelY = 0.18     -- matches HUDOverlay.PANEL_Y (BUILD 15:47 left default)
+    -- Wizard 2026-08-21: factory home is the suite layout Wizard arranged
+    -- in-game (must match HUDOverlay.PANEL_X/Y). A saved XML still wins on load.
+    hudPanelX = 0.012604,
+    hudPanelY = 0.236481,
+    -- Forecast pane home (Wizard 2026-08-21: strip is independently movable).
+    -- -1 = docked to the fields panel's right edge; the factory home is the
+    -- absolute spot Wizard placed it (just above the fields pane).
+    hudForecastX = 0.136500,
+    hudForecastY = 0.135556,
+    -- Wizard 2026-08-21 width wave: corner-scale and per-pane width multipliers
+    -- (NPCFavor/Workplace pattern) persist too. hudScale was written by the HUD
+    -- since the resize feature shipped but never saved - fixed here. Values are
+    -- the factory suite layout.
+    hudScale         = 1.118898,
+    hudWidthMult     = 1.098438,
+    hudForecastWMult = 1.187500
 }
 
 -- Difficulty multipliers
@@ -90,7 +106,15 @@ local VALIDATION = {
     criticalThreshold = { min = 0.15, max = 0.35 },
     alertCooldown = { min = 4, max = 24 },
     hudPanelX = { min = 0.0,  max = 0.95 },
-    hudPanelY = { min = 0.05, max = 0.95 }
+    hudPanelY = { min = 0.05, max = 0.95 },
+    -- Forecast pane: same screen clamp, but -1 (docked sentinel) passes through
+    -- validate() untouched - see the explicit branch there.
+    hudForecastX = { min = 0.0, max = 0.95 },
+    hudForecastY = { min = 0.0, max = 0.95 },
+    -- Mirror HUDOverlay.MIN/MAX_SCALE and MIN/MAX_WIDTH_MULT
+    hudScale         = { min = 0.6,  max = 1.6 },
+    hudWidthMult     = { min = 0.75, max = 2.0 },
+    hudForecastWMult = { min = 0.75, max = 2.0 }
 }
 
 function CropStressSettings.new()
@@ -161,6 +185,11 @@ function CropStressSettings:load(missionInfo)
     self.experimentalSystems = readBool(xmlFile, "cropStressSettings.experimentalSystems", DEFAULTS.experimentalSystems)
     self.hudPanelX          = xmlFile:getFloat("cropStressSettings.hudPanelX")           or DEFAULTS.hudPanelX
     self.hudPanelY          = xmlFile:getFloat("cropStressSettings.hudPanelY")           or DEFAULTS.hudPanelY
+    self.hudForecastX       = xmlFile:getFloat("cropStressSettings.hudForecastX")        or DEFAULTS.hudForecastX
+    self.hudForecastY       = xmlFile:getFloat("cropStressSettings.hudForecastY")        or DEFAULTS.hudForecastY
+    self.hudScale           = xmlFile:getFloat("cropStressSettings.hudScale")            or DEFAULTS.hudScale
+    self.hudWidthMult       = xmlFile:getFloat("cropStressSettings.hudWidthMult")        or DEFAULTS.hudWidthMult
+    self.hudForecastWMult   = xmlFile:getFloat("cropStressSettings.hudForecastWMult")    or DEFAULTS.hudForecastWMult
 
     -- One-time default migration for the yield cap (Arissani ruling 2026-07-30).
     --
@@ -241,6 +270,11 @@ function CropStressSettings:saveToXMLFile(missionInfo)
     xmlFile:setBool("cropStressSettings.experimentalSystems", self.experimentalSystems)
     xmlFile:setFloat("cropStressSettings.hudPanelX", self.hudPanelX)
     xmlFile:setFloat("cropStressSettings.hudPanelY", self.hudPanelY)
+    xmlFile:setFloat("cropStressSettings.hudForecastX", self.hudForecastX or -1)
+    xmlFile:setFloat("cropStressSettings.hudForecastY", self.hudForecastY or -1)
+    xmlFile:setFloat("cropStressSettings.hudScale", self.hudScale or 1.0)
+    xmlFile:setFloat("cropStressSettings.hudWidthMult", self.hudWidthMult or 1.0)
+    xmlFile:setFloat("cropStressSettings.hudForecastWMult", self.hudForecastWMult or 1.0)
 
     xmlFile:save()
     xmlFile:delete()
@@ -292,6 +326,17 @@ function CropStressSettings:validateSettings()
     -- Clamp HUD panel position
     self.hudPanelX = math.max(VALIDATION.hudPanelX.min, math.min(VALIDATION.hudPanelX.max, self.hudPanelX or DEFAULTS.hudPanelX))
     self.hudPanelY = math.max(VALIDATION.hudPanelY.min, math.min(VALIDATION.hudPanelY.max, self.hudPanelY or DEFAULTS.hudPanelY))
+    -- Forecast pane: -1 is the docked sentinel and passes through untouched;
+    -- anything else clamps on-screen like the main panel.
+    local fx = self.hudForecastX or DEFAULTS.hudForecastX
+    local fy = self.hudForecastY or DEFAULTS.hudForecastY
+    if fx >= 0 then fx = math.max(VALIDATION.hudForecastX.min, math.min(VALIDATION.hudForecastX.max, fx)) else fx = -1 end
+    if fy >= 0 then fy = math.max(VALIDATION.hudForecastY.min, math.min(VALIDATION.hudForecastY.max, fy)) else fy = -1 end
+    self.hudForecastX = fx
+    self.hudForecastY = fy
+    self.hudScale         = math.max(VALIDATION.hudScale.min,         math.min(VALIDATION.hudScale.max,         self.hudScale or DEFAULTS.hudScale))
+    self.hudWidthMult     = math.max(VALIDATION.hudWidthMult.min,     math.min(VALIDATION.hudWidthMult.max,     self.hudWidthMult or DEFAULTS.hudWidthMult))
+    self.hudForecastWMult = math.max(VALIDATION.hudForecastWMult.min, math.min(VALIDATION.hudForecastWMult.max, self.hudForecastWMult or DEFAULTS.hudForecastWMult))
 
     -- Ensure boolean values are actually booleans
     self.enabled = not not self.enabled
@@ -355,4 +400,20 @@ function CropStressSettings:debugPrint()
     csLog("hudPanelX: " .. tostring(self.hudPanelX))
     csLog("hudPanelY: " .. tostring(self.hudPanelY))
     csLog("=========================")
+end
+-- =========================================================
+-- Wizard hot-reload law Part 2: force-patch the live settings instance after a
+-- reload so the new save()/validate() (hudForecastX/Y persistence) apply
+-- mid-session. The instance lives at manager.settings; fields the new code
+-- reads that the old instance lacks are nil-safe (save writes "or -1").
+local __hrMgr = g_cropStressManager or (g_currentMission ~= nil and g_currentMission.cropStressManager or nil)
+if __hrMgr ~= nil and __hrMgr.settings ~= nil then
+    local inst = __hrMgr.settings
+    for k, v in pairs(CropStressSettings) do
+        if type(v) == "function" then
+            inst[k] = v
+        end
+    end
+    -- Delivery proof in log.txt (Wizard 2026-08-21).
+    print("[CropStress] CropStressSettings hot-patched onto live instance")
 end

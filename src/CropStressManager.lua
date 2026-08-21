@@ -485,6 +485,19 @@ function CropStressManager:applySettings()
     -- Push persisted HUD position (client-local display preference, not synced to MP)
     self.hudOverlay.panelX = self.settings.hudPanelX
     self.hudOverlay.panelY = self.settings.hudPanelY
+    -- Forecast pane home: -1 sentinel = docked to the panel (leave nil), >= 0 = absolute
+    if self.settings.hudForecastX ~= nil and self.settings.hudForecastX >= 0
+    and self.settings.hudForecastY ~= nil and self.settings.hudForecastY >= 0 then
+        self.hudOverlay.forecastX = self.settings.hudForecastX
+        self.hudOverlay.forecastY = self.settings.hudForecastY
+    else
+        self.hudOverlay.forecastX = nil
+        self.hudOverlay.forecastY = nil
+    end
+    -- Scale + per-pane width multipliers (Wizard 2026-08-21 width wave)
+    self.hudOverlay.scale             = self.settings.hudScale         or self.hudOverlay.scale
+    self.hudOverlay.widthMult         = self.settings.hudWidthMult     or self.hudOverlay.widthMult
+    self.hudOverlay.forecastWidthMult = self.settings.hudForecastWMult or self.hudOverlay.forecastWidthMult
 
     csLog("Settings applied to all subsystems")
 end
