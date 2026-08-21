@@ -3336,17 +3336,17 @@
   "2026-08-21": [
     {
       "referrer": "github.com",
-      "count": 357,
-      "uniques": 118
+      "count": 370,
+      "uniques": 117
     },
     {
       "referrer": "Google",
-      "count": 58,
+      "count": 57,
       "uniques": 33
     },
     {
       "referrer": "Bing",
-      "count": 10,
+      "count": 11,
       "uniques": 2
     },
     {
@@ -3366,8 +3366,8 @@
     },
     {
       "referrer": "kingmods.net",
-      "count": 2,
-      "uniques": 2
+      "count": 1,
+      "uniques": 1
     }
   ]
 }
