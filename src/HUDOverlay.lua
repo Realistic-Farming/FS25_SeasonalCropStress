@@ -6,9 +6,10 @@
 -- Phase 1: Basic moisture bars with auto-show/auto-hide
 -- Phase 3: +Forecast strip for selected field, +click-based row selection
 --
--- Layout (bottom-left, above minimap):
+-- Layout (bottom-left, above minimap). BUILD 05:40: the header no longer carries a
+-- key glyph - the toggle ships unbound (Rule 1) and Controls is the binding's truth.
 -- ┌─────────────────────────────────────────────┐
--- │  CROP MOISTURE MONITOR               [M]    │
+-- │  CROP MOISTURE MONITOR                      │
 -- │  Field 7 · Wheat S4    ████████░░ 78%  [SEL]│
 -- │  Field 3 · Corn  S5 !  ███░░░░░░░ 32%       │
 -- │  Field 5 · Corn  S3    ██████████ 80%       │
@@ -26,8 +27,12 @@ HUDOverlay = {}
 HUDOverlay.__index = HUDOverlay
 
 -- ── Main panel layout ──────────────────────────────────────
-HUDOverlay.PANEL_X          = 0.010
-HUDOverlay.PANEL_Y          = 0.175
+-- BUILD 06:43 (Sam DESIGN 06:42): fresh-save home is middle-LEFT (0.02, 0.45) in
+-- the suite's staggered default layout - clear of the vanilla minimap corner the
+-- old (0.010, 0.175) default crowded. A saved layout still wins (settings
+-- hudPanelX/Y override these on load; their DEFAULTS mirror these values).
+HUDOverlay.PANEL_X          = 0.02
+HUDOverlay.PANEL_Y          = 0.45
 HUDOverlay.PANEL_W          = 0.230
 HUDOverlay.ROW_H            = 0.024
 HUDOverlay.HEADER_H         = 0.028
@@ -178,6 +183,22 @@ end
 function HUDOverlay:update(dt)
     if not self.isInitialized then return end
     if not self.isVisible then return end
+
+    -- BUILD 04:34: suite hide-all governs this HUD's live state, not only its paint.
+    -- Both draw paths (the MasterHUD self-draw and the gated FSBaseMission fallback)
+    -- already skip while the suite is hidden, but this update ran on regardless - so
+    -- hide-all during edit mode would have kept asserting the cursor and the frozen
+    -- camera for a HUD the player could no longer see. Same rule MasterHUD applies to
+    -- its own edit listeners: entering hide exits edit. The isVisible flag is NOT
+    -- touched - a toggle-on while hidden stays an honest pending state that paints
+    -- the moment the suite is shown again.
+    local suiteHud = (g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD
+    if suiteHud ~= nil and suiteHud.hudsHidden == true then
+        if self.editMode then
+            self:exitEditMode()
+        end
+        return
+    end
 
     self.animTimer = self.animTimer + dt
 
@@ -517,7 +538,7 @@ function HUDOverlay:onMouseEvent(posX, posY, isDown, isUp, button)
     -- In vehicle: RMB is captured by the vehicle camera, so we only allow it
     --   to EXIT edit mode (cursor is visible when in edit mode, suppressing
     --   the vehicle camera, so this is safe). Entering edit mode in a vehicle
-    --   must be done via the CS_EDIT_HUD keybind (Shift+H).
+    --   must be done via the CS_EDIT_HUD keybind (player-assigned; no default ships).
     if isDown and button == 3 then
         if self:isPointerOverHUD(posX, posY) then
             if self.editMode then
@@ -532,7 +553,7 @@ function HUDOverlay:onMouseEvent(posX, posY, isDown, isUp, button)
 
     -- ── LMB without edit mode: row selection while in a vehicle ──────────────
     -- Allows the player to select a field for the forecast panel without
-    -- needing to enter full edit mode (which requires Shift+H in a vehicle).
+    -- needing to enter full edit mode (which requires the CS_EDIT_HUD key in a vehicle).
     if isDown and button == 1 and not self.editMode then
         if self:isPlayerInVehicle() and self:isPointerOverHUD(posX, posY) then
             self.lmbDownOnHUD = true
@@ -746,14 +767,24 @@ function HUDOverlay:draw()
     setTextBold(true)
     renderText(px + pad, py + panelH - headerH + pad, HUDOverlay.HEADER_TEXT_SIZE * s,
         (g_i18n ~= nil and g_i18n:getText("cs_hud_title")) or "CROP MOISTURE")
-    renderText(px + panelW - 0.028 * s, py + panelH - headerH + pad, HUDOverlay.TEXT_SIZE * s, "[M]")
+    -- BUILD 05:40 (PB-H02): the hardcoded "[M]" key glyph is GONE. It claimed a
+    -- binding this action does not ship (Rule 1: no defaults, player assigns), so it
+    -- lied to everyone except a player who happened to bind M. Omitting the glyph is
+    -- the honest state; the Controls row is the binding's one source of truth.
     setTextBold(false)
 
-    -- Edit mode: pulsing border + corner resize handles
+    -- Edit mode: pulsing border + corner resize handles.
+    -- BUILD 05:40 (PB-H01, George TASK 05:22): border and handles draw from
+    -- COLOR_EDIT_BORDER - the orange this file itself declares as "edit mode
+    -- indicator" (:77) - instead of the hardcoded cyan/blue family that ignored it.
+    -- The pulse Brian scored PASS is kept; only the colour was the defect. Handles
+    -- derive from the same constant: idle at reduced alpha, hover lifted toward
+    -- white so the hovered corner still reads brighter, never a different hue.
     if self.editMode then
         local pulse = 0.5 + 0.5 * math.sin(self.animTimer * 4)
         local bw = 0.002
-        setOverlayColor(self.fillOverlay, 0.30, 0.65, 1.00, 0.4 + 0.4 * pulse)
+        local ec = HUDOverlay.COLOR_EDIT_BORDER
+        setOverlayColor(self.fillOverlay, ec[1], ec[2], ec[3], 0.4 + 0.4 * pulse)
         renderOverlay(self.fillOverlay, px,             py + panelH - bw, panelW, bw)
         renderOverlay(self.fillOverlay, px,             py,               panelW, bw)
         renderOverlay(self.fillOverlay, px,             py,               bw, panelH)
@@ -762,8 +793,8 @@ function HUDOverlay:draw()
         local handles = self:getResizeHandleRects()
         for key, rect in pairs(handles) do
             local hc = (self.hoverCorner == key)
-                and {0.50, 0.80, 1.00, 0.90}
-                or  {0.30, 0.55, 0.90, 0.65}
+                and {ec[1], math.min(1, ec[2] + 0.20), math.min(1, ec[3] + 0.25), 0.90}
+                or  {ec[1], ec[2], ec[3], 0.65}
             setOverlayColor(self.fillOverlay, unpack(hc))
             renderOverlay(self.fillOverlay, rect.x, rect.y, rect.w, rect.h)
         end
@@ -795,18 +826,25 @@ function HUDOverlay:draw()
         self:drawFieldRow(row, px, rowY, s)
     end
 
-    -- Footer hint
+    -- Footer hint.
+    -- BUILD 05:40 (PB-H02): the "Shift+H" strings are GONE - that chord was a stale
+    -- fiction from before Rule 1 stripped the defaults, so the footer lied the moment
+    -- it painted. Mouse affordances (LMB/RMB/corners) are real hardware truths and
+    -- stay; the rebindable action is named by its Controls label ("Edit/Move"), never
+    -- by an invented glyph. The edit-hint text colour joins the orange family so the
+    -- edit state reads as one vocabulary.
     if self.editMode then
-        setTextColor(0.60, 0.80, 1.00, 0.85)
+        local ec = HUDOverlay.COLOR_EDIT_BORDER
+        setTextColor(ec[1], math.min(1, ec[2] + 0.20), math.min(1, ec[3] + 0.30), 0.85)
         local editHint = self:isPlayerInVehicle()
-            and "LMB drag  |  Corners scale  |  Shift+H to exit"
+            and "LMB drag  |  Corners scale  |  Edit/Move key to exit"
             or  "LMB drag/select  |  Corners scale  |  RMB to exit"
         renderText(px + pad, py + pad, HUDOverlay.TEXT_SIZE * s * 0.85, editHint)
     elseif self.selectedFieldId == nil then
         setTextColor(unpack(HUDOverlay.COLOR_DIM_TEXT))
         local hintText
         if self:isPlayerInVehicle() then
-            hintText = "Click row to select • Shift+H = move"
+            hintText = "Click row to select • Edit/Move key = move"
         else
             hintText = (g_i18n ~= nil and g_i18n:getText("cs_hud_click_forecast")) or "RMB = select row / edit mode"
         end

@@ -36,8 +36,8 @@ local DEFAULTS = {
     debugMode = false,
     -- Release-gate opt-in (default false), orthogonal to difficulty. See ReleaseGate.lua.
     experimentalSystems = false,
-    hudPanelX = 0.010,   -- matches HUDOverlay.PANEL_X
-    hudPanelY = 0.175    -- matches HUDOverlay.PANEL_Y
+    hudPanelX = 0.02,    -- matches HUDOverlay.PANEL_X (BUILD 06:43 middle-left default)
+    hudPanelY = 0.45     -- matches HUDOverlay.PANEL_Y (BUILD 06:43 middle-left default)
 }
 
 -- Difficulty multipliers
