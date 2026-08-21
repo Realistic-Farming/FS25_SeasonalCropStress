@@ -30,6 +30,9 @@ source(modDir .. "src/SoilMoistureSystem.lua")
 source(modDir .. "src/CropStressModifier.lua")
 source(modDir .. "src/IrrigationManager.lua")
 
+-- Option-Scaling Spine (pure library, vendored from SettingsHub)
+source(modDir .. "src/integrations/OptionScalingResolver.lua")
+
 -- Settings
 source(modDir .. "src/ReleaseGate.lua")
 source(modDir .. "src/settings/CropStressSettings.lua")
