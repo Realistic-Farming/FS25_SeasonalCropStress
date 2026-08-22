@@ -3373,17 +3373,17 @@
   "2026-08-22": [
     {
       "referrer": "github.com",
-      "count": 370,
+      "count": 352,
       "uniques": 117
     },
     {
       "referrer": "Google",
-      "count": 57,
-      "uniques": 33
+      "count": 58,
+      "uniques": 35
     },
     {
       "referrer": "Bing",
-      "count": 11,
+      "count": 12,
       "uniques": 2
     },
     {
