@@ -14,7 +14,7 @@
 -- Export to the global environment so other modules can access it.
 -- getfenv(0) writes to the shared mod-global table, which is required because
 -- plain module-level assignments stay in this file's local scope in FS25.
-WeatherIntegration = {}
+WeatherIntegration = WeatherIntegration or {}
 WeatherIntegration.__index = WeatherIntegration
 getfenv(0)["WeatherIntegration"] = WeatherIntegration
 

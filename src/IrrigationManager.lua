@@ -5,7 +5,7 @@
 -- activation, and publishes irrigation gain events.
 -- ============================================================
 
-IrrigationManager = {}
+IrrigationManager = IrrigationManager or {}
 IrrigationManager.__index = IrrigationManager
 
 -- Constants

@@ -29,7 +29,7 @@ local function getNPCSystem()
     return g_currentMission and g_currentMission.npcFavorSystem
 end
 
-NPCIntegration = {}
+NPCIntegration = NPCIntegration or {}
 NPCIntegration.__index = NPCIntegration
 
 -- NPC configuration for Alex Chen

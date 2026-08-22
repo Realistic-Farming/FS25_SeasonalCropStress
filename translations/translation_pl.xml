@@ -8,7 +8,7 @@
     <text name="cs_hud_critical"      text="KRYTYCZNE — Nawadniaj teraz!"/>
     <text name="cs_hud_no_crop"       text="Brak uprawy"/>
     <text name="cs_hud_forecast"      text="Prognoza 5-dniowa"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 załadowany. Shift+M otwiera HUD wilgotności. Nowy użytkownik? Otwórz menu Pomoc (ESC → Pomoc) i znajdź Seasonal Crop Stress, aby dowiedzieć się wszystkiego."/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 załadowany. Alt+M otwiera HUD wilgotności. Nowy użytkownik? Otwórz menu Pomoc (ESC → Pomoc) i znajdź Seasonal Crop Stress, aby dowiedzieć się wszystkiego."/>
     <text name="cs_hud_click_forecast" text="Kliknij wiersz aby zobaczyć prognozę 5-dniową"/>
     <text name="cs_hud_vehicle_disabled" text="Nakładka wyłączona w pojeździe"/>
 
@@ -158,7 +158,7 @@
     <text name="helpLine_cs_p1_intro_title"    text="Co dodaje ten mod"/>
     <text name="helpLine_cs_p1_intro_text"     text="Sezonowy stres upraw dodaje symulację wilgotności gleby do każdego pola. Rośliny potrzebują wody w kluczowych fazach wzrostu. Jeśli jej nie otrzymają, zbiory będą mniejsze. Systemy nawadniania pozwalają kontrolować zaopatrzenie pól w wodę."/>
     <text name="helpLine_cs_p1_start_title"    text="Pierwsze kroki"/>
-    <text name="helpLine_cs_p1_start_text"     text="Naciśnij Shift+M, aby otworzyć HUD wilgotności i zobaczyć wszystkie pola na pierwszy rzut oka. Pola oznaczone na czerwono pilnie potrzebują wody. Zielone pola są w dobrej kondycji. Naciśnij Shift+C, aby otworzyć Konsultanta upraw z szczegółowymi zaleceniami i wartościami ryzyka."/>
+    <text name="helpLine_cs_p1_start_text"     text="Naciśnij Alt+M, aby otworzyć HUD wilgotności i zobaczyć wszystkie pola na pierwszy rzut oka. Pola oznaczone na czerwono pilnie potrzebują wody. Zielone pola są w dobrej kondycji. Naciśnij 'Otwórz konsultanta upraw', aby otworzyć Konsultanta upraw z szczegółowymi zaleceniami i wartościami ryzyka."/>
 
     <!-- Przegląd: Strona 2 -->
     <text name="helpLine_cs_p2_title"          text="Wilgotność gleby"/>
@@ -179,12 +179,12 @@
     <text name="helpLine_cs_p5_types_title"    text="Typy nawadniania"/>
     <text name="helpLine_cs_p5_types_text"     text="W menu budowy dostępne są trzy typy nawadniania. Nawadnianie pivot pokrywa duży okrągły obszar. Linia nawadniania kroplowego zapewnia precyzyjne pokrycie wzdłuż rzędu pola. Pompa wodna zasila systemy nawadniania i musi być najpierw umieszczona w pobliżu źródła wody."/>
     <text name="helpLine_cs_p5_schedule_title" text="Harmonogram &amp; działanie"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Wybierz system nawadniania i naciśnij Shift+I, aby otworzyć jego harmonogram. Wybierz dni tygodnia i ustaw codzienne godziny rozpoczęcia i zakończenia. Możesz także nacisnąć Nawadniaj teraz w oknie dialogowym, aby natychmiast podlać objęte pola bez czekania na harmonogram."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="Wybierz system nawadniania i naciśnij 'Otwórz menedżera nawadniania', aby otworzyć jego harmonogram. Wybierz dni tygodnia i ustaw codzienne godziny rozpoczęcia i zakończenia. Możesz także nacisnąć Nawadniaj teraz w oknie dialogowym, aby natychmiast podlać objęte pola bez czekania na harmonogram."/>
 
     <!-- Przegląd: Strona 5 (Konsultant upraw) -->
     <text name="helpLine_cs_p6_title"          text="Konsultant upraw"/>
     <text name="helpLine_cs_p6_what_title"     text="Co pokazuje konsultant"/>
-    <text name="helpLine_cs_p6_what_text"      text="Naciśnij Shift+C, aby otworzyć Konsultanta upraw. Pokazuje on 5 pól najwyższego ryzyka uszeregowanych według wilgotności i poziomu stresu, wraz z zrozumiałym zaleceniem na najbliższe 24 godziny i 3-dniową prognozą wilgotności."/>
+    <text name="helpLine_cs_p6_what_text"      text="Naciśnij 'Otwórz konsultanta upraw', aby otworzyć Konsultanta upraw. Pokazuje on 5 pól najwyższego ryzyka uszeregowanych według wilgotności i poziomu stresu, wraz z zrozumiałym zaleceniem na najbliższe 24 godziny i 3-dniową prognozą wilgotności."/>
     <text name="helpLine_cs_p6_act_title"      text="Działanie zgodnie z zaleceniami"/>
     <text name="helpLine_cs_p6_act_text"       text="Pola oznaczone KRYTYCZNE wymagają nawadniania dzisiaj, aby zapobiec stratom w plonach. Pola oznaczone OSTRZEŻENIE powinny być nawadniane w ciągu jednego lub dwóch dni. Użyj przycisku Otwórz menedżera nawadniania w Konsultancie, aby szybko zaplanować nawadnianie dla najgorszego pola."/>
     <text name="helpLine_cs_p6_npc_title"      text="Opcjonalne integracje"/>
@@ -207,13 +207,13 @@
     <!-- Wskazówki &amp; Triki: Strona 1 (HUD &amp; sterowanie) -->
     <text name="helpLine_cs_p4_title"          text="HUD &amp; sterowanie"/>
     <text name="helpLine_cs_p4_hud_title"      text="Nakładka HUD wilgotności"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Naciśnij Shift+M, aby włączyć lub wyłączyć HUD wilgotności. Wyświetla on każde pole z jego poziomem wilgotności, typem uprawy i statusem stresu. 5-dniowa prognoza pokazuje, czy wilgotność rośnie, czy spada, abyś mógł planować z wyprzedzeniem. Panel można też przeciągnąć w dowolne miejsce na ekranie, klikając i zwalniając."/>
+    <text name="helpLine_cs_p4_hud_text"       text="Naciśnij Alt+M, aby włączyć lub wyłączyć HUD wilgotności. Wyświetla on każde pole z jego poziomem wilgotności, typem uprawy i statusem stresu. 5-dniowa prognoza pokazuje, czy wilgotność rośnie, czy spada, abyś mógł planować z wyprzedzeniem. Panel można też przeciągnąć w dowolne miejsce na ekranie, klikając i zwalniając."/>
     <text name="helpLine_cs_p4_reading_title"  text="Odczytywanie wiersza pola"/>
     <text name="helpLine_cs_p4_reading_text"   text="Każdy wiersz pokazuje: numer pola (F1), nazwę uprawy (Pszenica), aktualną fazę wzrostu (Faza 3), kolorowy pasek wilgotności i procent wilgotności. Jeśli wiersz kończy się wykrzyknikiem (!), to pole już gromadzi stres suszy i straty plonów się rozpoczęły — nawadniaj je teraz. Na liście pojawiają się tylko uprawy, które mogą cierpieć z powodu stresu suszy."/>
     <text name="helpLine_cs_p4_status_title"   text="Kolory statusu"/>
     <text name="helpLine_cs_p4_status_text"    text="Zielony oznacza zdrowe pole, nie wymaga działania. Żółty to ostrzeżenie: wilgotność spada, zalecane wkrótce nawadnianie. Czerwony jest krytyczny: uprawa cierpi na stres suszy i straty w plonach już narastają — nawadniaj natychmiast."/>
     <text name="helpLine_cs_p4_keys_title"     text="Skróty klawiszowe"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Shift+M przełącza HUD wilgotności. Shift+I otwiera menedżera nawadniania dla wybranego systemu. Shift+C otwiera Konsultanta upraw z podsumowaniem ryzyka i spersonalizowanymi zaleceniami."/>
+    <text name="helpLine_cs_p4_keys_text"      text="Alt+M przełącza HUD wilgotności. 'Otwórz menedżera nawadniania' otwiera menedżera nawadniania dla wybranego systemu. 'Otwórz konsultanta upraw' otwiera Konsultanta upraw z podsumowaniem ryzyka i spersonalizowanymi zaleceniami."/>
 
     <!-- Wskazówki &amp; Triki: Strona 2 — Strategie rolnicze -->
     <text name="helpLine_cs_t2_title"          text="Strategie rolnicze"/>

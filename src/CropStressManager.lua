@@ -62,7 +62,7 @@ end
 -- Subscribers receive (context, data) where context is the
 -- object registered as the listener's self/context.
 -- ============================================================
-CropEventBus = {}
+CropEventBus = CropEventBus or {}
 CropEventBus.listeners = {}
 
 function CropEventBus.subscribe(eventName, callback, context)
@@ -93,7 +93,7 @@ end
 -- ============================================================
 -- CROP STRESS MANAGER
 -- ============================================================
-CropStressManager = {}
+CropStressManager = CropStressManager or {}
 CropStressManager.__index = CropStressManager
 
 -- RWE event id → stress rate multiplier applied during that event.

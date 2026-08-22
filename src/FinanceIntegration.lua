@@ -23,7 +23,7 @@ local function csLog(msg)
     else print("[CropStress] " .. tostring(msg)) end
 end
 
-FinanceIntegration = {}
+FinanceIntegration = FinanceIntegration or {}
 FinanceIntegration.__index = FinanceIntegration
 
 function FinanceIntegration.new(manager)

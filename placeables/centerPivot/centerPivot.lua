@@ -9,8 +9,8 @@
 -- E-key proximity interaction: opens IrrigationScheduleDialog.
 -- ============================================================
 
-IrrigationPivot = {}
-IrrigationPivot.MOD_NAME = g_currentModName
+IrrigationPivot = IrrigationPivot or {}
+IrrigationPivot.MOD_NAME = (SeasonalCropStressModName or g_currentModName)
 IrrigationPivot.INTERACTION_RADIUS = 8
 
 local TWO_PI                    = 2 * math.pi

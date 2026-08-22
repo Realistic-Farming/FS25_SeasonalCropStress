@@ -8,7 +8,7 @@
     <text name="cs_hud_critical"      text="KRITISCH — Jetzt bewässern!"/>
     <text name="cs_hud_no_crop"       text="Keine Frucht"/>
     <text name="cs_hud_forecast"      text="5-Tage-Prognose"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 geladen. Shift+M öffnet das Feuchte-HUD. Neu dabei? Öffne das Hilfe-Menü (ESC → Hilfe) und suche nach Seasonal Crop Stress, um alles zu erfahren."/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 geladen. Alt+M öffnet das Feuchte-HUD. Neu dabei? Öffne das Hilfe-Menü (ESC → Hilfe) und suche nach Seasonal Crop Stress, um alles zu erfahren."/>
     <text name="cs_hud_click_forecast" text="Zeile anklicken für 5-Tage-Prognose"/>
     <text name="cs_hud_vehicle_disabled" text="Overlay im Fahrzeug deaktiviert"/>
 
@@ -158,7 +158,7 @@
     <text name="helpLine_cs_p1_intro_title"    text="Was diese Mod hinzufügt"/>
     <text name="helpLine_cs_p1_intro_text"     text="Saisonaler Pflanzenstress fügt jedem Feld eine Bodenfeuchtesimulation hinzu. Pflanzen brauchen Wasser in wichtigen Wachstumsphasen. Fehlt es, fällt die Ernte geringer aus. Bewässerungssysteme ermöglichen die Kontrolle über die Wasserversorgung."/>
     <text name="helpLine_cs_p1_start_title"    text="Erste Schritte"/>
-    <text name="helpLine_cs_p1_start_text"     text="Shift+M öffnet das Feuchte-HUD mit einer Übersicht aller Felder. Rote Felder benötigen dringend Wasser, grüne Felder sind in Ordnung. Shift+C öffnet den Pflanzenberater mit detaillierten Empfehlungen und Risikowerten."/>
+    <text name="helpLine_cs_p1_start_text"     text="Alt+M öffnet das Feuchte-HUD mit einer Übersicht aller Felder. Rote Felder benötigen dringend Wasser, grüne Felder sind in Ordnung. 'Pflanzenberater öffnen' öffnet den Pflanzenberater mit detaillierten Empfehlungen und Risikowerten."/>
 
     <!-- Übersicht: Seite 2 -->
     <text name="helpLine_cs_p2_title"          text="Bodenfeuchte"/>
@@ -179,12 +179,12 @@
     <text name="helpLine_cs_p5_types_title"    text="Bewässerungstypen"/>
     <text name="helpLine_cs_p5_types_text"     text="Im Baumenü stehen drei Bewässerungstypen zur Verfügung. Die Kreisbewässerung deckt eine große Kreisfläche ab. Die Tröpfchenbewässerung sorgt für gezielte Abdeckung entlang einer Feldreihe. Die Wasserpumpe treibt die Systeme an und muss zuerst in der Nähe einer Wasserquelle platziert werden."/>
     <text name="helpLine_cs_p5_schedule_title" text="Zeitplan &amp; Betrieb"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Wähle ein Bewässerungssystem aus und drücke Shift+I, um den Zeitplan zu öffnen. Wähle Wochentage und stelle tägliche Start- und Endzeiten ein. Mit Jetzt bewässern kannst du die abgedeckten Felder sofort wässern, ohne auf den Zeitplan zu warten."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="Wähle ein Bewässerungssystem aus und drücke 'Bewässerungsmanager öffnen', um den Zeitplan zu öffnen. Wähle Wochentage und stelle tägliche Start- und Endzeiten ein. Mit Jetzt bewässern kannst du die abgedeckten Felder sofort wässern, ohne auf den Zeitplan zu warten."/>
 
     <!-- Übersicht: Seite 5 (Pflanzenberater) -->
     <text name="helpLine_cs_p6_title"          text="Pflanzenberater"/>
     <text name="helpLine_cs_p6_what_title"     text="Was der Berater zeigt"/>
-    <text name="helpLine_cs_p6_what_text"      text="Shift+C öffnet den Pflanzenberater. Er zeigt die fünf risikoreichsten Felder nach Feuchte und Stressniveau sowie eine verständliche Empfehlung für die nächsten 24 Stunden und eine 3-Tage-Feuchtprognose."/>
+    <text name="helpLine_cs_p6_what_text"      text="'Pflanzenberater öffnen' öffnet den Pflanzenberater. Er zeigt die fünf risikoreichsten Felder nach Feuchte und Stressniveau sowie eine verständliche Empfehlung für die nächsten 24 Stunden und eine 3-Tage-Feuchtprognose."/>
     <text name="helpLine_cs_p6_act_title"      text="Empfehlungen umsetzen"/>
     <text name="helpLine_cs_p6_act_text"       text="Mit KRITISCH markierte Felder müssen heute bewässert werden, um Ernteverluste zu verhindern. Mit WARNUNG markierte Felder sollten innerhalb von ein bis zwei Tagen bewässert werden. Nutze die Schaltfläche Bewässerungsmanager öffnen, um schnell einen Zeitplan für das schlimmste Feld einzurichten."/>
     <text name="helpLine_cs_p6_npc_title"      text="Optionale Integrationen"/>
@@ -207,13 +207,13 @@
     <!-- Tipps & Tricks: Seite 1 (HUD & Steuerung) -->
     <text name="helpLine_cs_p4_title"          text="HUD &amp; Steuerung"/>
     <text name="helpLine_cs_p4_hud_title"      text="Feuchte-HUD-Overlay"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Shift+M schaltet das Feuchte-HUD ein oder aus. Es listet alle Felder mit Feuchtestand, Fruchttyp und Stressstatus. Eine 5-Tage-Prognose zeigt, ob die Feuchte steigt oder sinkt, sodass du vorausplanen kannst. Das Panel lässt sich durch Klicken und Loslassen an eine beliebige Bildschirmposition verschieben."/>
+    <text name="helpLine_cs_p4_hud_text"       text="Alt+M schaltet das Feuchte-HUD ein oder aus. Es listet alle Felder mit Feuchtestand, Fruchttyp und Stressstatus. Eine 5-Tage-Prognose zeigt, ob die Feuchte steigt oder sinkt, sodass du vorausplanen kannst. Das Panel lässt sich durch Klicken und Loslassen an eine beliebige Bildschirmposition verschieben."/>
     <text name="helpLine_cs_p4_reading_title"  text="Eine Feldzeile lesen"/>
     <text name="helpLine_cs_p4_reading_text"   text="Jede Zeile zeigt: Feldnummer (F1), Fruchtname (Weizen), aktuelle Wachstumsphase (Phase 3), einen farbcodierten Feuchtebalken und den Feuchteprozentsatz. Endet die Zeile mit einem Ausrufezeichen (!), baut dieses Feld bereits Trockenstress auf und Ertragsverlust hat begonnen — sofort bewässern. Nur Früchte, die Trockenstress erleiden können, erscheinen in der Liste."/>
     <text name="helpLine_cs_p4_status_title"   text="Statusfarben"/>
     <text name="helpLine_cs_p4_status_text"    text="Grün bedeutet gesundes Feld, kein Handlungsbedarf. Gelb ist eine Warnung: Feuchte sinkt, Bewässerung bald empfohlen. Rot ist kritisch: Die Pflanze leidet unter Trockenstress und der Ertragsverlust wächst — sofort bewässern."/>
     <text name="helpLine_cs_p4_keys_title"     text="Tastenkürzel"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Shift+M schaltet das Feuchte-HUD um. Shift+I öffnet den Bewässerungsmanager für ein ausgewähltes System. Shift+C öffnet den Pflanzenberater mit Feldrisiken und personalisierten Empfehlungen."/>
+    <text name="helpLine_cs_p4_keys_text"      text="Alt+M schaltet das Feuchte-HUD um. 'Bewässerungsmanager öffnen' öffnet den Bewässerungsmanager für ein ausgewähltes System. 'Pflanzenberater öffnen' öffnet den Pflanzenberater mit Feldrisiken und personalisierten Empfehlungen."/>
 
     <!-- Tipps & Tricks: Seite 2 — Landwirtschaftsstrategien -->
     <text name="helpLine_cs_t2_title"          text="Landwirtschaftsstrategien"/>

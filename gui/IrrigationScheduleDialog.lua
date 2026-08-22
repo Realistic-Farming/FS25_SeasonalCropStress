@@ -26,7 +26,7 @@
 --   btnIrrigateNowBg/Hit/Text, btnSaveBg/Hit/Text
 -- ============================================================
 
-IrrigationScheduleDialog = {}
+IrrigationScheduleDialog = IrrigationScheduleDialog or {}
 local IrrigationScheduleDialog_mt = Class(IrrigationScheduleDialog, MessageDialog)
 
 -- Button color constants (NPCFavor pattern)

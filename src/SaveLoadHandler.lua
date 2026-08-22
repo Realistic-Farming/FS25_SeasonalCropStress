@@ -27,7 +27,7 @@
 --   </cropStress>
 -- ============================================================
 
-SaveLoadHandler = {}
+SaveLoadHandler = SaveLoadHandler or {}
 SaveLoadHandler.__index = SaveLoadHandler
 
 local function csLog(msg)

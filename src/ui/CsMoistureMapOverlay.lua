@@ -29,7 +29,7 @@
 -- this is a display ramp, not a change to what counts as dry.
 -- =========================================================
 
-CsMoistureMapOverlay = {}
+CsMoistureMapOverlay = CsMoistureMapOverlay or {}
 local CsMoistureMapOverlay_mt = Class(CsMoistureMapOverlay)
 
 -- Ramp anchors. These are the hairlines the legend labels, NOT the HUD alert thresholds,
@@ -72,7 +72,7 @@ CsMoistureMapOverlay.DENSITY_DEFAULT      = 2
 CsMoistureMapOverlay.PDA_DMV_REBUILD_MS = 3000
 CsMoistureMapOverlay.PDA_DMV_BANDS      = 15
 
-local CS_MAP_MOD_NAME = g_currentModName
+local CS_MAP_MOD_NAME = (SeasonalCropStressModName or g_currentModName)
 
 local function tr(key, fallback)
     local modEnv = g_modEnvironments and g_modEnvironments[CS_MAP_MOD_NAME]

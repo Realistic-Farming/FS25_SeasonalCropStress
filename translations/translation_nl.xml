@@ -8,7 +8,7 @@
     <text name="cs_hud_critical"      text="KRITIEK — Irrigeer nu!"/>
     <text name="cs_hud_no_crop"       text="Geen gewas"/>
     <text name="cs_hud_forecast"      text="5-dagenprognose"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 geladen. Shift+M opent de vochtigheids-HUD. Nieuw? Open het Help-menu (ESC → Help) en zoek Seasonal Crop Stress om alles te leren."/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 geladen. Alt+M opent de vochtigheids-HUD. Nieuw? Open het Help-menu (ESC → Help) en zoek Seasonal Crop Stress om alles te leren."/>
     <text name="cs_hud_click_forecast" text="Klik op een rij voor 5-dagenprognose"/>
     <text name="cs_hud_vehicle_disabled" text="Overlay uitgeschakeld in voertuig"/>
 
@@ -158,7 +158,7 @@
     <text name="helpLine_cs_p1_intro_title"    text="Wat deze mod toevoegt"/>
     <text name="helpLine_cs_p1_intro_text"     text="Seizoensgebonden gewassstress voegt een bodemvochtsimulatie toe aan elk veld. Gewassen hebben water nodig tijdens belangrijke groeifasen. Zonder water wordt de oogst kleiner. Irrigatiesystemen laten je de watertoevoer van je velden zelf regelen."/>
     <text name="helpLine_cs_p1_start_title"    text="Aan de slag"/>
-    <text name="helpLine_cs_p1_start_text"     text="Druk op Shift+M om de vochtigheids-HUD te openen en alle velden in één oogopslag te zien. Rode velden hebben dringend water nodig, groene zijn in orde. Druk op Shift+C om de Gewasadviseur te openen voor gedetailleerd advies en risicowaarden."/>
+    <text name="helpLine_cs_p1_start_text"     text="Druk op Alt+M om de vochtigheids-HUD te openen en alle velden in één oogopslag te zien. Rode velden hebben dringend water nodig, groene zijn in orde. Druk op 'Gewasadviseur openen' om de Gewasadviseur te openen voor gedetailleerd advies en risicowaarden."/>
 
     <!-- Overzicht: Pagina 2 -->
     <text name="helpLine_cs_p2_title"          text="Bodemvochtigheid"/>
@@ -179,12 +179,12 @@
     <text name="helpLine_cs_p5_types_title"    text="Irrigatietypen"/>
     <text name="helpLine_cs_p5_types_text"     text="In het bouwmenu zijn drie irrigatietypen beschikbaar. De cirkelberegening dekt een groot cirkelvormig gebied. De druppelirrigatielijn biedt nauwkeurige dekking langs een veldrij. De waterpomp drijft de systemen aan en moet eerst in de buurt van een waterbron geplaatst worden."/>
     <text name="helpLine_cs_p5_schedule_title" text="Planning &amp; gebruik"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Selecteer een irrigatiesysteem en druk op Shift+I om het schema te openen. Kies de dagen van de week en stel dagelijkse start- en eindtijden in. Met de knop Nu irrigeren kun je de gedekte velden direct bewateren zonder op het schema te wachten."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="Selecteer een irrigatiesysteem en druk op 'Irrigatiebeheer openen' om het schema te openen. Kies de dagen van de week en stel dagelijkse start- en eindtijden in. Met de knop Nu irrigeren kun je de gedekte velden direct bewateren zonder op het schema te wachten."/>
 
     <!-- Overzicht: Pagina 5 (Gewasadviseur) -->
     <text name="helpLine_cs_p6_title"          text="Gewasadviseur"/>
     <text name="helpLine_cs_p6_what_title"     text="Wat de adviseur toont"/>
-    <text name="helpLine_cs_p6_what_text"      text="Druk op Shift+C om de Gewasadviseur te openen. Hij toont je 5 meest risicovolle velden gerangschikt op vochtigheid en stressniveau, met een begrijpelijke aanbeveling voor de komende 24 uur en een 3-dagenprognose voor de vochtigheid."/>
+    <text name="helpLine_cs_p6_what_text"      text="Druk op 'Gewasadviseur openen' om de Gewasadviseur te openen. Hij toont je 5 meest risicovolle velden gerangschikt op vochtigheid en stressniveau, met een begrijpelijke aanbeveling voor de komende 24 uur en een 3-dagenprognose voor de vochtigheid."/>
     <text name="helpLine_cs_p6_act_title"      text="Handelen op advies"/>
     <text name="helpLine_cs_p6_act_text"       text="Velden gemarkeerd KRITIEK moeten vandaag worden geïrrigeerd om oogstverlies te voorkomen. Velden gemarkeerd WAARSCHUWING moeten binnen een à twee dagen worden geïrrigeerd. Gebruik de knop Irrigatiebeheer openen in de adviseur om snel een schema in te stellen voor het slechtste veld."/>
     <text name="helpLine_cs_p6_npc_title"      text="Optionele integraties"/>
@@ -207,13 +207,13 @@
     <!-- Tips &amp; Trucs: Pagina 1 (HUD &amp; bediening) -->
     <text name="helpLine_cs_p4_title"          text="HUD &amp; bediening"/>
     <text name="helpLine_cs_p4_hud_title"      text="Vochtigheids-HUD-overlay"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Druk op Shift+M om de vochtigheids-HUD aan of uit te zetten. Hij toont elk veld met zijn vochtigheidsniveau, gewastype en stressstatus. Een 5-dagenprognose laat zien of de vochtigheid stijgt of daalt zodat je vooruit kunt plannen. Je kunt het paneel ook naar een andere positie op het scherm slepen door te klikken en los te laten."/>
+    <text name="helpLine_cs_p4_hud_text"       text="Druk op Alt+M om de vochtigheids-HUD aan of uit te zetten. Hij toont elk veld met zijn vochtigheidsniveau, gewastype en stressstatus. Een 5-dagenprognose laat zien of de vochtigheid stijgt of daalt zodat je vooruit kunt plannen. Je kunt het paneel ook naar een andere positie op het scherm slepen door te klikken en los te laten."/>
     <text name="helpLine_cs_p4_reading_title"  text="Een veldrij lezen"/>
     <text name="helpLine_cs_p4_reading_text"   text="Elke rij toont: veldnummer (F1), gewasnaam (Tarwe), huidige groeifase (Fase 3), een kleurgecodeerde vochtigheidsbalk en het vochtigheidpercentage. Als de rij eindigt met een uitroepteken (!), bouwt dat veld al droogtestress op en is oogstverlies begonnen — bewater het nu. Alleen gewassen die droogtestress kunnen lijden, verschijnen in de lijst."/>
     <text name="helpLine_cs_p4_status_title"   text="Statuskleuren"/>
     <text name="helpLine_cs_p4_status_text"    text="Groen betekent dat het veld gezond is en geen actie nodig heeft. Geel is een waarschuwing: de vochtigheid daalt en irrigatie is binnenkort aan te raden. Rood is kritiek: het gewas lijdt aan droogtestress en oogstverlies neemt toe — direct irrigeren."/>
     <text name="helpLine_cs_p4_keys_title"     text="Sneltoetsen"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Shift+M schakelt de vochtigheids-HUD in of uit. Shift+I opent het irrigatiebeheer voor een geselecteerd systeem. Shift+C opent de Gewasadviseur met een risicooverzicht en persoonlijke aanbevelingen."/>
+    <text name="helpLine_cs_p4_keys_text"      text="Alt+M schakelt de vochtigheids-HUD in of uit. 'Irrigatiebeheer openen' opent het irrigatiebeheer voor een geselecteerd systeem. 'Gewasadviseur openen' opent de Gewasadviseur met een risicooverzicht en persoonlijke aanbevelingen."/>
 
     <!-- Tips &amp; Trucs: Pagina 2 — Landbouwstrategieën -->
     <text name="helpLine_cs_t2_title"          text="Landbouwstrategieën"/>

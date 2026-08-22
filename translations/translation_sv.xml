@@ -8,7 +8,7 @@
     <text name="cs_hud_critical"      text="CRITICAL — Irrigate Now!"/>
     <text name="cs_hud_no_crop"       text="No crop"/>
     <text name="cs_hud_forecast"      text="5-Day Forecast"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 loaded. Press Shift+M to open the moisture HUD. New to the mod? Open the Help menu (ESC → Help) and find Seasonal Crop Stress to learn how everything works."/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 loaded. Press Alt+M to open the moisture HUD. New to the mod? Open the Help menu (ESC → Help) and find Seasonal Crop Stress to learn how everything works."/>
     <text name="cs_hud_click_forecast" text="Click a row for 5-day forecast"/>
     <text name="cs_hud_vehicle_disabled" text="Overlay disabled in vehicle"/>
 
@@ -158,7 +158,7 @@
     <text name="helpLine_cs_p1_intro_title"    text="What This Mod Adds"/>
     <text name="helpLine_cs_p1_intro_text"     text="Seasonal Crop Stress adds soil moisture simulation to every field. Crops need water during key growth stages. If they don't get it, your harvest will be smaller. Irrigation systems let you take control of your field's water supply."/>
     <text name="helpLine_cs_p1_start_title"    text="Getting Started"/>
-    <text name="helpLine_cs_p1_start_text"     text="Press Shift+M to open the moisture HUD and see all your fields at a glance. Fields shown in red need water urgently. Green fields are in good shape. Press Shift+C to open the Crop Consultant for detailed advice and field risk scores."/>
+    <text name="helpLine_cs_p1_start_text"     text="Press Alt+M to open the moisture HUD and see all your fields at a glance. Fields shown in red need water urgently. Green fields are in good shape. Press 'Open Crop Consultant' to open the Crop Consultant for detailed advice and field risk scores."/>
 
     <!-- Overview: Page 2 -->
     <text name="helpLine_cs_p2_title"          text="Soil Moisture"/>
@@ -179,12 +179,12 @@
     <text name="helpLine_cs_p5_types_title"    text="Irrigation Types"/>
     <text name="helpLine_cs_p5_types_text"     text="Three irrigation types are available in the build menu. Center Pivot covers a large circular area. Drip Line provides precise coverage along a field row. Water Pump powers your irrigation systems and must be placed near a water source first."/>
     <text name="helpLine_cs_p5_schedule_title" text="Scheduling &amp; Running"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Select an irrigation system and press Shift+I to open its schedule. Pick which days of the week to irrigate and set a daily start and end time. You can also press Irrigate Now in the dialog to water the covered fields immediately without waiting for the schedule."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="Select an irrigation system and press 'Open Irrigation Manager' to open its schedule. Pick which days of the week to irrigate and set a daily start and end time. You can also press Irrigate Now in the dialog to water the covered fields immediately without waiting for the schedule."/>
 
     <!-- Overview: Page 5 (Crop Consultant) -->
     <text name="helpLine_cs_p6_title"          text="Crop Consultant"/>
     <text name="helpLine_cs_p6_what_title"     text="What the Consultant Shows"/>
-    <text name="helpLine_cs_p6_what_text"      text="Press Shift+C to open the Crop Consultant. It shows your top 5 highest-risk fields ranked by moisture and stress level, along with a plain-language recommendation for the next 24 hours and a 3-day moisture forecast."/>
+    <text name="helpLine_cs_p6_what_text"      text="Press 'Open Crop Consultant' to open the Crop Consultant. It shows your top 5 highest-risk fields ranked by moisture and stress level, along with a plain-language recommendation for the next 24 hours and a 3-day moisture forecast."/>
     <text name="helpLine_cs_p6_act_title"      text="Acting on Advice"/>
     <text name="helpLine_cs_p6_act_text"       text="Fields marked CRITICAL need irrigation today to prevent harvest loss. Fields marked WARNING should be irrigated within a day or two. Use the Open Irrigation Manager button inside the Consultant to quickly schedule water for the worst field."/>
     <text name="helpLine_cs_p6_npc_title"      text="Optional Integrations"/>
@@ -207,13 +207,13 @@
     <!-- Tips & Tricks: Page 1 (HUD & Controls) -->
     <text name="helpLine_cs_p4_title"          text="HUD &amp; Controls"/>
     <text name="helpLine_cs_p4_hud_title"      text="Moisture HUD Overlay"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Press Shift+M to toggle the moisture HUD. It lists every field with its moisture level, crop type, and stress status. A 5-day forecast shows whether moisture is rising or falling so you can plan ahead. You can also drag the panel to any position on screen by clicking and releasing."/>
+    <text name="helpLine_cs_p4_hud_text"       text="Press Alt+M to toggle the moisture HUD. It lists every field with its moisture level, crop type, and stress status. A 5-day forecast shows whether moisture is rising or falling so you can plan ahead. You can also drag the panel to any position on screen by clicking and releasing."/>
     <text name="helpLine_cs_p4_reading_title"  text="Reading a Field Row"/>
     <text name="helpLine_cs_p4_reading_text"   text="Each row shows: field number (F1), crop name (Wheat), current growth stage (Stage 3), a colour-coded moisture bar, and the moisture percentage. If the row ends with an exclamation mark (!), that field is already building drought stress and yield loss has begun — irrigate it now. Only crops that can suffer drought stress appear in the list."/>
     <text name="helpLine_cs_p4_status_title"   text="Status Colours"/>
     <text name="helpLine_cs_p4_status_text"    text="Green means your field is healthy and no action is needed. Yellow is a warning: moisture is dropping and irrigation is advisable soon. Red is critical: the crop is under drought stress and yield loss is already building — irrigate immediately."/>
     <text name="helpLine_cs_p4_keys_title"     text="Keyboard Shortcuts"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Shift+M toggles the moisture HUD on or off. Shift+I opens the Irrigation Manager for a selected system. Shift+C opens the Crop Consultant with a field risk summary and personalised recommendations."/>
+    <text name="helpLine_cs_p4_keys_text"      text="Alt+M toggles the moisture HUD on or off. 'Open Irrigation Manager' opens the Irrigation Manager for a selected system. 'Open Crop Consultant' opens the Crop Consultant with a field risk summary and personalised recommendations."/>
 
     <!-- Tips & Tricks: Page 2 — Farming Strategies -->
     <text name="helpLine_cs_t2_title"          text="Farming Strategies"/>

@@ -23,7 +23,7 @@ local function csLog(msg)
     end
 end
 
-CropStressMoistureInitEvent = {}
+CropStressMoistureInitEvent = CropStressMoistureInitEvent or {}
 CropStressMoistureInitEvent_mt = Class(CropStressMoistureInitEvent, Event)
 
 InitEventClass(CropStressMoistureInitEvent, "CropStressMoistureInitEvent")

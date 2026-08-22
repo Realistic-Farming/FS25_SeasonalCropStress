@@ -15,7 +15,14 @@
 --   9. Central coordinator (depends on everything above)
 -- ============================================================
 
-local modDir = g_currentModDirectory
+-- Hot-reload latch (FuelCosts reference): g_currentModDirectory and
+-- g_currentModName are nil on a live re-source, so they are latched into
+-- module globals on first load, with a g_modsDirectory loose-folder fallback.
+SeasonalCropStressModDirectory = SeasonalCropStressModDirectory
+    or g_currentModDirectory
+    or (g_modsDirectory ~= nil and (g_modsDirectory .. "FS25_SeasonalCropStress/") or nil)
+SeasonalCropStressModName = SeasonalCropStressModName or g_currentModName or "FS25_SeasonalCropStress"
+local modDir = SeasonalCropStressModDirectory
 
 -- Weather bridge
 source(modDir .. "src/WeatherIntegration.lua")

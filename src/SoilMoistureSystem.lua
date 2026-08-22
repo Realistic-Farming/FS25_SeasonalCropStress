@@ -11,7 +11,7 @@
 --   • Evapotranspiration: base rate × temp modifier × season modifier × soil modifier
 -- ============================================================
 
-SoilMoistureSystem = {}
+SoilMoistureSystem = SoilMoistureSystem or {}
 SoilMoistureSystem.__index = SoilMoistureSystem
 
 -- Base evaporation per in-game hour (before modifiers).

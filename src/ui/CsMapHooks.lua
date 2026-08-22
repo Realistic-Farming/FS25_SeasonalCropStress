@@ -9,7 +9,7 @@
 -- custom page indices do not hit vanilla MAP_HOTSPOTS <= state fruit path.
 -- =========================================================
 
-CsMapHooks = {}
+CsMapHooks = CsMapHooks or {}
 
 local LOG_PREFIX = "[CropStress] CsMapHooks: "
 

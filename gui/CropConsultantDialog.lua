@@ -22,7 +22,7 @@
 -- (FS25_NPCFavor integration). Reads live field/stress/moisture data on open.
 -- ============================================================
 
-CropConsultantDialog = {}
+CropConsultantDialog = CropConsultantDialog or {}
 local CropConsultantDialog_mt = Class(CropConsultantDialog, MessageDialog)
 
 -- Button color constants (NPCFavor pattern)

@@ -27,7 +27,7 @@
 -- attach, no invented PTO.
 -- =========================================================
 
-ScsRainstarPumpPower = {}
+ScsRainstarPumpPower = ScsRainstarPumpPower or {}
 
 function ScsRainstarPumpPower.prerequisitesPresent(specializations)
     return true

@@ -19,7 +19,7 @@ end
 -- ============================================================
 -- EVENT CLASS DEFINITION
 -- ============================================================
-CropStressSettingsSyncEvent = {}
+CropStressSettingsSyncEvent = CropStressSettingsSyncEvent or {}
 CropStressSettingsSyncEvent_mt = Class(CropStressSettingsSyncEvent, Event)
 
 InitEventClass(CropStressSettingsSyncEvent, "CropStressSettingsSyncEvent")

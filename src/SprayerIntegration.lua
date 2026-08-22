@@ -4,7 +4,7 @@
 -- Intercepts Sprayer:processSprayerArea to add moisture.
 -- ============================================================
 
-SprayerIntegration = {}
+SprayerIntegration = SprayerIntegration or {}
 SprayerIntegration.__index = SprayerIntegration
 
 -- Scaling factor: how much 1 liter of water adds to 1 sqm of moisture fraction.
