@@ -102,19 +102,14 @@ source(modDir .. "src/CropStressManager.lua")
 -- g_inputBinding:registerActionEvent directly in loadMission00Finished
 -- is not inside the player input context and silently does nothing.
 -- ============================================================
+-- BUILD 04:34 (Wizard ruling, supersedes the BUILD 22:13 removal): the moisture HUD
+-- callbacks are restored WITH their surface - CropStressManager constructs the real
+-- HUDOverlay again instead of the noop stub, which is what made these rows
+-- lit-but-dead in the first place (PB-H05). The 22:13 principle stands satisfied the
+-- other way around: the actions now drive a HUD that exists.
 local function csToggleHUDCallback(_, _, inputValue)
     if (inputValue or 0) <= 0 then return end
     if g_cropStressManager ~= nil then g_cropStressManager:onToggleHUD() end
-end
-
-local function csOpenIrrigationCallback(_, _, inputValue)
-    if (inputValue or 0) <= 0 then return end
-    if g_cropStressManager ~= nil then g_cropStressManager:onOpenIrrigationDialog() end
-end
-
-local function csOpenConsultantCallback(_, _, inputValue)
-    if (inputValue or 0) <= 0 then return end
-    if g_cropStressManager ~= nil then g_cropStressManager:onOpenConsultantDialog() end
 end
 
 local function csEditHUDCallback(_, _, inputValue)
@@ -127,6 +122,16 @@ local function csEditHUDCallback(_, _, inputValue)
             hud:enterEditMode()
         end
     end
+end
+
+local function csOpenIrrigationCallback(_, _, inputValue)
+    if (inputValue or 0) <= 0 then return end
+    if g_cropStressManager ~= nil then g_cropStressManager:onOpenIrrigationDialog() end
+end
+
+local function csOpenConsultantCallback(_, _, inputValue)
+    if (inputValue or 0) <= 0 then return end
+    if g_cropStressManager ~= nil then g_cropStressManager:onOpenConsultantDialog() end
 end
 
 local function csOpenSettingsCallback(_, _, inputValue)
@@ -173,9 +178,10 @@ end
 
 -- ============================================================
 -- VEHICLE INPUT HOOK
--- Register CS_TOGGLE_HUD and CS_EDIT_HUD in the vehicle input context so
--- Shift+M and Shift+H work while driving (PlayerInputComponent context is
+-- Register CS_TOGGLE_HUD, CS_EDIT_HUD and CS_OPEN_SETTINGS in the vehicle input
+-- context so the HUD keys work while driving (PlayerInputComponent context is
 -- on-foot only; vehicles require a separate registration via Vehicle).
+-- BUILD 04:34: the two moisture HUD actions are back with their restored HUD.
 -- ============================================================
 do
     if Vehicle ~= nil and type(Vehicle.registerActionEvents) == "function" then
@@ -301,6 +307,14 @@ end)
 -- drawStack, so the two paths can never diverge.
 FSBaseMission.draw = Utils.appendedFunction(FSBaseMission.draw, function(self)
     if CropStressMasterHUDBridge ~= nil and CropStressMasterHUDBridge.active then return end
+    -- BUILD 21:53 (PB-H03, George TASK 21:39): the suite hide-all must govern this
+    -- fallback too. When MasterHUD is present but the bridge registration failed or
+    -- has not run yet, this hook is the path that draws - and before this gate it
+    -- drew straight through the player's hide-all. Registered draws are gated inside
+    -- MasterHUD itself; this closes the only RF-side leak. MasterHUD absent means
+    -- there is no suite hide state to honor and the gate passes through.
+    local suiteHud = (g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD
+    if suiteHud ~= nil and suiteHud.hudsHidden == true then return end
     if CropStressMasterHUDBridge ~= nil then
         CropStressMasterHUDBridge.drawStack()
     elseif g_csManager ~= nil then

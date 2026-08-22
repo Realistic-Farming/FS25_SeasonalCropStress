@@ -162,6 +162,12 @@ FUNKTIONER:
     </extraSourceFiles>
 
     <actions>
+        <!-- BUILD 04:34 (Wizard ruling, supersedes the BUILD 22:13 removal):
+             CS_TOGGLE_HUD and CS_EDIT_HUD are restored WITH their HUD - the manager
+             constructs the real HUDOverlay again, so these rows drive a live surface.
+             No default bindings per Input Convention Rule 1 (no Function keys, the
+             player assigns in Controls). input_CS_* texts already ship in all 26
+             translation files. -->
         <action name="CS_TOGGLE_HUD"/>
         <action name="CS_OPEN_IRRIGATION"/>
         <action name="CS_OPEN_CONSULTANT"/>
@@ -172,10 +178,17 @@ FUNKTIONER:
     </actions>
 
     <inputBinding>
-        <actionBinding action="CS_TOGGLE_HUD" />
+        <!-- BUILD 06:43 (Sam DESIGN 06:42): seat-locked non-Function defaults so a
+             fresh save can drive the Moisture HUD out of the box - Alt+M toggles,
+             Shift+Alt+M edits/moves. The other actions stay player-assigned. -->
+        <actionBinding action="CS_TOGGLE_HUD">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_lalt KEY_m" />
+        </actionBinding>
         <actionBinding action="CS_OPEN_IRRIGATION" />
         <actionBinding action="CS_OPEN_CONSULTANT" />
-        <actionBinding action="CS_EDIT_HUD" />
+        <actionBinding action="CS_EDIT_HUD">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_lalt KEY_m" />
+        </actionBinding>
         <actionBinding action="CS_OPEN_SETTINGS" />
         <actionBinding action="RWSM53_REEL_TOGGLE">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_n" axisComponent="+" inputComponent="+" index="1"/>

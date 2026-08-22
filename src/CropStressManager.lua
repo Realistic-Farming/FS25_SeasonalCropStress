@@ -181,12 +181,15 @@ function CropStressManager.new()
     self.soilMoistureSystem = self.soilSystem   -- FarmTablet compatibility alias
     self.stressModifier     = CropStressModifier.new(self)
     self.irrigationManager  = IrrigationManager.new(self)       -- Phase 2 stub
-    -- HUD removed: monitoring moved to the PDA screen (CsPDAScreen).
-    self.hudOverlay = {
-        initialize=function()end, update=function()end, draw=function()end,
-        delete=function()end, toggle=function()end, onMouseEvent=function()end,
-        isVisible=false, panelX=0, panelY=0,
-    }
+    -- BUILD 04:34 (Wizard Motherbarn 2026-08-21 02:10Z): the real HUD is BACK. The
+    -- noop stub that replaced it ("HUD removed: monitoring moved to the PDA screen")
+    -- left CS_TOGGLE_HUD / CS_EDIT_HUD driving nothing, which cascaded into the
+    -- lit-but-dead rows of PB-H05 and their brief removal at BUILD 22:13 - both now
+    -- superseded by Wizard's ruling: the actions open a moisture HUD, so a moisture
+    -- HUD must exist to open. CsPDAScreen keeps the PDA monitoring unchanged; this
+    -- HUD is the on-world glance beside it, hidden until toggled (isVisible=false in
+    -- new, then synced from settings.hudVisible below).
+    self.hudOverlay = HUDOverlay.new(self)
     self.consultant         = CropConsultant.new(self)
     self.moistureMapOverlay = CsMoistureMapOverlay ~= nil and CsMoistureMapOverlay.new(self) or nil
     self.npcIntegration     = NPCIntegration.new(self)
@@ -482,6 +485,19 @@ function CropStressManager:applySettings()
     -- Push persisted HUD position (client-local display preference, not synced to MP)
     self.hudOverlay.panelX = self.settings.hudPanelX
     self.hudOverlay.panelY = self.settings.hudPanelY
+    -- Forecast pane home: -1 sentinel = docked to the panel (leave nil), >= 0 = absolute
+    if self.settings.hudForecastX ~= nil and self.settings.hudForecastX >= 0
+    and self.settings.hudForecastY ~= nil and self.settings.hudForecastY >= 0 then
+        self.hudOverlay.forecastX = self.settings.hudForecastX
+        self.hudOverlay.forecastY = self.settings.hudForecastY
+    else
+        self.hudOverlay.forecastX = nil
+        self.hudOverlay.forecastY = nil
+    end
+    -- Scale + per-pane width multipliers (Wizard 2026-08-21 width wave)
+    self.hudOverlay.scale             = self.settings.hudScale         or self.hudOverlay.scale
+    self.hudOverlay.widthMult         = self.settings.hudWidthMult     or self.hudOverlay.widthMult
+    self.hudOverlay.forecastWidthMult = self.settings.hudForecastWMult or self.hudOverlay.forecastWidthMult
 
     csLog("Settings applied to all subsystems")
 end
