@@ -74,17 +74,17 @@ Set irrigation schedules per system (active days and hours), including overnight
 
 ### 📊 Moisture HUD
 
-Press `Shift+M` to open the field overlay. Shows every field growing a stress-tracked crop with:
+Press `Alt+M` to open the field overlay. Shows every field growing a stress-tracked crop with:
 - Color-coded moisture bar: **green** (≥40%) · **yellow** (≥25%) · **red** (<25%)
 - Current growth stage
 - Stress indicator (`!`) when drought stress is actively building
 - **5-day moisture forecast** strip for the selected field
 
-Drag the panel anywhere on screen by right-clicking to enter Edit Mode, then left-click dragging.
+Drag the panel anywhere on screen: press `Shift+Alt+M` (or use FS25_MasterHUD's suite *Edit HUD Layout* action) to enter Edit Mode, then left-click drag. Right-click exits Edit Mode.
 
 ### 🌿 Crop Consultant
 
-Press `Shift+C` for a risk-ranked field summary with plain-language recommendations.
+Open the Crop Consultant (*Open Crop Consultant* action - no default key, assign one under Options > Controls > Mods) for a risk-ranked field summary with plain-language recommendations.
 
 Three alert tiers fire automatically as fields dry out:
 
@@ -154,12 +154,12 @@ All integrations are detected at runtime and fail gracefully if the mod is not i
 
 ```
 1. Load your farm — moisture monitoring activates immediately
-2. Press Shift+M   → open the Field Moisture HUD
+2. Press Alt+M     → open the Field Moisture HUD
 3. Click a field   → see its 5-day moisture forecast strip
-4. Press Shift+C   → open the Crop Consultant for risk summary
+4. Open the Crop Consultant (assign its key in Controls) → risk summary
 5. Green = healthy · Yellow = needs attention · Red = irrigate NOW
 6. Place a Water Pump near water, then a Center Pivot within 500m
-7. Press E near the pivot (or Shift+I) → set your irrigation schedule
+7. Press E near the pivot (or your Irrigation Schedule key) → set your schedule
 8. At harvest, drought-stressed fields yield less — plan ahead
 ```
 
@@ -172,11 +172,12 @@ All integrations are detected at runtime and fail gracefully if the mod is not i
 
 | Keys | Action |
 |---|---|
-| `Shift+M` | Toggle the Field Moisture HUD |
-| `Shift+I` | Open Irrigation Schedule dialog |
-| `Shift+C` | Open Crop Consultant dialog |
+| `Alt+M` | Toggle the Field Moisture HUD |
+| `Shift+Alt+M` | Toggle HUD Edit Mode - drag with `LMB` to reposition, `RMB` exits |
+| *Open Irrigation Schedule* action | Open Irrigation Schedule dialog (no default key - assign under Options > Controls > Mods) |
+| *Open Crop Consultant* action | Open Crop Consultant dialog (no default key - assign under Options > Controls > Mods) |
+| *Open Crop Stress Settings* action | Open the settings panel (no default key - assign under Options > Controls > Mods) |
 | `E` *(near pivot)* | Open schedule for that specific system |
-| `RMB` *(on HUD)* | Toggle Edit Mode — drag with `LMB` to reposition |
 
 ---
 

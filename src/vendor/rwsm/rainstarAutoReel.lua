@@ -15,7 +15,7 @@
 -- transport mode = locked at the reel
 -- work mode      = full hose length released
 
-RWSM53AutoReel = {}
+RWSM53AutoReel = RWSM53AutoReel or {}
 
 local ANIMATION_NAME = "hoseReelLS19"
 local MAX_HOSE_LENGTH = 220

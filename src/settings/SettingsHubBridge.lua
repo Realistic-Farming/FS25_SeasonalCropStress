@@ -14,7 +14,7 @@
 -- coordinates are intentionally not exposed.
 -- =========================================================
 
-SeasonalSettingsHubBridge = {}
+SeasonalSettingsHubBridge = SeasonalSettingsHubBridge or {}
 
 local function applyChange(key, value)
     local mgr = g_cropStressManager

@@ -17,7 +17,7 @@
 --   Verify exact function signature against LUADOC before testing.
 -- ============================================================
 
-CropStressModifier = {}
+CropStressModifier = CropStressModifier or {}
 CropStressModifier.__index = CropStressModifier
 
 -- Maximum yield reduction at stress = 1.0 (full stress).

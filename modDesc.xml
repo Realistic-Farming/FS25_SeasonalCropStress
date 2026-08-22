@@ -24,10 +24,10 @@ FEATURES:
 Ã¢â‚¬Â¢ Soil type modifiers: sandy drains fast, clay holds moisture
 Ã¢â‚¬Â¢ Crop-specific critical growth windows (wheat, corn, barley, canola, and more)
 Ã¢â‚¬Â¢ Yield reduction at harvest Ã¢â‚¬â€ up to 60% loss at maximum stress
-Ã¢â‚¬Â¢ Field moisture HUD overlay with 5-day forecast (press Shift+M to toggle)
+Ã¢â‚¬Â¢ Field moisture HUD overlay with 5-day forecast (press Alt+M to toggle)
 Ã¢â‚¬Â¢ Center-pivot and drip irrigation placeables with water pump infrastructure
-Ã¢â‚¬Â¢ Irrigation scheduling dialog Ã¢â‚¬â€ set active days and hourly window (Shift+I)
-Ã¢â‚¬Â¢ Crop Consultant dialog with risk summary and recommendations (Shift+C)
+Ã¢â‚¬Â¢ Irrigation scheduling dialog Ã¢â‚¬â€ set active days and hourly window ("Open Irrigation Schedule")
+Ã¢â‚¬Â¢ Crop Consultant dialog with risk summary and recommendations ("Open Crop Consultant")
 Ã¢â‚¬Â¢ Optional integration with FS25_NPCFavor (Alex Chen, Agronomist NPC)
 Ã¢â‚¬Â¢ Optional integration with FS25_UsedPlus (used equipment marketplace)
 Ã¢â‚¬Â¢ Full save/load persistence of all field and irrigation state
@@ -43,10 +43,10 @@ FUNKTIONEN:
 Ã¢â‚¬Â¢ Bodentyp-Modifikatoren: Sandig trocknet schnell aus, Tonig hÃƒÂ¤lt Feuchte
 Ã¢â‚¬Â¢ Kultuurspezifische kritische Wachstumsphasen (Weizen, Mais, Gerste, Raps u. v. m.)
 Ã¢â‚¬Â¢ Ertragsreduzierung bei der Ernte Ã¢â‚¬â€ bis zu 60 % Verlust bei maximalem Stress
-Ã¢â‚¬Â¢ Bodenfeuchte-HUD-Overlay mit 5-Tage-Prognose (Shift+M zum Ein-/Ausblenden)
+Ã¢â‚¬Â¢ Bodenfeuchte-HUD-Overlay mit 5-Tage-Prognose (Alt+M zum Ein-/Ausblenden)
 Ã¢â‚¬Â¢ KreisbewÃƒÂ¤sserung und TrÃƒÂ¶pfchenbewÃƒÂ¤sserung mit Wasserpumpen-Infrastruktur
-Ã¢â‚¬Â¢ BewÃƒÂ¤sserungszeitplan-Dialog Ã¢â‚¬â€ Aktivtage und Zeitfenster einstellen (Shift+I)
-Ã¢â‚¬Â¢ Pflanzenbergungs-Dialog mit RisikoÃƒÂ¼bersicht und Empfehlungen (Shift+C)
+Ã¢â‚¬Â¢ BewÃƒÂ¤sserungszeitplan-Dialog Ã¢â‚¬â€ Aktivtage und Zeitfenster einstellen ("Open Irrigation Schedule")
+Ã¢â‚¬Â¢ Pflanzenbergungs-Dialog mit RisikoÃƒÂ¼bersicht und Empfehlungen ("Open Crop Consultant")
 Ã¢â‚¬Â¢ Optionale Integration mit FS25_NPCFavor (Alex Chen, Agrarberater-NPC)
 Ã¢â‚¬Â¢ Optionale Integration mit FS25_UsedPlus (Gebrauchtmarkt fÃƒÂ¼r Landmaschinen)
 Ã¢â‚¬Â¢ VollstÃƒÂ¤ndige Speicherung aller Feld- und BewÃƒÂ¤sserungsdaten
@@ -100,10 +100,10 @@ FUNCTIES:
 Ã¢â‚¬Â¢ Bodemtype-modifiers: Zandig droogt snel, Kleiig houdt vochtigheid vast
 Ã¢â‚¬Â¢ Gewasspecifieke kritieke groeivensters (tarwe, maÃƒÂ¯s, gerst, koolzaad en meer)
 Ã¢â‚¬Â¢ Opbrengstreductie bij oogst Ã¢â‚¬â€ tot 60 % verlies bij maximale stress
-Ã¢â‚¬Â¢ HUD-overlay bodemvochtigheid met 5-dagenprognose (Shift+M om in/uit te schakelen)
+Ã¢â‚¬Â¢ HUD-overlay bodemvochtigheid met 5-dagenprognose (Alt+M om in/uit te schakelen)
 Ã¢â‚¬Â¢ Cirkelberegening en druppelbevloeiing met waterpomp-infrastructuur
-Ã¢â‚¬Â¢ Irrigatieschema-dialoog Ã¢â‚¬â€ stel actieve dagen en tijdvenster in (Shift+I)
-Ã¢â‚¬Â¢ Gewasadviseur-dialoog met risicosamenvatting en aanbevelingen (Shift+C)
+Ã¢â‚¬Â¢ Irrigatieschema-dialoog Ã¢â‚¬â€ stel actieve dagen en tijdvenster in ("Open Irrigation Schedule")
+Ã¢â‚¬Â¢ Gewasadviseur-dialoog met risicosamenvatting en aanbevelingen ("Open Crop Consultant")
 Ã¢â‚¬Â¢ Optionele integratie met FS25_NPCFavor (Alex Chen, agronoom-NPC)
 Ã¢â‚¬Â¢ Optionele integratie met FS25_UsedPlus (marktplaats voor gebruikte machines)
 Ã¢â‚¬Â¢ Volledige opslag van veld- en irrigatiestatus
@@ -119,10 +119,10 @@ FUNKCE:
 Ã¢â‚¬Â¢ ModifikÃƒÂ¡tory typu pÃ…Â¯dy: pÃƒÂ­sÃ„ÂitÃƒÂ¡ odvÃƒÂ¡dÃƒÂ­ rychle, jÃƒÂ­lovitÃƒÂ¡ drÃ…Â¾ÃƒÂ­ vlhkost
 Ã¢â‚¬Â¢ KritickÃƒÂ¡ rÃ…Â¯stovÃƒÂ¡ okna specifickÃƒÂ¡ pro plodiny (pÃ…Â¡enice, kukuÃ…â„¢ice, jeÃ„Âmen, Ã…â„¢epka a dalÃ…Â¡ÃƒÂ­)
 Ã¢â‚¬Â¢ SnÃƒÂ­Ã…Â¾enÃƒÂ­ vÃƒÂ½nosu pÃ…â„¢i sklizni Ã¢â‚¬â€ aÃ…Â¾ 60% ztrÃƒÂ¡ta pÃ…â„¢i maximÃƒÂ¡lnÃƒÂ­m stresu
-Ã¢â‚¬Â¢ PÃ…â„¢ekrytÃƒÂ­ HUD vlhkosti pole s 5dennÃƒÂ­ pÃ…â„¢edpovÃ„â€ºdÃƒÂ­ (stisknÃ„â€ºte Shift+M pro pÃ…â„¢epnutÃƒÂ­)
+Ã¢â‚¬Â¢ PÃ…â„¢ekrytÃƒÂ­ HUD vlhkosti pole s 5dennÃƒÂ­ pÃ…â„¢edpovÃ„â€ºdÃƒÂ­ (stisknÃ„â€ºte Alt+M pro pÃ…â„¢epnutÃƒÂ­)
 Ã¢â‚¬Â¢ UmÃƒÂ­stitelnÃƒÂ© stÃ…â„¢edovÃƒÂ© pivoty a kapkovÃƒÂ© zavlaÃ…Â¾ovÃƒÂ¡nÃƒÂ­ s infrastrukturou vodnÃƒÂ­ pumpy
-Ã¢â‚¬Â¢ Dialog plÃƒÂ¡novÃƒÂ¡nÃƒÂ­ zavlaÃ…Â¾ovÃƒÂ¡nÃƒÂ­ Ã¢â‚¬â€ nastavte aktivnÃƒÂ­ dny a hodinovÃƒÂ© okno (Shift+I)
-Ã¢â‚¬Â¢ Dialog poradce pro plodiny s pÃ…â„¢ehledem rizik a doporuÃ„ÂenÃƒÂ­mi (Shift+C)
+Ã¢â‚¬Â¢ Dialog plÃƒÂ¡novÃƒÂ¡nÃƒÂ­ zavlaÃ…Â¾ovÃƒÂ¡nÃƒÂ­ Ã¢â‚¬â€ nastavte aktivnÃƒÂ­ dny a hodinovÃƒÂ© okno ("Open Irrigation Schedule")
+Ã¢â‚¬Â¢ Dialog poradce pro plodiny s pÃ…â„¢ehledem rizik a doporuÃ„ÂenÃƒÂ­mi ("Open Crop Consultant")
 Ã¢â‚¬Â¢ VolitelnÃƒÂ¡ integrace s FS25_NPCFavor (Alex Chen, NPC agronom)
 Ã¢â‚¬Â¢ VolitelnÃƒÂ¡ integrace s FS25_UsedPlus (trÃ…Â¾iÃ…Â¡tÃ„â€º pouÃ…Â¾itÃƒÂ©ho vybavenÃƒÂ­)
 Ã¢â‚¬Â¢ ÃƒÅ¡plnÃƒÂ¡ persistence uloÃ…Â¾enÃƒÂ­/naÃ„ÂtenÃƒÂ­ vÃ…Â¡ech stavÃ…Â¯ polÃƒÂ­ a zavlaÃ…Â¾ovÃƒÂ¡nÃƒÂ­
@@ -138,10 +138,10 @@ FUNKTIONER:
 Ã¢â‚¬Â¢ Jordtype-modifikatorer: sandjord drÃƒÂ¦ner hurtigt, lerjord holder pÃƒÂ¥ fugt
 Ã¢â‚¬Â¢ Kritiske vÃƒÂ¦kstperioder specifikke for afgrÃƒÂ¸der (hvede, majs, byg, raps og flere)
 Ã¢â‚¬Â¢ Udbyttereduktion ved hÃƒÂ¸st Ã¢â‚¬â€ op til 60% tab ved maksimal stress
-Ã¢â‚¬Â¢ HUD-overlay for markfugtighed med 5-dages vejrudsigt (tryk Shift+M for at skifte)
+Ã¢â‚¬Â¢ HUD-overlay for markfugtighed med 5-dages vejrudsigt (tryk Alt+M for at skifte)
 Ã¢â‚¬Â¢ Placerbare center pivot- og drypvandingssystemer med vandpumpeinfrastruktur
-Ã¢â‚¬Â¢ Dialog til planlÃƒÂ¦gning af vanding Ã¢â‚¬â€ angiv aktive dage og tidsvindue (Shift+I)
-Ã¢â‚¬Â¢ AfgrÃƒÂ¸derÃƒÂ¥dgiver-dialog med risikovurdering og anbefalinger (Shift+C)
+Ã¢â‚¬Â¢ Dialog til planlÃƒÂ¦gning af vanding Ã¢â‚¬â€ angiv aktive dage og tidsvindue ("Open Irrigation Schedule")
+Ã¢â‚¬Â¢ AfgrÃƒÂ¸derÃƒÂ¥dgiver-dialog med risikovurdering og anbefalinger ("Open Crop Consultant")
 Ã¢â‚¬Â¢ Valgfri integration med FS25_NPCFavor (Alex Chen, NPC agronom)
 Ã¢â‚¬Â¢ Valgfri integration med FS25_UsedPlus (marked for brugt udstyr)
 Ã¢â‚¬Â¢ Fuld persistens ved gem/indlÃƒÂ¦s af alle mark- og vandingsstatusser

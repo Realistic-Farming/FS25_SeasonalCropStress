@@ -8,7 +8,7 @@
     <text name="cs_hud_critical"      text="KRITICKÉ — Zavlažte okamžitě!"/>
     <text name="cs_hud_no_crop"       text="Žádná plodina"/>
     <text name="cs_hud_forecast"      text="5denní předpověď"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 načten. Stiskněte Shift+M pro otevření HUD vlhkosti. Jste v modu noví? Otevřete menu Nápověda (ESC → Nápověda) a najděte Seasonal Crop Stress, abyste se dozvěděli, jak vše funguje."/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 načten. Stiskněte Alt+M pro otevření HUD vlhkosti. Jste v modu noví? Otevřete menu Nápověda (ESC → Nápověda) a najděte Seasonal Crop Stress, abyste se dozvěděli, jak vše funguje."/>
     <text name="cs_hud_click_forecast" text="Klikněte na řádek pro 5denní předpověď"/>
     <text name="cs_hud_vehicle_disabled" text="Překrytí vypnuto ve vozidle"/>
 
@@ -158,7 +158,7 @@
     <text name="helpLine_cs_p1_intro_title"    text="Co tento mod přidává"/>
     <text name="helpLine_cs_p1_intro_text"     text="Seasonal Crop Stress přidává simulaci vlhkosti půdy na každé pole. Plodiny potřebují vodu během klíčových růstových stádií. Pokud ji nedostanou, vaše sklizeň bude menší. Zavlažovací systémy vám umožňují převzít kontrolu nad zásobováním pole vodou."/>
     <text name="helpLine_cs_p1_start_title"    text="Začínáme"/>
-    <text name="helpLine_cs_p1_start_text"     text="Stiskněte Shift+M pro otevření HUD vlhkosti a zobrazení všech vašich polí na první pohled. Pole zobrazená červeně naléhavě potřebují vodu. Zelená pole jsou v dobrém stavu. Stiskněte Shift+C pro otevření poradce pro plodiny pro podrobné rady a skóre rizik pole."/>
+    <text name="helpLine_cs_p1_start_text"     text="Stiskněte Alt+M pro otevření HUD vlhkosti a zobrazení všech vašich polí na první pohled. Pole zobrazená červeně naléhavě potřebují vodu. Zelená pole jsou v dobrém stavu. Stiskněte 'Otevřít poradce pro plodiny' pro otevření poradce pro plodiny pro podrobné rady a skóre rizik pole."/>
 
     <!-- Overview: Page 2 -->
    <text name="helpLine_cs_p2_title"          text="Vlhkost půdy"/>
@@ -179,12 +179,12 @@
     <text name="helpLine_cs_p5_types_title"    text="Typy zavlažování"/>
     <text name="helpLine_cs_p5_types_text"     text="Tři typy zavlažování jsou k dispozici v menu stavby. Středový pivot pokrývá velkou kruhovou oblast. Kapková linka poskytuje přesné pokrytí podél řádku pole. Vodní pumpa pohání vaše zavlažovací systémy a musí být nejprve umístěna poblíž zdroje vody."/>
     <text name="helpLine_cs_p5_schedule_title" text="Plánování a provoz"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Vyberte zavlažovací systém a stiskněte Shift+I pro otevření jeho plánu. Vyberte, ve které dny v týdnu zavlažovat, a nastavte denní čas zahájení a ukončení. Můžete také stisknout Zavlažit nyní v dialogu pro okamžité zavlažení pokrytých polí bez čekání na plán."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="Vyberte zavlažovací systém a stiskněte 'Otevřít správce zavlažování' pro otevření jeho plánu. Vyberte, ve které dny v týdnu zavlažovat, a nastavte denní čas zahájení a ukončení. Můžete také stisknout Zavlažit nyní v dialogu pro okamžité zavlažení pokrytých polí bez čekání na plán."/>
 
     <!-- Overview: Page 5 (Crop Consultant) -->
     <text name="helpLine_cs_p6_title"          text="Poradce pro plodiny"/>
     <text name="helpLine_cs_p6_what_title"     text="Co poradce zobrazuje"/>
-    <text name="helpLine_cs_p6_what_text"      text="Stiskněte Shift+C pro otevření poradce pro plodiny. Zobrazuje vašich 5 nejrizikovějších polí seřazených podle vlhkosti a úrovně stresu, spolu s jasnými doporučeními pro příštích 24 hodin a 3denní předpovědí vlhkosti."/>
+    <text name="helpLine_cs_p6_what_text"      text="Stiskněte 'Otevřít poradce pro plodiny' pro otevření poradce pro plodiny. Zobrazuje vašich 5 nejrizikovějších polí seřazených podle vlhkosti a úrovně stresu, spolu s jasnými doporučeními pro příštích 24 hodin a 3denní předpovědí vlhkosti."/>
     <text name="helpLine_cs_p6_act_title"      text="Jednání podle rad"/>
     <text name="helpLine_cs_p6_act_text"       text="Pole označená KRITICKÉ potřebují zavlažování dnes, aby se předešlo ztrátě sklizně. Pole označená VAROVÁNÍ by měla být zavlažena do jednoho nebo dvou dnů. Použijte tlačítko Otevřít správce zavlažování uvnitř poradce pro rychlé naplánování vody pro nejhorší pole."/>
     <text name="helpLine_cs_p6_npc_title"      text="Volitelné integrace"/>
@@ -207,13 +207,13 @@
     <!-- Tips & Tricks: Page 1 (HUD & Controls) -->
     <text name="helpLine_cs_p4_title"          text="HUD a ovládání"/>
     <text name="helpLine_cs_p4_hud_title"      text="Překrytí HUD vlhkosti"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Stiskněte Shift+M pro přepnutí HUD vlhkosti. Zobrazuje každé pole s jeho úrovní vlhkosti, typem plodiny a stavem stresu. 5denní předpověď ukazuje, zda vlhkost stoupá nebo klesá, takže můžete plánovat dopředu. Panel můžete také přetáhnout na libovolnou pozici na obrazovce kliknutím a uvolněním."/>
+    <text name="helpLine_cs_p4_hud_text"       text="Stiskněte Alt+M pro přepnutí HUD vlhkosti. Zobrazuje každé pole s jeho úrovní vlhkosti, typem plodiny a stavem stresu. 5denní předpověď ukazuje, zda vlhkost stoupá nebo klesá, takže můžete plánovat dopředu. Panel můžete také přetáhnout na libovolnou pozici na obrazovce kliknutím a uvolněním."/>
     <text name="helpLine_cs_p4_reading_title"  text="Čtení řádku pole"/>
     <text name="helpLine_cs_p4_reading_text"   text="Každý řádek zobrazuje: číslo pole (P1), název plodiny (Pšenice), aktuální růstové stadium (Stadium 3), barevně kódovaný pruh vlhkosti a procento vlhkosti. Pokud řádek končí vykřičníkem (!), toto pole již hromadí stres suchem a začala ztráta výnosu — zavlažte ho nyní. V seznamu se objevují pouze plodiny, které mohou trpět stresem suchem."/>
     <text name="helpLine_cs_p4_status_title"   text="Barvy stavu"/>
     <text name="helpLine_cs_p4_status_text"    text="Zelená znamená, že vaše pole je zdravé a není potřeba žádná akce. Žlutá je varování: vlhkost klesá a zavlažování je brzy vhodné. Červená je kritická: plodina je pod stresem suchem a ztráta výnosu již hromadí — zavlažte okamžitě."/>
     <text name="helpLine_cs_p4_keys_title"     text="Klávesové zkratky"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Shift+M přepíná HUD vlhkosti zapnuto nebo vypnuto. Shift+I otevírá správce zavlažování pro vybraný systém. Shift+C otevírá poradce pro plodiny se shrnutím rizik pole a personalizovanými doporučeními."/>
+    <text name="helpLine_cs_p4_keys_text"      text="Alt+M přepíná HUD vlhkosti zapnuto nebo vypnuto. 'Otevřít správce zavlažování' otevírá správce zavlažování pro vybraný systém. 'Otevřít poradce pro plodiny' otevírá poradce pro plodiny se shrnutím rizik pole a personalizovanými doporučeními."/>
 
     <!-- Tips & Tricks: Page 2 — Farming Strategies -->
     <text name="helpLine_cs_t2_title"          text="Farmářské strategie"/>

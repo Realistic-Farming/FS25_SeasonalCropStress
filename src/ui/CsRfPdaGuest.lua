@@ -10,11 +10,11 @@
 -- Host-capable SCS-alone (shared chrome package) is a later slice.
 -- =========================================================
 
-CsRfPdaGuest = {}
+CsRfPdaGuest = CsRfPdaGuest or {}
 
--- Capture at source() time — g_currentModDirectory is often nil at deferred/map-load callbacks.
-local MOD_DIR = g_currentModDirectory
-local CS_RF_MOD_NAME = g_currentModName
+-- Capture at source() time — (SeasonalCropStressModDirectory or g_currentModDirectory) is often nil at deferred/map-load callbacks.
+local MOD_DIR = (SeasonalCropStressModDirectory or g_currentModDirectory)
+local CS_RF_MOD_NAME = (SeasonalCropStressModName or g_currentModName)
 local PANEL_ID = "seasonalCropStress"
 local PANEL_ORDER = 20
 
@@ -2284,7 +2284,7 @@ function CsRfPdaGuest.standDownLegacyEsc()
 end
 
 function CsRfPdaGuest.tryRegister()
-    -- Always ensureDoor when bootstrap class is sourced; never trust bare g_currentModDirectory at callback time.
+    -- Always ensureDoor when bootstrap class is sourced; never trust bare (SeasonalCropStressModDirectory or g_currentModDirectory) at callback time.
     if RfEscBootstrap ~= nil then
         if MOD_DIR == nil then
             print("[CropStress] CsRfPdaGuest: WARNING MOD_DIR nil — cannot ensureDoor (source capture failed)")

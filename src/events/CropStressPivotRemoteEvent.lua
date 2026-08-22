@@ -5,7 +5,7 @@
 -- George ENGINE ACK 2026-08-09 GO WITH CONSTRAINTS.
 -- ============================================================
 
-CropStressPivotRemoteEvent = {}
+CropStressPivotRemoteEvent = CropStressPivotRemoteEvent or {}
 CropStressPivotRemoteEvent_mt = Class(CropStressPivotRemoteEvent, Event)
 
 InitEventClass(CropStressPivotRemoteEvent, "CropStressPivotRemoteEvent")

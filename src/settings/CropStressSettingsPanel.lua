@@ -6,7 +6,7 @@
 -- Modeled on FS25_SoilFertilizer SoilSettingsPanel.lua pattern.
 -- ============================================================
 
-CropStressSettingsPanel = {}
+CropStressSettingsPanel = CropStressSettingsPanel or {}
 local CropStressSettingsPanel_mt = Class(CropStressSettingsPanel)
 
 -- ── Panel geometry (normalized, Y=0 at bottom) ─────────────
@@ -219,7 +219,7 @@ function CropStressSettingsPanel.new(manager)
     self.popupLines   = nil
     self.popupScroll  = 0
     self.savedCamRotX, self.savedCamRotY, self.savedCamRotZ = nil, nil, nil
-    local mod = g_modManager and g_modManager:getModByName(g_currentModName)
+    local mod = g_modManager and g_modManager:getModByName((SeasonalCropStressModName or g_currentModName))
     self.modVersion = "v" .. (mod and mod.version or "?")
     return self
 end

@@ -30,8 +30,8 @@ Explaination:
 
 RWSM53ChangeObjectByDistance = {};
 
-RWSM53ChangeObjectByDistance.modDir = g_currentModDirectory;
-RWSM53ChangeObjectByDistance.currentModName = g_currentModName;
+RWSM53ChangeObjectByDistance.modDir = (SeasonalCropStressModDirectory or g_currentModDirectory);
+RWSM53ChangeObjectByDistance.currentModName = (SeasonalCropStressModName or g_currentModName);
 
 function RWSM53ChangeObjectByDistance.initSpecialization()
     local schema = Vehicle.xmlSchema

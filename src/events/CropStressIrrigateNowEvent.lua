@@ -8,7 +8,7 @@
 -- directly). SCS-018 brief 3.6.
 -- ============================================================
 
-CropStressIrrigateNowEvent = {}
+CropStressIrrigateNowEvent = CropStressIrrigateNowEvent or {}
 CropStressIrrigateNowEvent_mt = Class(CropStressIrrigateNowEvent, Event)
 
 InitEventClass(CropStressIrrigateNowEvent, "CropStressIrrigateNowEvent")

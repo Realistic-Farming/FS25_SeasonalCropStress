@@ -16,7 +16,7 @@
 --   CRITICAL (<25% moisture)  — "irrigate NOW!"               10s + auto-show HUD
 -- ============================================================
 
-CropConsultant = {}
+CropConsultant = CropConsultant or {}
 CropConsultant.__index = CropConsultant
 
 -- Severity thresholds (moisture fractions)

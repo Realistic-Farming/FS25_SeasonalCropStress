@@ -15,7 +15,7 @@
 -- after the existing dirty/sync tick, exactly like the sprayer and Irrigate Now.
 -- ============================================================
 
-IrrigatorSectorIntegration = {}
+IrrigatorSectorIntegration = IrrigatorSectorIntegration or {}
 IrrigatorSectorIntegration.__index = IrrigatorSectorIntegration
 
 --- Vehicle types this tick drives. Keyed by modDesc vehicleType name so swapping

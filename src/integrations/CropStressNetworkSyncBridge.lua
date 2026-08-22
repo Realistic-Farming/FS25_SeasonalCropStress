@@ -31,7 +31,7 @@
 -- is order-independent.
 -- =========================================================
 
-CropStressNetworkSyncBridge = {}
+CropStressNetworkSyncBridge = CropStressNetworkSyncBridge or {}
 
 -- Provisional module id. This is the network CHANNEL and the join-snapshot key, so
 -- it must be locked with Claude(A) before release (a later rename desyncs a mixed

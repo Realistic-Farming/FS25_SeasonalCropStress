@@ -10,7 +10,7 @@
 -- =========================================================
 
 ---@class CsPDAScreen
-CsPDAScreen = {}
+CsPDAScreen = CsPDAScreen or {}
 CsPDAScreen._mt = Class(CsPDAScreen, TabbedMenuFrameElement)
 
 CsPDAScreen.CLASS_NAME     = "CsPDAScreen"
@@ -18,8 +18,8 @@ CsPDAScreen.MENU_PAGE_NAME = "menuCropStress"
 CsPDAScreen.XML_FILENAME   = "xml/gui/CsPDAScreen.xml"
 CsPDAScreen.MENU_ICON_PATH = "icon.dds"
 
-local CS_PDA_MOD_DIR  = g_currentModDirectory
-local CS_PDA_MOD_NAME = g_currentModName
+local CS_PDA_MOD_DIR  = (SeasonalCropStressModDirectory or g_currentModDirectory)
+local CS_PDA_MOD_NAME = (SeasonalCropStressModName or g_currentModName)
 
 CsPDAScreen.CONTROLS = {
     -- Field list (left sidebar)

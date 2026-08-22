@@ -8,7 +8,7 @@
 -- No dynamic data — onOpen simply calls super.
 -- ============================================================
 
-CsHelpDialog = {}
+CsHelpDialog = CsHelpDialog or {}
 local CsHelpDialog_mt = Class(CsHelpDialog, MessageDialog)
 
 function CsHelpDialog.new(target, customMt)

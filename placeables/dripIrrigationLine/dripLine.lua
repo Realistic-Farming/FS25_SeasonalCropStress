@@ -6,8 +6,8 @@
 -- player is within INTERACTION_RADIUS metres of the line.
 -- ============================================================
 
-DripIrrigationLine = {}
-DripIrrigationLine.MOD_NAME = g_currentModName
+DripIrrigationLine = DripIrrigationLine or {}
+DripIrrigationLine.MOD_NAME = (SeasonalCropStressModName or g_currentModName)
 DripIrrigationLine.INTERACTION_RADIUS = 8  -- metres
 
 local function csLog(msg)

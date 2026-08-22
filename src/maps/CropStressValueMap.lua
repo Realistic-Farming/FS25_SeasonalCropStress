@@ -25,7 +25,7 @@
 -- That is a correctness law, not an optimisation.
 -- ============================================================
 
-CropStressValueMap = {}
+CropStressValueMap = CropStressValueMap or {}
 local CropStressValueMap_mt = Class(CropStressValueMap)
 
 -- The single layer. Moisture is a 0..1 fraction, so unitsPerRaw is 1/254.

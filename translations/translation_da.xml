@@ -8,7 +8,7 @@
     <text name="cs_hud_critical"      text="KRITISK — Vand nu!"/>
     <text name="cs_hud_no_crop"       text="Ingen afgrøde"/>
     <text name="cs_hud_forecast"      text="5-dages prognose"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 indlæst. Shift+M åbner fugtigheds-HUD'et. Ny her? Åbn hjælpemenuen (ESC → Hjælp) og søg efter Seasonal Crop Stress for at lære mere."/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 indlæst. Alt+M åbner fugtigheds-HUD'et. Ny her? Åbn hjælpemenuen (ESC → Hjælp) og søg efter Seasonal Crop Stress for at lære mere."/>
     <text name="cs_hud_click_forecast" text="Klik på rækken for at se 5-dages prognosen"/>
     <text name="cs_hud_vehicle_disabled" text="Overlay deaktiveret i køretøj"/>
 
@@ -155,7 +155,7 @@
     <text name="helpLine_cs_p1_intro_title"    text="Hvad denne mod tilføjer"/>
     <text name="helpLine_cs_p1_intro_text"     text="Sæsonbestemt plantestress tilføjer en simulering af jordfugtighed til hver mark. Planter har brug for vand i vigtige vækstfaser. Mangler de vand, bliver høsten mindre. Vandingssystemer giver dig kontrol over vandforsyningen."/>
     <text name="helpLine_cs_p1_start_title"    text="Kom godt i gang"/>
-    <text name="helpLine_cs_p1_start_text"     text="Shift+M åbner fugtigheds-HUD'et med en oversigt over alle marker. Røde marker har akut brug for vand, grønne marker er i orden. Shift+C åbner plantekonsulenten med detaljerede anbefalinger og risikoværdier."/>
+    <text name="helpLine_cs_p1_start_text"     text="Alt+M åbner fugtigheds-HUD'et med en oversigt over alle marker. Røde marker har akut brug for vand, grønne marker er i orden. 'Åbn plantekonsulent' åbner plantekonsulenten med detaljerede anbefalinger og risikoværdier."/>
 
     <text name="helpLine_cs_p2_title"          text="Jordfugtighed"/>
     <text name="helpLine_cs_p2_how_title"      text="Sådan fungerer fugtighed"/>
@@ -173,11 +173,11 @@
     <text name="helpLine_cs_p5_types_title"    text="Vandingstyper"/>
     <text name="helpLine_cs_p5_types_text"     text="I byggemenuen findes tre vandingstyper. Centerpivot-vanding dækker et stort cirkulært område. Drypvanding giver målrettet dækning langs en markrække. Vandpumpen driver systemerne og skal først placeres tæt på en vandkilde."/>
     <text name="helpLine_cs_p5_schedule_title" text="Tidsplan &amp; drift"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Vælg et vandingssystem, og tryk på Shift+I for at åbne tidsplanen. Vælg ugedage, og indstil daglige start- og sluttider. Med Vand nu kan du straks vande de dækkede marker uden at vente på tidsplanen."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="Vælg et vandingssystem, og tryk på 'Åbn vandingsmanager' for at åbne tidsplanen. Vælg ugedage, og indstil daglige start- og sluttider. Med Vand nu kan du straks vande de dækkede marker uden at vente på tidsplanen."/>
 
     <text name="helpLine_cs_p6_title"          text="Plantekonsulent"/>
     <text name="helpLine_cs_p6_what_title"     text="Hvad konsulenten viser"/>
-    <text name="helpLine_cs_p6_what_text"      text="Shift+C åbner plantekonsulenten. Den viser de fem mest risikofyldte marker baseret på fugtighed og stressniveau samt en letforståelig anbefaling for de næste 24 timer og en 3-dages fugtighedsprognose."/>
+    <text name="helpLine_cs_p6_what_text"      text="'Åbn plantekonsulent' åbner plantekonsulenten. Den viser de fem mest risikofyldte marker baseret på fugtighed og stressniveau samt en letforståelig anbefaling for de næste 24 timer og en 3-dages fugtighedsprognose."/>
     <text name="helpLine_cs_p6_act_title"      text="Følg anbefalingerne"/>
     <text name="helpLine_cs_p6_act_text"       text="Marker mærket KRITISK skal vandes i dag for at undgå udbyttetab. Marker mærket ADVARSEL bør vandes inden for én til to dage. Brug knappen Åbn vandingsmanager for hurtigt at oprette en tidsplan for den hårdest ramte mark."/>
     <text name="helpLine_cs_p6_npc_title"      text="Valgfri integrationer"/>
@@ -197,13 +197,13 @@
 
     <text name="helpLine_cs_p4_title"          text="HUD &amp; styring"/>
     <text name="helpLine_cs_p4_hud_title"      text="Fugtigheds-HUD-overlay"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Shift+M slår fugtigheds-HUD'et til eller fra. Det viser alle marker med fugtighedsniveau, afgrødetype og stressstatus. En 5-dages prognose viser, om fugtigheden stiger eller falder, så du kan planlægge fremad. Panelet kan flyttes til en valgfri placering på skærmen ved at klikke og slippe."/>
+    <text name="helpLine_cs_p4_hud_text"       text="Alt+M slår fugtigheds-HUD'et til eller fra. Det viser alle marker med fugtighedsniveau, afgrødetype og stressstatus. En 5-dages prognose viser, om fugtigheden stiger eller falder, så du kan planlægge fremad. Panelet kan flyttes til en valgfri placering på skærmen ved at klikke og slippe."/>
     <text name="helpLine_cs_p4_reading_title"  text="Sådan læser du en marklinje"/>
     <text name="helpLine_cs_p4_reading_text"   text="Hver linje viser: marknummer (F1), afgrødenavn (hvede), aktuel vækstfase (fase 3), en farvekodet fugtighedsbjælke og fugtighedsprocenten. Hvis linjen slutter med et udråbstegn (!), opbygger marken allerede tørkestress, og udbyttetabet er begyndt — vand straks. Kun afgrøder, der kan lide under tørkestress, vises på listen."/>
     <text name="helpLine_cs_p4_status_title"   text="Statusfarver"/>
     <text name="helpLine_cs_p4_status_text"    text="Grøn betyder sund mark uden behov for handling. Gul er en advarsel: Fugtigheden falder, og vanding anbefales snart. Rød er kritisk: Afgrøden lider under tørkestress, og udbyttetabet vokser — vand straks."/>
     <text name="helpLine_cs_p4_keys_title"     text="Tastaturgenveje"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Shift+M slår fugtigheds-HUD'et til/fra. Shift+I åbner vandingsmanageren for et valgt system. Shift+C åbner plantekonsulenten med markrisici og personlige anbefalinger."/>
+    <text name="helpLine_cs_p4_keys_text"      text="Alt+M slår fugtigheds-HUD'et til/fra. 'Åbn vandingsmanager' åbner vandingsmanageren for et valgt system. 'Åbn plantekonsulent' åbner plantekonsulenten med markrisici og personlige anbefalinger."/>
 
     <text name="helpLine_cs_t2_title"          text="Landbrugsstrategier"/>
     <text name="helpLine_cs_t2_sandy_title"    text="Prioritér sandede marker"/>

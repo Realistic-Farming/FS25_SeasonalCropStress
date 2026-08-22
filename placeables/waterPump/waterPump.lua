@@ -4,8 +4,8 @@
 -- Registers with IrrigationManager as a water source.
 -- ============================================================
 
-WaterPump = {}
-WaterPump.MOD_NAME = g_currentModName
+WaterPump = WaterPump or {}
+WaterPump.MOD_NAME = (SeasonalCropStressModName or g_currentModName)
 
 local function csLog(msg)
     if g_logManager ~= nil then

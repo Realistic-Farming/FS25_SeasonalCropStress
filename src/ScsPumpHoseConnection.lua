@@ -9,10 +9,10 @@
 -- or SPS/LSFM. SP-first: dedicated MP connect Event unpaid.
 -- ============================================================
 
-ScsPumpHoseConnection = {}
+ScsPumpHoseConnection = ScsPumpHoseConnection or {}
 
-ScsPumpHoseConnection.modDir = g_currentModDirectory
-ScsPumpHoseConnection.currentModName = g_currentModName
+ScsPumpHoseConnection.modDir = (SeasonalCropStressModDirectory or g_currentModDirectory)
+ScsPumpHoseConnection.currentModName = (SeasonalCropStressModName or g_currentModName)
 
 ScsPumpHoseConnection.MAX_RANGE_M = 8.0
 ScsPumpHoseConnection.ACTIVATE_RANGE_M = 4.5
@@ -853,7 +853,7 @@ end
 -- Walk-up activatable (vanilla use prompt)
 -- ------------------------------------------------------------
 
-ScsPumpHoseActivatable = {}
+ScsPumpHoseActivatable = ScsPumpHoseActivatable or {}
 local ScsPumpHoseActivatable_mt = Class(ScsPumpHoseActivatable)
 
 function ScsPumpHoseActivatable.new(vehicle)
@@ -992,7 +992,7 @@ end
 -- same vanilla events. No new geometry, no new motor API, one UX surface rather than three.
 -- ------------------------------------------------------------
 
-ScsPumpStartActivatable = {}
+ScsPumpStartActivatable = ScsPumpStartActivatable or {}
 local ScsPumpStartActivatable_mt = Class(ScsPumpStartActivatable)
 
 ScsPumpStartActivatable.RANGE_M = 5

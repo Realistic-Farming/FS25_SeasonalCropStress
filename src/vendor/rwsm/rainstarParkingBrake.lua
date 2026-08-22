@@ -7,7 +7,7 @@
 -- Author: Sherman
 -- Version: 1.38.36
 
-RWSM118RainstarParkingBrake = {}
+RWSM118RainstarParkingBrake = RWSM118RainstarParkingBrake or {}
 
 local REEL_WHEEL_COUNT = 2
 local LOAD_STABILIZATION_MS = 12000

@@ -15,7 +15,7 @@ local function getUPAPI()
     return (g_currentMission and g_currentMission.usedPlusAPI) or UsedPlusAPI or g_usedPlusManager
 end
 
-UsedEquipmentMarketplace = {}
+UsedEquipmentMarketplace = UsedEquipmentMarketplace or {}
 UsedEquipmentMarketplace.__index = UsedEquipmentMarketplace
 
 function UsedEquipmentMarketplace.new(manager)
