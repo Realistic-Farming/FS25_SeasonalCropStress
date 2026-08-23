@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to FS25_SeasonalCropStress will be documented in this file.
 
@@ -15,6 +15,7 @@ the repo's git history and README.
 
 ### Added
 - Changelog file established (suite ruling 2026-08-22).
+- Playtest fixes: CS_TOGGLE_HUD (RShift+M) and CS_EDIT_HUD (RShift+N) chord defaults, HUD/settings alignment, in-cab vehicle key hook.
 - Control Center actions (suite Control Center, requires SettingsHub): `CS_OPEN_IRRIGATION`, `CS_OPEN_CONSULTANT`, `CS_OPEN_SETTINGS`.
 
 ## [1.2.5.96] - 2026-08-22

@@ -354,38 +354,14 @@ function CropStressSettings:allowsExperimentalSystems()
     return self.experimentalSystems == true
 end
 
-CropStressSettings.SPINE_STRESS = {
-    id   = "scs_stressRate",
-    dial = "biological",
-    base = 1.0,
-}
-
-CropStressSettings.SPINE_EVAP = {
-    id   = "scs_evapRate",
-    dial = "biological",
-    base = 1.0,
-}
-
+-- Get stress rate multiplier based on difficulty
 function CropStressSettings:getDifficultyStressMultiplier()
-    if OptionScalingResolver ~= nil then
-        local hub = (g_currentMission ~= nil and g_currentMission.settingsHub) or g_settingsHub
-        local profile = OptionScalingResolver.readProfile(hub)
-        if profile ~= nil then
-            return OptionScalingResolver.resolve(CropStressSettings.SPINE_STRESS, profile)
-        end
-    end
     local mult = DIFFICULTY_MULTIPLIERS[self.difficulty]
     return mult and mult.stress or 1.0
 end
 
+-- Get evapotranspiration multiplier based on difficulty
 function CropStressSettings:getDifficultyEvapMultiplier()
-    if OptionScalingResolver ~= nil then
-        local hub = (g_currentMission ~= nil and g_currentMission.settingsHub) or g_settingsHub
-        local profile = OptionScalingResolver.readProfile(hub)
-        if profile ~= nil then
-            return OptionScalingResolver.resolve(CropStressSettings.SPINE_EVAP, profile)
-        end
-    end
     local mult = DIFFICULTY_MULTIPLIERS[self.difficulty]
     return mult and mult.evap or 1.0
 end
