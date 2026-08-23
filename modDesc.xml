@@ -168,10 +168,10 @@ FUNKTIONER:
              No default bindings per Input Convention Rule 1 (no Function keys, the
              player assigns in Controls). input_CS_* texts already ship in all 26
              translation files. -->
-        <action name="CS_TOGGLE_HUD"/>
+        <action name="CS_TOGGLE_HUD" category="ONFOOT VEHICLE" />
         <action name="CS_OPEN_IRRIGATION"/>
         <action name="CS_OPEN_CONSULTANT"/>
-        <action name="CS_EDIT_HUD"/>
+        <action name="CS_EDIT_HUD" category="ONFOOT VEHICLE" />
         <action name="CS_OPEN_SETTINGS"/>
         <!-- Reel retract, consumed by the vendored RWSM53AutoReel spec. -->
         <action name="RWSM53_REEL_TOGGLE" category="VEHICLE"/>
@@ -181,17 +181,17 @@ FUNKTIONER:
         <!-- BUILD 06:43 (Sam DESIGN 06:42): seat-locked non-Function defaults so a
              fresh save can drive the Moisture HUD out of the box - Alt+M toggles,
              Shift+Alt+M edits/moves. The other actions stay player-assigned. -->
-        <actionBinding action="CS_TOGGLE_HUD">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_lalt KEY_m" />
-        </actionBinding>
         <actionBinding action="CS_OPEN_IRRIGATION" />
         <actionBinding action="CS_OPEN_CONSULTANT" />
-        <actionBinding action="CS_EDIT_HUD">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_lalt KEY_m" />
-        </actionBinding>
         <actionBinding action="CS_OPEN_SETTINGS" />
         <actionBinding action="RWSM53_REEL_TOGGLE">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_n" axisComponent="+" inputComponent="+" index="1"/>
+        </actionBinding>
+        <actionBinding action="CS_TOGGLE_HUD">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_m" />
+        </actionBinding>
+        <actionBinding action="CS_EDIT_HUD">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_n" />
         </actionBinding>
     </inputBinding>
 
