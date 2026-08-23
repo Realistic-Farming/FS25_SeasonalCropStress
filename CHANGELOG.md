@@ -15,6 +15,7 @@ the repo's git history and README.
 
 ### Added
 - Changelog file established (suite ruling 2026-08-22).
+- Control Center actions (suite Control Center, requires SettingsHub): `CS_OPEN_IRRIGATION`, `CS_OPEN_CONSULTANT`, `CS_OPEN_SETTINGS`.
 
 ## [1.2.5.96] - 2026-08-22
 

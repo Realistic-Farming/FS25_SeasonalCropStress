@@ -1,3 +1,17 @@
+-- 2026-08-22 (Wizard): with MasterHUD installed this mod's own moisture HUD hide/move keys
+-- must not merely be inert, they must not REGISTER at all - that is what removes their rows
+-- from the F1 legend and the Controls list. Probed on TaxMod first. Only CS_TOGGLE_HUD and
+-- CS_EDIT_HUD are gated; irrigation, consultant and settings register as always.
+-- Passed through a function rather than "cond and nil or x": in Lua nil is falsy, so that
+-- idiom would hand back the action every time and silently do nothing.
+local function __rfMhOwnsHudKeys()
+    return ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil
+end
+local function __rfHudAct(actionId)
+    if __rfMhOwnsHudKeys() then return nil end
+    return actionId
+end
+
 -- ============================================================
 -- FS25_SeasonalCropStress — main.lua
 -- Entry point. Loads all modules via source() in strict dependency
@@ -118,11 +132,25 @@ source(modDir .. "src/CropStressManager.lua")
 -- lit-but-dead in the first place (PB-H05). The 22:13 principle stands satisfied the
 -- other way around: the actions now drive a HUD that exists.
 local function csToggleHUDCallback(_, _, inputValue)
+    -- 2026-08-22 (Wizard): MasterHUD takeover. When MasterHUD is installed it owns the
+    -- suite-wide hide/move binds, so this mod's own per-mod key is deliberately inert:
+    -- one surface, one way to reach it. Standalone (no MasterHUD) this runs normally.
+    -- Canonical presence check, the same expression the suite's MasterHUD bridges use.
+    if ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil then
+        return
+    end
     if (inputValue or 0) <= 0 then return end
     if g_cropStressManager ~= nil then g_cropStressManager:onToggleHUD() end
 end
 
 local function csEditHUDCallback(_, _, inputValue)
+    -- 2026-08-22 (Wizard): MasterHUD takeover. When MasterHUD is installed it owns the
+    -- suite-wide hide/move binds, so this mod's own per-mod key is deliberately inert:
+    -- one surface, one way to reach it. Standalone (no MasterHUD) this runs normally.
+    -- Canonical presence check, the same expression the suite's MasterHUD bridges use.
+    if ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil then
+        return
+    end
     if (inputValue or 0) <= 0 then return end
     if g_cropStressManager ~= nil and g_cropStressManager.hudOverlay ~= nil then
         local hud = g_cropStressManager.hudOverlay
@@ -171,10 +199,10 @@ do
                     end
                 end
 
-                reg(InputAction.CS_TOGGLE_HUD,      csToggleHUDCallback,      "input_CS_TOGGLE_HUD",      "Toggle Moisture HUD")
+                reg(__rfHudAct(InputAction.CS_TOGGLE_HUD),      csToggleHUDCallback,      "input_CS_TOGGLE_HUD",      "Toggle Moisture HUD")
                 reg(InputAction.CS_OPEN_IRRIGATION, csOpenIrrigationCallback, "input_CS_OPEN_IRRIGATION", "Open Irrigation Manager")
                 reg(InputAction.CS_OPEN_CONSULTANT, csOpenConsultantCallback, "input_CS_OPEN_CONSULTANT", "Open Crop Consultant")
-                reg(InputAction.CS_EDIT_HUD,        csEditHUDCallback,        "input_CS_EDIT_HUD",        "Edit/Move Moisture HUD")
+                reg(__rfHudAct(InputAction.CS_EDIT_HUD),        csEditHUDCallback,        "input_CS_EDIT_HUD",        "Edit/Move Moisture HUD")
                 reg(InputAction.CS_OPEN_SETTINGS,   csOpenSettingsCallback,   "input_CS_OPEN_SETTINGS",   "Open Crop Stress Settings")
 
                 g_inputBinding:endActionEventsModification()
@@ -209,8 +237,8 @@ do
                     )
                 end
 
-                regV(InputAction.CS_TOGGLE_HUD,    csToggleHUDCallback)
-                regV(InputAction.CS_EDIT_HUD,      csEditHUDCallback)
+                regV(__rfHudAct(InputAction.CS_TOGGLE_HUD),    csToggleHUDCallback)
+                regV(__rfHudAct(InputAction.CS_EDIT_HUD),      csEditHUDCallback)
                 regV(InputAction.CS_OPEN_SETTINGS, csOpenSettingsCallback)
             end
         )
@@ -472,3 +500,49 @@ addModEventListener({
         g_csManager.hudOverlay:onMouseEvent(posX, posY, isDown, isUp, button)
     end
 })
+
+-- ---------------------------------------------------------
+-- Realistic Farming Control Center: publish runnable delegates.
+--
+-- Feature actions only. CS_TOGGLE_HUD and CS_EDIT_HUD are deliberately absent:
+-- __rfHudAct above suppresses their key registration whenever MasterHUD owns the
+-- suite HUD keys, and a Control Center button would be a way around a
+-- suppression the suite chose on purpose. Those two live under Master HUD.
+-- ---------------------------------------------------------
+local function registerControlCenterActions()
+    local registry = g_currentMission ~= nil and g_currentMission.rfActionRegistry or nil
+    if registry == nil then return end
+
+    registry.registerAction({
+        action     = "CS_OPEN_IRRIGATION",
+        button     = "Open",
+        order      = 1,
+        closeFirst = true,
+        run = function()
+            if g_cropStressManager ~= nil then g_cropStressManager:onOpenIrrigationDialog() end
+        end,
+    })
+
+    registry.registerAction({
+        action     = "CS_OPEN_CONSULTANT",
+        button     = "Open",
+        order      = 2,
+        closeFirst = true,
+        run = function()
+            if g_cropStressManager ~= nil then g_cropStressManager:onOpenConsultantDialog() end
+        end,
+    })
+
+    registry.registerAction({
+        action     = "CS_OPEN_SETTINGS",
+        button     = "Open",
+        order      = 3,
+        closeFirst = true,
+        run = function()
+            if g_cropStressManager ~= nil then g_cropStressManager:onToggleSettings() end
+        end,
+    })
+end
+
+Mission00.loadMission00Finished = Utils.appendedFunction(
+    Mission00.loadMission00Finished, registerControlCenterActions)
