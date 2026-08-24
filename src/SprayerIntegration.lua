@@ -44,8 +44,7 @@ function SprayerIntegration.overwrittenProcessSprayerArea(self, superFunc, workA
     -- IrrigatorSectorIntegration, which models the real pie sector. Letting the
     -- rectangle work area ALSO credit moisture would double-count the same water.
     if IrrigatorSectorIntegration ~= nil
-            and self.typeName ~= nil
-            and IrrigatorSectorIntegration.VEHICLE_TYPES[self.typeName] == true then
+            and IrrigatorSectorIntegration.matchesType(self.typeName) then
         return changedArea, totalArea
     end
 

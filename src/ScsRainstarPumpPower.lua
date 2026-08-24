@@ -39,13 +39,14 @@ function ScsRainstarPumpPower.registerOverwrittenFunctions(vehicleType)
 end
 
 --- True only while a live supply hose from a RUNNING pump reaches this reel.
+local lastDiagTime = 0
+local DIAG_INTERVAL_MS = 5000
+
 local function poweredByPump(vehicle)
     local pump = vehicle ~= nil and vehicle.rwsmVirtualPump or nil
     if pump == nil then
         return false
     end
-    -- The pump owns the link, so ask it rather than trusting the back-reference alone;
-    -- a stale rwsmVirtualPump must not read as power.
     if type(pump.getScsHosePartner) == "function" then
         local ok, partner = pcall(pump.getScsHosePartner, pump)
         if not ok or partner ~= vehicle then
@@ -59,10 +60,34 @@ local function poweredByPump(vehicle)
     return ok and running == true
 end
 
+local function diagPumpPower(vehicle)
+    local now = g_currentMission ~= nil and g_currentMission.time or 0
+    if now - lastDiagTime < DIAG_INTERVAL_MS then return end
+    lastDiagTime = now
+    local pump = vehicle ~= nil and vehicle.rwsmVirtualPump or nil
+    if pump == nil then
+        print("[CropStress] PumpPower diag: no rwsmVirtualPump on Rainstar")
+        return
+    end
+    local partnerOk = "n/a"
+    if type(pump.getScsHosePartner) == "function" then
+        local ok, partner = pcall(pump.getScsHosePartner, pump)
+        partnerOk = ok and (partner == vehicle and "match" or "MISMATCH") or "error"
+    end
+    local running = "n/a"
+    if ScsPumpHoseConnection ~= nil and type(ScsPumpHoseConnection.getIsPumpRunning) == "function" then
+        local ok, r = pcall(ScsPumpHoseConnection.getIsPumpRunning, pump)
+        running = ok and tostring(r) or "error"
+    end
+    print(string.format("[CropStress] PumpPower diag: partner=%s running=%s powered=%s",
+        partnerOk, running, tostring(poweredByPump(vehicle))))
+end
+
 function ScsRainstarPumpPower:getIsPowered(superFunc)
     if poweredByPump(self) then
         return true
     end
+    diagPumpPower(self)
     local isPowered, warning = superFunc(self)
     if not isPowered and self.getAttacherVehicle ~= nil then
         local ok, attacher = pcall(self.getAttacherVehicle, self)

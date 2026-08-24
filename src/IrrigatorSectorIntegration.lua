@@ -24,6 +24,15 @@ IrrigatorSectorIntegration.VEHICLE_TYPES = {
     rwsmPlayRainstar = true,
 }
 
+--- Match a vehicle's typeName against VEHICLE_TYPES, stripping the mod prefix
+--- FS25 uses "ModName.typeName" at runtime (TypeManager.lua:259).
+function IrrigatorSectorIntegration.matchesType(typeName)
+    if typeName == nil then return false end
+    if IrrigatorSectorIntegration.VEHICLE_TYPES[typeName] then return true end
+    local baseName = typeName:match("%.(.+)$")
+    return baseName ~= nil and IrrigatorSectorIntegration.VEHICLE_TYPES[baseName] == true
+end
+
 IrrigatorSectorIntegration.TICK_MS      = 500    -- server sample cadence
 IrrigatorSectorIntegration.FLOW_LPS     = 20.0   -- liters/second while running
 IrrigatorSectorIntegration.RADIUS_M     = 28.0   -- throw radius
@@ -116,9 +125,7 @@ function IrrigatorSectorIntegration:update(dt)
     local anyApplied = false
 
     for _, vehicle in pairs(vehicles) do
-        if vehicle ~= nil
-                and vehicle.typeName ~= nil
-                and IrrigatorSectorIntegration.VEHICLE_TYPES[vehicle.typeName] == true then
+        if vehicle ~= nil and IrrigatorSectorIntegration.matchesType(vehicle.typeName) then
             anyApplied = self:_tickVehicle(vehicle, soilSystem, waterIndex, elapsedMs) or anyApplied
         end
     end
