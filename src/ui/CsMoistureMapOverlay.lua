@@ -398,14 +398,42 @@ function CsMoistureMapOverlay:_pdaPaintDisplayMap(polys)
     return true
 end
 
---- Kick an async DMV build. Repaints the display map only when the moisture state moved;
---- the state colours are a fixed ramp so the regenerate alone would not change anything.
+--- Kick an async DMV build. Two paths:
+--- 1. LIVE MAP (preferred): read the CropStressValueMap's own bitvector directly,
+---    same pattern SoilFertilizer uses. Per-pixel, zero lag, no repaint.
+--- 2. DISPLAY MAP (fallback): band-paint field polygons from aggregates.
 --- Engine-absent or value-map-absent leaves _pdaUsingDMV false so onDraw keeps tiles.
 function CsMoistureMapOverlay:_pdaKickBuild()
     local ov = self._pdaOverlays[self._pdaBuildIdx]
     if not ov then return end
     self._pdaUsingDMV = false
 
+    if resetDensityMapVisualizationOverlay then
+        resetDensityMapVisualizationOverlay(ov)
+    end
+
+    -- Path 1: read from the live value map (SF pattern). The top 4 bits of the
+    -- 8-bit moisture layer give 16 DMV states at 2 m/px, so irrigation pixels
+    -- light up the moment they are written.
+    local soilSystem = self.manager and self.manager.soilSystem
+    local valueMap = soilSystem and soilSystem.valueMap
+    if valueMap and valueMap.available and valueMap.bvm then
+        local bvm = valueMap.bvm
+        setDensityMapVisualizationOverlayStateColor(ov, bvm, 0, 0, 4, 4, 0, 0, 0, 0, 0)
+        for i = 1, CsMoistureMapOverlay.PDA_DMV_BANDS do
+            local r, g, b = CsMoistureMapOverlay.rampColor(i / CsMoistureMapOverlay.PDA_DMV_BANDS)
+            setDensityMapVisualizationOverlayStateColor(ov, bvm, 0, 0, 4, 4, i, r, g, b, 1.0)
+        end
+        local polys = self:_pdaCollectFieldPolygons()
+        self:_pdaComputeStats(polys)
+        self._pdaUsingDMV = true
+        generateDensityMapVisualizationOverlay(ov)
+        self._pdaBuildHandle   = ov
+        self._pdaBuildInFlight = true
+        return
+    end
+
+    -- Path 2 (fallback): paint the separate display bitvector from field aggregates.
     local polys = self:_pdaCollectFieldPolygons()
     local sig   = self:_pdaBuildDataSignature(polys)
     if sig ~= (self._pdaDataSig or -1) then
@@ -418,10 +446,6 @@ function CsMoistureMapOverlay:_pdaKickBuild()
     local map = self._pdaDisplayMap
     if map == nil then return end
 
-    if resetDensityMapVisualizationOverlay then
-        resetDensityMapVisualizationOverlay(ov)
-    end
-    -- State 0 (off-field band 0) stays transparent; states 1..15 follow the ramp.
     setDensityMapVisualizationOverlayStateColor(ov, map, 0, 0, 0, 4, 0, 0, 0, 0, 0)
     for i = 1, CsMoistureMapOverlay.PDA_DMV_BANDS do
         local r, g, b = CsMoistureMapOverlay.rampColor(i / CsMoistureMapOverlay.PDA_DMV_BANDS)
