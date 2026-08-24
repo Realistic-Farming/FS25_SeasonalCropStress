@@ -39,7 +39,8 @@ local function phIsRainstar(vehicle)
     if vehicle == nil then
         return false
     end
-    if vehicle.typeName == "rwsmPlayRainstar" then
+    local tn = vehicle.typeName
+    if tn == "rwsmPlayRainstar" or (tn ~= nil and tn:match("%.rwsmPlayRainstar$")) then
         return true
     end
     local path = phNormalizePath(vehicle.configFileName)
