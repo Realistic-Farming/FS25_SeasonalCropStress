@@ -112,6 +112,7 @@
           <Shape shapeId="15" name="beltCol3" translation="0 1.13846 0" scale="1.16 1.4 2" nodeId="69" materialIds="4" nonRenderable="true" distanceBlending="false"/>
           <Shape shapeId="15" name="beltCol4" translation="0.266962 2.13328 0.285218" scale="0.1 0.1 1" nodeId="70" materialIds="4" nonRenderable="true" distanceBlending="false"/>
         </TransformGroup>
+        <Shape shapeId="15" name="dieselExactFillRoot" translation="0 1.35 -0.45" scale="0.18 0.18 0.18" compoundChild="true" collisionMask="1073741824" nodeId="71" materialIds="4" nonRenderable="true" distanceBlending="false"/>
       </TransformGroup>
     </Shape>
   </Scene>
