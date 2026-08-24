@@ -125,7 +125,7 @@ All integrations are detected at runtime and fail gracefully if the mod is not i
 
 | Mod | What it adds |
 |---|---|
-| **FS25_RealisticWeather** | Moisture sourced from RW's density map. Irrigation writes back to RW. Harvest penalty deferred to RW — no double-dipping. |
+| **FS25_RealisticWeather** | Temperature and rainfall read from RW when present. SCS owns its own moisture simulation; irrigation stays within SCS. Harvest penalty deferred to RW when active. |
 | **FS25_NPCFavor** | Alex Chen appears as an Agronomist NPC with favor quests: soil samples, irrigation checks, emergency water calls. |
 | **FS25_SoilFertilizer** | Soil pH and organic matter adjust evapotranspiration per field. |
 | **CoursePlay / AutoDrive** | Vehicle positions used for irrigation coverage refinement. |
