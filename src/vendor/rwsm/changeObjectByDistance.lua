@@ -231,11 +231,13 @@ end
 -- so the whole thing stays swap-art replaceable in one folder. Retargeted here
 -- rather than duplicating the 11.6 MB shapes blob at the mod root.
 local RWSM_GROUND_HOSE_I3D = "vehicles/irrigatorPlay/i3d/rwsmGroundHoseTemplate.i3d"
-local RWSM_GROUND_HOSE_SEGMENT_LENGTH = 0.05
+local RWSM_GROUND_HOSE_SEGMENT_LENGTH = 0.10
 local RWSM_GROUND_HOSE_TEMPLATE_LENGTH = 0.5
 local RWSM_GROUND_HOSE_CLEARANCE = 0.09
-local RWSM_GROUND_HOSE_UPDATE_MS = 100
+local RWSM_GROUND_HOSE_UPDATE_MS = 125
 local RWSM_GROUND_HOSE_ENDPOINT_BLEND = 6.0
+local RWSM_GROUND_HOSE_CART_BLEND = 0.25
+local RWSM_GROUND_HOSE_CART_MAX_LIFT = 0.06
 
 local function cobdFindNodeByName(node, wantedName)
     if node == nil or node == 0 then
@@ -269,13 +271,38 @@ end
 
 local function cobdGroundHosePointY(distance, totalDistance, endpointY, terrainY, fromStart)
     local groundY = terrainY + RWSM_GROUND_HOSE_CLEARANCE
-    local blendLength = math.min(RWSM_GROUND_HOSE_ENDPOINT_BLEND, math.max(0.01, totalDistance * 0.5))
     local edgeDistance = fromStart and distance or (totalDistance - distance)
+    local safeEndpointY = math.max(endpointY or groundY, groundY)
+
+    if fromStart then
+        local blendLength = math.min(
+            RWSM_GROUND_HOSE_ENDPOINT_BLEND,
+            math.max(0.01, totalDistance * 0.5)
+        )
+        if edgeDistance < blendLength then
+            local t = cobdSmoothStep(edgeDistance / blendLength)
+            return safeEndpointY * (1 - t) + groundY * t
+        end
+        return groundY
+    end
+
+    if edgeDistance <= 0.001 then
+        return safeEndpointY
+    end
+
+    local blendLength = math.min(
+        RWSM_GROUND_HOSE_CART_BLEND,
+        math.max(0.05, totalDistance * 0.02)
+    )
     if edgeDistance < blendLength then
         local t = cobdSmoothStep(edgeDistance / blendLength)
-        local safeEndpointY = math.max(endpointY or groundY, groundY)
-        return safeEndpointY * (1 - t) + groundY * t
+        local limitedY = math.min(
+            safeEndpointY,
+            groundY + RWSM_GROUND_HOSE_CART_MAX_LIFT
+        )
+        return limitedY * (1 - t) + groundY * t
     end
+
     return groundY
 end
 
@@ -368,7 +395,7 @@ local function cobdUpdateGroundHose(vehicle, dt, startX, startY, startZ, endX, e
         local edy = endY - spec.groundHoseLastEndY
         local edz = endZ - spec.groundHoseLastEndZ
         local movedSq = sdx * sdx + sdy * sdy + sdz * sdz + edx * edx + edy * edy + edz * edz
-        if movedSq < 0.000225 then -- about 1.5 cm combined endpoint movement
+        if movedSq < 0.000625 then -- about 2.5 cm combined endpoint movement
             return
         end
     end
@@ -1135,7 +1162,13 @@ function RWSM53ChangeObjectByDistance:onUpdate(dt)
 	-- Legacy physical number display disabled: LS19 numberShader is incompatible with LS25.
 	
 	-- set distance for dash hud
-	self.COBD.disctanceToSplit2 = MathUtil.round(self.COBD.workingWidth,1)
+	local safeWorkingWidth = tonumber(self.COBD.workingWidth)
+	if safeWorkingWidth == nil then
+		local safeRadius = tonumber(self.COBD.sprayRadius) or 33
+		safeWorkingWidth = safeRadius * 2
+		self.COBD.workingWidth = safeWorkingWidth
+	end
+	self.COBD.disctanceToSplit2 = MathUtil.round(safeWorkingWidth, 1)
 	if self.COBD.disctanceToSplit2 > 50 and self.COBD.disctanceToSplit2 < 60 then
 		self.COBD.text3 = 5
 		self.COBD.text4 = MathUtil.round(self.COBD.disctanceToSplit2 - 50,0)

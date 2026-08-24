@@ -196,6 +196,23 @@ function ScsPumpHoseConnection.getIsPumpRunning(pump)
     return phIsPumpRunning(pump)
 end
 
+local function phSetPartnerTurnedOn(pump, state)
+    local spec = pump ~= nil and pump.spec_scsPumpHose or nil
+    if spec == nil or spec.partner == nil then
+        return
+    end
+    local partner = spec.partner
+    if partner.setIsTurnedOn == nil then
+        return
+    end
+    local ok, current = pcall(partner.getIsTurnedOn, partner)
+    if ok and current == state then
+        return
+    end
+    pcall(partner.setIsTurnedOn, partner, state)
+    print(string.format("[CropStress] ScsPumpHose: Rainstar turned %s by pump", state and "ON" or "OFF"))
+end
+
 function ScsPumpHoseConnection.initSpecialization()
 end
 
@@ -320,6 +337,9 @@ function ScsPumpHoseConnection:setScsHoseConnected(connected, force)
         self.RPC.virtualHoseConnected = true
         self.RPC.virtualRainstar = partner
         ScsPumpHoseConnection.ensureHoseVisual(self)
+        if phIsPumpRunning(self) then
+            phSetPartnerTurnedOn(self, true)
+        end
         if spec.activatable ~= nil then
             spec.activatable:updateActivateText()
         end
@@ -331,8 +351,13 @@ function ScsPumpHoseConnection:setScsHoseConnected(connected, force)
             self.RPC.virtualHoseConnected = false
             self.RPC.virtualRainstar = nil
         end
-        if partner ~= nil and partner.rwsmVirtualPump == self then
-            partner.rwsmVirtualPump = nil
+        if partner ~= nil then
+            if partner.setIsTurnedOn ~= nil then
+                pcall(partner.setIsTurnedOn, partner, false)
+            end
+            if partner.rwsmVirtualPump == self then
+                partner.rwsmVirtualPump = nil
+            end
         end
         ScsPumpHoseConnection.deleteHoseVisual(self)
         if spec.activatable ~= nil then
@@ -719,6 +744,7 @@ function ScsPumpHoseConnection.updatePendingTurnOn(pump, dt)
             spec.pendingTurnOn = false
             spec.pendingTurnOnTimer = 0
             print("[CropStress] ScsPumpHose: pump turned on, reel gate is open")
+            phSetPartnerTurnedOn(pump, true)
             return
         end
     end
@@ -797,6 +823,16 @@ function ScsPumpHoseConnection:onUpdateTick(dt, isActiveForInput, isActiveForInp
 
     if self.isServer and spec.connected then
         ScsPumpHoseConnection.transferWater(self, dt)
+    end
+
+    if spec.connected and phIsPumpRunning(self) then
+        if self.raiseActive ~= nil then
+            pcall(self.raiseActive, self)
+        end
+        local partner = spec.partner
+        if partner ~= nil and partner.raiseActive ~= nil then
+            pcall(partner.raiseActive, partner)
+        end
     end
 
     -- Walk-up activatable: offer Connect/Disconnect when a Rainstar is in range.
@@ -1083,6 +1119,7 @@ function ScsPumpStartActivatable:run()
             spec.pendingTurnOn = false
             spec.pendingTurnOnTimer = 0
         end
+        phSetPartnerTurnedOn(vehicle, false)
         if vehicle.setIsTurnedOn ~= nil then
             pcall(vehicle.setIsTurnedOn, vehicle, false)
         end

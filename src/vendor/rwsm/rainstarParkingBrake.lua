@@ -1,34 +1,57 @@
 -- Vendored from FS25_RealisticWaterSoilManagement (Sherman / original HoFFi)
--- for SeasonalCropStress BUILD 21:13 Phase 1. Unmodified except where marked
--- 'SCS vendor note'. Moisture stays on the SCS door: this file does not write
--- soil moisture, and RWSM53WaterControl is deliberately not shipped.
+-- for SeasonalCropStress. Updated to RWSM v1.4.0.1 (safe physics: no direct
+-- velocity/position writes on articulated bodies). SCS vendor note: pump
+-- detection uses the virtual hose back-reference set by ScsPumpHoseConnection.
 -- Realistic Water & Soil Management
 -- Automatic parking brake for the detached Bauer Rainstar hose reel
 -- Author: Sherman
--- Version: 1.38.36
+-- Version: 1.4.0.1
 
 RWSM118RainstarParkingBrake = RWSM118RainstarParkingBrake or {}
 
 local REEL_WHEEL_COUNT = 2
+local REEL_SUPPORT_WHEEL_INDEX = 6
 local LOAD_STABILIZATION_MS = 12000
 local CART_WHEEL_START_INDEX = 3
 local CART_WHEEL_END_INDEX = 5
 local ASSEMBLY_TIPPED_UP_DOT = 0.55
 local CART_TIP_CHECK_MS = 100
+local DETACH_STABILIZATION_MS = 900
+
+local REEL_BRAKE_SAMPLE_MS = 150
+local REEL_BRAKE_MAX = 0.22
+
+local REEL_BRAKE_RISE_PER_SEC = 0.10
+local REEL_BRAKE_FALL_PER_SEC = 0.08
+local REEL_BRAKE_SPEED_FILTER_ALPHA = 0.12
+local REEL_BRAKE_INCREASE_RATIO = 1.05
+local REEL_BRAKE_RELEASE_RATIO = 0.95
+local REEL_BRAKE_STEP_UP_MAX = 0.007
+local REEL_BRAKE_STEP_DOWN_MAX = 0.005
 
 local function rpbGetFoldTime(vehicle)
     if vehicle ~= nil and vehicle.getFoldAnimTime ~= nil then
         local ok, value = pcall(vehicle.getFoldAnimTime, vehicle)
-        if ok and value ~= nil then return tonumber(value) end
+        if ok then
+            local numericValue = tonumber(value)
+            if numericValue ~= nil then
+                return numericValue
+            end
+        end
     end
+
     if vehicle ~= nil and vehicle.spec_foldable ~= nil then
-        return tonumber(vehicle.spec_foldable.foldAnimTime) or 1
+        local numericValue = tonumber(vehicle.spec_foldable.foldAnimTime)
+        if numericValue ~= nil then
+            return numericValue
+        end
     end
+
     return 1
 end
 
 local function rpbIsWorkMode(vehicle)
-    return rpbGetFoldTime(vehicle) < 0.5
+    return (tonumber(rpbGetFoldTime(vehicle)) or 1) < 0.5
 end
 
 local function rpbIsReelActive(vehicle)
@@ -47,7 +70,6 @@ function RWSM118RainstarParkingBrake.registerEventListeners(vehicleType)
     SpecializationUtil.registerEventListener(vehicleType, "onPostAttach", RWSM118RainstarParkingBrake)
     SpecializationUtil.registerEventListener(vehicleType, "onPostDetach", RWSM118RainstarParkingBrake)
     SpecializationUtil.registerEventListener(vehicleType, "onUpdate", RWSM118RainstarParkingBrake)
-    SpecializationUtil.registerEventListener(vehicleType, "onUpdateTick", RWSM118RainstarParkingBrake)
 end
 
 function RWSM118RainstarParkingBrake.registerOverwrittenFunctions(vehicleType)
@@ -87,67 +109,19 @@ local function rpbIsMotorPump(vehicle)
 end
 
 local function rpbIsMotorPumpConnected(vehicle)
-    if vehicle ~= nil then
-        local virtualPump = vehicle.rwsmVirtualPump
-        if virtualPump ~= nil and virtualPump.RPC ~= nil
-            and virtualPump.RPC.virtualHoseConnected == true
-            and virtualPump.RPC.virtualRainstar == vehicle then
-            return true
-        end
-        if RWSMPumpConnectionState ~= nil
-            and RWSMPumpConnectionState.findVirtualPumpForRainstar ~= nil then
-            local ok, pump = pcall(RWSMPumpConnectionState.findVirtualPumpForRainstar, vehicle)
-            if ok and pump ~= nil then return true end
-        end
+    if vehicle == nil then return false end
+    local virtualPump = vehicle.rwsmVirtualPump
+    if virtualPump ~= nil and virtualPump.RPC ~= nil
+        and virtualPump.RPC.virtualHoseConnected == true
+        and virtualPump.RPC.virtualRainstar == vehicle then
+        return true
     end
-
-    local data = vehicle ~= nil and vehicle.RPB or nil
-    local now = tonumber(g_time) or 0
-    if data ~= nil and tonumber(data.pumpConnectionCacheUntil) ~= nil
-        and now < data.pumpConnectionCacheUntil then
-        return data.pumpConnectionCached == true
+    if RWSMPumpConnectionState ~= nil
+        and RWSMPumpConnectionState.findVirtualPumpForRainstar ~= nil then
+        local ok, pump = pcall(RWSMPumpConnectionState.findVirtualPumpForRainstar, vehicle)
+        return ok and pump ~= nil
     end
-
-    local connected = false
-    local attacherVehicle = rpbGetAttacherVehicle(vehicle)
-    if rpbIsMotorPump(attacherVehicle) then
-        connected = true
-    end
-
-    -- Manual Attach can temporarily leave the active input-joint index unset
-    -- even though the physical pump/Rainstar implement relation already exists.
-    -- The expensive mission-wide fallback is cached for 500 ms and invalidated
-    -- immediately by the normal attach/detach events.
-    local spec = vehicle ~= nil and vehicle.spec_attachable or nil
-    if not connected and spec ~= nil and rpbIsMotorPump(spec.attacherVehicle) then
-        connected = true
-    end
-
-    if not connected and g_currentMission ~= nil then
-        local vehicles = ShermanRuntimeCore ~= nil and ShermanRuntimeCore.getVehicles ~= nil
-            and ShermanRuntimeCore.getVehicles("pumps")
-            or (g_currentMission.vehicleSystem ~= nil
-                and g_currentMission.vehicleSystem.vehicles or g_currentMission.vehicles)
-        for _, candidate in pairs(vehicles or {}) do
-            if rpbIsMotorPump(candidate) and candidate.spec_attacherJoints ~= nil then
-                for _, implement in pairs(candidate.spec_attacherJoints.attachedImplements or {}) do
-                    local object = type(implement) == "table"
-                        and (implement.object or implement.vehicle) or nil
-                    if object == vehicle then
-                        connected = true
-                        break
-                    end
-                end
-            end
-            if connected then break end
-        end
-    end
-
-    if data ~= nil then
-        data.pumpConnectionCached = connected
-        data.pumpConnectionCacheUntil = now + 500
-    end
-    return connected
+    return false
 end
 
 local function rpbGetActiveInputJointIndex(vehicle)
@@ -184,9 +158,6 @@ local function rpbIsNodeTipped(node)
 end
 
 local function rpbIsAssemblyTipped(vehicle)
-    -- Component 1 is the hose-reel chassis, component 2 the sprinkler cart.
-    -- 1.38.27 watched only component 2, so a tipped reel chassis could still
-    -- move under passive wheel/joint physics even with pump and reel switched off.
     return rpbIsNodeTipped(rpbGetComponentNode(vehicle, 1))
         or rpbIsNodeTipped(rpbGetComponentNode(vehicle, 2))
 end
@@ -196,9 +167,6 @@ end
 local SUPPORT_ANIMATION_NAME = "moveSupport"
 
 local function rpbUsesPumpInputJoint(vehicle, attacherVehicle, inputJointDescIndex)
-    local index = tonumber(inputJointDescIndex) or tonumber(rpbGetActiveInputJointIndex(vehicle))
-    if index == 3 then return true end
-    if rpbIsMotorPump(attacherVehicle) then return true end
     return rpbIsMotorPumpConnected(vehicle)
 end
 
@@ -223,10 +191,6 @@ local function rpbKeepSupportWheelDown(vehicle)
 end
 
 function RWSM118RainstarParkingBrake:getIsSupportAnimationAllowed(superFunc, supportAnimation)
-    -- Savegame reconstruction must be owned completely by GIANTS. Blocking the
-    -- native support animation while the saved attachment chain is still being
-    -- rebuilt can put the support wheel into the ground and create a physics
-    -- impulse that flips or launches the whole pump/Rainstar combination.
     if self.RPB ~= nil
         and (tonumber(g_time) or 0) < (tonumber(self.RPB.loadStabilizeUntil) or 0) then
         return superFunc(self, supportAnimation)
@@ -253,6 +217,7 @@ end
 
 local function rpbSetReelWheelBrakes(vehicle, brakePedal)
     rpbSetWheelBrakeRange(vehicle, brakePedal, 1, REEL_WHEEL_COUNT)
+    rpbSetWheelBrakeRange(vehicle, brakePedal, REEL_SUPPORT_WHEEL_INDEX, REEL_SUPPORT_WHEEL_INDEX)
 end
 
 local function rpbSetCartWheelBrakes(vehicle, brakePedal)
@@ -264,29 +229,188 @@ local function rpbSetAllWheelBrakes(vehicle, brakePedal)
     rpbSetWheelBrakeRange(vehicle, brakePedal, 1, #vehicle.spec_wheels.wheels)
 end
 
+local function rpbClearCartAnchor(vehicle)
+    local data = vehicle ~= nil and vehicle.RPB or nil
+    if data == nil then return end
+    data.cartAnchorValid = false
+end
+
+local function rpbCaptureCartAnchor(vehicle)
+    local data = vehicle ~= nil and vehicle.RPB or nil
+    local node = rpbGetComponentNode(vehicle, 2)
+    if data == nil or node == nil or getWorldTranslation == nil then return false end
+    local ok, x, _, z = pcall(getWorldTranslation, node)
+    if not ok or x == nil or z == nil then return false end
+    data.cartAnchorX = x
+    data.cartAnchorZ = z
+    data.cartAnchorValid = true
+    return true
+end
+
+local function rpbHoldSprinklerCart(vehicle, correctPosition)
+    return
+end
+
+local function rpbGetHorizontalCartDistance(vehicle)
+    local reelNode = rpbGetComponentNode(vehicle, 1)
+    local cartNode = rpbGetComponentNode(vehicle, 2)
+    if reelNode == nil or cartNode == nil or getWorldTranslation == nil then
+        return nil
+    end
+
+    local ok1, rx, _, rz = pcall(getWorldTranslation, reelNode)
+    local ok2, cx, _, cz = pcall(getWorldTranslation, cartNode)
+    if not ok1 or not ok2 or rx == nil or rz == nil or cx == nil or cz == nil then
+        return nil
+    end
+
+    local dx, dz = cx - rx, cz - rz
+    return math.sqrt(dx * dx + dz * dz)
+end
+
+local function rpbGetReelSlopePercent(vehicle)
+    local reelNode = rpbGetComponentNode(vehicle, 1)
+    local cartNode = rpbGetComponentNode(vehicle, 2)
+    if reelNode == nil or cartNode == nil or getWorldTranslation == nil then
+        return 0
+    end
+    local ok1, rx, ry, rz = pcall(getWorldTranslation, reelNode)
+    local ok2, cx, cy, cz = pcall(getWorldTranslation, cartNode)
+    if not ok1 or not ok2 or rx == nil or ry == nil or rz == nil
+        or cx == nil or cy == nil or cz == nil then
+        return 0
+    end
+    local dx, dz = rx - cx, rz - cz
+    local horizontal = math.sqrt(dx * dx + dz * dz)
+    if horizontal < 0.25 then return 0 end
+    return (ry - cy) / horizontal * 100
+end
+
+local function rpbGetTimeScale()
+    if g_currentMission ~= nil and g_currentMission.missionInfo ~= nil then
+        return math.max(
+            0.5,
+            math.min(
+                360,
+                tonumber(g_currentMission.missionInfo.timeScale) or 1
+            )
+        )
+    end
+    return 1
+end
+
+local function rpbGetExpectedReelSpeedMps(vehicle, distance)
+    local rar = vehicle ~= nil and vehicle.RAR or nil
+    local baseMph = rar ~= nil and tonumber(rar.baseReelSpeedMPerHour) or 60
+
+    return math.max(
+        0.002,
+        (baseMph * rpbGetTimeScale()) / 3600
+    )
+end
+
+local function rpbResetReelBrakeController(data)
+    if data == nil then return end
+    data.reelBrakeTarget = 0
+    data.reelBrakeApplied = 0
+    data.reelBrakeSampleTimer = 0
+    data.reelBrakeLastDistance = nil
+    data.reelBrakeRatioFiltered = 1
+end
+
+local function rpbGetReelOverspeedBrake(vehicle, dt)
+    local data = vehicle ~= nil and vehicle.RPB or nil
+    local rar = vehicle ~= nil and vehicle.RAR or nil
+    if data == nil or rar == nil or rar.reelCommandActive ~= true then
+        rpbResetReelBrakeController(data)
+        return 0
+    end
+
+    local slopePercent = rpbGetReelSlopePercent(vehicle)
+    if slopePercent >= -1.0 then
+        rpbResetReelBrakeController(data)
+        return 0
+    end
+
+    local distance = rpbGetHorizontalCartDistance(vehicle)
+    if distance == nil then
+        rpbResetReelBrakeController(data)
+        return 0
+    end
+
+    local dtMs = math.max(0, tonumber(dt) or 0)
+    local frameSec = dtMs / 1000
+    data.reelBrakeSampleTimer = (data.reelBrakeSampleTimer or 0) + dtMs
+
+    if data.reelBrakeLastDistance == nil then
+        data.reelBrakeLastDistance = distance
+        data.reelBrakeSampleTimer = 0
+        data.reelBrakeRatioFiltered = 1
+    elseif data.reelBrakeSampleTimer >= REEL_BRAKE_SAMPLE_MS then
+        local sampleSec = math.max(0.05, data.reelBrakeSampleTimer / 1000)
+        local inwardSpeed = math.max(
+            0,
+            (data.reelBrakeLastDistance - distance) / sampleSec
+        )
+        local expectedSpeed = rpbGetExpectedReelSpeedMps(vehicle, distance)
+        local rawRatio = inwardSpeed / math.max(0.002, expectedSpeed)
+
+        local oldRatio = tonumber(data.reelBrakeRatioFiltered) or 1
+        local ratio = oldRatio
+            + (rawRatio - oldRatio) * REEL_BRAKE_SPEED_FILTER_ALPHA
+        data.reelBrakeRatioFiltered = math.max(0, math.min(4, ratio))
+
+        local target = tonumber(data.reelBrakeTarget) or 0
+        if ratio > REEL_BRAKE_INCREASE_RATIO then
+            local error = ratio - REEL_BRAKE_INCREASE_RATIO
+            local step = math.min(
+                REEL_BRAKE_STEP_UP_MAX,
+                0.001 + error * 0.008
+            )
+            target = math.min(REEL_BRAKE_MAX, target + step)
+        elseif ratio < REEL_BRAKE_RELEASE_RATIO then
+            local error = REEL_BRAKE_RELEASE_RATIO - ratio
+            local step = math.min(
+                REEL_BRAKE_STEP_DOWN_MAX,
+                0.0008 + error * 0.006
+            )
+            target = math.max(0, target - step)
+        end
+
+        data.reelBrakeTarget = target
+        data.reelBrakeLastDistance = distance
+        data.reelBrakeSampleTimer = 0
+    end
+
+    local current = tonumber(data.reelBrakeApplied) or 0
+    local target = tonumber(data.reelBrakeTarget) or 0
+    if target > current then
+        current = math.min(
+            target,
+            current + REEL_BRAKE_RISE_PER_SEC * frameSec
+        )
+    elseif target < current then
+        current = math.max(
+            target,
+            current - REEL_BRAKE_FALL_PER_SEC * frameSec
+        )
+    end
+
+    data.reelBrakeApplied = current
+    return current
+end
+
+local function rpbUpdateReelStartBrake(vehicle, reelActive)
+    local data = vehicle ~= nil and vehicle.RPB or nil
+    if data == nil then return false end
+
+    data.lastReelActive = reelActive == true
+    data.cartBrakeReleaseAt = 0
+    return false
+end
+
 local function rpbStopTippedAssemblyMotion(vehicle)
     rpbSetAllWheelBrakes(vehicle, 1)
-
-    -- This is passive rollover stabilization and does not depend on pump state
-    -- or an active reel command. If no tractor is physically attached to the
-    -- Rainstar, remove horizontal and angular residual motion from every dynamic
-    -- component while gravity remains free vertically. This prevents the tipped
-    -- assembly from 'driving' across the map through wheel/suspension/joint forces.
-    local actualAttacher = rpbGetAttacherVehicle(vehicle)
-    if actualAttacher == nil and not rpbIsTractorAttachedToCart(vehicle) then
-        for componentIndex = 1, 3 do
-            local node = rpbGetComponentNode(vehicle, componentIndex)
-            if node ~= nil then
-                if getLinearVelocity ~= nil and setLinearVelocity ~= nil then
-                    local ok, _, vy, _ = pcall(getLinearVelocity, node)
-                    if ok then pcall(setLinearVelocity, node, 0, tonumber(vy) or 0, 0) end
-                end
-                if setAngularVelocity ~= nil then
-                    pcall(setAngularVelocity, node, 0, 0, 0)
-                end
-            end
-        end
-    end
 end
 
 
@@ -301,6 +425,38 @@ local function rpbGetReelNode(vehicle)
     return node
 end
 
+local function rpbSetReelKinematicLock(vehicle, enabled)
+    local data = vehicle ~= nil and vehicle.RPB or nil
+    if data ~= nil then
+        data.reelKinematicLocked = false
+        data.reelOriginalRigidBodyType = nil
+    end
+    return true
+end
+
+
+local function rpbClearWorkAnchor(vehicle)
+    local data = vehicle ~= nil and vehicle.RPB or nil
+    if data == nil then return end
+    data.workAnchorValid = false
+end
+
+local function rpbCaptureWorkAnchor(vehicle)
+    local data = vehicle ~= nil and vehicle.RPB or nil
+    local node = rpbGetReelNode(vehicle)
+    if data == nil or node == nil or getWorldTranslation == nil then return false end
+    local ok, x, _, z = pcall(getWorldTranslation, node)
+    if not ok or x == nil or z == nil then return false end
+    data.workAnchorX = x
+    data.workAnchorZ = z
+    data.workAnchorValid = true
+    return true
+end
+
+local function rpbHoldReelAtWorkAnchor(vehicle)
+    return
+end
+
 local function rpbCaptureAnchor(vehicle)
     local data = vehicle ~= nil and vehicle.RPB or nil
     local node = rpbGetReelNode(vehicle)
@@ -312,41 +468,10 @@ local function rpbCaptureAnchor(vehicle)
 end
 
 local function rpbHoldReelChassis(vehicle, correctPosition)
-    local data = vehicle ~= nil and vehicle.RPB or nil
-    local node = rpbGetReelNode(vehicle)
-    if data == nil or node == nil then return end
-
-    if not data.anchorValid then
-        rpbCaptureAnchor(vehicle)
-    end
-
-    -- The reel chassis is the stationary end of the hose system. Keep its
-    -- horizontal velocity at zero while detached so joint tension moves the
-    -- sprinkler cart toward the drum instead of dragging the drum across the field.
-    if getLinearVelocity ~= nil and setLinearVelocity ~= nil then
-        local _, vy, _ = getLinearVelocity(node)
-        setLinearVelocity(node, 0, vy, 0)
-    end
-
-    if getAngularVelocity ~= nil and setAngularVelocity ~= nil then
-        setAngularVelocity(node, 0, 0, 0)
-    end
-
-    if correctPosition and data.anchorValid and setWorldTranslation ~= nil then
-        local x, y, z = getWorldTranslation(node)
-        local dx = x - data.anchorX
-        local dz = z - data.anchorZ
-        if dx * dx + dz * dz > 0.0004 then
-            setWorldTranslation(node, data.anchorX, y, data.anchorZ)
-        end
-    end
+    return
 end
 
 local function rpbHoldPumpWorkSetup(vehicle)
-    -- Only use physical wheel brakes after the native attachment chain is fully
-    -- restored. Never correct world position or zero component velocities while
-    -- the motor pump is attached: doing so fights the GIANTS attacher joint and
-    -- was the source of the save/load teleport/rotation problem.
     rpbKeepSupportWheelDown(vehicle)
     rpbSetReelWheelBrakes(vehicle, 1)
     rpbSetCartWheelBrakes(vehicle, 1)
@@ -354,8 +479,16 @@ end
 
 function RWSM118RainstarParkingBrake:onPostAttach(attacherVehicle, inputJointDescIndex, jointDescIndex)
     if self.RPB ~= nil then
-        self.RPB.pumpConnectionCached = rpbIsMotorPump(attacherVehicle) or tonumber(inputJointDescIndex) == 3
-        self.RPB.pumpConnectionCacheUntil = (tonumber(g_time) or 0) + 500
+        self.RPB.detachStabilizeUntil = 0
+        self.RPB.pumpConnectionCached = rpbIsMotorPumpConnected(self)
+        self.RPB.pumpConnectionCacheUntil = 0
+        rpbClearCartAnchor(self)
+        if tonumber(inputJointDescIndex) == 2 then
+            rpbSetCartWheelBrakes(self, 0)
+            self.RPB.parkingBrakeApplied = false
+        else
+            rpbClearWorkAnchor(self)
+        end
     end
     if rpbUsesPumpInputJoint(self, attacherVehicle, inputJointDescIndex)
         and (tonumber(g_time) or 0) >= (tonumber(self.RPB ~= nil and self.RPB.loadStabilizeUntil) or 0) then
@@ -364,14 +497,16 @@ function RWSM118RainstarParkingBrake:onPostAttach(attacherVehicle, inputJointDes
 end
 
 function RWSM118RainstarParkingBrake:onPostDetach(implementIndex)
-    if self.RPB ~= nil then
-        self.RPB.pumpConnectionCacheUntil = 0
-        self.RPB.pumpConnectionCached = false
-    end
-    -- Do not force support movement during savegame reconstruction.
-    if (tonumber(g_time) or 0) >= (tonumber(self.RPB ~= nil and self.RPB.loadStabilizeUntil) or 0) then
-        rpbKeepSupportWheelDown(self)
-    end
+    local data = self.RPB
+    if data == nil then return end
+
+    local now = tonumber(g_time) or 0
+    data.pumpConnectionCacheUntil = 0
+    data.pumpConnectionCached = false
+    data.detachStabilizeUntil = now + DETACH_STABILIZATION_MS
+    data.parkingBrakeApplied = false
+    data.anchorValid = false
+    rpbClearCartAnchor(self)
 end
 
 function RWSM118RainstarParkingBrake:onLoad(savegame)
@@ -384,10 +519,27 @@ function RWSM118RainstarParkingBrake:onLoad(savegame)
         pumpConnectionCacheUntil = 0,
         cartTipTimer = 0,
         assemblyTipped = false,
-        loadStabilizeUntil = (tonumber(g_time) or 0) + LOAD_STABILIZATION_MS
+        lastReelActive = false,
+        cartBrakeReleaseAt = 0,
+        cartAnchorValid = false,
+        cartAnchorX = 0,
+        cartAnchorZ = 0,
+        reelBrakeTarget = 0,
+        reelBrakeApplied = 0,
+        reelBrakeSampleTimer = 0,
+        reelBrakeLastDistance = nil,
+        reelBrakeRatioFiltered = 1,
+        reelKinematicLocked = false,
+        reelOriginalRigidBodyType = nil,
+        workAnchorValid = false,
+        workAnchorX = 0,
+        workAnchorZ = 0,
+        restoringSavegame = savegame ~= nil and not savegame.resetVehicles,
+        loadStabilizeUntil = (tonumber(g_time) or 0) + LOAD_STABILIZATION_MS,
+        detachStabilizeUntil = 0
     }
 
-    print("[RWSM v1.38.36] Hose-only deployment keeps the reel chassis physically planted")
+    do end
 end
 
 function RWSM118RainstarParkingBrake:onUpdate(dt, isActiveForInput, isActiveForInputIgnoreSelection, isSelected)
@@ -395,13 +547,31 @@ function RWSM118RainstarParkingBrake:onUpdate(dt, isActiveForInput, isActiveForI
         return
     end
 
+    local startupNow = tonumber(g_time) or 0
+    if self.RPB.restoringSavegame == true
+        and startupNow < (tonumber(self.RPB.loadStabilizeUntil) or 0) then
+        return
+    end
+    self.RPB.restoringSavegame = false
+
+    if startupNow < (tonumber(self.RPB.detachStabilizeUntil) or 0) then
+        return
+    end
+
+    local earlyCartTractorAttached = rpbIsTractorAttachedToCart(self)
+
     self.RPB.cartTipTimer = (self.RPB.cartTipTimer or 0) + (tonumber(dt) or 0)
     if self.RPB.cartTipTimer >= CART_TIP_CHECK_MS then
         self.RPB.cartTipTimer = self.RPB.cartTipTimer - CART_TIP_CHECK_MS
-        self.RPB.assemblyTipped = rpbIsAssemblyTipped(self)
+        if earlyCartTractorAttached then
+            self.RPB.assemblyTipped = rpbIsNodeTipped(rpbGetComponentNode(self, 1))
+        else
+            self.RPB.assemblyTipped = rpbIsAssemblyTipped(self)
+        end
     end
 
     if self.RPB.assemblyTipped == true then
+        rpbSetReelKinematicLock(self, false)
         if self.RAR ~= nil then
             self.RAR.tipSafetyActive = true
             self.RAR.reelCommandActive = false
@@ -409,9 +579,17 @@ function RWSM118RainstarParkingBrake:onUpdate(dt, isActiveForInput, isActiveForI
         if self.stopAnimation ~= nil then
             pcall(self.stopAnimation, self, "hoseReelLS19", false)
         end
-        rpbStopTippedAssemblyMotion(self)
+        if earlyCartTractorAttached then
+            rpbSetReelWheelBrakes(self, 1)
+            rpbSetCartWheelBrakes(self, 0)
+            rpbClearCartAnchor(self)
+        else
+            rpbStopTippedAssemblyMotion(self)
+        end
         self.RPB.parkingBrakeApplied = true
         self.RPB.anchorValid = false
+        rpbClearCartAnchor(self)
+        rpbClearWorkAnchor(self)
         return
     elseif self.RAR ~= nil then
         self.RAR.tipSafetyActive = false
@@ -421,54 +599,78 @@ function RWSM118RainstarParkingBrake:onUpdate(dt, isActiveForInput, isActiveForI
     local attacherVehicle = rpbGetAttacherVehicle(self)
     local confirmedPumpConnected = rpbIsMotorPumpConnected(self)
     local pumpInputActive = confirmedPumpConnected
-    -- A virtual pump hose is NOT a mechanical vehicle attachment. Treating it as
-    -- one released the reel chassis brake as soon as automatic retraction ran,
-    -- which allowed the internal hose-joint pull to tip the complete drum over.
     local physicallyAttached = attacherVehicle ~= nil
         or (self.spec_attachable ~= nil and self.spec_attachable.attacherVehicle ~= nil)
+    local cartTractorAttached = rpbIsTractorAttachedToCart(self)
+    local drumPhysicallyAttached = physicallyAttached and not cartTractorAttached
     local workMode = rpbIsWorkMode(self)
     local reelActive = rpbIsReelActive(self)
+    rpbUpdateReelStartBrake(self, reelActive)
     local hoseOnlyDeployed = confirmedPumpConnected and not physicallyAttached
     local shouldHoldWorkSetup = hoseOnlyDeployed and workMode and not reelActive
+    local shouldHardLockDrum = workMode and not drumPhysicallyAttached
 
-    -- During savegame reconstruction do not fight GIANTS physics at all. The
-    -- engine restores component transforms and native attacher joints first;
-    -- custom brakes/support handling starts only after the stabilization window.
     if (tonumber(g_time) or 0) < (tonumber(self.RPB.loadStabilizeUntil) or 0) then
+        rpbSetReelKinematicLock(self, false)
+        rpbClearWorkAnchor(self)
         if physicallyAttached then
-            -- Real GIANTS attachment: do not fight reconstruction physics.
             rpbSetReelWheelBrakes(self, 0)
             rpbSetCartWheelBrakes(self, 0)
             self.RPB.parkingBrakeApplied = false
             self.RPB.anchorValid = false
+            rpbClearCartAnchor(self)
         else
-            -- Since 1.38.26 the pump connection is hose-only. With no real
-            -- attacher joint there is nothing GIANTS needs to reconstruct here,
-            -- so keep the heavy drum chassis calm without changing its position.
             rpbSetReelWheelBrakes(self, 1)
-            rpbSetCartWheelBrakes(self, 0)
+            rpbSetCartWheelBrakes(self, reelActive and 0 or 1)
+            if not reelActive then rpbHoldSprinklerCart(self, false) end
             rpbHoldReelChassis(self, false)
             self.RPB.parkingBrakeApplied = true
         end
         return
     end
 
+    if shouldHardLockDrum then
+        if self.RPB.workAnchorValid ~= true then rpbCaptureWorkAnchor(self) end
+    else
+        rpbClearWorkAnchor(self)
+    end
+    rpbSetReelKinematicLock(self, shouldHardLockDrum)
+    if shouldHardLockDrum then rpbHoldReelAtWorkAnchor(self) end
+
     if pumpInputActive then
         rpbKeepSupportWheelDown(self)
+    end
+
+    if cartTractorAttached then
+        rpbSetCartWheelBrakes(self, 0)
+        rpbClearCartAnchor(self)
+        if workMode then
+            rpbSetReelWheelBrakes(self, 1)
+            rpbHoldReelAtWorkAnchor(self)
+            self.RPB.parkingBrakeApplied = true
+        else
+            rpbSetReelWheelBrakes(self, 0)
+            self.RPB.parkingBrakeApplied = false
+        end
+        self.RPB.anchorValid = false
+        return
     end
 
     local shouldPark = not physicallyAttached
         and (activeInputJointIndex == nil or activeInputJointIndex == 2)
 
     if hoseOnlyDeployed and workMode then
-        -- The drum is the fixed end of the deployed irrigation hose. Keep only
-        -- component 1 stationary/level by cancelling residual motion; the cart
-        -- remains free while automatic retraction is active. No teleporting and
-        -- no world-position correction is used.
         rpbKeepSupportWheelDown(self)
         rpbSetReelWheelBrakes(self, 1)
-        rpbSetCartWheelBrakes(self, reelActive and 0 or 1)
-        rpbHoldReelChassis(self, false)
+        local holdCart = not reelActive
+        local reelBrake = reelActive and rpbGetReelOverspeedBrake(self, dt) or 0
+        rpbSetCartWheelBrakes(self, holdCart and 1 or reelBrake)
+        if holdCart then
+            rpbHoldSprinklerCart(self, true)
+        else
+            rpbClearCartAnchor(self)
+        end
+        rpbHoldReelAtWorkAnchor(self)
         self.RPB.parkingBrakeApplied = true
         return
     end
@@ -484,12 +686,17 @@ function RWSM118RainstarParkingBrake:onUpdate(dt, isActiveForInput, isActiveForI
         rpbSetCartWheelBrakes(self, 0)
         self.RPB.parkingBrakeApplied = false
         self.RPB.anchorValid = false
+        rpbClearCartAnchor(self)
+        if drumPhysicallyAttached or not workMode then
+            rpbClearWorkAnchor(self)
+        end
         return
     end
 
     if shouldPark then
         rpbSetReelWheelBrakes(self, 1)
-        rpbSetCartWheelBrakes(self, 0)
+        rpbSetCartWheelBrakes(self, 1)
+        rpbHoldSprinklerCart(self, true)
         self.RPB.parkingBrakeApplied = true
         self.RPB.anchorValid = false
     elseif self.RPB.parkingBrakeApplied then
@@ -497,65 +704,6 @@ function RWSM118RainstarParkingBrake:onUpdate(dt, isActiveForInput, isActiveForI
         rpbSetCartWheelBrakes(self, 0)
         self.RPB.parkingBrakeApplied = false
         self.RPB.anchorValid = false
+        rpbClearCartAnchor(self)
     end
-end
-
-function RWSM118RainstarParkingBrake:onUpdateTick(dt, isActiveForInput, isActiveForInputIgnoreSelection, isSelected)
-    if not self.isServer or self.RPB == nil then
-        return
-    end
-    if self.RPB.assemblyTipped == true then
-        rpbStopTippedAssemblyMotion(self)
-        self.RPB.parkingBrakeApplied = true
-        self.RPB.anchorValid = false
-        return
-    end
-    local activeInputJointIndex = rpbGetActiveInputJointIndex(self)
-    local attacherVehicle = rpbGetAttacherVehicle(self)
-    local confirmedPumpConnected = rpbIsMotorPumpConnected(self)
-    local pumpInputActive = confirmedPumpConnected
-    local physicallyAttached = attacherVehicle ~= nil
-        or (self.spec_attachable ~= nil and self.spec_attachable.attacherVehicle ~= nil)
-    local reelActive = rpbIsReelActive(self)
-    local workMode = rpbIsWorkMode(self)
-    local hoseOnlyDeployed = confirmedPumpConnected and not physicallyAttached
-    local shouldHoldWorkSetup = hoseOnlyDeployed and workMode and not reelActive
-    if (tonumber(g_time) or 0) < (tonumber(self.RPB.loadStabilizeUntil) or 0) then
-        if physicallyAttached then
-            rpbSetReelWheelBrakes(self, 0)
-            rpbSetCartWheelBrakes(self, 0)
-            self.RPB.parkingBrakeApplied = false
-            self.RPB.anchorValid = false
-        else
-            rpbSetReelWheelBrakes(self, 1)
-            rpbSetCartWheelBrakes(self, 0)
-            rpbHoldReelChassis(self, false)
-            self.RPB.parkingBrakeApplied = true
-        end
-        return
-    end
-    if hoseOnlyDeployed and workMode then
-        rpbKeepSupportWheelDown(self)
-        rpbSetReelWheelBrakes(self, 1)
-        rpbSetCartWheelBrakes(self, reelActive and 0 or 1)
-        rpbHoldReelChassis(self, false)
-        self.RPB.parkingBrakeApplied = true
-        return
-    end
-    if shouldHoldWorkSetup then
-        rpbHoldPumpWorkSetup(self)
-        self.RPB.parkingBrakeApplied = true
-        return
-    end
-    if physicallyAttached then
-        rpbSetReelWheelBrakes(self, 0)
-        rpbSetCartWheelBrakes(self, 0)
-        self.RPB.parkingBrakeApplied = false
-        self.RPB.anchorValid = false
-        return
-    end
-    if not self.RPB.parkingBrakeApplied then return end
-    rpbSetReelWheelBrakes(self, 1)
-    rpbSetCartWheelBrakes(self, 0)
-    self.RPB.anchorValid = false
 end
