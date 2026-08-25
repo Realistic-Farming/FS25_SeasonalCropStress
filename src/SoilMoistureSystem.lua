@@ -308,18 +308,91 @@ end
 --- moisture overlay is not blank on the first open. A fresh map (no .grle) is
 --- the only one seeded: a map restored from its own savegame file is already
 --- the per-pixel truth and must not be flattened back to field averages.
+--- Relief variation is painted over the aggregate base coat so a field does not
+--- read as one flat average.
 ---@return integer number of fields painted
 function SoilMoistureSystem:seedMapFromStore()
     if not self:mapActive() then return 0 end
     if self.valueMap.loadedFromSave then return 0 end
     local count = 0
+    local varied = 0
     for fid in pairs(self.fieldData) do
-        if self:migrateFieldToMap(fid) then count = count + 1 end
+        if self:migrateFieldToMap(fid) then
+            count = count + 1
+            local d = self.fieldData[fid]
+            local vx, vz, n = self:_getFieldVerts(fid)
+            if vx ~= nil then
+                local base = self:getFieldAggregate(d) or 0.5
+                if self:_seedMapRelief(vx, vz, n, base) > 0 then
+                    varied = varied + 1
+                end
+            end
+        end
     end
     if count > 0 then
-        csLog(string.format("Moisture map: seeded %d fields from the store", count))
+        csLog(string.format("Moisture map: seeded %d fields from the store (%d with relief variation)", count, varied))
     end
     return count
+end
+
+--- Paint per-pixel relief variation over a field's aggregate base coat so the
+--- moisture map is not one flat average per field. Low ground reads wetter by
+--- the same SENS/MAX the store's relief pass uses, and the offsets sum to about
+--- zero over the field, so the derived field mean is unchanged. Sampled on a
+--- coarse grid to bound the one-time load cost.
+---@param vx number[] polygon x
+---@param vz number[] polygon z
+---@param n integer vertex count
+---@param base number field aggregate moisture
+---@return integer number of varied regions painted
+function SoilMoistureSystem:_seedMapRelief(vx, vz, n, base)
+    if not self:mapActive() then return 0 end
+    if getTerrainHeightAtWorldPos == nil or g_terrainNode == nil then return 0 end
+    local grain = self.valueMap:getGrainMetres() or 2
+    local step = math.max(grain * 4, 8)
+    local half = step * 0.5
+    local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
+    for i = 1, n do
+        if vx[i] < minX then minX = vx[i] end
+        if vx[i] > maxX then maxX = vx[i] end
+        if vz[i] < minZ then minZ = vz[i] end
+        if vz[i] > maxZ then maxZ = vz[i] end
+    end
+    if minX == math.huge then return 0 end
+    local samples, count = {}, 0
+    local limit = SoilMoistureSystem.MAP_DRAIN_MAX_BLOCKS
+    local x = minX + half
+    while x <= maxX and count < limit do
+        local z = minZ + half
+        while z <= maxZ and count < limit do
+            if csPointInPolygon(x, z, vx, vz, n) then
+                local ok, h = pcall(getTerrainHeightAtWorldPos, g_terrainNode, x, 0, z)
+                if ok and h ~= nil then
+                    count = count + 1
+                    samples[count] = { x = x, z = z, h = h }
+                end
+            end
+            z = z + step
+        end
+        x = x + step
+    end
+    if count < 4 then return 0 end
+    local meanH = 0
+    for i = 1, count do meanH = meanH + samples[i].h end
+    meanH = meanH / count
+    local SENS = SoilMoistureSystem.CELL_SENS
+    local MAX = SoilMoistureSystem.CELL_RELIEF_MAX
+    local written = 0
+    for i = 1, count do
+        local offset = SENS * (meanH - samples[i].h)
+        if offset > MAX then offset = MAX elseif offset < -MAX then offset = -MAX end
+        if math.abs(offset) >= 0.001 then
+            local m = math.max(0.0, math.min(1.0, base + offset))
+            self.valueMap:writeValueAtWorld(samples[i].x, samples[i].z, m, half)
+            written = written + 1
+        end
+    end
+    return written
 end
 
 function SoilMoistureSystem:initialize()
