@@ -429,6 +429,15 @@ function CsRfPdaGuest.buildFieldRows()
         end
     end
 
+    -- Vehicle irrigators (Rainstar play kit): a field being actively watered by
+    -- a parked Rainstar reads as irrigated the same way a placed system does.
+    local vehIrr = mgr.irrigatorSectorIntegration
+    if vehIrr and type(vehIrr.getActiveWateredFields) == "function" then
+        for fid in pairs(vehIrr:getActiveWateredFields()) do
+            coveredFields[fid] = true
+        end
+    end
+
     local yesText = tr("cs_pda_irrigated_yes", "Yes")
     local noText = tr("cs_pda_irrigated_no", "No")
 
