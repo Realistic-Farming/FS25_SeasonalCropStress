@@ -429,11 +429,11 @@ function CsRfPdaGuest.buildFieldRows()
         end
     end
 
-    -- Vehicle irrigators (Rainstar play kit): a field being actively watered by
-    -- a parked Rainstar reads as irrigated the same way a placed system does.
+    -- Vehicle irrigators (Rainstar play kit): a field a Rainstar is parked on
+    -- reads as irrigated the same way a placed system does, running or not.
     local vehIrr = mgr.irrigatorSectorIntegration
-    if vehIrr and type(vehIrr.getActiveWateredFields) == "function" then
-        for fid in pairs(vehIrr:getActiveWateredFields()) do
+    if vehIrr and type(vehIrr.getPresentFields) == "function" then
+        for fid in pairs(vehIrr:getPresentFields()) do
             coveredFields[fid] = true
         end
     end
@@ -1731,20 +1731,38 @@ updatePivotCard = function(container, fieldId)
         }
 
         -- RAINSTAR SEAT: a vehicle irrigator is not a placeable system, so no
-        -- Reinke pivot resolves here. When one is actively watering the selected
-        -- field the seat is not empty: report it and offer a Stop.
+        -- Reinke pivot resolves here. When one is present on the selected field
+        -- (parked or running) the seat is not empty: report it, show whether it
+        -- is actually watering, and offer a Stop while it is active.
         local vehIrr = mgr ~= nil and mgr.irrigatorSectorIntegration or nil
+        local presentFields = vehIrr and type(vehIrr.getPresentFields) == "function"
+            and vehIrr:getPresentFields() or nil
         local activeFields = vehIrr and type(vehIrr.getActiveWateredFields) == "function"
             and vehIrr:getActiveWateredFields() or nil
         local rainstarHere = false
-        if activeFields then
-            if fieldId ~= nil and activeFields[fieldId] then
+        local rainstarActive = false
+        if presentFields then
+            if fieldId ~= nil and presentFields[fieldId] then
                 rainstarHere = true
             else
                 for _, mid in ipairs(members or {}) do
-                    if activeFields[mid] then rainstarHere = true break end
+                    if presentFields[mid] then rainstarHere = true break end
                 end
             end
+        end
+        if activeFields then
+            local anyActive = false
+            if fieldId ~= nil and activeFields[fieldId] then
+                anyActive = true
+            else
+                for _, mid in ipairs(members or {}) do
+                    if activeFields[mid] then anyActive = true break end
+                end
+            end
+            rainstarActive = anyActive
+            -- A Rainstar whose root sits beside the field but whose sector lands
+            -- on it is still the irrigator here; presence or active both count.
+            if anyActive then rainstarHere = true end
         end
         if rainstarHere then
             setPivotText(container, "csPivotTitle",
@@ -1755,8 +1773,9 @@ updatePivotCard = function(container, fieldId)
             setPivotText(container, "csPivotDialMax", "")
             setPivotText(container, "csPivotCoverage",
                 tr("cs_rf_pda_pivot_coverage_rainstar", "Coverage: Rainstar spraying this field"))
-            setPivotText(container, "csPivotWatering",
-                tr("cs_rf_pda_pivot_watering_on", "Watering now: On"))
+            setPivotText(container, "csPivotWatering", rainstarActive
+                and tr("cs_rf_pda_pivot_watering_on", "Watering now: On")
+                or tr("cs_rf_pda_pivot_watering_off", "Watering now: Off"))
             setPivotText(container, "csPivotPressure",
                 tr("cs_rf_pda_pivot_pressure_na", "Pressure: —"))
             setPivotText(container, "csPivotRate",
@@ -1767,7 +1786,7 @@ updatePivotCard = function(container, fieldId)
                 tr("cs_rf_pda_pivot_warn_rainstar", "Vehicle irrigator"))
             for _, id in ipairs(dead) do
                 if id == "csPivotBtnStop" then
-                    setPivotBtn(container, id, labels[id], true, false)
+                    setPivotBtn(container, id, labels[id], rainstarActive, false)
                 else
                     setPivotBtn(container, id, labels[id], false, true)
                 end
