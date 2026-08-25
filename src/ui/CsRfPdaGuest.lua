@@ -429,6 +429,15 @@ function CsRfPdaGuest.buildFieldRows()
         end
     end
 
+    -- Vehicle irrigators (Rainstar play kit): a field a Rainstar is parked on
+    -- reads as irrigated the same way a placed system does, running or not.
+    local vehIrr = mgr.irrigatorSectorIntegration
+    if vehIrr and type(vehIrr.getPresentFields) == "function" then
+        for fid in pairs(vehIrr:getPresentFields()) do
+            coveredFields[fid] = true
+        end
+    end
+
     local yesText = tr("cs_pda_irrigated_yes", "Yes")
     local noText = tr("cs_pda_irrigated_no", "No")
 
@@ -1720,6 +1729,71 @@ updatePivotCard = function(container, fieldId)
             csPivotBtnArmMinus = tr("cs_rf_pda_pivot_btn_arm_minus", "Arm−"),
             csBtnSchedule = tr("cs_rf_pda_pivot_btn_schedule", "Schedule"),
         }
+
+        -- RAINSTAR SEAT: a vehicle irrigator is not a placeable system, so no
+        -- Reinke pivot resolves here. When one is present on the selected field
+        -- (parked or running) the seat is not empty: report it, show whether it
+        -- is actually watering, and offer a Stop while it is active.
+        local vehIrr = mgr ~= nil and mgr.irrigatorSectorIntegration or nil
+        local presentFields = vehIrr and type(vehIrr.getPresentFields) == "function"
+            and vehIrr:getPresentFields() or nil
+        local activeFields = vehIrr and type(vehIrr.getActiveWateredFields) == "function"
+            and vehIrr:getActiveWateredFields() or nil
+        local rainstarHere = false
+        local rainstarActive = false
+        if presentFields then
+            if fieldId ~= nil and presentFields[fieldId] then
+                rainstarHere = true
+            else
+                for _, mid in ipairs(members or {}) do
+                    if presentFields[mid] then rainstarHere = true break end
+                end
+            end
+        end
+        if activeFields then
+            local anyActive = false
+            if fieldId ~= nil and activeFields[fieldId] then
+                anyActive = true
+            else
+                for _, mid in ipairs(members or {}) do
+                    if activeFields[mid] then anyActive = true break end
+                end
+            end
+            rainstarActive = anyActive
+            -- A Rainstar whose root sits beside the field but whose sector lands
+            -- on it is still the irrigator here; presence or active both count.
+            if anyActive then rainstarHere = true end
+        end
+        if rainstarHere then
+            setPivotText(container, "csPivotTitle",
+                tr("cs_rf_pda_pivot_title_rainstar", "RAINSTAR"))
+            setPivotText(container, "csPivotDialCur",
+                tr("cs_rf_pda_pivot_rainstar_label", "Vehicle irrigator"))
+            setPivotText(container, "csPivotDialMin", "")
+            setPivotText(container, "csPivotDialMax", "")
+            setPivotText(container, "csPivotCoverage",
+                tr("cs_rf_pda_pivot_coverage_rainstar", "Coverage: Rainstar spraying this field"))
+            setPivotText(container, "csPivotWatering", rainstarActive
+                and tr("cs_rf_pda_pivot_watering_on", "Watering now: On")
+                or tr("cs_rf_pda_pivot_watering_off", "Watering now: Off"))
+            setPivotText(container, "csPivotPressure",
+                tr("cs_rf_pda_pivot_pressure_na", "Pressure: —"))
+            setPivotText(container, "csPivotRate",
+                tr("cs_rf_pda_pivot_rate_na", "Rate: —"))
+            setPivotText(container, "csPivotSchedule",
+                tr("cs_rf_pda_pivot_sched_none", "Schedule: No schedule"))
+            setPivotText(container, "csPivotWarn",
+                tr("cs_rf_pda_pivot_warn_rainstar", "Vehicle irrigator"))
+            for _, id in ipairs(dead) do
+                if id == "csPivotBtnStop" then
+                    setPivotBtn(container, id, labels[id], rainstarActive, false)
+                else
+                    setPivotBtn(container, id, labels[id], false, true)
+                end
+            end
+            return
+        end
+
         for _, id in ipairs(dead) do
             setPivotBtn(container, id, labels[id], false, true)
         end
@@ -1929,6 +2003,21 @@ function CsRfPdaGuest.onPivotRemote(container, actionToken)
     end
     local sysId = select(1, selectedSystemId(container, mgr, members))
     if sysId == nil then
+        -- RAINSTAR STOP: no placed pivot covers this field, but a Rainstar may
+        -- be actively watering it. Route the Stop remote to the vehicle rig.
+        if action == A.AUTO_STOP and fieldId ~= nil then
+            local vehIrr = mgr ~= nil and mgr.irrigatorSectorIntegration or nil
+            if vehIrr and type(vehIrr.stopForField) == "function" then
+                vehIrr:stopForField(fieldId)
+                print(string.format(
+                    "[CropStress] Esc pivot STOP -> Rainstar stop fieldId=%s",
+                    tostring(fieldId)))
+                if type(CsRfPdaGuest.onShow) == "function" then
+                    CsRfPdaGuest.onShow(container, true)
+                end
+                return
+            end
+        end
         print(string.format(
             "[CropStress] Esc pivot %s IGNORED: no system resolved for fieldId=%s",
             tostring(actionToken), tostring(fieldId)))

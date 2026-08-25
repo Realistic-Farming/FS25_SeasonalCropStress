@@ -403,6 +403,10 @@
     <!-- Esc CS PIVOT card (2026-08-09) -->
     <text name="cs_rf_pda_pivot_title" text="[EN] PIVOT"/>
     <text name="cs_rf_pda_pivot_title_irrig" text="[EN] IRRIGATION"/>
+<text name="cs_rf_pda_pivot_title_rainstar" text="RAINSTAR"/>
+<text name="cs_rf_pda_pivot_rainstar_label" text="[EN] Vehicle irrigator"/>
+<text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
+<text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
     <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0f°"/>
     <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0f°"/>

@@ -46,6 +46,17 @@ function IrrigatorSectorIntegration.new(manager)
     self.isInitialized = false
     self._accMs = 0
     self._waterFillType = nil
+    -- farmlandId -> true for every field this tick actually watered. The PDA
+    -- reads this so a parked Rainstar shows its field as irrigated the same way
+    -- a placed pivot or drip line does; cleared at the top of each tick window.
+    self._activeWateredFields = {}
+    -- farmlandId -> { [vehicle] = true }: which Rainstar vehicles watered each
+    -- field this tick, so the Esc PIVOT card can stop the rig for a field.
+    self._activeVehiclesByField = {}
+    -- farmlandId -> true: fields a Rainstar is physically parked on this tick,
+    -- running or not. Kept so the Esc PIVOT card keeps showing the Rainstar seat
+    -- when the rig is present but not spraying.
+    self._presentFields = {}
     return self
 end
 
@@ -113,9 +124,12 @@ function IrrigatorSectorIntegration:update(dt)
     if self._accMs < IrrigatorSectorIntegration.TICK_MS then return end
     local elapsedMs = self._accMs
     self._accMs = 0
+    self._activeWateredFields = {}      -- fresh window; repopulated as water lands
+    self._activeVehiclesByField = {}
+    self._presentFields = {}
 
     local soilSystem = self.manager ~= nil and self.manager.soilSystem or nil
-    if soilSystem == nil or type(soilSystem.applyWaterAtCell) ~= "function" then return end
+    local canWrite = soilSystem ~= nil and type(soilSystem.applyWaterAtCell) == "function"
 
     local vehicleSystem = mission.vehicleSystem
     local vehicles = (vehicleSystem ~= nil and vehicleSystem.vehicles) or mission.vehicles
@@ -126,7 +140,10 @@ function IrrigatorSectorIntegration:update(dt)
 
     for _, vehicle in pairs(vehicles) do
         if vehicle ~= nil and IrrigatorSectorIntegration.matchesType(vehicle.typeName) then
-            anyApplied = self:_tickVehicle(vehicle, soilSystem, waterIndex, elapsedMs) or anyApplied
+            self:_recordPresence(vehicle)
+            if canWrite then
+                anyApplied = self:_tickVehicle(vehicle, soilSystem, waterIndex, elapsedMs) or anyApplied
+            end
         end
     end
 
@@ -207,6 +224,10 @@ function IrrigatorSectorIntegration:_tickVehicle(vehicle, soilSystem, waterIndex
             -- unknown fieldId, so water thrown at a road wets nothing. That is the
             -- honest outcome rather than crediting it to the nearest field.
             soilSystem:applyWaterAtCell(farmland.id, x, z, gain)
+            self._activeWateredFields[farmland.id] = true
+            local vehSet = self._activeVehiclesByField[farmland.id]
+            if vehSet == nil then vehSet = {}; self._activeVehiclesByField[farmland.id] = vehSet end
+            vehSet[vehicle] = true
             applied = true
         end
     end
@@ -230,6 +251,55 @@ function IrrigatorSectorIntegration:_tickVehicle(vehicle, soilSystem, waterIndex
     return true
 end
 
+--- Farmland ids an active vehicle irrigator watered on the last tick.
+--- The PDA merges these into its covered-fields set so a Rainstar on a field
+--- shows as irrigated without needing a placed pivot or drip line.
+---@return table farmlandId -> true
+function IrrigatorSectorIntegration:getActiveWateredFields()
+    return self._activeWateredFields
+end
+
+--- Farmland ids a Rainstar is physically present on this tick, parked or
+--- running. The Esc PIVOT card uses this so the Rainstar seat stays visible
+--- after the rig is stopped, instead of swapping back to an empty pivot seat.
+---@return table farmlandId -> true
+function IrrigatorSectorIntegration:getPresentFields()
+    return self._presentFields
+end
+
+--- Mark the farmland the vehicle's root node sits on. Runs for every matched
+--- Rainstar every tick, on or off, so presence does not depend on the sprayer.
+function IrrigatorSectorIntegration:_recordPresence(vehicle)
+    local node = vehicle.rootNode
+    if type(vehicle.getRootNode) == "function" then node = vehicle:getRootNode() or node end
+    if node == nil or node == 0 then return end
+    local ok, ox, _, oz = pcall(getWorldTranslation, node)
+    if not ok or ox == nil then return end
+    local farmland = g_farmlandManager ~= nil
+        and g_farmlandManager:getFarmlandAtWorldPosition(ox, oz) or nil
+    if farmland ~= nil and farmland.id ~= nil then
+        self._presentFields[farmland.id] = true
+    end
+end
+
+--- Turn off every Rainstar that watered the given field on the last tick. The
+--- Esc PIVOT card's Stop remote calls this for a vehicle-irrigated field that
+--- has no placed pivot to drive. Safe to call when nothing is active.
+---@param fieldId number farmland id
+function IrrigatorSectorIntegration:stopForField(fieldId)
+    local vehSet = self._activeVehiclesByField[fieldId]
+    if vehSet == nil then return end
+    for vehicle in pairs(vehSet) do
+        if type(vehicle.setIsTurnedOn) == "function" then
+            pcall(vehicle.setIsTurnedOn, vehicle, false)
+        end
+    end
+    -- The next tick repopulates from real state, so do not clear here.
+end
+
 function IrrigatorSectorIntegration:delete()
     self.isInitialized = false
+    self._activeWateredFields = {}
+    self._activeVehiclesByField = {}
+    self._presentFields = {}
 end
