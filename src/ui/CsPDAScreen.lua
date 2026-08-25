@@ -406,6 +406,18 @@ function CsPDAScreen:_rebuildData()
         end
     end
 
+    -- Vehicle irrigators (Rainstar play kit): a field being actively watered by
+    -- a parked Rainstar is irrigated even when no placeable system covers it.
+    -- Kept separate from coveredFields so a vehicle-watered field keeps a nil
+    -- systemId and the row click still says "no irrigation system connected".
+    local vehicleFields = {}
+    local vehIrr = mgr.irrigatorSectorIntegration
+    if vehIrr and type(vehIrr.getActiveWateredFields) == "function" then
+        for fid in pairs(vehIrr:getActiveWateredFields()) do
+            vehicleFields[fid] = true
+        end
+    end
+
     local localFarmId = self.showOwnedOnly and mgr.getLocalFarmId() or nil
 
     local rows = {}
@@ -424,7 +436,7 @@ function CsPDAScreen:_rebuildData()
             local moisture   = entry.moisture or 0
             local stress     = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
             local systemId   = coveredFields[fid]  -- nil if not irrigated
-            local irrigated  = systemId ~= nil
+            local irrigated  = systemId ~= nil or vehicleFields[fid] == true
 
             table.insert(rows, {
                 fieldId   = fid,
@@ -486,6 +498,14 @@ function CsPDAScreen:_rebuildStats()
                     coveredFields[fid] = true
                 end
             end
+        end
+    end
+
+    -- Vehicle irrigators count toward the irrigated total too.
+    local vehIrr = mgr.irrigatorSectorIntegration
+    if vehIrr and type(vehIrr.getActiveWateredFields) == "function" then
+        for fid in pairs(vehIrr:getActiveWateredFields()) do
+            coveredFields[fid] = true
         end
     end
 

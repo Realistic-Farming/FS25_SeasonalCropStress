@@ -46,6 +46,10 @@ function IrrigatorSectorIntegration.new(manager)
     self.isInitialized = false
     self._accMs = 0
     self._waterFillType = nil
+    -- farmlandId -> true for every field this tick actually watered. The PDA
+    -- reads this so a parked Rainstar shows its field as irrigated the same way
+    -- a placed pivot or drip line does; cleared at the top of each tick window.
+    self._activeWateredFields = {}
     return self
 end
 
@@ -113,6 +117,7 @@ function IrrigatorSectorIntegration:update(dt)
     if self._accMs < IrrigatorSectorIntegration.TICK_MS then return end
     local elapsedMs = self._accMs
     self._accMs = 0
+    self._activeWateredFields = {}   -- fresh window; repopulated as water lands
 
     local soilSystem = self.manager ~= nil and self.manager.soilSystem or nil
     if soilSystem == nil or type(soilSystem.applyWaterAtCell) ~= "function" then return end
@@ -207,6 +212,7 @@ function IrrigatorSectorIntegration:_tickVehicle(vehicle, soilSystem, waterIndex
             -- unknown fieldId, so water thrown at a road wets nothing. That is the
             -- honest outcome rather than crediting it to the nearest field.
             soilSystem:applyWaterAtCell(farmland.id, x, z, gain)
+            self._activeWateredFields[farmland.id] = true
             applied = true
         end
     end
@@ -230,6 +236,15 @@ function IrrigatorSectorIntegration:_tickVehicle(vehicle, soilSystem, waterIndex
     return true
 end
 
+--- Farmland ids an active vehicle irrigator watered on the last tick.
+--- The PDA merges these into its covered-fields set so a Rainstar on a field
+--- shows as irrigated without needing a placed pivot or drip line.
+---@return table farmlandId -> true
+function IrrigatorSectorIntegration:getActiveWateredFields()
+    return self._activeWateredFields
+end
+
 function IrrigatorSectorIntegration:delete()
     self.isInitialized = false
+    self._activeWateredFields = {}
 end
