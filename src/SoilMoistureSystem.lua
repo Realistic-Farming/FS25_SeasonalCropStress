@@ -182,6 +182,12 @@ function SoilMoistureSystem.new(manager)
     self.valueMap = nil
     self._fieldVerts = {}      -- fieldId -> {vx, vz, n}, cached polygon
     self._mapSeeded  = {}      -- fieldId -> true once migrated onto the map
+    -- SCS-039 quantisation remainders for positional water writes, keyed
+    -- fieldId -> [pixelKey] -> pending sub-step moisture. The cell store holds
+    -- a float so it never floors; the 2 m map has 254 raw steps, so a single
+    -- irrigator tick's gain (liters over the whole sector) must accumulate here
+    -- and spend only whole raw steps, or water lands on the map as nothing.
+    self._mapWaterPending = {} -- fieldId -> [px * 4096 + pz] -> remainder
 
     self.isInitialized = false
     return self
@@ -296,6 +302,97 @@ function SoilMoistureSystem:migrateFieldToMap(fieldId)
     csLog(string.format("Moisture map: field %d migrated (base=%.2f, %d cells stamped)",
         fieldId, base, stamped))
     return true
+end
+
+--- SCS-039: paint every tracked field onto the map from the store, once, so the
+--- moisture overlay is not blank on the first open. A fresh map (no .grle) is
+--- the only one seeded: a map restored from its own savegame file is already
+--- the per-pixel truth and must not be flattened back to field averages.
+--- Relief variation is painted over the aggregate base coat so a field does not
+--- read as one flat average.
+---@return integer number of fields painted
+function SoilMoistureSystem:seedMapFromStore()
+    if not self:mapActive() then return 0 end
+    if self.valueMap.loadedFromSave then return 0 end
+    local count = 0
+    local varied = 0
+    for fid in pairs(self.fieldData) do
+        if self:migrateFieldToMap(fid) then
+            count = count + 1
+            local d = self.fieldData[fid]
+            local vx, vz, n = self:_getFieldVerts(fid)
+            if vx ~= nil then
+                local base = self:getFieldAggregate(d) or 0.5
+                if self:_seedMapRelief(vx, vz, n, base) > 0 then
+                    varied = varied + 1
+                end
+            end
+        end
+    end
+    if count > 0 then
+        csLog(string.format("Moisture map: seeded %d fields from the store (%d with relief variation)", count, varied))
+    end
+    return count
+end
+
+--- Paint per-pixel relief variation over a field's aggregate base coat so the
+--- moisture map is not one flat average per field. Low ground reads wetter by
+--- the same SENS/MAX the store's relief pass uses, and the offsets sum to about
+--- zero over the field, so the derived field mean is unchanged. Sampled on a
+--- coarse grid to bound the one-time load cost.
+---@param vx number[] polygon x
+---@param vz number[] polygon z
+---@param n integer vertex count
+---@param base number field aggregate moisture
+---@return integer number of varied regions painted
+function SoilMoistureSystem:_seedMapRelief(vx, vz, n, base)
+    if not self:mapActive() then return 0 end
+    if getTerrainHeightAtWorldPos == nil or g_terrainNode == nil then return 0 end
+    local grain = self.valueMap:getGrainMetres() or 2
+    local step = math.max(grain * 4, 8)
+    local half = step * 0.5
+    local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
+    for i = 1, n do
+        if vx[i] < minX then minX = vx[i] end
+        if vx[i] > maxX then maxX = vx[i] end
+        if vz[i] < minZ then minZ = vz[i] end
+        if vz[i] > maxZ then maxZ = vz[i] end
+    end
+    if minX == math.huge then return 0 end
+    local samples, count = {}, 0
+    local limit = SoilMoistureSystem.MAP_DRAIN_MAX_BLOCKS
+    local x = minX + half
+    while x <= maxX and count < limit do
+        local z = minZ + half
+        while z <= maxZ and count < limit do
+            if csPointInPolygon(x, z, vx, vz, n) then
+                local ok, h = pcall(getTerrainHeightAtWorldPos, g_terrainNode, x, 0, z)
+                if ok and h ~= nil then
+                    count = count + 1
+                    samples[count] = { x = x, z = z, h = h }
+                end
+            end
+            z = z + step
+        end
+        x = x + step
+    end
+    if count < 4 then return 0 end
+    local meanH = 0
+    for i = 1, count do meanH = meanH + samples[i].h end
+    meanH = meanH / count
+    local SENS = SoilMoistureSystem.CELL_SENS
+    local MAX = SoilMoistureSystem.CELL_RELIEF_MAX
+    local written = 0
+    for i = 1, count do
+        local offset = SENS * (meanH - samples[i].h)
+        if offset > MAX then offset = MAX elseif offset < -MAX then offset = -MAX end
+        if math.abs(offset) >= 0.001 then
+            local m = math.max(0.0, math.min(1.0, base + offset))
+            self.valueMap:writeValueAtWorld(samples[i].x, samples[i].z, m, half)
+            written = written + 1
+        end
+    end
+    return written
 end
 
 function SoilMoistureSystem:initialize()
@@ -799,15 +896,28 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
 
     -- SCS-039: water lands on a PLACE, and on the map that place is a 2 m pixel
     -- instead of a 10-40 m cell. Read what is there, add the gain, write it back.
-    -- No accumulator here: an irrigation gain at a point is a real quantity at a
-    -- real spot, not a field-wide sub-step drift, and the pivot's own pass writes
-    -- enough water to clear the floor.
+    -- QUANTISATION LAW (CropStressValueMap): the tick's gain, spread over the
+    -- whole sector area, is far below one raw step (~0.0039 moisture). Writing
+    -- it straight through floors to nothing and the map never moves while the
+    -- cell store does. Accumulate per pixel and spend only whole raw steps, the
+    -- same shape as the hourly weather path's mapPending.
     if self:mapActive() then
         self:migrateFieldToMap(fieldId)
-        local current = self.valueMap:readValueAtWorld(x, z)
-        if current == nil then current = self:getFieldAggregate(d) or 0 end
-        local grain = self.valueMap:getGrainMetres() or 2
-        self.valueMap:writeValueAtWorld(x, z, math.max(0.0, math.min(1.0, current + gain)), grain * 0.5)
+        local px, pz = self.valueMap:worldToPixel(x, z)
+        if px ~= nil then
+            local fieldAcc = self._mapWaterPending[fieldId]
+            if fieldAcc == nil then fieldAcc = {}; self._mapWaterPending[fieldId] = fieldAcc end
+            local key = px * 4096 + pz
+            local pending = (fieldAcc[key] or 0) + gain
+            local applied, remainder = CropStressValueMap.quantiseDelta(pending)
+            fieldAcc[key] = remainder
+            if applied ~= 0 then
+                local grain = self.valueMap:getGrainMetres() or 2
+                local current = self.valueMap:readValueAtWorld(x, z)
+                if current == nil then current = self:getFieldAggregate(d) or 0 end
+                self.valueMap:writeValueAtWorld(x, z, math.max(0.0, math.min(1.0, current + applied)), grain * 0.5)
+            end
+        end
         -- The field aggregate is re-derived from the map on the daily settle;
         -- a single pixel's gain is below the noise of the field mean until then.
         return
