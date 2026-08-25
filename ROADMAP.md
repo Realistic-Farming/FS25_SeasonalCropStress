@@ -98,3 +98,12 @@
 
 ## 2026-08-16 (Tyson): MP join d.cells nil crash fix
 - [x] SoilMoistureSystem.lua: nil-init guards for d.cells, d.cellCount, d.cellSum in both materialiseRelief and _writeCell. Field data entries created via MP moisture sync events before the full structure was built caused cascading packetReceived errors (540+ in 8 seconds). Merged #140; 1.2.5.95.
+
+## 2026-08-25 (Fred): Moisture map renders per-pixel; Rainstar detected and stoppable in the PDA (PRs #157, #158)
+- [x] PR #157 fix/scs-moisture-map-quantisation: applyWaterAtCell accumulates the quantisation remainder per pixel (quantiseDelta, the hourly-path shape) so irrigator water past one raw step lands on the 2m map; seedMapFromStore paints all fields at load (no blank map, no whole-field base-coat on first write); _seedMapRelief paints per-pixel relief variation so fields are not flat averages. 4 commits.
+- [x] PR #158 fix/scs-pda-rainstar-coverage: IrrigatorSectorIntegration tracks presence (getPresentFields) and active watering plus stopForField; CsPDAScreen and the RF Esc Crop Stress desk mark Rainstar-covered fields as irrigated, presence-based like placed pivots; the RF Esc PIVOT card shows a Rainstar seat with watering on/off and a working Stop. 5 commits, new l10n keys in all 26 languages.
+- [x] Built and deployed; Lua syntax clean. In-game verified 2026-08-25: the map shows variation and the wet patch; the PIVOT seat shows and stops the Rainstar and stays after Stop.
+- [~] The relief variation is coarse (8m blocks) to bound load cost; smooth it if the look is too blocky.
+- [~] Wet patch colour bands move slowly at low time scale (a band is about 6% moisture); that is the honest moisture rate, not a regression.
+- [~] cs_grid_concordance is still release-gated; decision pending on making the per-pixel map the default (the in-game layer look ran this session).
+- [~] DMV availability still gated on the CS_PDA_MoistureDisplay bitvector in _pdaCreateOverlays; robustness fix noted, not built.
