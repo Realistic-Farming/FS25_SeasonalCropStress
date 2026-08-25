@@ -742,6 +742,13 @@ function CropStressManager:loadFromXMLFile()
     else
         self.saveLoad:loadFromXMLFile()
     end
+
+    -- SCS-039: now that the store scalars are restored, paint a fresh map from
+    -- them so the moisture overlay is not blank until the first write. A map
+    -- restored from its own .grle is skipped: it is already the per-pixel truth.
+    if self.soilSystem ~= nil and self.soilSystem.seedMapFromStore ~= nil then
+        self.soilSystem:seedMapFromStore()
+    end
 end
 
 -- ============================================================
