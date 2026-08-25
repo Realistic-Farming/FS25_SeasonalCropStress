@@ -50,6 +50,9 @@ function IrrigatorSectorIntegration.new(manager)
     -- reads this so a parked Rainstar shows its field as irrigated the same way
     -- a placed pivot or drip line does; cleared at the top of each tick window.
     self._activeWateredFields = {}
+    -- farmlandId -> { [vehicle] = true }: which Rainstar vehicles watered each
+    -- field this tick, so the Esc PIVOT card can stop the rig for a field.
+    self._activeVehiclesByField = {}
     return self
 end
 
@@ -117,7 +120,8 @@ function IrrigatorSectorIntegration:update(dt)
     if self._accMs < IrrigatorSectorIntegration.TICK_MS then return end
     local elapsedMs = self._accMs
     self._accMs = 0
-    self._activeWateredFields = {}   -- fresh window; repopulated as water lands
+    self._activeWateredFields = {}      -- fresh window; repopulated as water lands
+    self._activeVehiclesByField = {}
 
     local soilSystem = self.manager ~= nil and self.manager.soilSystem or nil
     if soilSystem == nil or type(soilSystem.applyWaterAtCell) ~= "function" then return end
@@ -213,6 +217,9 @@ function IrrigatorSectorIntegration:_tickVehicle(vehicle, soilSystem, waterIndex
             -- honest outcome rather than crediting it to the nearest field.
             soilSystem:applyWaterAtCell(farmland.id, x, z, gain)
             self._activeWateredFields[farmland.id] = true
+            local vehSet = self._activeVehiclesByField[farmland.id]
+            if vehSet == nil then vehSet = {}; self._activeVehiclesByField[farmland.id] = vehSet end
+            vehSet[vehicle] = true
             applied = true
         end
     end
@@ -244,7 +251,23 @@ function IrrigatorSectorIntegration:getActiveWateredFields()
     return self._activeWateredFields
 end
 
+--- Turn off every Rainstar that watered the given field on the last tick. The
+--- Esc PIVOT card's Stop remote calls this for a vehicle-irrigated field that
+--- has no placed pivot to drive. Safe to call when nothing is active.
+---@param fieldId number farmland id
+function IrrigatorSectorIntegration:stopForField(fieldId)
+    local vehSet = self._activeVehiclesByField[fieldId]
+    if vehSet == nil then return end
+    for vehicle in pairs(vehSet) do
+        if type(vehicle.setIsTurnedOn) == "function" then
+            pcall(vehicle.setIsTurnedOn, vehicle, false)
+        end
+    end
+    -- The next tick repopulates from real state, so do not clear here.
+end
+
 function IrrigatorSectorIntegration:delete()
     self.isInitialized = false
     self._activeWateredFields = {}
+    self._activeVehiclesByField = {}
 end
