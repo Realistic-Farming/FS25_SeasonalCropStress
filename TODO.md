@@ -104,3 +104,10 @@
 ## Crop Moisture heat sheet + hose log-flood fix (2026-08-15, Wizard)
 - [x] Moisture heat-sheet overlay (#138) and the hose-peer liveness/log-flood fix (#137), both merged; 1.2.5.77.
 - [~] In-game: the heat sheet paints the wet patch where an irrigator just ran; a sold hose partner clears the prompt and the log goes quiet.
+
+## Moisture map + Rainstar UI (2026-08-25, PRs #157 #158)
+- [x] Per-pixel irrigator accumulation, load seeding, relief variation, Rainstar presence detection and the PIVOT Stop all built and deployed.
+- [~] Release cs_grid_concordance (the 2m value map) so the per-pixel map is the default; decision owed by Tyson after the in-game layer look.
+- [~] Smooth the relief variation (currently 8m blocks) if the map reads too blocky.
+- [~] Watch for Arissani's SCS-24 brief and check overlap with the moisture map and Rainstar surfaces.
+- [~] DMV availability robustness: gate _pdaDMVAvailable only on the two DMV overlays, not the display bitvector.
