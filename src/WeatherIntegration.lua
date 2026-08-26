@@ -121,19 +121,49 @@ end
 -- OPTIONAL MOD DETECTION
 -- ============================================================
 function WeatherIntegration:detectOptionalMods()
-    -- FS25_RealisticWeather detection
-    -- This mod exposes g_realisticWeather global with enhanced weather data
-    if getfenv(0)["g_realisticWeather"] ~= nil then
+    -- FS25_RealisticWeather detection. The mod publishes the bare global
+    -- g_realisticWeather (RealisticWeather.lua:109); whether that bare global is
+    -- visible here depends on the engine's mod-environment scoping, so probe every
+    -- surface the handle could live on (_rwHandle) and log which one matched, so a
+    -- csDebug session can confirm the real cross-mod path.
+    if self:_rwHandle() ~= nil then
         self.realisticWeatherActive = true
-        csLog("FS25_RealisticWeather detected — using enhanced weather data")
-    elseif getfenv(0)["g_weatherSystem"] ~= nil then
-        -- NOTE: g_weatherSystem might be a vanilla FS25 global on some builds.
-        -- If the RealisticWeather API methods don't exist on it, getTemperatureFromWeather()
-        -- and getHumidity() will return nil from the RW path and fall through to vanilla
-        -- automatically — so this detection fails safe even if it's a false positive.
-        self.realisticWeatherActive = true
-        csLog("Weather mod detected (g_weatherSystem) — using enhanced weather data")
+        csLog(string.format("FS25_RealisticWeather detected (%s) - using enhanced weather data", self._rwSurface))
     end
+end
+
+-- FS25_RealisticWeather handle resolution. Probes every surface the handle could
+-- live on in order: the bare global, the g_currentMission bridge (the ecosystem's
+-- delegate-when-present shape), then getfenv(0). Falls back to the g_weatherSystem
+-- family the same way. g_weatherSystem may be a vanilla global on some builds, but
+-- the RW-path reads fail safe to vanilla when its API is absent, so a false
+-- positive here is harmless. Records which surface matched on self._rwSurface.
+function WeatherIntegration:_rwHandle()
+    local surface, h
+    h = g_realisticWeather
+    if h ~= nil then surface = "g_realisticWeather" end
+    if h == nil and g_currentMission ~= nil and g_currentMission.realisticWeather ~= nil then
+        h = g_currentMission.realisticWeather
+        surface = "g_currentMission.realisticWeather"
+    end
+    if h == nil and getfenv ~= nil and getfenv(0) ~= nil and getfenv(0).g_realisticWeather ~= nil then
+        h = getfenv(0).g_realisticWeather
+        surface = "getfenv(0).g_realisticWeather"
+    end
+    if h == nil then
+        h = g_weatherSystem
+        if h ~= nil then surface = "g_weatherSystem" end
+    end
+    if h == nil and g_currentMission ~= nil and g_currentMission.weatherSystem ~= nil then
+        h = g_currentMission.weatherSystem
+        surface = "g_currentMission.weatherSystem"
+    end
+    if h == nil and getfenv ~= nil and getfenv(0) ~= nil and getfenv(0).g_weatherSystem ~= nil then
+        h = getfenv(0).g_weatherSystem
+        surface = "getfenv(0).g_weatherSystem"
+    end
+    self._rwSurface = surface or "none"
+    return h
 end
 
 -- Called every in-game hour by CropStressManager:onHourlyTick()
@@ -198,7 +228,7 @@ function WeatherIntegration:getTemperatureFromWeather()
 
     -- Try RealisticWeather first if active.
     if self.realisticWeatherActive then
-        local rw = g_realisticWeather or g_weatherSystem
+        local rw = self:_rwHandle()
         if rw ~= nil then
             local val = nil
             if type(rw.getTemperature) == "function" then
@@ -266,7 +296,7 @@ function WeatherIntegration:getHumidity()
 
     -- Try RealisticWeather first if active.
     if self.realisticWeatherActive then
-        local rw = g_realisticWeather or g_weatherSystem
+        local rw = self:_rwHandle()
         if rw ~= nil then
             local val = nil
             if type(rw.getHumidity) == "function" then
@@ -309,7 +339,7 @@ function WeatherIntegration:getRainFromWeather()
 
     -- Try RealisticWeather first if active
     if self.realisticWeatherActive then
-        local rw = g_realisticWeather or g_weatherSystem
+        local rw = self:_rwHandle()
         if rw ~= nil then
             -- RealisticWeather rain methods - check multiple possible APIs
             if type(rw.getRainIntensity) == "function" then
