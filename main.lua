@@ -504,10 +504,12 @@ addModEventListener({
 -- ---------------------------------------------------------
 -- Realistic Farming Control Center: publish runnable delegates.
 --
--- Feature actions only. CS_TOGGLE_HUD and CS_EDIT_HUD are deliberately absent:
--- __rfHudAct above suppresses their key registration whenever MasterHUD owns the
--- suite HUD keys, and a Control Center button would be a way around a
--- suppression the suite chose on purpose. Those two live under Master HUD.
+-- CS_EDIT_HUD stays button-less: moving the panel needs the in-world drag, not a
+-- dialog button. CS_TOGGLE_HUD now grows a hide/show button below (tison, 2026-08-27,
+-- reversing the earlier "no CC button" call): the moisture HUD is hidden by default
+-- and its physical key is suppressed under MasterHUD, which left MasterHUD players
+-- unable to open it at all - the Control Center button restores that per-mod access.
+-- __rfHudAct still gates the physical key; only the "no button" half is reversed.
 -- ---------------------------------------------------------
 local function registerControlCenterActions()
     local registry = g_currentMission ~= nil and g_currentMission.rfActionRegistry or nil
@@ -540,6 +542,26 @@ local function registerControlCenterActions()
         closeFirst = true,
         run = function()
             if g_cropStressManager ~= nil then g_cropStressManager:onToggleSettings() end
+        end,
+    })
+
+    -- Per-mod moisture HUD hide/show. onToggleHUD flips hudOverlay.isVisible and
+    -- syncs settings.hudVisible; it is not MasterHUD-gated (only its key is), and
+    -- HUDOverlay:draw honours isVisible under both draw paths. Live caption.
+    registry.registerAction({
+        action = "CS_TOGGLE_HUD", order = 4,
+        button = function()
+            local mgr = g_cropStressManager
+            local hud = mgr ~= nil and mgr.hudOverlay or nil
+            return (hud ~= nil and hud.isVisible) and "Hide" or "Show"
+        end,
+        run = function()
+            local mgr = g_cropStressManager
+            if mgr ~= nil and mgr.onToggleHUD ~= nil then
+                mgr:onToggleHUD()
+                local hud = mgr.hudOverlay
+                return (hud ~= nil and hud.isVisible) and "Moisture HUD shown" or "Moisture HUD hidden"
+            end
         end,
     })
 end
