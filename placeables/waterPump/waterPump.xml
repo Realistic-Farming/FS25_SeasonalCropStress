@@ -9,7 +9,7 @@
 
     <storeData>
         <name>$l10n_cs_pump_name</name>
-        <image>$data/placeables/brandless/waterTanks/level01/store_waterTankLevel01.dds</image>
+        <image>$data/placeables/brandless/waterTanks/level02/store_waterTankLevel02.dds</image>
         <functions>
             <function>$l10n_cs_pump_function</function>
         </functions>
@@ -29,14 +29,23 @@
         </brush>
     </storeData>
 
+    <!--
+        The water pump wears a real water tank model. The base-game level02 tank
+        is referenced directly (the $data pattern, same as the store image) so the
+        mod stays lean; the WaterPump specialization still registers as an SCS
+        water source. Placement areas come from the tank i3d's own node layout.
+    -->
     <base>
-        <filename>placeables/waterPump/waterPump.i3d</filename>
+        <filename>$data/placeables/brandless/waterTanks/level02/waterTankLevel02.i3d</filename>
     </base>
 
     <placement useRandomYRotation="false" useManualYRotation="true">
         <testAreas>
             <testArea startNode="testAreaStart01" endNode="testAreaEnd01" />
         </testAreas>
+        <sounds>
+            <place template="smallImp"/>
+        </sounds>
     </placement>
 
     <!--
@@ -49,8 +58,8 @@
     <levelingAreas/>
 
     <i3dMappings>
-        <i3dMapping id="testAreaStart01" node="0>0|0" />
-        <i3dMapping id="testAreaEnd01"   node="0>0|0|0" />
+        <i3dMapping id="testAreaStart01" node="0>3|0" />
+        <i3dMapping id="testAreaEnd01"   node="0>3|0|0" />
     </i3dMappings>
 
     <!-- Custom pump parameters — read by WaterPump:onLoad() via getXMLFloat -->

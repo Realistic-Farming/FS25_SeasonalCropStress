@@ -2,22 +2,22 @@
 <l10n>
     <texts>
     <!-- ========== HUD OVERLAY ========== -->
-    <text name="cs_hud_title"         text="HUMIDITÉ DU SOL"/>
+    <text name="cs_hud_title"         text="HUMIDITÃ‰ DU SOL"/>
     <text name="cs_hud_healthy"       text="Sain"/>
     <text name="cs_hud_warning"       text="Stress hydrique"/>
-    <text name="cs_hud_critical"      text="CRITIQUE — Irriguer maintenant !"/>
+    <text name="cs_hud_critical"      text="CRITIQUE â€” Irriguer maintenant !"/>
     <text name="cs_hud_no_crop"       text="Pas de culture"/>
-    <text name="cs_hud_forecast"      text="Prévisions 5 jours"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 chargé. Maj+M pour ouvrir le HUD d'humidité. Nouveau ? Ouvrez le menu Aide (ESC → Aide) et cherchez Seasonal Crop Stress pour tout apprendre."/>
-    <text name="cs_hud_click_forecast" text="Cliquez sur une ligne pour la prévision 5 jours"/>
-    <text name="cs_hud_vehicle_disabled" text="Overlay désactivé en véhicule"/>
+    <text name="cs_hud_forecast"      text="PrÃ©visions 5 jours"/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 chargÃ©. Maj+M pour ouvrir le HUD d'humiditÃ©. Nouveau ? Ouvrez le menu Aide (ESC â†’ Aide) et cherchez Seasonal Crop Stress pour tout apprendre."/>
+    <text name="cs_hud_click_forecast" text="Cliquez sur une ligne pour la prÃ©vision 5 jours"/>
+    <text name="cs_hud_vehicle_disabled" text="Overlay dÃ©sactivÃ© en vÃ©hicule"/>
 
     <!-- ========== FIELD STATUS ========== -->
-    <text name="cs_field_moisture"        text="Humidité"/>
+    <text name="cs_field_moisture"        text="HumiditÃ©"/>
     <text name="cs_field_soil_type"       text="Type de sol"/>
-    <text name="cs_field_stress"          text="Stress accumulé"/>
-    <text name="cs_field_yield_impact"    text="Impact rendement estimé"/>
-    <text name="cs_field_critical_window" text="Période critique: MAINTENANT"/>
+    <text name="cs_field_stress"          text="Stress accumulÃ©"/>
+    <text name="cs_field_yield_impact"    text="Impact rendement estimÃ©"/>
+    <text name="cs_field_critical_window" text="PÃ©riode critique: MAINTENANT"/>
     <text name="cs_field_nearest_water"   text="Point d'eau le plus proche"/>
 
     <!-- ========== SOIL TYPES ========== -->
@@ -26,32 +26,32 @@
     <text name="cs_soil_clay"   text="Argileux"/>
 
     <!-- ========== ALERTS ========== -->
-    <text name="cs_alert_info"     text="Champ %d : %s humidité baisse — surveiller."/>
-    <text name="cs_alert_warning"  text="Champ %d : %s humidité faible — irrigation recommandée."/>
-    <text name="cs_alert_critical" text="Champ %d : %s seuil de stress hydrique — irriguer !"/>
+    <text name="cs_alert_info"     text="Champ %d : %s humiditÃ© baisse â€” surveiller."/>
+    <text name="cs_alert_warning"  text="Champ %d : %s humiditÃ© faible â€” irrigation recommandÃ©e."/>
+    <text name="cs_alert_critical" text="Champ %d : %s seuil de stress hydrique â€” irriguer !"/>
 
     <!-- ========== IRRIGATION ========== -->
-    <text name="cs_irr_title"          text="Système d'irrigation — %s"/>
+    <text name="cs_irr_title"          text="SystÃ¨me d'irrigation â€” %s"/>
     <text name="cs_irr_water_source"   text="Source d'eau"/>
-    <text name="cs_irr_connected"      text="Connecté"/>
-    <text name="cs_irr_disconnected"   text="Déconnecté"/>
+    <text name="cs_irr_connected"      text="ConnectÃ©"/>
+    <text name="cs_irr_disconnected"   text="DÃ©connectÃ©"/>
     <text name="cs_irr_schedule"       text="Programme"/>
-    <text name="cs_irr_flow_rate"      text="Débit"/>
-    <text name="cs_irr_efficiency"     text="Efficacité"/>
-    <text name="cs_irr_cost"           text="Coût estimé"/>
+    <text name="cs_irr_flow_rate"      text="DÃ©bit"/>
+    <text name="cs_irr_efficiency"     text="EfficacitÃ©"/>
+    <text name="cs_irr_cost"           text="CoÃ»t estimÃ©"/>
     <text name="cs_irr_wear"           text="Usure"/>
-    <text name="cs_irr_covered_fields" text="Parcelles irriguées"/>
+    <text name="cs_irr_covered_fields" text="Parcelles irriguÃ©es"/>
     <text name="cs_irr_irrigate_now"   text="Irriguer maintenant"/>
     <text name="cs_irr_save_schedule"  text="Enregistrer le programme"/>
     <text name="cs_irr_pivot"          text="Pivot central"/>
-    <text name="cs_irr_drip"           text="Goutte-à-goutte"/>
-    <text name="cs_irr_pump"           text="Pompe à eau"/>
-    <text name="cs_irr_start_time"     text="Heure de début"/>
+    <text name="cs_irr_drip"           text="Goutte-Ã -goutte"/>
+    <text name="cs_irr_pump"           text="Pompe Ã  eau"/>
+    <text name="cs_irr_start_time"     text="Heure de dÃ©but"/>
     <text name="cs_irr_end_time"       text="Heure de fin"/>
     <text name="cs_irr_performance"    text="Performance"/>
-    <text name="cs_irr_started"        text="Irrigation démarrée."/>
+    <text name="cs_irr_started"        text="Irrigation dÃ©marrÃ©e."/>
     <text name="cs_irr_open_schedule"  text="Ouvrir le programme d'irrigation"/>
-    <text name="cs_schedule_saved"     text="Programme enregistré."/>
+    <text name="cs_schedule_saved"     text="Programme enregistrÃ©."/>
 
     <!-- ========== DAY LABELS ========== -->
     <text name="cs_day_mon" text="L"/>
@@ -64,219 +64,219 @@
 
     <!-- ========== CONSULTANT ========== -->
     <text name="cs_consultant_name"            text="Alex Chen, Agronome"/>
-    <text name="cs_consultant_subtitle"        text="État des parcelles &amp; Recommandations"/>
+    <text name="cs_consultant_subtitle"        text="Ã‰tat des parcelles &amp; Recommandations"/>
     <text name="cs_consultant_relationship"    text="Relation avec Alex :"/>
-    <text name="cs_consultant_field_status"    text="Résumé des risques (Top 5)"/>
+    <text name="cs_consultant_field_status"    text="RÃ©sumÃ© des risques (Top 5)"/>
     <text name="cs_consultant_recommendation"  text="Recommandations"/>
     <text name="cs_consultant_open_irrigation" text="Ouvrir gestionnaire d'irrigation"/>
-    <text name="cs_consultant_no_data"         text="Aucune donnée disponible."/>
+    <text name="cs_consultant_no_data"         text="Aucune donnÃ©e disponible."/>
 
     <!-- ========== NPC FAVOR QUESTS ========== -->
-    <text name="cs_favor_soil_sample"     text="Prélever un échantillon de sol de la parcelle %d"/>
-    <text name="cs_favor_irr_check"       text="Inspecter le système d'irrigation près de la parcelle %d"/>
+    <text name="cs_favor_soil_sample"     text="PrÃ©lever un Ã©chantillon de sol de la parcelle %d"/>
+    <text name="cs_favor_irr_check"       text="Inspecter le systÃ¨me d'irrigation prÃ¨s de la parcelle %d"/>
     <text name="cs_favor_emergency_water" text="Irriguer la parcelle %d avant le coucher du soleil !"/>
     <text name="cs_favor_seasonal_plan"   text="Revoir le plan d'irrigation saisonnier"/>
 
     <!-- ========== PLACEABLES ========== -->
     <text name="cs_pivot_name"     text="Pivot central d'irrigation"/>
-    <text name="cs_pump_name"      text="Pompe à eau"/>
-    <text name="cs_drip_name"      text="Ligne de goutte-à-goutte"/>
-    <text name="cs_pivot_function" text="Irrigation par pivot à large rayon. Couvre une zone circulaire. Nécessite une pompe à eau."/>
-    <text name="cs_pump_function"  text="Alimente les pivots et lignes goutte-à-goutte. Placer près d'une source d'eau."/>
-    <text name="cs_drip_function"  text="Irrigation goutte-à-goutte précise en rangée. Nécessite une pompe à eau."/>
+    <text name="cs_pump_name"      text="Pompe Ã  eau"/>
+    <text name="cs_drip_name"      text="Ligne de goutte-Ã -goutte"/>
+    <text name="cs_pivot_function" text="Irrigation par pivot Ã  large rayon. Couvre une zone circulaire. NÃ©cessite une pompe Ã  eau."/>
+    <text name="cs_pump_function"  text="Alimente les pivots et lignes goutte-Ã -goutte. Placer prÃ¨s d'une source d'eau."/>
+    <text name="cs_drip_function"  text="Irrigation goutte-Ã -goutte prÃ©cise en rangÃ©e. NÃ©cessite une pompe Ã  eau."/>
 
     <!-- ========== IRRIGATION PERFORMANCE VALUES (dynamic, format strings) ========== -->
-    <text name="cs_irr_flow_rate_value"   text="Débit : %.3f/h"/>
-    <text name="cs_irr_efficiency_value"  text="Efficacité : %d%%"/>
-    <text name="cs_irr_cost_value"        text="Coût est. : €%d/h"/>
+    <text name="cs_irr_flow_rate_value"   text="DÃ©bit : %.3f/h"/>
+    <text name="cs_irr_efficiency_value"  text="EfficacitÃ© : %d%%"/>
+    <text name="cs_irr_cost_value"        text="CoÃ»t est. : â‚¬%d/h"/>
     <text name="cs_irr_wear_value"        text="Usure : %d%%"/>
-    <text name="cs_irr_already_active"    text="Le système d'irrigation est déjà en cours."/>
-    <text name="cs_irr_no_covered_fields" text="Aucune parcelle couverte par ce système."/>
+    <text name="cs_irr_already_active"    text="Le systÃ¨me d'irrigation est dÃ©jÃ  en cours."/>
+    <text name="cs_irr_no_covered_fields" text="Aucune parcelle couverte par ce systÃ¨me."/>
 
     <!-- ========== CONSULTANT RECOMMENDATIONS (dynamic, format strings) ========== -->
-    <text name="cs_rec_urgent"          text="URGENT : Champ %d à %.0f%% d'humidité — irriguer immédiatement !"/>
-    <text name="cs_rec_warning"         text="Champ %d à %.0f%% d'humidité — irrigation recommandée sous 24h."/>
-    <text name="cs_rec_ok"              text="Toutes les parcelles dans une plage d'humidité acceptable."/>
-    <text name="cs_rec_forecast"        text="Prévision : ~ J+1 %.0f%%  J+2 %.0f%%  J+3 %.0f%%"/>
-    <text name="cs_rec_systems_running" text="%d système(s) d'irrigation en cours."/>
-    <text name="cs_rec_no_systems"      text="Aucun système d'irrigation actif."/>
+    <text name="cs_rec_urgent"          text="URGENT : Champ %d Ã  %.0f%% d'humiditÃ© â€” irriguer immÃ©diatement !"/>
+    <text name="cs_rec_warning"         text="Champ %d Ã  %.0f%% d'humiditÃ© â€” irrigation recommandÃ©e sous 24h."/>
+    <text name="cs_rec_ok"              text="Toutes les parcelles dans une plage d'humiditÃ© acceptable."/>
+    <text name="cs_rec_forecast"        text="PrÃ©vision : ~ J+1 %.0f%%  J+2 %.0f%%  J+3 %.0f%%"/>
+    <text name="cs_rec_systems_running" text="%d systÃ¨me(s) d'irrigation en cours."/>
+    <text name="cs_rec_no_systems"      text="Aucun systÃ¨me d'irrigation actif."/>
     <text name="cs_rec_all_healthy"     text="Toutes les parcelles semblent saines."/>
 
     <!-- ========== SHARED ========== -->
     <text name="cs_close"                 text="Fermer"/>
-    <text name="cs_no_irrigation_systems" text="Aucun système d'irrigation placé."/>
+    <text name="cs_no_irrigation_systems" text="Aucun systÃ¨me d'irrigation placÃ©."/>
 
     <!-- ========== INPUT ACTION DESCRIPTIONS ========== -->
-    <text name="input_CS_TOGGLE_HUD"      text="Afficher/masquer HUD humidité"/>
+    <text name="input_CS_TOGGLE_HUD"      text="Afficher/masquer HUD humiditÃ©"/>
     <text name="input_CS_OPEN_IRRIGATION" text="Ouvrir gestionnaire d'irrigation"/>
     <text name="input_CS_OPEN_CONSULTANT" text="Ouvrir conseiller cultural"/>
-    <text name="input_CS_OPEN_SETTINGS"   text="Ouvrir paramètres stress cultural"/>
-    <text name="input_CS_EDIT_HUD"        text="Déplacer/redimensionner HUD humidité"/>
+    <text name="input_CS_OPEN_SETTINGS"   text="Ouvrir paramÃ¨tres stress cultural"/>
+    <text name="input_CS_EDIT_HUD"        text="DÃ©placer/redimensionner HUD humiditÃ©"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
 
     <!-- ========== SETTINGS ========== -->
-    <text name="cs_settings_section"           text="Stress des Cultures Saisonnières"/>
+    <text name="cs_settings_section"           text="Stress des Cultures SaisonniÃ¨res"/>
     <text name="cs_settings_enabled_short"     text="Activer le Mod"/>
-    <text name="cs_settings_enabled_long"      text="Activer ou désactiver l'ensemble du système Stress des Cultures Saisonnières"/>
-    <text name="cs_settings_difficulty_short"  text="Difficulté"/>
-    <text name="cs_settings_difficulty_long"   text="Ajuster l'accumulation de stress et les taux d'évapotranspiration"/>
+    <text name="cs_settings_enabled_long"      text="Activer ou dÃ©sactiver l'ensemble du systÃ¨me Stress des Cultures SaisonniÃ¨res"/>
+    <text name="cs_settings_difficulty_short"  text="DifficultÃ©"/>
+    <text name="cs_settings_difficulty_long"   text="Ajuster l'accumulation de stress et les taux d'Ã©vapotranspiration"/>
     <text name="cs_settings_diff_easy"         text="Facile"/>
     <text name="cs_settings_diff_normal"       text="Normal"/>
     <text name="cs_settings_diff_hard"         text="Difficile"/>
     <text name="cs_settings_hud_short"         text="HUD Visible"/>
-    <text name="cs_settings_hud_long"          text="Afficher ou masquer la superposition d'humidité sur la liste des champs"/>
-    <text name="cs_settings_evap_short"        text="Évapotranspiration"/>
-    <text name="cs_settings_evap_long"         text="Taux de base de perte d'humidité du sol"/>
+    <text name="cs_settings_hud_long"          text="Afficher ou masquer la superposition d'humiditÃ© sur la liste des champs"/>
+    <text name="cs_settings_evap_short"        text="Ã‰vapotranspiration"/>
+    <text name="cs_settings_evap_long"         text="Taux de base de perte d'humiditÃ© du sol"/>
     <text name="cs_settings_evap_slow"         text="Lent"/>
     <text name="cs_settings_evap_normal"       text="Normal"/>
     <text name="cs_settings_evap_fast"         text="Rapide"/>
     <text name="cs_settings_yield_loss_short"  text="Perte de Rendement Max"/>
-    <text name="cs_settings_yield_loss_long"   text="Pourcentage maximal de rendement pouvant être perdu à cause du stress de sécheresse"/>
+    <text name="cs_settings_yield_loss_long"   text="Pourcentage maximal de rendement pouvant Ãªtre perdu Ã  cause du stress de sÃ©cheresse"/>
     <text name="cs_settings_threshold_short"   text="Seuil Critique"/>
-    <text name="cs_settings_threshold_long"    text="Niveau d'humidité en dessous duquel le stress s'accumule"/>
-    <text name="cs_settings_irr_costs_short"   text="Coûts d'Irrigation"/>
-    <text name="cs_settings_irr_costs_long"    text="Activer ou désactiver les coûts financiers du fonctionnement des systèmes d'irrigation"/>
-    <text name="cs_settings_alerts_short"      text="Alertes Activées"/>
+    <text name="cs_settings_threshold_long"    text="Niveau d'humiditÃ© en dessous duquel le stress s'accumule"/>
+    <text name="cs_settings_irr_costs_short"   text="CoÃ»ts d'Irrigation"/>
+    <text name="cs_settings_irr_costs_long"    text="Activer ou dÃ©sactiver les coÃ»ts financiers du fonctionnement des systÃ¨mes d'irrigation"/>
+    <text name="cs_settings_alerts_short"      text="Alertes ActivÃ©es"/>
     <text name="cs_settings_alerts_long"       text="Afficher les notifications d'alerte lorsque les champs ont besoin d'eau"/>
-    <text name="cs_settings_cooldown_short"    text="Délai d'Alerte"/>
-    <text name="cs_settings_cooldown_long"     text="Heures minimales entre les alertes pour le même champ"/>
-    <text name="cs_settings_debug_short"       text="Mode Débogage"/>
-    <text name="cs_settings_debug_long"        text="Activer la journalisation détaillée pour le dépannage"/>
+    <text name="cs_settings_cooldown_short"    text="DÃ©lai d'Alerte"/>
+    <text name="cs_settings_cooldown_long"     text="Heures minimales entre les alertes pour le mÃªme champ"/>
+    <text name="cs_settings_debug_short"       text="Mode DÃ©bogage"/>
+    <text name="cs_settings_debug_long"        text="Activer la journalisation dÃ©taillÃ©e pour le dÃ©pannage"/>
 
     <!-- ========== HELP LINES ========== -->
-    <!-- Clé héritée conservée pour compatibilité -->
+    <!-- ClÃ© hÃ©ritÃ©e conservÃ©e pour compatibilitÃ© -->
     <text name="helpLine_cs_category"          text="Stress saisonnier des cultures"/>
-    <!-- Titres de catégories -->
-    <text name="helpLine_cs_cat_overview"      text="Général"/>
-    <text name="helpLine_cs_cat_settings"      text="Paramètres"/>
+    <!-- Titres de catÃ©gories -->
+    <text name="helpLine_cs_cat_overview"      text="GÃ©nÃ©ral"/>
+    <text name="helpLine_cs_cat_settings"      text="ParamÃ¨tres"/>
     <text name="helpLine_cs_cat_tips"          text="Conseils &amp; Astuces"/>
     <text name="helpLine_cs_cat_info"          text="Informations sur le Mod"/>
 
-    <!-- Présentation : Page 1 -->
-    <text name="helpLine_cs_p1_title"          text="Présentation"/>
+    <!-- PrÃ©sentation : Page 1 -->
+    <text name="helpLine_cs_p1_title"          text="PrÃ©sentation"/>
     <text name="helpLine_cs_p1_intro_title"    text="Ce que ce mod ajoute"/>
-    <text name="helpLine_cs_p1_intro_text"     text="Stress saisonnier des cultures ajoute une simulation d'humidité du sol à chaque parcelle. Les cultures ont besoin d'eau lors des étapes clés de croissance. Sans eau, la récolte sera moins bonne. Les systèmes d'irrigation vous permettent de contrôler l'approvisionnement en eau de vos champs."/>
+    <text name="helpLine_cs_p1_intro_text"     text="Stress saisonnier des cultures ajoute une simulation d'humiditÃ© du sol Ã  chaque parcelle. Les cultures ont besoin d'eau lors des Ã©tapes clÃ©s de croissance. Sans eau, la rÃ©colte sera moins bonne. Les systÃ¨mes d'irrigation vous permettent de contrÃ´ler l'approvisionnement en eau de vos champs."/>
     <text name="helpLine_cs_p1_start_title"    text="Premiers pas"/>
-    <text name="helpLine_cs_p1_start_text"     text="Appuyez sur Maj+M pour ouvrir le HUD d'humidité et voir toutes vos parcelles d'un coup d'œil. Les parcelles en rouge ont besoin d'eau d'urgence, les vertes sont en bon état. Maj+C ouvre le Conseiller cultural pour des recommandations détaillées."/>
+    <text name="helpLine_cs_p1_start_text"     text="Appuyez sur Maj+M pour ouvrir le HUD d'humiditÃ© et voir toutes vos parcelles d'un coup d'Å“il. Les parcelles en rouge ont besoin d'eau d'urgence, les vertes sont en bon Ã©tat. Maj+C ouvre le Conseiller cultural pour des recommandations dÃ©taillÃ©es."/>
 
-    <!-- Présentation : Page 2 -->
-    <text name="helpLine_cs_p2_title"          text="Humidité du sol"/>
-    <text name="helpLine_cs_p2_how_title"      text="Comment fonctionne l'humidité"/>
-    <text name="helpLine_cs_p2_how_text"       text="La pluie remplit le sol et la chaleur l'assèche. Chaque parcelle suit son propre niveau d'humidité de 0% (complètement sec) à 100% (saturé). La vitesse de séchage dépend de la météo, de la saison et du type de sol."/>
+    <!-- PrÃ©sentation : Page 2 -->
+    <text name="helpLine_cs_p2_title"          text="HumiditÃ© du sol"/>
+    <text name="helpLine_cs_p2_how_title"      text="Comment fonctionne l'humiditÃ©"/>
+    <text name="helpLine_cs_p2_how_text"       text="La pluie remplit le sol et la chaleur l'assÃ¨che. Chaque parcelle suit son propre niveau d'humiditÃ© de 0% (complÃ¨tement sec) Ã  100% (saturÃ©). La vitesse de sÃ©chage dÃ©pend de la mÃ©tÃ©o, de la saison et du type de sol."/>
     <text name="helpLine_cs_p2_soil_title"     text="Types de sol"/>
-    <text name="helpLine_cs_p2_soil_text"      text="Le sol sableux s'assèche vite et nécessite une irrigation fréquente. Le sol argileux retient l'eau plus longtemps mais peut devenir gorgé d'eau. Le sol limoneux est intermédiaire et le plus facile à gérer. Le type de sol est affiché dans le HUD et le Conseiller cultural."/>
+    <text name="helpLine_cs_p2_soil_text"      text="Le sol sableux s'assÃ¨che vite et nÃ©cessite une irrigation frÃ©quente. Le sol argileux retient l'eau plus longtemps mais peut devenir gorgÃ© d'eau. Le sol limoneux est intermÃ©diaire et le plus facile Ã  gÃ©rer. Le type de sol est affichÃ© dans le HUD et le Conseiller cultural."/>
 
-    <!-- Présentation : Page 3 -->
+    <!-- PrÃ©sentation : Page 3 -->
     <text name="helpLine_cs_p3_title"          text="Stress des cultures &amp; rendement"/>
-    <text name="helpLine_cs_p3_window_title"   text="Périodes de croissance critiques"/>
-    <text name="helpLine_cs_p3_window_text"    text="Chaque culture a une période où elle a le plus besoin d'eau. Le blé est le plus vulnérable au printemps, le maïs souffre des vagues de chaleur estivales, le colza est sensible en automne. Une humidité insuffisante pendant cette période génère du stress sur la parcelle."/>
-    <text name="helpLine_cs_p3_yield_title"    text="Réduction du rendement à la récolte"/>
-    <text name="helpLine_cs_p3_yield_text"     text="Le stress accumulé réduit votre récolte. Un peu de stress entraîne une petite perte. Une sécheresse sévère peut réduire la récolte jusqu'à 60%. Le Conseiller cultural affiche le risque de rendement par parcelle pour vous aider à prioriser l'irrigation."/>
+    <text name="helpLine_cs_p3_window_title"   text="PÃ©riodes de croissance critiques"/>
+    <text name="helpLine_cs_p3_window_text"    text="Chaque culture a une pÃ©riode oÃ¹ elle a le plus besoin d'eau. Le blÃ© est le plus vulnÃ©rable au printemps, le maÃ¯s souffre des vagues de chaleur estivales, le colza est sensible en automne. Une humiditÃ© insuffisante pendant cette pÃ©riode gÃ©nÃ¨re du stress sur la parcelle."/>
+    <text name="helpLine_cs_p3_yield_title"    text="RÃ©duction du rendement Ã  la rÃ©colte"/>
+    <text name="helpLine_cs_p3_yield_text"     text="Le stress accumulÃ© rÃ©duit votre rÃ©colte. Un peu de stress entraÃ®ne une petite perte. Une sÃ©cheresse sÃ©vÃ¨re peut rÃ©duire la rÃ©colte jusqu'Ã  60%. Le Conseiller cultural affiche le risque de rendement par parcelle pour vous aider Ã  prioriser l'irrigation."/>
 
-    <!-- Présentation : Page 4 (Irrigation) -->
+    <!-- PrÃ©sentation : Page 4 (Irrigation) -->
     <text name="helpLine_cs_p5_title"          text="Irrigation"/>
     <text name="helpLine_cs_p5_types_title"    text="Types d'irrigation"/>
-    <text name="helpLine_cs_p5_types_text"     text="Trois types d'irrigation sont disponibles dans le menu de construction. Le pivot central couvre une grande zone circulaire. La ligne de goutte-à-goutte assure une couverture précise le long d'une rangée. La pompe à eau alimente les systèmes et doit d'abord être placée près d'une source d'eau."/>
+    <text name="helpLine_cs_p5_types_text"     text="Trois types d'irrigation sont disponibles dans le menu de construction. Le pivot central couvre une grande zone circulaire. La ligne de goutte-Ã -goutte assure une couverture prÃ©cise le long d'une rangÃ©e. La pompe Ã  eau alimente les systÃ¨mes et doit d'abord Ãªtre placÃ©e prÃ¨s d'une source d'eau."/>
     <text name="helpLine_cs_p5_schedule_title" text="Programme &amp; fonctionnement"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Sélectionnez un système d'irrigation et appuyez sur Maj+I pour ouvrir son programme. Choisissez les jours de la semaine et définissez des heures de début et de fin quotidiennes. Le bouton Irriguer maintenant permet d'arroser immédiatement les parcelles couvertes sans attendre le programme."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="SÃ©lectionnez un systÃ¨me d'irrigation et appuyez sur Maj+I pour ouvrir son programme. Choisissez les jours de la semaine et dÃ©finissez des heures de dÃ©but et de fin quotidiennes. Le bouton Irriguer maintenant permet d'arroser immÃ©diatement les parcelles couvertes sans attendre le programme."/>
 
-    <!-- Présentation : Page 5 (Conseiller cultural) -->
+    <!-- PrÃ©sentation : Page 5 (Conseiller cultural) -->
     <text name="helpLine_cs_p6_title"          text="Conseiller cultural"/>
     <text name="helpLine_cs_p6_what_title"     text="Ce que montre le Conseiller"/>
-    <text name="helpLine_cs_p6_what_text"      text="Appuyez sur Maj+C pour ouvrir le Conseiller cultural. Il affiche vos 5 parcelles les plus à risque classées par humidité et niveau de stress, ainsi qu'une recommandation claire pour les prochaines 24 heures et une prévision d'humidité sur 3 jours."/>
+    <text name="helpLine_cs_p6_what_text"      text="Appuyez sur Maj+C pour ouvrir le Conseiller cultural. Il affiche vos 5 parcelles les plus Ã  risque classÃ©es par humiditÃ© et niveau de stress, ainsi qu'une recommandation claire pour les prochaines 24 heures et une prÃ©vision d'humiditÃ© sur 3 jours."/>
     <text name="helpLine_cs_p6_act_title"      text="Agir sur les conseils"/>
-    <text name="helpLine_cs_p6_act_text"       text="Les parcelles marquées CRITIQUE doivent être irriguées aujourd'hui pour éviter des pertes de rendement. Les parcelles marquées AVERTISSEMENT devraient être irriguées dans un ou deux jours. Utilisez le bouton Ouvrir gestionnaire d'irrigation pour planifier rapidement l'arrosage de la parcelle la plus critique."/>
-    <text name="helpLine_cs_p6_npc_title"      text="Intégrations optionnelles"/>
-    <text name="helpLine_cs_p6_npc_text"       text="Plusieurs mods optionnels étendent le système. FS25_NPCFavor : Alex Chen apparaît comme NPC agronome — accomplissez des services pour débloquer les alertes précoces et des conseils spécialisés. FS25_SoilFertilizer : Le pH du sol et la matière organique modifient l'évapotranspiration par parcelle. FS25_UsedPlus : Les coûts de fonctionnement et l'usure des équipements sont suivis. CoursePlay : Le nombre de véhicules actifs s'affiche dans les alertes. AutoDrive : Les destinations d'eau apparaissent dans les alertes critiques. DLC Agriculture de précision : L'humidité du sol est visible dans la vue carte PF."/>
+    <text name="helpLine_cs_p6_act_text"       text="Les parcelles marquÃ©es CRITIQUE doivent Ãªtre irriguÃ©es aujourd'hui pour Ã©viter des pertes de rendement. Les parcelles marquÃ©es AVERTISSEMENT devraient Ãªtre irriguÃ©es dans un ou deux jours. Utilisez le bouton Ouvrir gestionnaire d'irrigation pour planifier rapidement l'arrosage de la parcelle la plus critique."/>
+    <text name="helpLine_cs_p6_npc_title"      text="IntÃ©grations optionnelles"/>
+    <text name="helpLine_cs_p6_npc_text"       text="Plusieurs mods optionnels Ã©tendent le systÃ¨me. FS25_NPCFavor : Alex Chen apparaÃ®t comme NPC agronome â€” accomplissez des services pour dÃ©bloquer les alertes prÃ©coces et des conseils spÃ©cialisÃ©s. FS25_SoilFertilizer : Le pH du sol et la matiÃ¨re organique modifient l'Ã©vapotranspiration par parcelle. FS25_UsedPlus : Les coÃ»ts de fonctionnement et l'usure des Ã©quipements sont suivis. CoursePlay : Le nombre de vÃ©hicules actifs s'affiche dans les alertes. AutoDrive : Les destinations d'eau apparaissent dans les alertes critiques. DLC Agriculture de prÃ©cision : L'humiditÃ© du sol est visible dans la vue carte PF."/>
 
-    <!-- Paramètres : Page 1 — Paramètres généraux -->
-    <text name="helpLine_cs_s1_title"          text="Paramètres généraux"/>
+    <!-- ParamÃ¨tres : Page 1 â€” ParamÃ¨tres gÃ©nÃ©raux -->
+    <text name="helpLine_cs_s1_title"          text="ParamÃ¨tres gÃ©nÃ©raux"/>
     <text name="helpLine_cs_s1_gen_title"      text="Activer le mod"/>
-    <text name="helpLine_cs_s1_gen_text"       text="Ouvrez les paramètres du jeu (Échap → Paramètres → Stress des Cultures Saisonnières). Activer le Mod permet d'activer ou désactiver tout le système sans retirer vos infrastructures d'irrigation. La Difficulté contrôle la vitesse d'accumulation du stress hydrique — Facile est indulgent, Difficile demande une gestion proactive de l'irrigation."/>
-    <text name="helpLine_cs_s1_evap_title"     text="Taux d'évapotranspiration"/>
-    <text name="helpLine_cs_s1_evap_text"      text="L'évapotranspiration contrôle la vitesse à laquelle le sol se dessèche entre les pluies. Lent signifie que les champs retiennent bien l'humidité et que la pluie est très utile. Rapide signifie que les champs peuvent s'assécher en une journée de jeu par temps chaud — la gestion active de l'irrigation devient alors essentielle."/>
+    <text name="helpLine_cs_s1_gen_text"       text="Ouvrez les paramÃ¨tres du jeu (Ã‰chap â†’ ParamÃ¨tres â†’ Stress des Cultures SaisonniÃ¨res). Activer le Mod permet d'activer ou dÃ©sactiver tout le systÃ¨me sans retirer vos infrastructures d'irrigation. La DifficultÃ© contrÃ´le la vitesse d'accumulation du stress hydrique â€” Facile est indulgent, Difficile demande une gestion proactive de l'irrigation."/>
+    <text name="helpLine_cs_s1_evap_title"     text="Taux d'Ã©vapotranspiration"/>
+    <text name="helpLine_cs_s1_evap_text"      text="L'Ã©vapotranspiration contrÃ´le la vitesse Ã  laquelle le sol se dessÃ¨che entre les pluies. Lent signifie que les champs retiennent bien l'humiditÃ© et que la pluie est trÃ¨s utile. Rapide signifie que les champs peuvent s'assÃ©cher en une journÃ©e de jeu par temps chaud â€” la gestion active de l'irrigation devient alors essentielle."/>
 
-    <!-- Paramètres : Page 2 — Paramètres avancés -->
-    <text name="helpLine_cs_s2_title"          text="Paramètres avancés"/>
+    <!-- ParamÃ¨tres : Page 2 â€” ParamÃ¨tres avancÃ©s -->
+    <text name="helpLine_cs_s2_title"          text="ParamÃ¨tres avancÃ©s"/>
     <text name="helpLine_cs_s2_yield_title"    text="Perte de rendement &amp; Seuil de stress"/>
-    <text name="helpLine_cs_s2_yield_text"     text="Perte de Rendement Max limite le pourcentage de récolte que le stress hydrique peut réduire. À la valeur par défaut de 60%, un champ complètement stressé produit encore 40% de la récolte normale. Le Seuil Critique est le niveau d'humidité en dessous duquel le stress commence à s'accumuler — augmentez-le pour des cultures plus sensibles à la sécheresse, abaissez-le pour plus de tolérance."/>
-    <text name="helpLine_cs_s2_alerts_title"   text="Coûts d'irrigation &amp; Alertes"/>
-    <text name="helpLine_cs_s2_alerts_text"    text="Coûts d'Irrigation facture des frais horaires pour le fonctionnement des systèmes d'irrigation. Désactivez cette option pour une expérience plus simple. Alertes Activées affiche des notifications lorsque les champs ont besoin d'eau. Le Délai d'Alerte fixe les heures de jeu minimum avant qu'une nouvelle alerte soit envoyée pour le même champ, évitant ainsi les notifications répétées."/>
+    <text name="helpLine_cs_s2_yield_text"     text="Perte de Rendement Max limite le pourcentage de rÃ©colte que le stress hydrique peut rÃ©duire. Ã€ la valeur par dÃ©faut de 60%, un champ complÃ¨tement stressÃ© produit encore 40% de la rÃ©colte normale. Le Seuil Critique est le niveau d'humiditÃ© en dessous duquel le stress commence Ã  s'accumuler â€” augmentez-le pour des cultures plus sensibles Ã  la sÃ©cheresse, abaissez-le pour plus de tolÃ©rance."/>
+    <text name="helpLine_cs_s2_alerts_title"   text="CoÃ»ts d'irrigation &amp; Alertes"/>
+    <text name="helpLine_cs_s2_alerts_text"    text="CoÃ»ts d'Irrigation facture des frais horaires pour le fonctionnement des systÃ¨mes d'irrigation. DÃ©sactivez cette option pour une expÃ©rience plus simple. Alertes ActivÃ©es affiche des notifications lorsque les champs ont besoin d'eau. Le DÃ©lai d'Alerte fixe les heures de jeu minimum avant qu'une nouvelle alerte soit envoyÃ©e pour le mÃªme champ, Ã©vitant ainsi les notifications rÃ©pÃ©tÃ©es."/>
 
     <!-- Conseils &amp; Astuces : Page 1 (HUD &amp; commandes) -->
     <text name="helpLine_cs_p4_title"          text="HUD &amp; commandes"/>
-    <text name="helpLine_cs_p4_hud_title"      text="Superposition HUD d'humidité"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Appuyez sur Maj+M pour afficher ou masquer le HUD d'humidité. Il liste chaque parcelle avec son niveau d'humidité, son type de culture et son état de stress. Une prévision sur 5 jours indique si l'humidité monte ou baisse. Vous pouvez aussi faire glisser le panneau n'importe où à l'écran en cliquant et relâchant."/>
+    <text name="helpLine_cs_p4_hud_title"      text="Superposition HUD d'humiditÃ©"/>
+    <text name="helpLine_cs_p4_hud_text"       text="Appuyez sur Maj+M pour afficher ou masquer le HUD d'humiditÃ©. Il liste chaque parcelle avec son niveau d'humiditÃ©, son type de culture et son Ã©tat de stress. Une prÃ©vision sur 5 jours indique si l'humiditÃ© monte ou baisse. Vous pouvez aussi faire glisser le panneau n'importe oÃ¹ Ã  l'Ã©cran en cliquant et relÃ¢chant."/>
     <text name="helpLine_cs_p4_reading_title"  text="Lire une ligne de parcelle"/>
-    <text name="helpLine_cs_p4_reading_text"   text="Chaque ligne indique : numéro de parcelle (F1), nom de la culture (Blé), stade de croissance actuel (Stade 3), une barre d'humidité colorée et le pourcentage d'humidité. Si la ligne se termine par un point d'exclamation (!), cette parcelle accumule déjà du stress hydrique et la perte de rendement a commencé — irriguez-la maintenant. Seules les cultures susceptibles de souffrir du stress hydrique apparaissent dans la liste."/>
+    <text name="helpLine_cs_p4_reading_text"   text="Chaque ligne indique : numÃ©ro de parcelle (F1), nom de la culture (BlÃ©), stade de croissance actuel (Stade 3), une barre d'humiditÃ© colorÃ©e et le pourcentage d'humiditÃ©. Si la ligne se termine par un point d'exclamation (!), cette parcelle accumule dÃ©jÃ  du stress hydrique et la perte de rendement a commencÃ© â€” irriguez-la maintenant. Seules les cultures susceptibles de souffrir du stress hydrique apparaissent dans la liste."/>
     <text name="helpLine_cs_p4_status_title"   text="Couleurs de statut"/>
-    <text name="helpLine_cs_p4_status_text"    text="Vert signifie que la parcelle est saine et qu'aucune action n'est nécessaire. Jaune est un avertissement : l'humidité baisse et l'irrigation est bientôt conseillée. Rouge est critique : la culture subit un stress hydrique et la perte de rendement augmente — irriguer immédiatement."/>
+    <text name="helpLine_cs_p4_status_text"    text="Vert signifie que la parcelle est saine et qu'aucune action n'est nÃ©cessaire. Jaune est un avertissement : l'humiditÃ© baisse et l'irrigation est bientÃ´t conseillÃ©e. Rouge est critique : la culture subit un stress hydrique et la perte de rendement augmente â€” irriguer immÃ©diatement."/>
     <text name="helpLine_cs_p4_keys_title"     text="Raccourcis clavier"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Maj+M active ou désactive le HUD d'humidité. Maj+I ouvre le gestionnaire d'irrigation pour un système sélectionné. Maj+C ouvre le Conseiller cultural avec un résumé des risques et des recommandations personnalisées."/>
+    <text name="helpLine_cs_p4_keys_text"      text="Maj+M active ou dÃ©sactive le HUD d'humiditÃ©. Maj+I ouvre le gestionnaire d'irrigation pour un systÃ¨me sÃ©lectionnÃ©. Maj+C ouvre le Conseiller cultural avec un rÃ©sumÃ© des risques et des recommandations personnalisÃ©es."/>
 
-    <!-- Conseils &amp; Astuces : Page 2 — Stratégies agricoles -->
-    <text name="helpLine_cs_t2_title"          text="Stratégies agricoles"/>
+    <!-- Conseils &amp; Astuces : Page 2 â€” StratÃ©gies agricoles -->
+    <text name="helpLine_cs_t2_title"          text="StratÃ©gies agricoles"/>
     <text name="helpLine_cs_t2_sandy_title"    text="Prioriser les sols sableux"/>
-    <text name="helpLine_cs_t2_sandy_text"     text="Le sol sableux s'assèche deux fois plus vite que le sol limoneux. Si vous cultivez des sols variés, priorisez l'installation de l'irrigation sur les parcelles sableuses. Un pivot couvrant une grande zone sableuse est souvent un meilleur investissement qu'une ligne goutte-à-goutte sur un petit champ argileux qui retient naturellement l'humidité."/>
-    <text name="helpLine_cs_t2_forecast_title" text="Utiliser les prévisions"/>
-    <text name="helpLine_cs_t2_forecast_text"  text="Les prévisions sur 5 jours dans le HUD indiquent si l'humidité monte ou baisse. Si de la pluie est prévue dans un ou deux jours et que vos champs sont seulement en zone d'avertissement, attendez la pluie — vous économiserez de l'argent et l'usure de votre matériel. Agissez tôt si les prévisions annoncent plusieurs jours secs pendant une période de croissance critique."/>
+    <text name="helpLine_cs_t2_sandy_text"     text="Le sol sableux s'assÃ¨che deux fois plus vite que le sol limoneux. Si vous cultivez des sols variÃ©s, priorisez l'installation de l'irrigation sur les parcelles sableuses. Un pivot couvrant une grande zone sableuse est souvent un meilleur investissement qu'une ligne goutte-Ã -goutte sur un petit champ argileux qui retient naturellement l'humiditÃ©."/>
+    <text name="helpLine_cs_t2_forecast_title" text="Utiliser les prÃ©visions"/>
+    <text name="helpLine_cs_t2_forecast_text"  text="Les prÃ©visions sur 5 jours dans le HUD indiquent si l'humiditÃ© monte ou baisse. Si de la pluie est prÃ©vue dans un ou deux jours et que vos champs sont seulement en zone d'avertissement, attendez la pluie â€” vous Ã©conomiserez de l'argent et l'usure de votre matÃ©riel. Agissez tÃ´t si les prÃ©visions annoncent plusieurs jours secs pendant une pÃ©riode de croissance critique."/>
 
-    <!-- Informations sur le Mod : Page 1 — À propos -->
-    <text name="helpLine_cs_i1_title"           text="À propos de ce mod"/>
+    <!-- Informations sur le Mod : Page 1 â€” Ã€ propos -->
+    <text name="helpLine_cs_i1_title"           text="Ã€ propos de ce mod"/>
     <text name="helpLine_cs_i1_about_title"     text="Seasonal Crop Stress v1.0.5.0"/>
-    <text name="helpLine_cs_i1_about_text"      text="Créé par TisonK. Ajoute une simulation réaliste de l'humidité du sol, du stress saisonnier des cultures et de la gestion de l'infrastructure d'irrigation à Farming Simulator 25. Conçu pour rendre la gestion des cultures plus stratégique — chaque champ, chaque saison, chaque décision compte."/>
-    <text name="helpLine_cs_i1_community_title" text="Communauté &amp; Support"/>
-    <text name="helpLine_cs_i1_community_text"  text="Retrouvez ce mod sur le ModHub de Farming Simulator. Pour les questions, rapports de bugs et mises à jour, visitez la page du mod sur le ModHub ou le dépôt GitHub. Rejoignez les forums communautaires pour partager des conseils avec d'autres joueurs."/>
+    <text name="helpLine_cs_i1_about_text"      text="CrÃ©Ã© par TisonK. Ajoute une simulation rÃ©aliste de l'humiditÃ© du sol, du stress saisonnier des cultures et de la gestion de l'infrastructure d'irrigation Ã  Farming Simulator 25. ConÃ§u pour rendre la gestion des cultures plus stratÃ©gique â€” chaque champ, chaque saison, chaque dÃ©cision compte."/>
+    <text name="helpLine_cs_i1_community_title" text="CommunautÃ© &amp; Support"/>
+    <text name="helpLine_cs_i1_community_text"  text="Retrouvez ce mod sur le ModHub de Farming Simulator. Pour les questions, rapports de bugs et mises Ã  jour, visitez la page du mod sur le ModHub ou le dÃ©pÃ´t GitHub. Rejoignez les forums communautaires pour partager des conseils avec d'autres joueurs."/>
 
-    <!-- Informations sur le Mod : Page 2 — Intégrations optionnelles -->
-    <text name="helpLine_cs_i2_title"          text="Intégrations optionnelles"/>
+    <!-- Informations sur le Mod : Page 2 â€” IntÃ©grations optionnelles -->
+    <text name="helpLine_cs_i2_title"          text="IntÃ©grations optionnelles"/>
     <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor &amp; FS25_SoilFertilizer"/>
-    <text name="helpLine_cs_i2_npc_text"       text="With FS25_NPCFavor installed, Alex Chen appears as an Agronomist NPC on your farm. Completing favors for Alex builds your relationship and unlocks early drought warnings and specialist irrigation advice. With FS25_SoilFertilizer, each field's soil pH and organic matter content adjusts evapotranspiration — fields with poor soil health dry out faster, making good soil management worthwhile alongside irrigation."/>
+    <text name="helpLine_cs_i2_npc_text"       text="With FS25_NPCFavor installed, Alex Chen appears as an Agronomist NPC on your farm. Completing favors for Alex builds your relationship and unlocks early drought warnings and specialist irrigation advice. With FS25_SoilFertilizer, each field's soil pH and organic matter content adjusts evapotranspiration â€” fields with poor soil health dry out faster, making good soil management worthwhile alongside irrigation."/>
     <text name="helpLine_cs_i2_vehicle_title"  text="CoursePlay, AutoDrive &amp; Precision Farming"/>
     <text name="helpLine_cs_i2_vehicle_text"   text="When CoursePlay is active, the number of autonomous vehicles working a stressed field is shown in that field's alert. When AutoDrive is detected, critical drought alerts include available water destination counts and a suggestion to set up a hauling route. With FS25_UsedPlus, hourly irrigation running costs are charged and equipment wear accumulates realistically. If the Precision Farming DLC is active, soil moisture data is shown directly in the PF soil map overlay."/>
 
-    <!-- ========== INTÉGRATIONS MODS OPTIONNELLES ========== -->
-    <text name="cs_cp_vehicle_on_field"  text="CoursePlay : %d véhicule sur cette parcelle"/>
-    <text name="cs_cp_vehicles_on_field" text="CoursePlay : %d véhicules sur cette parcelle"/>
-    <text name="cs_ad_water_hint"    text="AutoDrive : %d point(s) d'eau disponible(s) — créez une route d'approvisionnement"/>
-    <text name="cs_ad_destinations"  text="AutoDrive : %d destination(s) configurée(s)"/>
+    <!-- ========== INTÃ‰GRATIONS MODS OPTIONNELLES ========== -->
+    <text name="cs_cp_vehicle_on_field"  text="CoursePlay : %d vÃ©hicule sur cette parcelle"/>
+    <text name="cs_cp_vehicles_on_field" text="CoursePlay : %d vÃ©hicules sur cette parcelle"/>
+    <text name="cs_ad_water_hint"    text="AutoDrive : %d point(s) d'eau disponible(s) â€” crÃ©ez une route d'approvisionnement"/>
+    <text name="cs_ad_destinations"  text="AutoDrive : %d destination(s) configurÃ©e(s)"/>
 
-    <!-- ========== ÉCRAN PDA ========== -->
-    <text name="cs_pda_screen_title" text="Moniteur d'humidité des cultures"/>
+    <!-- ========== Ã‰CRAN PDA ========== -->
+    <text name="cs_pda_screen_title" text="Moniteur d'humiditÃ© des cultures"/>
 <text name="cs_pda_tab_fields" text="Champs"/>
 <text name="cs_pda_tab_overview" text="Vue d'ensemble"/>
 <text name="cs_pda_tab_irrigation" text="Irrigation"/>
 <text name="cs_pda_col_field" text="Champ"/>
 <text name="cs_pda_col_crop" text="Culture"/>
-<text name="cs_pda_col_moisture" text="Humidité"/>
+<text name="cs_pda_col_moisture" text="HumiditÃ©"/>
 <text name="cs_pda_col_status" text="Statut"/>
 <text name="cs_pda_col_stress" text="Stress"/>
-<text name="cs_pda_col_irrigated" text="Irrigué"/>
+<text name="cs_pda_col_irrigated" text="IrriguÃ©"/>
 <text name="cs_pda_section_farm_overview" text="Vue d'ensemble de la ferme"/>
-<text name="cs_pda_section_moisture" text="État de l'humidité"/>
+<text name="cs_pda_section_moisture" text="Ã‰tat de l'humiditÃ©"/>
 <text name="cs_pda_section_stress" text="Stress des cultures"/>
 <text name="cs_pda_section_irrigation" text="Irrigation"/>
-<text name="cs_pda_section_irrigation_plan" text="Priorité d'irrigation"/>
+<text name="cs_pda_section_irrigation_plan" text="PrioritÃ© d'irrigation"/>
 <text name="cs_pda_fields_tracked" text="Champs suivis"/>
-<text name="cs_pda_fields_owned" text="Champs possédés"/>
-<text name="cs_pda_avg_moisture" text="Humidité moyenne"/>
+<text name="cs_pda_fields_owned" text="Champs possÃ©dÃ©s"/>
+<text name="cs_pda_avg_moisture" text="HumiditÃ© moyenne"/>
 <text name="cs_pda_fields_healthy" text="Sains (>=40%)"/>
 <text name="cs_pda_fields_warning" text="Alerte (25-40%)"/>
 <text name="cs_pda_fields_critical" text="Critique (&lt;25%)"/>
 <text name="cs_pda_avg_stress" text="Stress moyen"/>
-<text name="cs_pda_est_yield_loss" text="Perte de rendement estimée"/>
-<text name="cs_pda_irrigated_fields" text="Champs irrigués"/>
-<text name="cs_pda_irrigation_systems" text="Systèmes actifs"/>
+<text name="cs_pda_est_yield_loss" text="Perte de rendement estimÃ©e"/>
+<text name="cs_pda_irrigated_fields" text="Champs irriguÃ©s"/>
+<text name="cs_pda_irrigation_systems" text="SystÃ¨mes actifs"/>
 <text name="cs_pda_status_healthy" text="Sain"/>
 <text name="cs_pda_status_warning" text="Alerte"/>
 <text name="cs_pda_status_critical" text="Critique"/>
 <text name="cs_pda_irrigated_yes" text="Oui"/>
 <text name="cs_pda_irrigated_no" text="Non"/>
-<text name="cs_pda_no_fields" text="Aucune donnée de champ pour le moment."/>
+<text name="cs_pda_no_fields" text="Aucune donnÃ©e de champ pour le moment."/>
     <!-- ========== SUPERPOSITION CARTE ========== -->
-<text name="cs_map_page_title" text="Humidité des cultures"/>
-<text name="cs_map_sidebar_title" text="LÉGENDE D'HUMIDITÉ"/>
+<text name="cs_map_page_title" text="HumiditÃ© des cultures"/>
+<text name="cs_map_sidebar_title" text="LÃ‰GENDE D'HUMIDITÃ‰"/>
 <text name="cs_map_legend_healthy" text="Sain >=40%"/>
 <text name="cs_map_legend_warning" text="Alerte 25-40%"/>
 <text name="cs_map_legend_critical" text="Critique &lt;25%"/>
@@ -298,38 +298,38 @@
     <text name="cs_map_info_title"            text="[EN] Crop Moisture"/>
     <text name="cs_map_info_line"            text="[EN] Spot readings, not field averages. Detail sets the sample step."/>
     
-    <!-- ========== FENÊTRE D'AIDE ========== -->
-<text name="cs_help_title" text="Moniteur d'humidité des cultures -- Aide"/>
+    <!-- ========== FENÃŠTRE D'AIDE ========== -->
+<text name="cs_help_title" text="Moniteur d'humiditÃ© des cultures -- Aide"/>
 <text name="cs_help_ov_hdr" text="Fonctionnement"/>
-<text name="cs_help_ov_1" text="Suit l'humidité du sol pour chaque champ du jeu."/>
-<text name="cs_help_ov_2" text="Les précipitations augmentent l'humidité ; la chaleur et le temps la réduisent."/>
+<text name="cs_help_ov_1" text="Suit l'humiditÃ© du sol pour chaque champ du jeu."/>
+<text name="cs_help_ov_2" text="Les prÃ©cipitations augmentent l'humiditÃ© ; la chaleur et le temps la rÃ©duisent."/>
 <text name="cs_help_ov_3" text="Utilisez le bouton de filtre pour afficher uniquement vos champs."/>
-<text name="cs_help_status_hdr" text="Niveaux d'humidité"/>
+<text name="cs_help_status_hdr" text="Niveaux d'humiditÃ©"/>
 <text name="cs_help_status_1" text="Sain >=40% Aucun besoin d'action."/>
-<text name="cs_help_status_2" text="Alerte 25-40% Irriguez bientôt."/>
-<text name="cs_help_status_3" text="Critique &lt;25% Irriguez immédiatement !"/>
+<text name="cs_help_status_2" text="Alerte 25-40% Irriguez bientÃ´t."/>
+<text name="cs_help_status_3" text="Critique &lt;25% Irriguez immÃ©diatement !"/>
 <text name="cs_help_stress_hdr" text="Stress des cultures"/>
-<text name="cs_help_stress_1" text="Augmente chaque heure où l'humidité reste sous 40% pendant la croissance."/>
-<text name="cs_help_stress_2" text="Jusqu'à 60% de perte de rendement au stress maximal. Ne peut pas être inversé."/>
+<text name="cs_help_stress_1" text="Augmente chaque heure oÃ¹ l'humiditÃ© reste sous 40% pendant la croissance."/>
+<text name="cs_help_stress_2" text="Jusqu'Ã  60% de perte de rendement au stress maximal. Ne peut pas Ãªtre inversÃ©."/>
 <text name="cs_help_irr_hdr" text="Irrigation"/>
-<text name="cs_help_irr_1" text="Placez des pivots centraux ou des lignes goutte-à-goutte depuis le menu de construction."/>
-<text name="cs_help_irr_2" text="Utilisez le programme d'irrigation pour définir des plages automatiques de fonctionnement."/>
+<text name="cs_help_irr_1" text="Placez des pivots centraux ou des lignes goutte-Ã -goutte depuis le menu de construction."/>
+<text name="cs_help_irr_2" text="Utilisez le programme d'irrigation pour dÃ©finir des plages automatiques de fonctionnement."/>
 <text name="cs_help_keys_hdr" text="Informations du moniteur"/>
-<text name="cs_help_keys_1" text="ESC (Menu pause) -> Moniteur d'humidité des cultures"/>
-<text name="cs_help_keys_2" text="Onglet 1 (Vue d'ensemble) -> État général des champs"/>
+<text name="cs_help_keys_1" text="ESC (Menu pause) -> Moniteur d'humiditÃ© des cultures"/>
+<text name="cs_help_keys_2" text="Onglet 1 (Vue d'ensemble) -> Ã‰tat gÃ©nÃ©ral des champs"/>
 <text name="cs_help_keys_3" text="Onglet 2 (Irrigation) -> Gestion de l'irrigation"/>
-    <!-- ========== ÉCRAN PDA ========== -->
+    <!-- ========== Ã‰CRAN PDA ========== -->
 <text name="cs_pda_btn_irrigation" text="Programme d'irrigation"/>
 <text name="cs_pda_btn_consultant" text="Conseiller agricole"/>
 <text name="cs_pda_btn_help" text="Aide"/>
 <text name="cs_pda_filter_all" text="TOUS LES CHAMPS"/>
 <text name="cs_pda_filter_owned" text="MES CHAMPS"/>
-<text name="cs_pda_no_system_msg" text="Aucun système d'irrigation n'est connecté à ce champ. Placez un pivot central ou une ligne goutte-à-goutte pour gérer l'irrigation."/>
+<text name="cs_pda_no_system_msg" text="Aucun systÃ¨me d'irrigation n'est connectÃ© Ã  ce champ. Placez un pivot central ou une ligne goutte-Ã -goutte pour gÃ©rer l'irrigation."/>
 
-<!-- ========== LIGNE D'AIDE (pulvérisateur) ========== -->
-<text name="helpLine_cs_t3_title" text="Pulvérisateurs &amp; arrosage"/>
-<text name="helpLine_cs_t3_sprayer_title" text="Utiliser les pulvérisateurs comme irrigation"/>
-<text name="helpLine_cs_t3_sprayer_text" text="Les pulvérisateurs standards montés sur véhicule peuvent être utilisés comme alternative manuelle aux systèmes d'irrigation permanents. Si vous remplissez un pulvérisateur avec de l'EAU, toute zone pulvérisée recevra immédiatement un gain d'humidité. Cela est utile pour les petits champs ou comme solution temporaire jusqu'à ce que vous puissiez vous offrir un pivot central ou une ligne goutte-à-goutte."/>
+<!-- ========== LIGNE D'AIDE (pulvÃ©risateur) ========== -->
+<text name="helpLine_cs_t3_title" text="PulvÃ©risateurs &amp; arrosage"/>
+<text name="helpLine_cs_t3_sprayer_title" text="Utiliser les pulvÃ©risateurs comme irrigation"/>
+<text name="helpLine_cs_t3_sprayer_text" text="Les pulvÃ©risateurs standards montÃ©s sur vÃ©hicule peuvent Ãªtre utilisÃ©s comme alternative manuelle aux systÃ¨mes d'irrigation permanents. Si vous remplissez un pulvÃ©risateur avec de l'EAU, toute zone pulvÃ©risÃ©e recevra immÃ©diatement un gain d'humiditÃ©. Cela est utile pour les petits champs ou comme solution temporaire jusqu'Ã  ce que vous puissiez vous offrir un pivot central ou une ligne goutte-Ã -goutte."/>
     
     <!-- Esc RF PDA greenfield guest (2026-08-02) -->
     <text name="cs_rf_pda_module_title" text="Crop Stress"/>
@@ -386,18 +386,18 @@
     <text name="cs_rf_pda_next_covered_idle" text="[EN] Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
     <text name="cs_rf_pda_next_looking_good" text="[EN] Looking good - recheck later; handle Critical fields first."/>
     <text name="cs_rf_pda_yield_keep" text="[EN] Yield keep: %d%%"/>
-    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0f°C, dry pull %.1f"/>
-    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %d–%d"/>
+    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0fÂ°C, dry pull %.1f"/>
+    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %dâ€“%d"/>
     <text name="cs_rf_pda_sched_daily" text=" daily"/>
     <text name="cs_rf_pda_sched_weekdays" text=" weekdays"/>
     <text name="cs_rf_pda_sched_none" text="[EN] no schedule"/>
-    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered · no schedule"/>
+    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered Â· no schedule"/>
     <text name="cs_rf_pda_no_coverage" text="[EN] No coverage"/>
     <text name="cs_rf_pda_rate_off" text="[EN] Rate off"/>
     <text name="cs_rf_pda_rate_on" text="[EN] Rate +%.2f/h"/>
     <text name="cs_rf_pda_alert_prefix" text="[EN] Alert: %s"/>
-    <text name="cs_rf_pda_next_alert_sep" text=" · %s"/>
-    <text name="cs_rf_pda_status_join" text="[EN] %s  ·  Status: %s"/>
+    <text name="cs_rf_pda_next_alert_sep" text=" Â· %s"/>
+    <text name="cs_rf_pda_status_join" text="[EN] %s  Â·  Status: %s"/>
     <!-- Esc CS PIVOT card (2026-08-09) -->
     <text name="cs_rf_pda_pivot_title" text="[EN] PIVOT"/>
     <text name="cs_rf_pda_pivot_title_irrig" text="[EN] IRRIGATION"/>
@@ -406,21 +406,21 @@
 <text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur —"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min —"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max —"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
     <text name="cs_rf_pda_pivot_watering_off" text="[EN] Watering now: Off"/>
     <text name="cs_rf_pda_pivot_pressure" text="[EN] Pressure: %d%%"/>
-    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: —"/>
+    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: â€”"/>
     <text name="cs_rf_pda_pivot_rate" text="[EN] Rate: +%.3f/h"/>
-    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: —"/>
-    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00–%02d:00%s"/>
+    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: â€”"/>
+    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00â€“%02d:00%s"/>
     <text name="cs_rf_pda_pivot_sched_none" text="[EN] Schedule: No schedule"/>
     <text name="cs_rf_pda_pivot_warn_none" text="[EN] No pivot on this field"/>
     <text name="cs_rf_pda_pivot_warn_owner" text="[EN] Not your pivot"/>
@@ -435,11 +435,11 @@
     <text name="cs_rf_pda_pivot_btn_start" text="[EN] Start"/>
     <text name="cs_rf_pda_pivot_btn_stop" text="[EN] Stop"/>
     <text name="cs_rf_pda_pivot_btn_min_up" text="[EN] Min+"/>
-    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Min−"/>
+    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Minâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_max_up" text="[EN] Max+"/>
-    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Max−"/>
+    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Maxâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_arm_plus" text="[EN] Arm+"/>
-    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Arm−"/>
+    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Armâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_schedule" text="[EN] Schedule"/>
     <text name="cs_rf_pda_page_fields" text="[EN] Fields"/>
     <text name="cs_rf_pda_page_pivot" text="[EN] Pivot"/>
@@ -476,10 +476,29 @@
     <text name="cs_playkit_pump_power_teach" text="[EN] The pump is the power. Hitch the reel only to tow it: to spray, run the hose from the pump, start the pump, then switch the reel on. Stop the pump or pull the hose and the spray stops."/>
     <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
     <text name="cs_rf_pda_crop_mixed" text="[EN] Mixed"/>
-    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s · covers %s of this block"/>
+    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s Â· covers %s of this block"/>
         <!-- BUILD 11:27 F155 Esc RF button labels -->
         <text name="wc_rf_pda_open_manager" text="Ouvrir le gestionnaire d'ouvriers" />
         <text name="sf_pda_btn_rotation_planner" text="Planificateur de rotation" />
-        <text name="sf_pda_btn_field_detail" text="Détail du champ" />
+        <text name="sf_pda_btn_field_detail" text="DÃ©tail du champ" />
+    <!-- ========== REINKE A22 PIVOT (vendored) ========== -->
+    <text name="reinke_pivot_3_name"      text="Reinke A22 Center Pivot - 3 Tower (~115m)"/>
+    <text name="reinke_pivot_5_name"      text="Reinke A22 Center Pivot - 5 Tower (~188m)"/>
+    <text name="reinke_pivot_10_name"     text="Reinke A22 Center Pivot - 10 Tower (~369m)"/>
+    <text name="reinke_pivot_function"    text="Center pivot irrigation system"/>
+    <text name="reinke_pivot_open_dialog" text="Open Pivot Schedule"/>
+    <text name="reinke_pivot_toggle"      text="Toggle Pivot Rotation"/>
+    <text name="input_REINKE_DOOR_TOGGLE"           text="Open / Close Control Panel"/>
+    <text name="input_REINKE_MASTER_POWER"          text="Master Power On / Off"/>
+    <text name="input_REINKE_PIVOT_INTERACT"        text="Toggle Auto Rotation (KP8)"/>
+    <text name="input_REINKE_PIVOT_ANGLE_PLUS"      text="Step Arm +10 deg (Manual)"/>
+    <text name="input_REINKE_PIVOT_ANGLE_MINUS"     text="Step Arm -10 deg (Manual)"/>
+    <text name="input_REINKE_PIVOT_AUTO_MIN_UP"     text="Raise Min Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SWEEP_MIN_DN"    text="Lower Min Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_AUTO_MAX_UP"     text="Raise Max Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SWEEP_MAX_DN"    text="Lower Max Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
+    <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
+    <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
 </texts>
 </l10n>

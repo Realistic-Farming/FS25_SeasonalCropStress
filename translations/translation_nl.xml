@@ -5,10 +5,10 @@
     <text name="cs_hud_title"         text="BODEMVOCHTIGHEID"/>
     <text name="cs_hud_healthy"       text="Gezond"/>
     <text name="cs_hud_warning"       text="Droogtestress"/>
-    <text name="cs_hud_critical"      text="KRITIEK — Irrigeer nu!"/>
+    <text name="cs_hud_critical"      text="KRITIEK â€” Irrigeer nu!"/>
     <text name="cs_hud_no_crop"       text="Geen gewas"/>
     <text name="cs_hud_forecast"      text="5-dagenprognose"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 geladen. Alt+M opent de vochtigheids-HUD. Nieuw? Open het Help-menu (ESC → Help) en zoek Seasonal Crop Stress om alles te leren."/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 geladen. Alt+M opent de vochtigheids-HUD. Nieuw? Open het Help-menu (ESC â†’ Help) en zoek Seasonal Crop Stress om alles te leren."/>
     <text name="cs_hud_click_forecast" text="Klik op een rij voor 5-dagenprognose"/>
     <text name="cs_hud_vehicle_disabled" text="Overlay uitgeschakeld in voertuig"/>
 
@@ -26,21 +26,21 @@
     <text name="cs_soil_clay"   text="Kleiig"/>
 
     <!-- ========== ALERTS ========== -->
-    <text name="cs_alert_info"     text="Veld %d: %s vochtigheid daalt — situatie volgen."/>
-    <text name="cs_alert_warning"  text="Veld %d: %s vochtigheid laag — irrigatie aanbevolen."/>
-    <text name="cs_alert_critical" text="Veld %d: %s droogtestress-drempel — irrigeer nu!"/>
+    <text name="cs_alert_info"     text="Veld %d: %s vochtigheid daalt â€” situatie volgen."/>
+    <text name="cs_alert_warning"  text="Veld %d: %s vochtigheid laag â€” irrigatie aanbevolen."/>
+    <text name="cs_alert_critical" text="Veld %d: %s droogtestress-drempel â€” irrigeer nu!"/>
 
     <!-- ========== IRRIGATION ========== -->
-    <text name="cs_irr_title"          text="Irrigatiesysteem — %s"/>
+    <text name="cs_irr_title"          text="Irrigatiesysteem â€” %s"/>
     <text name="cs_irr_water_source"   text="Waterbron"/>
     <text name="cs_irr_connected"      text="Aangesloten"/>
     <text name="cs_irr_disconnected"   text="Niet aangesloten"/>
     <text name="cs_irr_schedule"       text="Schema"/>
     <text name="cs_irr_flow_rate"      text="Doorvoersnelheid"/>
-    <text name="cs_irr_efficiency"     text="Efficiëntie"/>
+    <text name="cs_irr_efficiency"     text="EfficiÃ«ntie"/>
     <text name="cs_irr_cost"           text="Geschatte kosten"/>
     <text name="cs_irr_wear"           text="Slijtage"/>
-    <text name="cs_irr_covered_fields" text="Geïrrigeerde velden"/>
+    <text name="cs_irr_covered_fields" text="GeÃ¯rrigeerde velden"/>
     <text name="cs_irr_irrigate_now"   text="Nu irrigeren"/>
     <text name="cs_irr_save_schedule"  text="Schema opslaan"/>
     <text name="cs_irr_pivot"          text="Cirkelberegening"/>
@@ -87,15 +87,15 @@
 
     <!-- ========== IRRIGATION PERFORMANCE VALUES (dynamic, format strings) ========== -->
     <text name="cs_irr_flow_rate_value"   text="Doorvoer: %.3f/u"/>
-    <text name="cs_irr_efficiency_value"  text="Efficiëntie: %d%%"/>
-    <text name="cs_irr_cost_value"        text="Gesch. kosten: €%d/u"/>
+    <text name="cs_irr_efficiency_value"  text="EfficiÃ«ntie: %d%%"/>
+    <text name="cs_irr_cost_value"        text="Gesch. kosten: â‚¬%d/u"/>
     <text name="cs_irr_wear_value"        text="Slijtage: %d%%"/>
     <text name="cs_irr_already_active"    text="Het irrigatiesysteem is al actief."/>
     <text name="cs_irr_no_covered_fields" text="Geen velden gedekt door dit systeem."/>
 
     <!-- ========== CONSULTANT RECOMMENDATIONS (dynamic, format strings) ========== -->
-    <text name="cs_rec_urgent"          text="DRINGEND: Veld %d op %.0f%% vochtigheid — onmiddellijk irrigeren!"/>
-    <text name="cs_rec_warning"         text="Veld %d op %.0f%% vochtigheid — irrigatie aanbevolen binnen 24u."/>
+    <text name="cs_rec_urgent"          text="DRINGEND: Veld %d op %.0f%% vochtigheid â€” onmiddellijk irrigeren!"/>
+    <text name="cs_rec_warning"         text="Veld %d op %.0f%% vochtigheid â€” irrigatie aanbevolen binnen 24u."/>
     <text name="cs_rec_ok"              text="Alle velden binnen aanvaardbaar vochtigheidsbereik."/>
     <text name="cs_rec_forecast"        text="Prognose: ~ D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
     <text name="cs_rec_systems_running" text="%d irrigatiesysteem/systemen actief."/>
@@ -136,7 +136,7 @@
     <text name="cs_settings_threshold_short"   text="Kritieke drempel"/>
     <text name="cs_settings_threshold_long"    text="Vochtigheidsniveau waaronder stress zich ophoopt"/>
     <text name="cs_settings_irr_costs_short"   text="Irrigatiekosten"/>
-    <text name="cs_settings_irr_costs_long"    text="Schakel financiële kosten voor het bedienen van irrigatiesystemen in of uit"/>
+    <text name="cs_settings_irr_costs_long"    text="Schakel financiÃ«le kosten voor het bedienen van irrigatiesystemen in of uit"/>
     <text name="cs_settings_alerts_short"      text="Waarschuwingen ingeschakeld"/>
     <text name="cs_settings_alerts_long"       text="Toon waarschuwingsnotificaties wanneer velden water nodig hebben"/>
     <text name="cs_settings_cooldown_short"    text="Waarschuwings-cooldown"/>
@@ -158,7 +158,7 @@
     <text name="helpLine_cs_p1_intro_title"    text="Wat deze mod toevoegt"/>
     <text name="helpLine_cs_p1_intro_text"     text="Seizoensgebonden gewassstress voegt een bodemvochtsimulatie toe aan elk veld. Gewassen hebben water nodig tijdens belangrijke groeifasen. Zonder water wordt de oogst kleiner. Irrigatiesystemen laten je de watertoevoer van je velden zelf regelen."/>
     <text name="helpLine_cs_p1_start_title"    text="Aan de slag"/>
-    <text name="helpLine_cs_p1_start_text"     text="Druk op Alt+M om de vochtigheids-HUD te openen en alle velden in één oogopslag te zien. Rode velden hebben dringend water nodig, groene zijn in orde. Druk op 'Gewasadviseur openen' om de Gewasadviseur te openen voor gedetailleerd advies en risicowaarden."/>
+    <text name="helpLine_cs_p1_start_text"     text="Druk op Alt+M om de vochtigheids-HUD te openen en alle velden in Ã©Ã©n oogopslag te zien. Rode velden hebben dringend water nodig, groene zijn in orde. Druk op 'Gewasadviseur openen' om de Gewasadviseur te openen voor gedetailleerd advies en risicowaarden."/>
 
     <!-- Overzicht: Pagina 2 -->
     <text name="helpLine_cs_p2_title"          text="Bodemvochtigheid"/>
@@ -186,21 +186,21 @@
     <text name="helpLine_cs_p6_what_title"     text="Wat de adviseur toont"/>
     <text name="helpLine_cs_p6_what_text"      text="Druk op 'Gewasadviseur openen' om de Gewasadviseur te openen. Hij toont je 5 meest risicovolle velden gerangschikt op vochtigheid en stressniveau, met een begrijpelijke aanbeveling voor de komende 24 uur en een 3-dagenprognose voor de vochtigheid."/>
     <text name="helpLine_cs_p6_act_title"      text="Handelen op advies"/>
-    <text name="helpLine_cs_p6_act_text"       text="Velden gemarkeerd KRITIEK moeten vandaag worden geïrrigeerd om oogstverlies te voorkomen. Velden gemarkeerd WAARSCHUWING moeten binnen een à twee dagen worden geïrrigeerd. Gebruik de knop Irrigatiebeheer openen in de adviseur om snel een schema in te stellen voor het slechtste veld."/>
+    <text name="helpLine_cs_p6_act_text"       text="Velden gemarkeerd KRITIEK moeten vandaag worden geÃ¯rrigeerd om oogstverlies te voorkomen. Velden gemarkeerd WAARSCHUWING moeten binnen een Ã  twee dagen worden geÃ¯rrigeerd. Gebruik de knop Irrigatiebeheer openen in de adviseur om snel een schema in te stellen voor het slechtste veld."/>
     <text name="helpLine_cs_p6_npc_title"      text="Optionele integraties"/>
-    <text name="helpLine_cs_p6_npc_text"       text="Meerdere optionele mods breiden het systeem uit. FS25_NPCFavor: Alex Chen verschijnt als Agronoom-NPC — voltooi gunsten voor vroege droogtewaarschuwingen en gespecialiseerd advies. FS25_SoilFertilizer: Bodem-pH en organische stof beïnvloeden de evapotranspiratie per veld. FS25_UsedPlus: Bedrijfskosten en slijtage worden bijgehouden. CoursePlay: Actieve voertuigaantallen verschijnen in veldwaarschuwingen. AutoDrive: Waterbestemmingen worden getoond in kritieke waarschuwingen. Precision Farming DLC: Bodemvochtigheidsgegevens zijn beschikbaar in de PF-kaartweergave."/>
+    <text name="helpLine_cs_p6_npc_text"       text="Meerdere optionele mods breiden het systeem uit. FS25_NPCFavor: Alex Chen verschijnt als Agronoom-NPC â€” voltooi gunsten voor vroege droogtewaarschuwingen en gespecialiseerd advies. FS25_SoilFertilizer: Bodem-pH en organische stof beÃ¯nvloeden de evapotranspiratie per veld. FS25_UsedPlus: Bedrijfskosten en slijtage worden bijgehouden. CoursePlay: Actieve voertuigaantallen verschijnen in veldwaarschuwingen. AutoDrive: Waterbestemmingen worden getoond in kritieke waarschuwingen. Precision Farming DLC: Bodemvochtigheidsgegevens zijn beschikbaar in de PF-kaartweergave."/>
 
-    <!-- Instellingen: Pagina 1 — Algemene instellingen -->
+    <!-- Instellingen: Pagina 1 â€” Algemene instellingen -->
     <text name="helpLine_cs_s1_title"          text="Algemene instellingen"/>
     <text name="helpLine_cs_s1_gen_title"      text="Mod inschakelen"/>
-    <text name="helpLine_cs_s1_gen_text"       text="Open de spelinstellingen (ESC → Instellingen → Seizoensgebonden Gewasstress). Gebruik Mod inschakelen om het hele systeem aan of uit te zetten zonder je irrigatie-infrastructuur te verwijderen. Moeilijkheidsgraad bepaalt hoe snel gewassen droogtestress opbouwen — Gemakkelijk is vergevingsgezind, Moeilijk vereist proactief irrigatiebeheer."/>
+    <text name="helpLine_cs_s1_gen_text"       text="Open de spelinstellingen (ESC â†’ Instellingen â†’ Seizoensgebonden Gewasstress). Gebruik Mod inschakelen om het hele systeem aan of uit te zetten zonder je irrigatie-infrastructuur te verwijderen. Moeilijkheidsgraad bepaalt hoe snel gewassen droogtestress opbouwen â€” Gemakkelijk is vergevingsgezind, Moeilijk vereist proactief irrigatiebeheer."/>
     <text name="helpLine_cs_s1_evap_title"     text="Evapotranspiratiesnelheid"/>
-    <text name="helpLine_cs_s1_evap_text"      text="Evapotranspiratie bepaalt hoe snel de bodem uitdroogt tussen regenperioden. Traag betekent dat velden vochtigheid goed vasthouden en regen veel effect heeft. Snel betekent dat velden bij warm weer binnen een speeldag kunnen uitdrogen — actief irrigatiebeheer wordt dan essentieel."/>
+    <text name="helpLine_cs_s1_evap_text"      text="Evapotranspiratie bepaalt hoe snel de bodem uitdroogt tussen regenperioden. Traag betekent dat velden vochtigheid goed vasthouden en regen veel effect heeft. Snel betekent dat velden bij warm weer binnen een speeldag kunnen uitdrogen â€” actief irrigatiebeheer wordt dan essentieel."/>
 
-    <!-- Instellingen: Pagina 2 — Geavanceerde instellingen -->
+    <!-- Instellingen: Pagina 2 â€” Geavanceerde instellingen -->
     <text name="helpLine_cs_s2_title"          text="Geavanceerde instellingen"/>
     <text name="helpLine_cs_s2_yield_title"    text="Opbrengstverlies &amp; Stressdrempel"/>
-    <text name="helpLine_cs_s2_yield_text"     text="Max. Opbrengstverlies beperkt het percentage van de oogst dat droogtestress kan verminderen. Bij de standaard 60% levert een volledig gestresst veld nog steeds 40% van de normale opbrengst. De Kritieke Drempel is het vochtigheidsniveau waaronder stress begint op te bouwen — verhoog het voor gevoeliger gewassen, verlaag het voor meer tolerantie."/>
+    <text name="helpLine_cs_s2_yield_text"     text="Max. Opbrengstverlies beperkt het percentage van de oogst dat droogtestress kan verminderen. Bij de standaard 60% levert een volledig gestresst veld nog steeds 40% van de normale opbrengst. De Kritieke Drempel is het vochtigheidsniveau waaronder stress begint op te bouwen â€” verhoog het voor gevoeliger gewassen, verlaag het voor meer tolerantie."/>
     <text name="helpLine_cs_s2_alerts_title"   text="Irrigatiekosten &amp; Waarschuwingen"/>
     <text name="helpLine_cs_s2_alerts_text"    text="Irrigatiekosten brengt een uurlijks bedrag in rekening voor actieve irrigatiesystemen. Schakel dit uit voor een eenvoudigere ervaring. Waarschuwingen ingeschakeld toont meldingen wanneer velden water nodig hebben. Waarschuwings-cooldown stelt de minimale speeluren in voor een nieuwe waarschuwing voor hetzelfde veld, zodat je niet overspoeld wordt met meldingen."/>
 
@@ -209,34 +209,34 @@
     <text name="helpLine_cs_p4_hud_title"      text="Vochtigheids-HUD-overlay"/>
     <text name="helpLine_cs_p4_hud_text"       text="Druk op Alt+M om de vochtigheids-HUD aan of uit te zetten. Hij toont elk veld met zijn vochtigheidsniveau, gewastype en stressstatus. Een 5-dagenprognose laat zien of de vochtigheid stijgt of daalt zodat je vooruit kunt plannen. Je kunt het paneel ook naar een andere positie op het scherm slepen door te klikken en los te laten."/>
     <text name="helpLine_cs_p4_reading_title"  text="Een veldrij lezen"/>
-    <text name="helpLine_cs_p4_reading_text"   text="Elke rij toont: veldnummer (F1), gewasnaam (Tarwe), huidige groeifase (Fase 3), een kleurgecodeerde vochtigheidsbalk en het vochtigheidpercentage. Als de rij eindigt met een uitroepteken (!), bouwt dat veld al droogtestress op en is oogstverlies begonnen — bewater het nu. Alleen gewassen die droogtestress kunnen lijden, verschijnen in de lijst."/>
+    <text name="helpLine_cs_p4_reading_text"   text="Elke rij toont: veldnummer (F1), gewasnaam (Tarwe), huidige groeifase (Fase 3), een kleurgecodeerde vochtigheidsbalk en het vochtigheidpercentage. Als de rij eindigt met een uitroepteken (!), bouwt dat veld al droogtestress op en is oogstverlies begonnen â€” bewater het nu. Alleen gewassen die droogtestress kunnen lijden, verschijnen in de lijst."/>
     <text name="helpLine_cs_p4_status_title"   text="Statuskleuren"/>
-    <text name="helpLine_cs_p4_status_text"    text="Groen betekent dat het veld gezond is en geen actie nodig heeft. Geel is een waarschuwing: de vochtigheid daalt en irrigatie is binnenkort aan te raden. Rood is kritiek: het gewas lijdt aan droogtestress en oogstverlies neemt toe — direct irrigeren."/>
+    <text name="helpLine_cs_p4_status_text"    text="Groen betekent dat het veld gezond is en geen actie nodig heeft. Geel is een waarschuwing: de vochtigheid daalt en irrigatie is binnenkort aan te raden. Rood is kritiek: het gewas lijdt aan droogtestress en oogstverlies neemt toe â€” direct irrigeren."/>
     <text name="helpLine_cs_p4_keys_title"     text="Sneltoetsen"/>
     <text name="helpLine_cs_p4_keys_text"      text="Alt+M schakelt de vochtigheids-HUD in of uit. 'Irrigatiebeheer openen' opent het irrigatiebeheer voor een geselecteerd systeem. 'Gewasadviseur openen' opent de Gewasadviseur met een risicooverzicht en persoonlijke aanbevelingen."/>
 
-    <!-- Tips &amp; Trucs: Pagina 2 — Landbouwstrategieën -->
-    <text name="helpLine_cs_t2_title"          text="Landbouwstrategieën"/>
+    <!-- Tips &amp; Trucs: Pagina 2 â€” LandbouwstrategieÃ«n -->
+    <text name="helpLine_cs_t2_title"          text="LandbouwstrategieÃ«n"/>
     <text name="helpLine_cs_t2_sandy_title"    text="Prioriteit aan zandige velden"/>
     <text name="helpLine_cs_t2_sandy_text"     text="Zandige bodem droogt twee keer zo snel uit als leembodem. Als je verschillende bodemtypen bewerkt, geef dan eerst prioriteit aan irrigatie op zandige velden. Een cirkelberegening op een groot zandgebied is vaak een betere investering dan een druppellijn op een klein kleiveldje dat zelf vochtigheid vasthoudt."/>
     <text name="helpLine_cs_t2_forecast_title" text="Gebruik de prognose"/>
-    <text name="helpLine_cs_t2_forecast_text"  text="De 5-dagenprognose in de HUD toont of vochtigheid stijgt of daalt. Als er binnen een dag of twee regen verwacht wordt en je velden zitten alleen in het waarschuwingsgebied, wacht dan op de regen — je bespaart geld en slijtage van je apparatuur. Handel vroeg als de prognose meerdere droge dagen toont tijdens een kritieke groeiperiode."/>
+    <text name="helpLine_cs_t2_forecast_text"  text="De 5-dagenprognose in de HUD toont of vochtigheid stijgt of daalt. Als er binnen een dag of twee regen verwacht wordt en je velden zitten alleen in het waarschuwingsgebied, wacht dan op de regen â€” je bespaart geld en slijtage van je apparatuur. Handel vroeg als de prognose meerdere droge dagen toont tijdens een kritieke groeiperiode."/>
 
-    <!-- Mod-informatie: Pagina 1 — Over deze mod -->
+    <!-- Mod-informatie: Pagina 1 â€” Over deze mod -->
     <text name="helpLine_cs_i1_title"           text="Over deze mod"/>
     <text name="helpLine_cs_i1_about_title"     text="Seasonal Crop Stress v1.0.5.0"/>
-    <text name="helpLine_cs_i1_about_text"      text="Gemaakt door TisonK. Voegt realistische bodemvochtsimulatie, seizoensgebonden gewasstress en beheer van irrigatie-infrastructuur toe aan Farming Simulator 25. Ontworpen om gewasbeheer strategischer te maken — elk veld, elk seizoen, elke beslissing telt."/>
+    <text name="helpLine_cs_i1_about_text"      text="Gemaakt door TisonK. Voegt realistische bodemvochtsimulatie, seizoensgebonden gewasstress en beheer van irrigatie-infrastructuur toe aan Farming Simulator 25. Ontworpen om gewasbeheer strategischer te maken â€” elk veld, elk seizoen, elke beslissing telt."/>
     <text name="helpLine_cs_i1_community_title" text="Community &amp; Support"/>
     <text name="helpLine_cs_i1_community_text"  text="Vind deze mod op de Farming Simulator ModHub. Voor vragen, bugrapporten en updates, bezoek de modpagina op ModHub of de GitHub-repository. Sluit je aan bij de communityforums om tips te delen met andere spelers."/>
 
-    <!-- Mod-informatie: Pagina 2 — Optionele integraties -->
+    <!-- Mod-informatie: Pagina 2 â€” Optionele integraties -->
     <text name="helpLine_cs_i2_title"          text="Optionele integraties"/>
     <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor &amp; FS25_SoilFertilizer"/>
-    <text name="helpLine_cs_i2_npc_text"       text="With FS25_NPCFavor installed, Alex Chen appears as an Agronomist NPC on your farm. Completing favors for Alex builds your relationship and unlocks early drought warnings and specialist irrigation advice. With FS25_SoilFertilizer, each field's soil pH and organic matter content adjusts evapotranspiration — fields with poor soil health dry out faster, making good soil management worthwhile alongside irrigation."/>
+    <text name="helpLine_cs_i2_npc_text"       text="With FS25_NPCFavor installed, Alex Chen appears as an Agronomist NPC on your farm. Completing favors for Alex builds your relationship and unlocks early drought warnings and specialist irrigation advice. With FS25_SoilFertilizer, each field's soil pH and organic matter content adjusts evapotranspiration â€” fields with poor soil health dry out faster, making good soil management worthwhile alongside irrigation."/>
     <text name="helpLine_cs_i2_vehicle_title"  text="CoursePlay, AutoDrive &amp; Precision Farming"/>
     <text name="helpLine_cs_i2_vehicle_text"   text="When CoursePlay is active, the number of autonomous vehicles working a stressed field is shown in that field's alert. When AutoDrive is detected, critical drought alerts include available water destination counts and a suggestion to set up a hauling route. With FS25_UsedPlus, hourly irrigation running costs are charged and equipment wear accumulates realistically. If the Precision Farming DLC is active, soil moisture data is shown directly in the PF soil map overlay."/>
 
-    <!-- Tips &amp; Trucs: Pagina 3 — Spuiten & Bewateren -->
+    <!-- Tips &amp; Trucs: Pagina 3 â€” Spuiten & Bewateren -->
     <text name="helpLine_cs_t3_title"          text="Spuiten &amp; Bewateren"/>
     <text name="helpLine_cs_t3_sprayer_title"  text="Sproeiers gebruiken als irrigatie"/>
     <text name="helpLine_cs_t3_sprayer_text"   text="Standaard veldspuiten kunnen worden gebruikt als een handmatig alternatief voor permanente irrigatiesystemen. Als u een sproeier vult met WATER, krijgt elk gebied dat u besproeit een onmiddellijke vochtigheidsboost. Dit is handig voor kleine velden of als tijdelijke maatregel totdat u een cirkelberegening of druppellijn kunt betalen."/>
@@ -244,7 +244,7 @@
     <!-- ========== OPTIONELE MOD-INTEGRATIES ========== -->
     <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d voertuig actief op dit perceel"/>
     <text name="cs_cp_vehicles_on_field" text="CoursePlay: %d voertuigen actief op dit perceel"/>
-    <text name="cs_ad_water_hint"    text="AutoDrive: %d waterbestemming(en) beschikbaar — stel een transportroute in"/>
+    <text name="cs_ad_water_hint"    text="AutoDrive: %d waterbestemming(en) beschikbaar â€” stel een transportroute in"/>
     <text name="cs_ad_destinations"  text="AutoDrive: %d bestemming(en) geconfigureerd"/>
 
     <!-- ========== PDA SCREEN ========== -->
@@ -386,18 +386,18 @@
     <text name="cs_rf_pda_next_covered_idle" text="[EN] Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
     <text name="cs_rf_pda_next_looking_good" text="[EN] Looking good - recheck later; handle Critical fields first."/>
     <text name="cs_rf_pda_yield_keep" text="[EN] Yield keep: %d%%"/>
-    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0f°C, dry pull %.1f"/>
-    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %d–%d"/>
+    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0fÂ°C, dry pull %.1f"/>
+    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %dâ€“%d"/>
     <text name="cs_rf_pda_sched_daily" text=" daily"/>
     <text name="cs_rf_pda_sched_weekdays" text=" weekdays"/>
     <text name="cs_rf_pda_sched_none" text="[EN] no schedule"/>
-    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered · no schedule"/>
+    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered Â· no schedule"/>
     <text name="cs_rf_pda_no_coverage" text="[EN] No coverage"/>
     <text name="cs_rf_pda_rate_off" text="[EN] Rate off"/>
     <text name="cs_rf_pda_rate_on" text="[EN] Rate +%.2f/h"/>
     <text name="cs_rf_pda_alert_prefix" text="[EN] Alert: %s"/>
-    <text name="cs_rf_pda_next_alert_sep" text=" · %s"/>
-    <text name="cs_rf_pda_status_join" text="[EN] %s  ·  Status: %s"/>
+    <text name="cs_rf_pda_next_alert_sep" text=" Â· %s"/>
+    <text name="cs_rf_pda_status_join" text="[EN] %s  Â·  Status: %s"/>
     <!-- Esc CS PIVOT card (2026-08-09) -->
     <text name="cs_rf_pda_pivot_title" text="[EN] PIVOT"/>
     <text name="cs_rf_pda_pivot_title_irrig" text="[EN] IRRIGATION"/>
@@ -406,21 +406,21 @@
 <text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur —"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min —"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max —"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
     <text name="cs_rf_pda_pivot_watering_off" text="[EN] Watering now: Off"/>
     <text name="cs_rf_pda_pivot_pressure" text="[EN] Pressure: %d%%"/>
-    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: —"/>
+    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: â€”"/>
     <text name="cs_rf_pda_pivot_rate" text="[EN] Rate: +%.3f/h"/>
-    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: —"/>
-    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00–%02d:00%s"/>
+    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: â€”"/>
+    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00â€“%02d:00%s"/>
     <text name="cs_rf_pda_pivot_sched_none" text="[EN] Schedule: No schedule"/>
     <text name="cs_rf_pda_pivot_warn_none" text="[EN] No pivot on this field"/>
     <text name="cs_rf_pda_pivot_warn_owner" text="[EN] Not your pivot"/>
@@ -435,11 +435,11 @@
     <text name="cs_rf_pda_pivot_btn_start" text="[EN] Start"/>
     <text name="cs_rf_pda_pivot_btn_stop" text="[EN] Stop"/>
     <text name="cs_rf_pda_pivot_btn_min_up" text="[EN] Min+"/>
-    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Min−"/>
+    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Minâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_max_up" text="[EN] Max+"/>
-    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Max−"/>
+    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Maxâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_arm_plus" text="[EN] Arm+"/>
-    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Arm−"/>
+    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Armâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_schedule" text="[EN] Schedule"/>
     <text name="cs_rf_pda_page_fields" text="[EN] Fields"/>
     <text name="cs_rf_pda_page_pivot" text="[EN] Pivot"/>
@@ -476,10 +476,29 @@
     <text name="cs_playkit_pump_power_teach" text="[EN] The pump is the power. Hitch the reel only to tow it: to spray, run the hose from the pump, start the pump, then switch the reel on. Stop the pump or pull the hose and the spray stops."/>
     <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
     <text name="cs_rf_pda_crop_mixed" text="[EN] Mixed"/>
-    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s · covers %s of this block"/>
+    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s Â· covers %s of this block"/>
         <!-- BUILD 11:27 F155 Esc RF button labels -->
         <text name="wc_rf_pda_open_manager" text="Werkersbeheer openen" />
         <text name="sf_pda_btn_rotation_planner" text="Rotatieplanner" />
         <text name="sf_pda_btn_field_detail" text="Veldgegevens" />
+    <!-- ========== REINKE A22 PIVOT (vendored) ========== -->
+    <text name="reinke_pivot_3_name"      text="Reinke A22 Center Pivot - 3 Tower (~115m)"/>
+    <text name="reinke_pivot_5_name"      text="Reinke A22 Center Pivot - 5 Tower (~188m)"/>
+    <text name="reinke_pivot_10_name"     text="Reinke A22 Center Pivot - 10 Tower (~369m)"/>
+    <text name="reinke_pivot_function"    text="Center pivot irrigation system"/>
+    <text name="reinke_pivot_open_dialog" text="Open Pivot Schedule"/>
+    <text name="reinke_pivot_toggle"      text="Toggle Pivot Rotation"/>
+    <text name="input_REINKE_DOOR_TOGGLE"           text="Open / Close Control Panel"/>
+    <text name="input_REINKE_MASTER_POWER"          text="Master Power On / Off"/>
+    <text name="input_REINKE_PIVOT_INTERACT"        text="Toggle Auto Rotation (KP8)"/>
+    <text name="input_REINKE_PIVOT_ANGLE_PLUS"      text="Step Arm +10 deg (Manual)"/>
+    <text name="input_REINKE_PIVOT_ANGLE_MINUS"     text="Step Arm -10 deg (Manual)"/>
+    <text name="input_REINKE_PIVOT_AUTO_MIN_UP"     text="Raise Min Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SWEEP_MIN_DN"    text="Lower Min Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_AUTO_MAX_UP"     text="Raise Max Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SWEEP_MAX_DN"    text="Lower Max Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
+    <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
+    <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
 </texts>
 </l10n>
