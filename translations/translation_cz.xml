@@ -3,243 +3,243 @@
     <texts>
     <!-- ========== HUD OVERLAY ========== -->
     <text name="cs_hud_title"         text="VLHKOST PLODIN"/>
-    <text name="cs_hud_healthy"       text="Zdravé"/>
+    <text name="cs_hud_healthy"       text="ZdravÃ©"/>
     <text name="cs_hud_warning"       text="Stres suchem"/>
-    <text name="cs_hud_critical"      text="KRITICKÉ — Zavlažte okamžitě!"/>
-    <text name="cs_hud_no_crop"       text="Žádná plodina"/>
-    <text name="cs_hud_forecast"      text="5denní předpověď"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 načten. Stiskněte Alt+M pro otevření HUD vlhkosti. Jste v modu noví? Otevřete menu Nápověda (ESC → Nápověda) a najděte Seasonal Crop Stress, abyste se dozvěděli, jak vše funguje."/>
-    <text name="cs_hud_click_forecast" text="Klikněte na řádek pro 5denní předpověď"/>
-    <text name="cs_hud_vehicle_disabled" text="Překrytí vypnuto ve vozidle"/>
+    <text name="cs_hud_critical"      text="KRITICKÃ‰ â€” ZavlaÅ¾te okamÅ¾itÄ›!"/>
+    <text name="cs_hud_no_crop"       text="Å½Ã¡dnÃ¡ plodina"/>
+    <text name="cs_hud_forecast"      text="5dennÃ­ pÅ™edpovÄ›Ä"/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 naÄten. StisknÄ›te Alt+M pro otevÅ™enÃ­ HUD vlhkosti. Jste v modu novÃ­? OtevÅ™ete menu NÃ¡povÄ›da (ESC â†’ NÃ¡povÄ›da) a najdÄ›te Seasonal Crop Stress, abyste se dozvÄ›dÄ›li, jak vÅ¡e funguje."/>
+    <text name="cs_hud_click_forecast" text="KliknÄ›te na Å™Ã¡dek pro 5dennÃ­ pÅ™edpovÄ›Ä"/>
+    <text name="cs_hud_vehicle_disabled" text="PÅ™ekrytÃ­ vypnuto ve vozidle"/>
 
     <!-- ========== FIELD STATUS ========== -->
     <text name="cs_field_moisture"        text="Vlhkost"/>
-    <text name="cs_field_soil_type"       text="Typ půdy"/>
-    <text name="cs_field_stress"          text="Nahromadněný stres"/>
-    <text name="cs_field_yield_impact"    text="Odh. dopad na výnos"/>
-    <text name="cs_field_critical_window" text="Kritické období: NYNÍ"/>
-    <text name="cs_field_nearest_water"   text="Nejbližší voda"/>
+    <text name="cs_field_soil_type"       text="Typ pÅ¯dy"/>
+    <text name="cs_field_stress"          text="NahromadnÄ›nÃ½ stres"/>
+    <text name="cs_field_yield_impact"    text="Odh. dopad na vÃ½nos"/>
+    <text name="cs_field_critical_window" text="KritickÃ© obdobÃ­: NYNÃ"/>
+    <text name="cs_field_nearest_water"   text="NejbliÅ¾Å¡Ã­ voda"/>
 
     <!-- ========== SOIL TYPES ========== -->
-    <text name="cs_soil_sandy"  text="Písčitá"/>
-    <text name="cs_soil_loamy"  text="Hlinitá"/>
-    <text name="cs_soil_clay"   text="Jílovitá"/>
+    <text name="cs_soil_sandy"  text="PÃ­sÄitÃ¡"/>
+    <text name="cs_soil_loamy"  text="HlinitÃ¡"/>
+    <text name="cs_soil_clay"   text="JÃ­lovitÃ¡"/>
 
     <!-- ========== ALERTS ========== -->
-    <text name="cs_alert_info"     text="Pole %d: %s vlhkost klesá — sledujte podmínky."/>
-    <text name="cs_alert_warning"  text="Pole %d: %s vlhkost nízká — doporučeno zavlažování."/>
-    <text name="cs_alert_critical" text="Pole %d: %s na prahu sucha — zavlažte IHNED!"/>
+    <text name="cs_alert_info"     text="Pole %d: %s vlhkost klesÃ¡ â€” sledujte podmÃ­nky."/>
+    <text name="cs_alert_warning"  text="Pole %d: %s vlhkost nÃ­zkÃ¡ â€” doporuÄeno zavlaÅ¾ovÃ¡nÃ­."/>
+    <text name="cs_alert_critical" text="Pole %d: %s na prahu sucha â€” zavlaÅ¾te IHNED!"/>
 
     <!-- ========== IRRIGATION ========== -->
-    <text name="cs_irr_title"          text="Zavlažovací systém — %s"/>
+    <text name="cs_irr_title"          text="ZavlaÅ¾ovacÃ­ systÃ©m â€” %s"/>
     <text name="cs_irr_water_source"   text="Zdroj vody"/>
-    <text name="cs_irr_connected"      text="Připojeno"/>
+    <text name="cs_irr_connected"      text="PÅ™ipojeno"/>
     <text name="cs_irr_disconnected"   text="Odpojeno"/>
-    <text name="cs_irr_schedule"       text="Plán"/>
-    <text name="cs_irr_flow_rate"      text="Průtok"/>
-    <text name="cs_irr_efficiency"     text="Účinnost"/>
-    <text name="cs_irr_cost"           text="Odh. náklady"/>
-    <text name="cs_irr_wear"           text="Úroveň opotřebení"/>
-    <text name="cs_irr_covered_fields" text="Pokrytá pole"/>
-    <text name="cs_irr_irrigate_now"   text="Zavlažit nyní"/>
-    <text name="cs_irr_save_schedule"  text="Uložit plán"/>
-    <text name="cs_irr_pivot"          text="Středový pivot"/>
-    <text name="cs_irr_drip"           text="Kapková linka"/>
-    <text name="cs_irr_pump"           text="Vodní pumpa"/>
-    <text name="cs_irr_start_time"     text="Čas zahájení"/>
-    <text name="cs_irr_end_time"       text="Čas ukončení"/>
-    <text name="cs_irr_performance"    text="Výkon"/>
-    <text name="cs_irr_started"        text="Zavlažování zahájeno."/>
-    <text name="cs_irr_open_schedule"  text="Otevřít plán zavlažování"/>
-    <text name="cs_schedule_saved"     text="Plán uložen."/>
+    <text name="cs_irr_schedule"       text="PlÃ¡n"/>
+    <text name="cs_irr_flow_rate"      text="PrÅ¯tok"/>
+    <text name="cs_irr_efficiency"     text="ÃšÄinnost"/>
+    <text name="cs_irr_cost"           text="Odh. nÃ¡klady"/>
+    <text name="cs_irr_wear"           text="ÃšroveÅˆ opotÅ™ebenÃ­"/>
+    <text name="cs_irr_covered_fields" text="PokrytÃ¡ pole"/>
+    <text name="cs_irr_irrigate_now"   text="ZavlaÅ¾it nynÃ­"/>
+    <text name="cs_irr_save_schedule"  text="UloÅ¾it plÃ¡n"/>
+    <text name="cs_irr_pivot"          text="StÅ™edovÃ½ pivot"/>
+    <text name="cs_irr_drip"           text="KapkovÃ¡ linka"/>
+    <text name="cs_irr_pump"           text="VodnÃ­ pumpa"/>
+    <text name="cs_irr_start_time"     text="ÄŒas zahÃ¡jenÃ­"/>
+    <text name="cs_irr_end_time"       text="ÄŒas ukonÄenÃ­"/>
+    <text name="cs_irr_performance"    text="VÃ½kon"/>
+    <text name="cs_irr_started"        text="ZavlaÅ¾ovÃ¡nÃ­ zahÃ¡jeno."/>
+    <text name="cs_irr_open_schedule"  text="OtevÅ™Ã­t plÃ¡n zavlaÅ¾ovÃ¡nÃ­"/>
+    <text name="cs_schedule_saved"     text="PlÃ¡n uloÅ¾en."/>
 
     <!-- ========== DAY LABELS ========== -->
     <text name="cs_day_mon" text="Po"/>
-    <text name="cs_day_tue" text="Út"/>
+    <text name="cs_day_tue" text="Ãšt"/>
     <text name="cs_day_wed" text="St"/>
-    <text name="cs_day_thu" text="Čt"/>
-    <text name="cs_day_fri" text="Pá"/>
+    <text name="cs_day_thu" text="ÄŒt"/>
+    <text name="cs_day_fri" text="PÃ¡"/>
     <text name="cs_day_sat" text="So"/>
     <text name="cs_day_sun" text="Ne"/>
 
     <!-- ========== CONSULTANT ========== -->
     <text name="cs_consultant_name"            text="Alex Chen, Agronom"/>
-    <text name="cs_consultant_subtitle"        text="Stav pole a doporučení"/>
+    <text name="cs_consultant_subtitle"        text="Stav pole a doporuÄenÃ­"/>
     <text name="cs_consultant_relationship"    text="Vztah s Alexem:"/>
-    <text name="cs_consultant_field_status"    text="Přehled rizik pole (Top 5)"/>
-    <text name="cs_consultant_recommendation"  text="Doporučení"/>
-    <text name="cs_consultant_open_irrigation" text="Otevřít správce zavlažování"/>
+    <text name="cs_consultant_field_status"    text="PÅ™ehled rizik pole (Top 5)"/>
+    <text name="cs_consultant_recommendation"  text="DoporuÄenÃ­"/>
+    <text name="cs_consultant_open_irrigation" text="OtevÅ™Ã­t sprÃ¡vce zavlaÅ¾ovÃ¡nÃ­"/>
     <text name="cs_consultant_no_data"         text="Nejsou k dispozici data o poli."/>
 
     <!-- ========== NPC FAVOR QUESTS ========== -->
-    <text name="cs_favor_soil_sample"     text="Odebrat vzorek půdy z pole %d"/>
-    <text name="cs_favor_irr_check"       text="Zkontrolovat zavlažovací systém u pole %d"/>
-    <text name="cs_favor_emergency_water" text="Zavlažit pole %d před soumrakem!"/>
-    <text name="cs_favor_seasonal_plan"   text="Prohlédnout sezónní plán zavlažování"/>
+    <text name="cs_favor_soil_sample"     text="Odebrat vzorek pÅ¯dy z pole %d"/>
+    <text name="cs_favor_irr_check"       text="Zkontrolovat zavlaÅ¾ovacÃ­ systÃ©m u pole %d"/>
+    <text name="cs_favor_emergency_water" text="ZavlaÅ¾it pole %d pÅ™ed soumrakem!"/>
+    <text name="cs_favor_seasonal_plan"   text="ProhlÃ©dnout sezÃ³nnÃ­ plÃ¡n zavlaÅ¾ovÃ¡nÃ­"/>
 
     <!-- ========== PLACEABLES ========== -->
-    <text name="cs_pivot_name"     text="Středový pivotový zavlažovač"/>
-    <text name="cs_pump_name"      text="Vodní pumpa"/>
-    <text name="cs_drip_name"      text="Kapková zavlažovací linka"/>
-    <text name="cs_pivot_function" text="Středový pivotový zavlažovač s velkým poloměrem. Pokrývá kruhové plochy polí. Vyžaduje vodní pumpu."/>
-    <text name="cs_pump_function"  text="Pohání středové pivoty a kapkové zavlažovací systémy. Umístěte poblíž zdroje vody."/>
-    <text name="cs_drip_function"  text="Přesné zavlažování s nízkým průtokem podél řádků pole. Vyžaduje vodní pumpu."/>
+    <text name="cs_pivot_name"     text="StÅ™edovÃ½ pivotovÃ½ zavlaÅ¾ovaÄ"/>
+    <text name="cs_pump_name"      text="VodnÃ­ pumpa"/>
+    <text name="cs_drip_name"      text="KapkovÃ¡ zavlaÅ¾ovacÃ­ linka"/>
+    <text name="cs_pivot_function" text="StÅ™edovÃ½ pivotovÃ½ zavlaÅ¾ovaÄ s velkÃ½m polomÄ›rem. PokrÃ½vÃ¡ kruhovÃ© plochy polÃ­. VyÅ¾aduje vodnÃ­ pumpu."/>
+    <text name="cs_pump_function"  text="PohÃ¡nÃ­ stÅ™edovÃ© pivoty a kapkovÃ© zavlaÅ¾ovacÃ­ systÃ©my. UmÃ­stÄ›te poblÃ­Å¾ zdroje vody."/>
+    <text name="cs_drip_function"  text="PÅ™esnÃ© zavlaÅ¾ovÃ¡nÃ­ s nÃ­zkÃ½m prÅ¯tokem podÃ©l Å™Ã¡dkÅ¯ pole. VyÅ¾aduje vodnÃ­ pumpu."/>
 
     <!-- ========== IRRIGATION PERFORMANCE VALUES (dynamic, format strings) ========== -->
-    <text name="cs_irr_flow_rate_value"   text="Průtok: %.3f/hod"/>
-    <text name="cs_irr_efficiency_value"  text="Účinnost: %d%%"/>
-    <text name="cs_irr_cost_value"        text="Odh. náklady: $%d/hod"/>
-    <text name="cs_irr_wear_value"        text="Úroveň opotřebení: %d%%"/>
-    <text name="cs_irr_already_active"    text="Zavlažovací systém již běží."/>
-    <text name="cs_irr_no_covered_fields" text="Žádná pole pokrytá tímto systémem."/>
+    <text name="cs_irr_flow_rate_value"   text="PrÅ¯tok: %.3f/hod"/>
+    <text name="cs_irr_efficiency_value"  text="ÃšÄinnost: %d%%"/>
+    <text name="cs_irr_cost_value"        text="Odh. nÃ¡klady: $%d/hod"/>
+    <text name="cs_irr_wear_value"        text="ÃšroveÅˆ opotÅ™ebenÃ­: %d%%"/>
+    <text name="cs_irr_already_active"    text="ZavlaÅ¾ovacÃ­ systÃ©m jiÅ¾ bÄ›Å¾Ã­."/>
+    <text name="cs_irr_no_covered_fields" text="Å½Ã¡dnÃ¡ pole pokrytÃ¡ tÃ­mto systÃ©mem."/>
 
     <!-- ========== CONSULTANT RECOMMENDATIONS (dynamic, format strings) ========== -->
-    <text name="cs_rec_urgent"          text="NALÉHAVÉ: Pole %d na %.0f%% vlhkosti — zavlažte okamžitě!"/>
-    <text name="cs_rec_warning"         text="Pole %d na %.0f%% vlhkosti — doporučeno zavlažování do 24h."/>
-    <text name="cs_rec_ok"              text="Všechna pole v přijatelném rozsahu vlhkosti."/>
-    <text name="cs_rec_forecast"        text="Předpověď: ~ D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
-    <text name="cs_rec_systems_running" text="%d zavlažovací systém(y) aktuálně běží."/>
-    <text name="cs_rec_no_systems"      text="Žádné zavlažovací systémy momentálně neběží."/>
-    <text name="cs_rec_all_healthy"     text="Všechna pole vypadají zdravě."/>
+    <text name="cs_rec_urgent"          text="NALÃ‰HAVÃ‰: Pole %d na %.0f%% vlhkosti â€” zavlaÅ¾te okamÅ¾itÄ›!"/>
+    <text name="cs_rec_warning"         text="Pole %d na %.0f%% vlhkosti â€” doporuÄeno zavlaÅ¾ovÃ¡nÃ­ do 24h."/>
+    <text name="cs_rec_ok"              text="VÅ¡echna pole v pÅ™ijatelnÃ©m rozsahu vlhkosti."/>
+    <text name="cs_rec_forecast"        text="PÅ™edpovÄ›Ä: ~ D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
+    <text name="cs_rec_systems_running" text="%d zavlaÅ¾ovacÃ­ systÃ©m(y) aktuÃ¡lnÄ› bÄ›Å¾Ã­."/>
+    <text name="cs_rec_no_systems"      text="Å½Ã¡dnÃ© zavlaÅ¾ovacÃ­ systÃ©my momentÃ¡lnÄ› nebÄ›Å¾Ã­."/>
+    <text name="cs_rec_all_healthy"     text="VÅ¡echna pole vypadajÃ­ zdravÄ›."/>
 
     <!-- ========== SHARED ========== -->
-    <text name="cs_close"                 text="Zavřít"/>
-    <text name="cs_no_irrigation_systems" text="Zatím nejsou umístěny žádné zavlažovací systémy"/>
+    <text name="cs_close"                 text="ZavÅ™Ã­t"/>
+    <text name="cs_no_irrigation_systems" text="ZatÃ­m nejsou umÃ­stÄ›ny Å¾Ã¡dnÃ© zavlaÅ¾ovacÃ­ systÃ©my"/>
 
     <!-- ========== INPUT ACTION DESCRIPTIONS ========== -->
-    <text name="input_CS_TOGGLE_HUD"      text="Přepnout HUD vlhkosti"/>
-    <text name="input_CS_OPEN_IRRIGATION" text="Otevřít správce zavlažování"/>
-    <text name="input_CS_OPEN_CONSULTANT" text="Otevřít poradce pro plodiny"/>
-    <text name="input_CS_OPEN_SETTINGS"   text="Otevřít nastavení stresu plodin"/>
-    <text name="input_CS_EDIT_HUD"        text="Upravit/Přesunout HUD vlhkosti"/>
+    <text name="input_CS_TOGGLE_HUD"      text="PÅ™epnout HUD vlhkosti"/>
+    <text name="input_CS_OPEN_IRRIGATION" text="OtevÅ™Ã­t sprÃ¡vce zavlaÅ¾ovÃ¡nÃ­"/>
+    <text name="input_CS_OPEN_CONSULTANT" text="OtevÅ™Ã­t poradce pro plodiny"/>
+    <text name="input_CS_OPEN_SETTINGS"   text="OtevÅ™Ã­t nastavenÃ­ stresu plodin"/>
+    <text name="input_CS_EDIT_HUD"        text="Upravit/PÅ™esunout HUD vlhkosti"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Seasonal Crop Stress"/>
     <text name="cs_settings_enabled_short"     text="Povolit mod"/>
-    <text name="cs_settings_enabled_long"      text="Přepnout celý systém Seasonal Crop Stress zapnuto nebo vypnuto"/>
-    <text name="cs_settings_difficulty_short"  text="Obtížnost"/>
-    <text name="cs_settings_difficulty_long"   text="Upravit hromadění stresu a rychlost evapotranspirace"/>
-    <text name="cs_settings_diff_easy"         text="Snadná"/>
-    <text name="cs_settings_diff_normal"       text="Normální"/>
-    <text name="cs_settings_diff_hard"         text="Těžká"/>
-    <text name="cs_settings_hud_short"         text="HUD viditelný"/>
-    <text name="cs_settings_hud_long"          text="Zobrazit nebo skrýt překrytí vlhkosti v seznamu polí"/>
+    <text name="cs_settings_enabled_long"      text="PÅ™epnout celÃ½ systÃ©m Seasonal Crop Stress zapnuto nebo vypnuto"/>
+    <text name="cs_settings_difficulty_short"  text="ObtÃ­Å¾nost"/>
+    <text name="cs_settings_difficulty_long"   text="Upravit hromadÄ›nÃ­ stresu a rychlost evapotranspirace"/>
+    <text name="cs_settings_diff_easy"         text="SnadnÃ¡"/>
+    <text name="cs_settings_diff_normal"       text="NormÃ¡lnÃ­"/>
+    <text name="cs_settings_diff_hard"         text="TÄ›Å¾kÃ¡"/>
+    <text name="cs_settings_hud_short"         text="HUD viditelnÃ½"/>
+    <text name="cs_settings_hud_long"          text="Zobrazit nebo skrÃ½t pÅ™ekrytÃ­ vlhkosti v seznamu polÃ­"/>
     <text name="cs_settings_evap_short"        text="Evapotranspirace"/>
-    <text name="cs_settings_evap_long"         text="Základní rychlost ztráty vlhkosti z půdy"/>
-    <text name="cs_settings_evap_slow"         text="Pomalá"/>
-    <text name="cs_settings_evap_normal"       text="Normální"/>
-    <text name="cs_settings_evap_fast"         text="Rychlá"/>
-    <text name="cs_settings_yield_loss_short"  text="Max. ztráta výnosu"/>
-    <text name="cs_settings_yield_loss_long"   text="Maximální procento výnosu, které může být ztraceno kvůli stresu suchem"/>
-    <text name="cs_settings_threshold_short"   text="Kritický práh"/>
-    <text name="cs_settings_threshold_long"    text="Úroveň vlhkosti, pod kterou se hromadí stres"/>
-    <text name="cs_settings_irr_costs_short"   text="Náklady na zavlažování"/>
-    <text name="cs_settings_irr_costs_long"    text="Povolit nebo zakázat finanční náklady za provoz zavlažovacích systémů"/>
-    <text name="cs_settings_alerts_short"      text="Upozornění povolena"/>
-    <text name="cs_settings_alerts_long"       text="Zobrazit varovná oznámení, když pole potřebují vodu"/>
-    <text name="cs_settings_cooldown_short"    text="Časový odstup upozornění"/>
-    <text name="cs_settings_cooldown_long"     text="Minimální hodiny mezi upozorněními pro stejné pole"/>
-    <text name="cs_settings_debug_short"       text="Režim ladění"/>
-    <text name="cs_settings_debug_long"        text="Povolit podrobné protokolování pro řešení problémů"/>
+    <text name="cs_settings_evap_long"         text="ZÃ¡kladnÃ­ rychlost ztrÃ¡ty vlhkosti z pÅ¯dy"/>
+    <text name="cs_settings_evap_slow"         text="PomalÃ¡"/>
+    <text name="cs_settings_evap_normal"       text="NormÃ¡lnÃ­"/>
+    <text name="cs_settings_evap_fast"         text="RychlÃ¡"/>
+    <text name="cs_settings_yield_loss_short"  text="Max. ztrÃ¡ta vÃ½nosu"/>
+    <text name="cs_settings_yield_loss_long"   text="MaximÃ¡lnÃ­ procento vÃ½nosu, kterÃ© mÅ¯Å¾e bÃ½t ztraceno kvÅ¯li stresu suchem"/>
+    <text name="cs_settings_threshold_short"   text="KritickÃ½ prÃ¡h"/>
+    <text name="cs_settings_threshold_long"    text="ÃšroveÅˆ vlhkosti, pod kterou se hromadÃ­ stres"/>
+    <text name="cs_settings_irr_costs_short"   text="NÃ¡klady na zavlaÅ¾ovÃ¡nÃ­"/>
+    <text name="cs_settings_irr_costs_long"    text="Povolit nebo zakÃ¡zat finanÄnÃ­ nÃ¡klady za provoz zavlaÅ¾ovacÃ­ch systÃ©mÅ¯"/>
+    <text name="cs_settings_alerts_short"      text="UpozornÄ›nÃ­ povolena"/>
+    <text name="cs_settings_alerts_long"       text="Zobrazit varovnÃ¡ oznÃ¡menÃ­, kdyÅ¾ pole potÅ™ebujÃ­ vodu"/>
+    <text name="cs_settings_cooldown_short"    text="ÄŒasovÃ½ odstup upozornÄ›nÃ­"/>
+    <text name="cs_settings_cooldown_long"     text="MinimÃ¡lnÃ­ hodiny mezi upozornÄ›nÃ­mi pro stejnÃ© pole"/>
+    <text name="cs_settings_debug_short"       text="ReÅ¾im ladÄ›nÃ­"/>
+    <text name="cs_settings_debug_long"        text="Povolit podrobnÃ© protokolovÃ¡nÃ­ pro Å™eÅ¡enÃ­ problÃ©mÅ¯"/>
 
     <!-- ========== HELP LINES ========== -->
     <!-- Legacy key kept for safety -->
     <text name="helpLine_cs_category"          text="Seasonal Crop Stress"/>
     <!-- Category titles -->
-    <text name="helpLine_cs_cat_overview"      text="Obecné"/>
-    <text name="helpLine_cs_cat_settings"      text="Nastavení"/>
+    <text name="helpLine_cs_cat_overview"      text="ObecnÃ©"/>
+    <text name="helpLine_cs_cat_settings"      text="NastavenÃ­"/>
     <text name="helpLine_cs_cat_tips"          text="Tipy a triky"/>
     <text name="helpLine_cs_cat_info"          text="Informace o modu"/>
 
     <!-- Overview: Page 1 -->
-    <text name="helpLine_cs_p1_title"          text="Přehled"/>
-    <text name="helpLine_cs_p1_intro_title"    text="Co tento mod přidává"/>
-    <text name="helpLine_cs_p1_intro_text"     text="Seasonal Crop Stress přidává simulaci vlhkosti půdy na každé pole. Plodiny potřebují vodu během klíčových růstových stádií. Pokud ji nedostanou, vaše sklizeň bude menší. Zavlažovací systémy vám umožňují převzít kontrolu nad zásobováním pole vodou."/>
-    <text name="helpLine_cs_p1_start_title"    text="Začínáme"/>
-    <text name="helpLine_cs_p1_start_text"     text="Stiskněte Alt+M pro otevření HUD vlhkosti a zobrazení všech vašich polí na první pohled. Pole zobrazená červeně naléhavě potřebují vodu. Zelená pole jsou v dobrém stavu. Stiskněte 'Otevřít poradce pro plodiny' pro otevření poradce pro plodiny pro podrobné rady a skóre rizik pole."/>
+    <text name="helpLine_cs_p1_title"          text="PÅ™ehled"/>
+    <text name="helpLine_cs_p1_intro_title"    text="Co tento mod pÅ™idÃ¡vÃ¡"/>
+    <text name="helpLine_cs_p1_intro_text"     text="Seasonal Crop Stress pÅ™idÃ¡vÃ¡ simulaci vlhkosti pÅ¯dy na kaÅ¾dÃ© pole. Plodiny potÅ™ebujÃ­ vodu bÄ›hem klÃ­ÄovÃ½ch rÅ¯stovÃ½ch stÃ¡diÃ­. Pokud ji nedostanou, vaÅ¡e sklizeÅˆ bude menÅ¡Ã­. ZavlaÅ¾ovacÃ­ systÃ©my vÃ¡m umoÅ¾ÅˆujÃ­ pÅ™evzÃ­t kontrolu nad zÃ¡sobovÃ¡nÃ­m pole vodou."/>
+    <text name="helpLine_cs_p1_start_title"    text="ZaÄÃ­nÃ¡me"/>
+    <text name="helpLine_cs_p1_start_text"     text="StisknÄ›te Alt+M pro otevÅ™enÃ­ HUD vlhkosti a zobrazenÃ­ vÅ¡ech vaÅ¡ich polÃ­ na prvnÃ­ pohled. Pole zobrazenÃ¡ ÄervenÄ› nalÃ©havÄ› potÅ™ebujÃ­ vodu. ZelenÃ¡ pole jsou v dobrÃ©m stavu. StisknÄ›te 'OtevÅ™Ã­t poradce pro plodiny' pro otevÅ™enÃ­ poradce pro plodiny pro podrobnÃ© rady a skÃ³re rizik pole."/>
 
     <!-- Overview: Page 2 -->
-   <text name="helpLine_cs_p2_title"          text="Vlhkost půdy"/>
+   <text name="helpLine_cs_p2_title"          text="Vlhkost pÅ¯dy"/>
     <text name="helpLine_cs_p2_how_title"      text="Jak vlhkost funguje"/>
-    <text name="helpLine_cs_p2_how_text"       text="Déšť plní vaši půdu a teplo ji vysušuje. Každé pole sleduje svou vlastní úroveň vlhkosti od 0% (úplně suché) do 100% (nasycené). Rychlost sušení závisí na počasí, ročním období a typu půdy."/>
-    <text name="helpLine_cs_p2_soil_title"     text="Typy půdy"/>
-    <text name="helpLine_cs_p2_soil_text"      text="Písčitá půda odvádí rychle a potřebuje časté zavlažování. Jílovitá půda drží vodu déle, ale může se zamoknout. Hlinitá půda je mezi tím a nejsnadnější na správu. Typ půdy vašeho pole je zobrazen v HUD a poradci pro plodiny."/>
+    <text name="helpLine_cs_p2_how_text"       text="DÃ©Å¡Å¥ plnÃ­ vaÅ¡i pÅ¯du a teplo ji vysuÅ¡uje. KaÅ¾dÃ© pole sleduje svou vlastnÃ­ ÃºroveÅˆ vlhkosti od 0% (ÃºplnÄ› suchÃ©) do 100% (nasycenÃ©). Rychlost suÅ¡enÃ­ zÃ¡visÃ­ na poÄasÃ­, roÄnÃ­m obdobÃ­ a typu pÅ¯dy."/>
+    <text name="helpLine_cs_p2_soil_title"     text="Typy pÅ¯dy"/>
+    <text name="helpLine_cs_p2_soil_text"      text="PÃ­sÄitÃ¡ pÅ¯da odvÃ¡dÃ­ rychle a potÅ™ebuje ÄastÃ© zavlaÅ¾ovÃ¡nÃ­. JÃ­lovitÃ¡ pÅ¯da drÅ¾Ã­ vodu dÃ©le, ale mÅ¯Å¾e se zamoknout. HlinitÃ¡ pÅ¯da je mezi tÃ­m a nejsnadnÄ›jÅ¡Ã­ na sprÃ¡vu. Typ pÅ¯dy vaÅ¡eho pole je zobrazen v HUD a poradci pro plodiny."/>
 
     <!-- Overview: Page 3 -->
-    <text name="helpLine_cs_p3_title"          text="Stres plodin a výnos"/>
-    <text name="helpLine_cs_p3_window_title"   text="Kritická růstová okna"/>
-    <text name="helpLine_cs_p3_window_text"    text="Každá plodina má období během svého růstového cyklu, kdy potřebuje vodu nejvíce. Pšenice je nejzranitelnější na jaře, kukuřice trpí během letních veder, řepka je citlivá na podzim. Nízká vlhkost během tohoto okna hromadí stres na tomto poli."/>
-    <text name="helpLine_cs_p3_yield_title"    text="Snížení výnosu při sklizni"/>
-    <text name="helpLine_cs_p3_yield_text"     text="Nahromadněný stres snižuje vaši sklizeň. Malé množství stresu znamená malou ztrátu výnosu. Těžké sucho může snížit vaši sklizeň až o 60%. Poradce pro plodiny zobrazuje vaše aktuální riziko výnosu podle pole, takže můžete upřednostnit zavlažování tam, kde nejvíce záleží."/>
+    <text name="helpLine_cs_p3_title"          text="Stres plodin a vÃ½nos"/>
+    <text name="helpLine_cs_p3_window_title"   text="KritickÃ¡ rÅ¯stovÃ¡ okna"/>
+    <text name="helpLine_cs_p3_window_text"    text="KaÅ¾dÃ¡ plodina mÃ¡ obdobÃ­ bÄ›hem svÃ©ho rÅ¯stovÃ©ho cyklu, kdy potÅ™ebuje vodu nejvÃ­ce. PÅ¡enice je nejzranitelnÄ›jÅ¡Ã­ na jaÅ™e, kukuÅ™ice trpÃ­ bÄ›hem letnÃ­ch veder, Å™epka je citlivÃ¡ na podzim. NÃ­zkÃ¡ vlhkost bÄ›hem tohoto okna hromadÃ­ stres na tomto poli."/>
+    <text name="helpLine_cs_p3_yield_title"    text="SnÃ­Å¾enÃ­ vÃ½nosu pÅ™i sklizni"/>
+    <text name="helpLine_cs_p3_yield_text"     text="NahromadnÄ›nÃ½ stres sniÅ¾uje vaÅ¡i sklizeÅˆ. MalÃ© mnoÅ¾stvÃ­ stresu znamenÃ¡ malou ztrÃ¡tu vÃ½nosu. TÄ›Å¾kÃ© sucho mÅ¯Å¾e snÃ­Å¾it vaÅ¡i sklizeÅˆ aÅ¾ o 60%. Poradce pro plodiny zobrazuje vaÅ¡e aktuÃ¡lnÃ­ riziko vÃ½nosu podle pole, takÅ¾e mÅ¯Å¾ete upÅ™ednostnit zavlaÅ¾ovÃ¡nÃ­ tam, kde nejvÃ­ce zÃ¡leÅ¾Ã­."/>
 
     <!-- Overview: Page 4 (Irrigation) -->
-    <text name="helpLine_cs_p5_title"          text="Zavlažování"/>
-    <text name="helpLine_cs_p5_types_title"    text="Typy zavlažování"/>
-    <text name="helpLine_cs_p5_types_text"     text="Tři typy zavlažování jsou k dispozici v menu stavby. Středový pivot pokrývá velkou kruhovou oblast. Kapková linka poskytuje přesné pokrytí podél řádku pole. Vodní pumpa pohání vaše zavlažovací systémy a musí být nejprve umístěna poblíž zdroje vody."/>
-    <text name="helpLine_cs_p5_schedule_title" text="Plánování a provoz"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Vyberte zavlažovací systém a stiskněte 'Otevřít správce zavlažování' pro otevření jeho plánu. Vyberte, ve které dny v týdnu zavlažovat, a nastavte denní čas zahájení a ukončení. Můžete také stisknout Zavlažit nyní v dialogu pro okamžité zavlažení pokrytých polí bez čekání na plán."/>
+    <text name="helpLine_cs_p5_title"          text="ZavlaÅ¾ovÃ¡nÃ­"/>
+    <text name="helpLine_cs_p5_types_title"    text="Typy zavlaÅ¾ovÃ¡nÃ­"/>
+    <text name="helpLine_cs_p5_types_text"     text="TÅ™i typy zavlaÅ¾ovÃ¡nÃ­ jsou k dispozici v menu stavby. StÅ™edovÃ½ pivot pokrÃ½vÃ¡ velkou kruhovou oblast. KapkovÃ¡ linka poskytuje pÅ™esnÃ© pokrytÃ­ podÃ©l Å™Ã¡dku pole. VodnÃ­ pumpa pohÃ¡nÃ­ vaÅ¡e zavlaÅ¾ovacÃ­ systÃ©my a musÃ­ bÃ½t nejprve umÃ­stÄ›na poblÃ­Å¾ zdroje vody."/>
+    <text name="helpLine_cs_p5_schedule_title" text="PlÃ¡novÃ¡nÃ­ a provoz"/>
+    <text name="helpLine_cs_p5_schedule_text"  text="Vyberte zavlaÅ¾ovacÃ­ systÃ©m a stisknÄ›te 'OtevÅ™Ã­t sprÃ¡vce zavlaÅ¾ovÃ¡nÃ­' pro otevÅ™enÃ­ jeho plÃ¡nu. Vyberte, ve kterÃ© dny v tÃ½dnu zavlaÅ¾ovat, a nastavte dennÃ­ Äas zahÃ¡jenÃ­ a ukonÄenÃ­. MÅ¯Å¾ete takÃ© stisknout ZavlaÅ¾it nynÃ­ v dialogu pro okamÅ¾itÃ© zavlaÅ¾enÃ­ pokrytÃ½ch polÃ­ bez ÄekÃ¡nÃ­ na plÃ¡n."/>
 
     <!-- Overview: Page 5 (Crop Consultant) -->
     <text name="helpLine_cs_p6_title"          text="Poradce pro plodiny"/>
     <text name="helpLine_cs_p6_what_title"     text="Co poradce zobrazuje"/>
-    <text name="helpLine_cs_p6_what_text"      text="Stiskněte 'Otevřít poradce pro plodiny' pro otevření poradce pro plodiny. Zobrazuje vašich 5 nejrizikovějších polí seřazených podle vlhkosti a úrovně stresu, spolu s jasnými doporučeními pro příštích 24 hodin a 3denní předpovědí vlhkosti."/>
-    <text name="helpLine_cs_p6_act_title"      text="Jednání podle rad"/>
-    <text name="helpLine_cs_p6_act_text"       text="Pole označená KRITICKÉ potřebují zavlažování dnes, aby se předešlo ztrátě sklizně. Pole označená VAROVÁNÍ by měla být zavlažena do jednoho nebo dvou dnů. Použijte tlačítko Otevřít správce zavlažování uvnitř poradce pro rychlé naplánování vody pro nejhorší pole."/>
-    <text name="helpLine_cs_p6_npc_title"      text="Volitelné integrace"/>
-    <text name="helpLine_cs_p6_npc_text"       text="Několik volitelných modů rozšiřuje systém. FS25_NPCFavor: Alex Chen se objeví jako NPC agronom — plňte laskavosti pro odemčení včasných varování před suchem a specializovaných rad k zavlažování. FS25_SoilFertilizer: pH půdy a organická hmota upravují evapotranspiraci podle pole. FS25_UsedPlus: Provozní náklady na zavlažování a opotřebení zařízení jsou sledovány. CoursePlay: Počty aktivních vozidel se objevují ve stresových upozorněních. AutoDrive: Návrhy na vodní cíle se objevují v kritických upozorněních. Precision Farming DLC: Vlhkost půdy je zobrazena v mapovém překrytí PF."/>
+    <text name="helpLine_cs_p6_what_text"      text="StisknÄ›te 'OtevÅ™Ã­t poradce pro plodiny' pro otevÅ™enÃ­ poradce pro plodiny. Zobrazuje vaÅ¡ich 5 nejrizikovÄ›jÅ¡Ã­ch polÃ­ seÅ™azenÃ½ch podle vlhkosti a ÃºrovnÄ› stresu, spolu s jasnÃ½mi doporuÄenÃ­mi pro pÅ™Ã­Å¡tÃ­ch 24 hodin a 3dennÃ­ pÅ™edpovÄ›dÃ­ vlhkosti."/>
+    <text name="helpLine_cs_p6_act_title"      text="JednÃ¡nÃ­ podle rad"/>
+    <text name="helpLine_cs_p6_act_text"       text="Pole oznaÄenÃ¡ KRITICKÃ‰ potÅ™ebujÃ­ zavlaÅ¾ovÃ¡nÃ­ dnes, aby se pÅ™edeÅ¡lo ztrÃ¡tÄ› skliznÄ›. Pole oznaÄenÃ¡ VAROVÃNÃ by mÄ›la bÃ½t zavlaÅ¾ena do jednoho nebo dvou dnÅ¯. PouÅ¾ijte tlaÄÃ­tko OtevÅ™Ã­t sprÃ¡vce zavlaÅ¾ovÃ¡nÃ­ uvnitÅ™ poradce pro rychlÃ© naplÃ¡novÃ¡nÃ­ vody pro nejhorÅ¡Ã­ pole."/>
+    <text name="helpLine_cs_p6_npc_title"      text="VolitelnÃ© integrace"/>
+    <text name="helpLine_cs_p6_npc_text"       text="NÄ›kolik volitelnÃ½ch modÅ¯ rozÅ¡iÅ™uje systÃ©m. FS25_NPCFavor: Alex Chen se objevÃ­ jako NPC agronom â€” plÅˆte laskavosti pro odemÄenÃ­ vÄasnÃ½ch varovÃ¡nÃ­ pÅ™ed suchem a specializovanÃ½ch rad k zavlaÅ¾ovÃ¡nÃ­. FS25_SoilFertilizer: pH pÅ¯dy a organickÃ¡ hmota upravujÃ­ evapotranspiraci podle pole. FS25_UsedPlus: ProvoznÃ­ nÃ¡klady na zavlaÅ¾ovÃ¡nÃ­ a opotÅ™ebenÃ­ zaÅ™Ã­zenÃ­ jsou sledovÃ¡ny. CoursePlay: PoÄty aktivnÃ­ch vozidel se objevujÃ­ ve stresovÃ½ch upozornÄ›nÃ­ch. AutoDrive: NÃ¡vrhy na vodnÃ­ cÃ­le se objevujÃ­ v kritickÃ½ch upozornÄ›nÃ­ch. Precision Farming DLC: Vlhkost pÅ¯dy je zobrazena v mapovÃ©m pÅ™ekrytÃ­ PF."/>
 
-    <!-- Settings: Page 1 — General Settings -->
-    <text name="helpLine_cs_s1_title"          text="Obecná nastavení"/>
-    <text name="helpLine_cs_s1_gen_title"      text="Povolení modu"/>
-    <text name="helpLine_cs_s1_gen_text"       text="Otevřete herní nastavení (ESC → Nastavení → Seasonal Crop Stress). Použijte Povolit mod pro zapnutí nebo vypnutí celého systému bez odstranění vaší zavlažovací infrastruktury. Nastavení obtížnosti řídí, jak rychle plodiny hromadí stres suchem — Snadná je shovívavá, Těžká vás nutí zavlažovat proaktivně."/>
+    <!-- Settings: Page 1 â€” General Settings -->
+    <text name="helpLine_cs_s1_title"          text="ObecnÃ¡ nastavenÃ­"/>
+    <text name="helpLine_cs_s1_gen_title"      text="PovolenÃ­ modu"/>
+    <text name="helpLine_cs_s1_gen_text"       text="OtevÅ™ete hernÃ­ nastavenÃ­ (ESC â†’ NastavenÃ­ â†’ Seasonal Crop Stress). PouÅ¾ijte Povolit mod pro zapnutÃ­ nebo vypnutÃ­ celÃ©ho systÃ©mu bez odstranÄ›nÃ­ vaÅ¡Ã­ zavlaÅ¾ovacÃ­ infrastruktury. NastavenÃ­ obtÃ­Å¾nosti Å™Ã­dÃ­, jak rychle plodiny hromadÃ­ stres suchem â€” SnadnÃ¡ je shovÃ­vavÃ¡, TÄ›Å¾kÃ¡ vÃ¡s nutÃ­ zavlaÅ¾ovat proaktivnÄ›."/>
     <text name="helpLine_cs_s1_evap_title"     text="Rychlost evapotranspirace"/>
-    <text name="helpLine_cs_s1_evap_text"      text="Evapotranspirace řídí, jak rychle půda vysychá mezi dešti. Pomalá znamená, že pole drží vlhkost dobře a déšť má velký dosah. Rychlá znamená, že pole mohou vyschnout během jednoho herního dne během horkého počasí — aktivní správa zavlažování se stává nezbytnou."/>
+    <text name="helpLine_cs_s1_evap_text"      text="Evapotranspirace Å™Ã­dÃ­, jak rychle pÅ¯da vysychÃ¡ mezi deÅ¡ti. PomalÃ¡ znamenÃ¡, Å¾e pole drÅ¾Ã­ vlhkost dobÅ™e a dÃ©Å¡Å¥ mÃ¡ velkÃ½ dosah. RychlÃ¡ znamenÃ¡, Å¾e pole mohou vyschnout bÄ›hem jednoho hernÃ­ho dne bÄ›hem horkÃ©ho poÄasÃ­ â€” aktivnÃ­ sprÃ¡va zavlaÅ¾ovÃ¡nÃ­ se stÃ¡vÃ¡ nezbytnou."/>
 
-    <!-- Settings: Page 2 — Advanced Settings -->
-    <text name="helpLine_cs_s2_title"          text="Pokročilá nastavení"/>
-    <text name="helpLine_cs_s2_yield_title"    text="Ztráta výnosu a práh stresu"/>
-    <text name="helpLine_cs_s2_yield_text"     text="Maximální ztráta výnosu omezuje procento sklizně, které může stres suchem snížit. Při výchozích 60 % plně stresované pole stále poskytuje 40 % normálního výnosu. Kritický práh je úroveň vlhkosti, pod kterou začíná hromadit se stres — zvyšte ho pro citlivější plodiny na sucho, snižte ho pro větší toleranci."/>
-    <text name="helpLine_cs_s2_alerts_title"   text="Náklady na zavlažování a upozornění"/>
-    <text name="helpLine_cs_s2_alerts_text"    text="Náklady na zavlažování účtují hodinový poplatek za běžící zavlažovací systémy, což přidává vrstvu finančního řízení. Zakažte to pro jednodušší zážitek. Upozornění povolena zobrazuje varovná oznámení, když pole potřebují vodu. Časový odstup upozornění nastavuje minimální herní hodiny před tím, než stejné pole spustí další upozornění, což zabraňuje spamu oznámení."/>
+    <!-- Settings: Page 2 â€” Advanced Settings -->
+    <text name="helpLine_cs_s2_title"          text="PokroÄilÃ¡ nastavenÃ­"/>
+    <text name="helpLine_cs_s2_yield_title"    text="ZtrÃ¡ta vÃ½nosu a prÃ¡h stresu"/>
+    <text name="helpLine_cs_s2_yield_text"     text="MaximÃ¡lnÃ­ ztrÃ¡ta vÃ½nosu omezuje procento skliznÄ›, kterÃ© mÅ¯Å¾e stres suchem snÃ­Å¾it. PÅ™i vÃ½chozÃ­ch 60 % plnÄ› stresovanÃ© pole stÃ¡le poskytuje 40 % normÃ¡lnÃ­ho vÃ½nosu. KritickÃ½ prÃ¡h je ÃºroveÅˆ vlhkosti, pod kterou zaÄÃ­nÃ¡ hromadit se stres â€” zvyÅ¡te ho pro citlivÄ›jÅ¡Ã­ plodiny na sucho, sniÅ¾te ho pro vÄ›tÅ¡Ã­ toleranci."/>
+    <text name="helpLine_cs_s2_alerts_title"   text="NÃ¡klady na zavlaÅ¾ovÃ¡nÃ­ a upozornÄ›nÃ­"/>
+    <text name="helpLine_cs_s2_alerts_text"    text="NÃ¡klady na zavlaÅ¾ovÃ¡nÃ­ ÃºÄtujÃ­ hodinovÃ½ poplatek za bÄ›Å¾Ã­cÃ­ zavlaÅ¾ovacÃ­ systÃ©my, coÅ¾ pÅ™idÃ¡vÃ¡ vrstvu finanÄnÃ­ho Å™Ã­zenÃ­. ZakaÅ¾te to pro jednoduÅ¡Å¡Ã­ zÃ¡Å¾itek. UpozornÄ›nÃ­ povolena zobrazuje varovnÃ¡ oznÃ¡menÃ­, kdyÅ¾ pole potÅ™ebujÃ­ vodu. ÄŒasovÃ½ odstup upozornÄ›nÃ­ nastavuje minimÃ¡lnÃ­ hernÃ­ hodiny pÅ™ed tÃ­m, neÅ¾ stejnÃ© pole spustÃ­ dalÅ¡Ã­ upozornÄ›nÃ­, coÅ¾ zabraÅˆuje spamu oznÃ¡menÃ­."/>
 
     <!-- Tips & Tricks: Page 1 (HUD & Controls) -->
-    <text name="helpLine_cs_p4_title"          text="HUD a ovládání"/>
-    <text name="helpLine_cs_p4_hud_title"      text="Překrytí HUD vlhkosti"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Stiskněte Alt+M pro přepnutí HUD vlhkosti. Zobrazuje každé pole s jeho úrovní vlhkosti, typem plodiny a stavem stresu. 5denní předpověď ukazuje, zda vlhkost stoupá nebo klesá, takže můžete plánovat dopředu. Panel můžete také přetáhnout na libovolnou pozici na obrazovce kliknutím a uvolněním."/>
-    <text name="helpLine_cs_p4_reading_title"  text="Čtení řádku pole"/>
-    <text name="helpLine_cs_p4_reading_text"   text="Každý řádek zobrazuje: číslo pole (P1), název plodiny (Pšenice), aktuální růstové stadium (Stadium 3), barevně kódovaný pruh vlhkosti a procento vlhkosti. Pokud řádek končí vykřičníkem (!), toto pole již hromadí stres suchem a začala ztráta výnosu — zavlažte ho nyní. V seznamu se objevují pouze plodiny, které mohou trpět stresem suchem."/>
+    <text name="helpLine_cs_p4_title"          text="HUD a ovlÃ¡dÃ¡nÃ­"/>
+    <text name="helpLine_cs_p4_hud_title"      text="PÅ™ekrytÃ­ HUD vlhkosti"/>
+    <text name="helpLine_cs_p4_hud_text"       text="StisknÄ›te Alt+M pro pÅ™epnutÃ­ HUD vlhkosti. Zobrazuje kaÅ¾dÃ© pole s jeho ÃºrovnÃ­ vlhkosti, typem plodiny a stavem stresu. 5dennÃ­ pÅ™edpovÄ›Ä ukazuje, zda vlhkost stoupÃ¡ nebo klesÃ¡, takÅ¾e mÅ¯Å¾ete plÃ¡novat dopÅ™edu. Panel mÅ¯Å¾ete takÃ© pÅ™etÃ¡hnout na libovolnou pozici na obrazovce kliknutÃ­m a uvolnÄ›nÃ­m."/>
+    <text name="helpLine_cs_p4_reading_title"  text="ÄŒtenÃ­ Å™Ã¡dku pole"/>
+    <text name="helpLine_cs_p4_reading_text"   text="KaÅ¾dÃ½ Å™Ã¡dek zobrazuje: ÄÃ­slo pole (P1), nÃ¡zev plodiny (PÅ¡enice), aktuÃ¡lnÃ­ rÅ¯stovÃ© stadium (Stadium 3), barevnÄ› kÃ³dovanÃ½ pruh vlhkosti a procento vlhkosti. Pokud Å™Ã¡dek konÄÃ­ vykÅ™iÄnÃ­kem (!), toto pole jiÅ¾ hromadÃ­ stres suchem a zaÄala ztrÃ¡ta vÃ½nosu â€” zavlaÅ¾te ho nynÃ­. V seznamu se objevujÃ­ pouze plodiny, kterÃ© mohou trpÄ›t stresem suchem."/>
     <text name="helpLine_cs_p4_status_title"   text="Barvy stavu"/>
-    <text name="helpLine_cs_p4_status_text"    text="Zelená znamená, že vaše pole je zdravé a není potřeba žádná akce. Žlutá je varování: vlhkost klesá a zavlažování je brzy vhodné. Červená je kritická: plodina je pod stresem suchem a ztráta výnosu již hromadí — zavlažte okamžitě."/>
-    <text name="helpLine_cs_p4_keys_title"     text="Klávesové zkratky"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Alt+M přepíná HUD vlhkosti zapnuto nebo vypnuto. 'Otevřít správce zavlažování' otevírá správce zavlažování pro vybraný systém. 'Otevřít poradce pro plodiny' otevírá poradce pro plodiny se shrnutím rizik pole a personalizovanými doporučeními."/>
+    <text name="helpLine_cs_p4_status_text"    text="ZelenÃ¡ znamenÃ¡, Å¾e vaÅ¡e pole je zdravÃ© a nenÃ­ potÅ™eba Å¾Ã¡dnÃ¡ akce. Å½lutÃ¡ je varovÃ¡nÃ­: vlhkost klesÃ¡ a zavlaÅ¾ovÃ¡nÃ­ je brzy vhodnÃ©. ÄŒervenÃ¡ je kritickÃ¡: plodina je pod stresem suchem a ztrÃ¡ta vÃ½nosu jiÅ¾ hromadÃ­ â€” zavlaÅ¾te okamÅ¾itÄ›."/>
+    <text name="helpLine_cs_p4_keys_title"     text="KlÃ¡vesovÃ© zkratky"/>
+    <text name="helpLine_cs_p4_keys_text"      text="Alt+M pÅ™epÃ­nÃ¡ HUD vlhkosti zapnuto nebo vypnuto. 'OtevÅ™Ã­t sprÃ¡vce zavlaÅ¾ovÃ¡nÃ­' otevÃ­rÃ¡ sprÃ¡vce zavlaÅ¾ovÃ¡nÃ­ pro vybranÃ½ systÃ©m. 'OtevÅ™Ã­t poradce pro plodiny' otevÃ­rÃ¡ poradce pro plodiny se shrnutÃ­m rizik pole a personalizovanÃ½mi doporuÄenÃ­mi."/>
 
-    <!-- Tips & Tricks: Page 2 — Farming Strategies -->
-    <text name="helpLine_cs_t2_title"          text="Farmářské strategie"/>
-    <text name="helpLine_cs_t2_sandy_title"    text="Upřednostněte písčitá pole"/>
-    <text name="helpLine_cs_t2_sandy_text"     text="Písčitá půda schne dvakrát rychleji než hlinitá půda. Pokud farmíte mix typů půdy, umístěte zavlažování nejprve na písčitá pole. Středový pivot pokrývající velkou písčitou oblast je často lepší investicí než kapková linka na malém jílovitém poli, které přirozeně drží vlhkost."/>
-    <text name="helpLine_cs_t2_forecast_title" text="Používejte předpověď"/>
-    <text name="helpLine_cs_t2_forecast_text"  text="5denní předpověď v HUD ukazuje, zda vlhkost má vzestupný nebo sestupný trend. Pokud je déšť předpovězen do jednoho nebo dvou dnů a vaše pole jsou pouze v rozsahu varování, počkejte na déšť — ušetříte peníze a opotřebení zařízení. Jednejte brzy, když předpověď ukazuje několik suchých dní během kritického růstového okna."/>
+    <!-- Tips & Tricks: Page 2 â€” Farming Strategies -->
+    <text name="helpLine_cs_t2_title"          text="FarmÃ¡Å™skÃ© strategie"/>
+    <text name="helpLine_cs_t2_sandy_title"    text="UpÅ™ednostnÄ›te pÃ­sÄitÃ¡ pole"/>
+    <text name="helpLine_cs_t2_sandy_text"     text="PÃ­sÄitÃ¡ pÅ¯da schne dvakrÃ¡t rychleji neÅ¾ hlinitÃ¡ pÅ¯da. Pokud farmÃ­te mix typÅ¯ pÅ¯dy, umÃ­stÄ›te zavlaÅ¾ovÃ¡nÃ­ nejprve na pÃ­sÄitÃ¡ pole. StÅ™edovÃ½ pivot pokrÃ½vajÃ­cÃ­ velkou pÃ­sÄitou oblast je Äasto lepÅ¡Ã­ investicÃ­ neÅ¾ kapkovÃ¡ linka na malÃ©m jÃ­lovitÃ©m poli, kterÃ© pÅ™irozenÄ› drÅ¾Ã­ vlhkost."/>
+    <text name="helpLine_cs_t2_forecast_title" text="PouÅ¾Ã­vejte pÅ™edpovÄ›Ä"/>
+    <text name="helpLine_cs_t2_forecast_text"  text="5dennÃ­ pÅ™edpovÄ›Ä v HUD ukazuje, zda vlhkost mÃ¡ vzestupnÃ½ nebo sestupnÃ½ trend. Pokud je dÃ©Å¡Å¥ pÅ™edpovÄ›zen do jednoho nebo dvou dnÅ¯ a vaÅ¡e pole jsou pouze v rozsahu varovÃ¡nÃ­, poÄkejte na dÃ©Å¡Å¥ â€” uÅ¡etÅ™Ã­te penÃ­ze a opotÅ™ebenÃ­ zaÅ™Ã­zenÃ­. Jednejte brzy, kdyÅ¾ pÅ™edpovÄ›Ä ukazuje nÄ›kolik suchÃ½ch dnÃ­ bÄ›hem kritickÃ©ho rÅ¯stovÃ©ho okna."/>
 
-    <!-- Mod Information: Page 1 — About -->
+    <!-- Mod Information: Page 1 â€” About -->
     <text name="helpLine_cs_i1_title"           text="O tomto modu"/>
     <text name="helpLine_cs_i1_about_title"     text="Seasonal Crop Stress v1.0.5.0"/>
-    <text name="helpLine_cs_i1_about_text"      text="Vytvořil TisonK. Přidává realistickou simulaci vlhkosti půdy, sezónní hromadění stresu plodin a správu zavlažovací infrastruktury do Farming Simulator 25. Navrženo pro strategičtější správu plodin — každé pole, každá sezóna, každé rozhodnutí se počítá."/>
+    <text name="helpLine_cs_i1_about_text"      text="VytvoÅ™il TisonK. PÅ™idÃ¡vÃ¡ realistickou simulaci vlhkosti pÅ¯dy, sezÃ³nnÃ­ hromadÄ›nÃ­ stresu plodin a sprÃ¡vu zavlaÅ¾ovacÃ­ infrastruktury do Farming Simulator 25. NavrÅ¾eno pro strategiÄtÄ›jÅ¡Ã­ sprÃ¡vu plodin â€” kaÅ¾dÃ© pole, kaÅ¾dÃ¡ sezÃ³na, kaÅ¾dÃ© rozhodnutÃ­ se poÄÃ­tÃ¡."/>
     <text name="helpLine_cs_i1_community_title" text="Komunita a podpora"/>
-    <text name="helpLine_cs_i1_community_text"  text="Najděte tento mod na Github a KingMods. Pro otázky, hlášení chyb a aktualizace prosím navštivte github repozitář."/>
+    <text name="helpLine_cs_i1_community_text"  text="NajdÄ›te tento mod na Github a KingMods. Pro otÃ¡zky, hlÃ¡Å¡enÃ­ chyb a aktualizace prosÃ­m navÅ¡tivte github repozitÃ¡Å™."/>
 
-    <!-- Mod Information: Page 2 — Optional Integrations detail -->
-    <text name="helpLine_cs_i2_title"          text="Volitelné integrace"/>
+    <!-- Mod Information: Page 2 â€” Optional Integrations detail -->
+    <text name="helpLine_cs_i2_title"          text="VolitelnÃ© integrace"/>
     <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor a FS25_SoilFertilizer"/>
-    <text name="helpLine_cs_i2_npc_text"       text="S nainstalovaným FS25_NPCFavor se Alex Chen objeví jako NPC agronom na vaší farmě. Plnění laskavostí pro Alexe buduje váš vztah a odemyká včasná varování před suchem a specializované rady k zavlažování. S FS25_SoilFertilizer pH půdy a obsah organické hmoty každého pole upravuje evapotranspiraci — pole se špatným zdravím půdy schnou rychleji, což činí dobrou správu půdy hodnotnou vedle zavlažování."/>
+    <text name="helpLine_cs_i2_npc_text"       text="S nainstalovanÃ½m FS25_NPCFavor se Alex Chen objevÃ­ jako NPC agronom na vaÅ¡Ã­ farmÄ›. PlnÄ›nÃ­ laskavostÃ­ pro Alexe buduje vÃ¡Å¡ vztah a odemykÃ¡ vÄasnÃ¡ varovÃ¡nÃ­ pÅ™ed suchem a specializovanÃ© rady k zavlaÅ¾ovÃ¡nÃ­. S FS25_SoilFertilizer pH pÅ¯dy a obsah organickÃ© hmoty kaÅ¾dÃ©ho pole upravuje evapotranspiraci â€” pole se Å¡patnÃ½m zdravÃ­m pÅ¯dy schnou rychleji, coÅ¾ ÄinÃ­ dobrou sprÃ¡vu pÅ¯dy hodnotnou vedle zavlaÅ¾ovÃ¡nÃ­."/>
     <text name="helpLine_cs_i2_vehicle_title"  text="CoursePlay, AutoDrive a Precision Farming"/>
-    <text name="helpLine_cs_i2_vehicle_text"   text="Když je CoursePlay aktivní, počet autonomních vozidel pracujících na stresovaném poli je zobrazen v upozornění tohoto pole. Když je detekován AutoDrive, kritická upozornění na sucho zahrnují počty dostupných vodních cílů a návrh na nastavení dopravní trasy. S FS25_UsedPlus se účtují hodinové provozní náklady na zavlažování a realisticky se hromadí opotřebení zařízení. Pokud je aktivní DLC Precision Farming, data o vlhkosti půdy jsou zobrazena přímo v mapovém překrytí PF."/>
+    <text name="helpLine_cs_i2_vehicle_text"   text="KdyÅ¾ je CoursePlay aktivnÃ­, poÄet autonomnÃ­ch vozidel pracujÃ­cÃ­ch na stresovanÃ©m poli je zobrazen v upozornÄ›nÃ­ tohoto pole. KdyÅ¾ je detekovÃ¡n AutoDrive, kritickÃ¡ upozornÄ›nÃ­ na sucho zahrnujÃ­ poÄty dostupnÃ½ch vodnÃ­ch cÃ­lÅ¯ a nÃ¡vrh na nastavenÃ­ dopravnÃ­ trasy. S FS25_UsedPlus se ÃºÄtujÃ­ hodinovÃ© provoznÃ­ nÃ¡klady na zavlaÅ¾ovÃ¡nÃ­ a realisticky se hromadÃ­ opotÅ™ebenÃ­ zaÅ™Ã­zenÃ­. Pokud je aktivnÃ­ DLC Precision Farming, data o vlhkosti pÅ¯dy jsou zobrazena pÅ™Ã­mo v mapovÃ©m pÅ™ekrytÃ­ PF."/>
 
-    <!-- Tips & Tricks: Page 3 — Sprayers & Watering -->
-    <text name="helpLine_cs_t3_title"          text="Postřikovače a zalévání"/>
-    <text name="helpLine_cs_t3_sprayer_title"  text="Použití postřikovačů jako zavlažování"/>
-    <text name="helpLine_cs_t3_sprayer_text"   text="Standardní vozidlové postřikovače lze použít jako manuální alternativu k permanentním zavlažovacím systémům. Pokud naplníte postřikovač VODOU, jakákoli oblast, kterou postříkáte, obdrží okamžité zvýšení vlhkosti. To je užitečné pro malá pole nebo jako dočasné opatření, dokud si nemůžete dovolit středový pivot nebo kapkovou linku."/>
+    <!-- Tips & Tricks: Page 3 â€” Sprayers & Watering -->
+    <text name="helpLine_cs_t3_title"          text="PostÅ™ikovaÄe a zalÃ©vÃ¡nÃ­"/>
+    <text name="helpLine_cs_t3_sprayer_title"  text="PouÅ¾itÃ­ postÅ™ikovaÄÅ¯ jako zavlaÅ¾ovÃ¡nÃ­"/>
+    <text name="helpLine_cs_t3_sprayer_text"   text="StandardnÃ­ vozidlovÃ© postÅ™ikovaÄe lze pouÅ¾Ã­t jako manuÃ¡lnÃ­ alternativu k permanentnÃ­m zavlaÅ¾ovacÃ­m systÃ©mÅ¯m. Pokud naplnÃ­te postÅ™ikovaÄ VODOU, jakÃ¡koli oblast, kterou postÅ™Ã­kÃ¡te, obdrÅ¾Ã­ okamÅ¾itÃ© zvÃ½Å¡enÃ­ vlhkosti. To je uÅ¾iteÄnÃ© pro malÃ¡ pole nebo jako doÄasnÃ© opatÅ™enÃ­, dokud si nemÅ¯Å¾ete dovolit stÅ™edovÃ½ pivot nebo kapkovou linku."/>
 
     <!-- ========== PDA SCREEN ========== -->
     <text name="cs_pda_screen_title"           text="Crop Moisture Monitor"/>
@@ -302,8 +302,8 @@
     <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d vozidlo pracuje na tomto poli"/>
     <text name="cs_cp_vehicles_on_field" text="CoursePlay: %d vozidel pracuje na tomto poli"/>
     <!-- AutoDrive context appended to CRITICAL alerts -->
-    <text name="cs_ad_water_hint"    text="AutoDrive: %d vodní cíl(e) k dispozici — zvažte dopravní trasu"/>
-    <text name="cs_ad_destinations"  text="AutoDrive: %d cíl(ů) nakonfigurováno"/>
+    <text name="cs_ad_water_hint"    text="AutoDrive: %d vodnÃ­ cÃ­l(e) k dispozici â€” zvaÅ¾te dopravnÃ­ trasu"/>
+    <text name="cs_ad_destinations"  text="AutoDrive: %d cÃ­l(Å¯) nakonfigurovÃ¡no"/>
 
     
     <!-- ========== HELP DIALOG ========== -->
@@ -389,18 +389,18 @@
     <text name="cs_rf_pda_next_covered_idle" text="[EN] Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
     <text name="cs_rf_pda_next_looking_good" text="[EN] Looking good - recheck later; handle Critical fields first."/>
     <text name="cs_rf_pda_yield_keep" text="[EN] Yield keep: %d%%"/>
-    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0f°C, dry pull %.1f"/>
-    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %d–%d"/>
+    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0fÂ°C, dry pull %.1f"/>
+    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %dâ€“%d"/>
     <text name="cs_rf_pda_sched_daily" text=" daily"/>
     <text name="cs_rf_pda_sched_weekdays" text=" weekdays"/>
     <text name="cs_rf_pda_sched_none" text="[EN] no schedule"/>
-    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered · no schedule"/>
+    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered Â· no schedule"/>
     <text name="cs_rf_pda_no_coverage" text="[EN] No coverage"/>
     <text name="cs_rf_pda_rate_off" text="[EN] Rate off"/>
     <text name="cs_rf_pda_rate_on" text="[EN] Rate +%.2f/h"/>
     <text name="cs_rf_pda_alert_prefix" text="[EN] Alert: %s"/>
-    <text name="cs_rf_pda_next_alert_sep" text=" · %s"/>
-    <text name="cs_rf_pda_status_join" text="[EN] %s  ·  Status: %s"/>
+    <text name="cs_rf_pda_next_alert_sep" text=" Â· %s"/>
+    <text name="cs_rf_pda_status_join" text="[EN] %s  Â·  Status: %s"/>
     <!-- Esc CS PIVOT card (2026-08-09) -->
     <text name="cs_rf_pda_pivot_title" text="[EN] PIVOT"/>
     <text name="cs_rf_pda_pivot_title_irrig" text="[EN] IRRIGATION"/>
@@ -409,21 +409,21 @@
 <text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur —"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min —"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max —"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
     <text name="cs_rf_pda_pivot_watering_off" text="[EN] Watering now: Off"/>
     <text name="cs_rf_pda_pivot_pressure" text="[EN] Pressure: %d%%"/>
-    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: —"/>
+    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: â€”"/>
     <text name="cs_rf_pda_pivot_rate" text="[EN] Rate: +%.3f/h"/>
-    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: —"/>
-    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00–%02d:00%s"/>
+    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: â€”"/>
+    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00â€“%02d:00%s"/>
     <text name="cs_rf_pda_pivot_sched_none" text="[EN] Schedule: No schedule"/>
     <text name="cs_rf_pda_pivot_warn_none" text="[EN] No pivot on this field"/>
     <text name="cs_rf_pda_pivot_warn_owner" text="[EN] Not your pivot"/>
@@ -438,11 +438,11 @@
     <text name="cs_rf_pda_pivot_btn_start" text="[EN] Start"/>
     <text name="cs_rf_pda_pivot_btn_stop" text="[EN] Stop"/>
     <text name="cs_rf_pda_pivot_btn_min_up" text="[EN] Min+"/>
-    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Min−"/>
+    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Minâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_max_up" text="[EN] Max+"/>
-    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Max−"/>
+    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Maxâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_arm_plus" text="[EN] Arm+"/>
-    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Arm−"/>
+    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Armâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_schedule" text="[EN] Schedule"/>
     <text name="cs_rf_pda_page_fields" text="[EN] Fields"/>
     <text name="cs_rf_pda_page_pivot" text="[EN] Pivot"/>
@@ -479,10 +479,29 @@
     <text name="cs_playkit_pump_power_teach" text="[EN] The pump is the power. Hitch the reel only to tow it: to spray, run the hose from the pump, start the pump, then switch the reel on. Stop the pump or pull the hose and the spray stops."/>
     <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
     <text name="cs_rf_pda_crop_mixed" text="[EN] Mixed"/>
-    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s · covers %s of this block"/>
+    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s Â· covers %s of this block"/>
         <!-- BUILD 11:27 F155 Esc RF button labels -->
-        <text name="wc_rf_pda_open_manager" text="Otevřít správce pracovníků" />
-        <text name="sf_pda_btn_rotation_planner" text="Plánovač osevního postupu" />
+        <text name="wc_rf_pda_open_manager" text="OtevÅ™Ã­t sprÃ¡vce pracovnÃ­kÅ¯" />
+        <text name="sf_pda_btn_rotation_planner" text="PlÃ¡novaÄ osevnÃ­ho postupu" />
         <text name="sf_pda_btn_field_detail" text="Detail pole" />
+    <!-- ========== REINKE A22 PIVOT (vendored) ========== -->
+    <text name="reinke_pivot_3_name"      text="Reinke A22 Center Pivot - 3 Tower (~115m)"/>
+    <text name="reinke_pivot_5_name"      text="Reinke A22 Center Pivot - 5 Tower (~188m)"/>
+    <text name="reinke_pivot_10_name"     text="Reinke A22 Center Pivot - 10 Tower (~369m)"/>
+    <text name="reinke_pivot_function"    text="Center pivot irrigation system"/>
+    <text name="reinke_pivot_open_dialog" text="Open Pivot Schedule"/>
+    <text name="reinke_pivot_toggle"      text="Toggle Pivot Rotation"/>
+    <text name="input_REINKE_DOOR_TOGGLE"           text="Open / Close Control Panel"/>
+    <text name="input_REINKE_MASTER_POWER"          text="Master Power On / Off"/>
+    <text name="input_REINKE_PIVOT_INTERACT"        text="Toggle Auto Rotation (KP8)"/>
+    <text name="input_REINKE_PIVOT_ANGLE_PLUS"      text="Step Arm +10 deg (Manual)"/>
+    <text name="input_REINKE_PIVOT_ANGLE_MINUS"     text="Step Arm -10 deg (Manual)"/>
+    <text name="input_REINKE_PIVOT_AUTO_MIN_UP"     text="Raise Min Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SWEEP_MIN_DN"    text="Lower Min Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_AUTO_MAX_UP"     text="Raise Max Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SWEEP_MAX_DN"    text="Lower Max Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
+    <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
+    <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
 </texts>
 </l10n>

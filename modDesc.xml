@@ -175,6 +175,20 @@ FUNKTIONER:
         <action name="CS_OPEN_SETTINGS"/>
         <!-- Reel retract, consumed by the vendored RWSM53AutoReel spec. -->
         <action name="RWSM53_REEL_TOGGLE" category="VEHICLE"/>
+        <!-- Reinke A22 pivot controls (vendored from FS25_ReinkeA22). KP defaults
+             ship so the pivot works out of the box; players may rebind in Controls. -->
+        <action name="REINKE_DOOR_TOGGLE"           axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_MASTER_POWER"          axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_PIVOT_INTERACT"        axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_PIVOT_ANGLE_PLUS"      axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_PIVOT_ANGLE_MINUS"     axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_PIVOT_AUTO_MIN_UP"     axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_PIVOT_SWEEP_MIN_DN"    axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_PIVOT_AUTO_MAX_UP"     axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_PIVOT_SWEEP_MAX_DN"    axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_PIVOT_SPRAY"           axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_END_GUN"               axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_SPEED_CYCLE"           axisType="HALF" ignoreRestrictions="true"/>
     </actions>
 
     <inputBinding>
@@ -192,6 +206,43 @@ FUNKTIONER:
         </actionBinding>
         <actionBinding action="CS_EDIT_HUD">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_n" />
+        </actionBinding>
+        <!-- Reinke A22 pivot KP bindings (vendored from FS25_ReinkeA22). -->
+        <actionBinding action="REINKE_DOOR_TOGGLE">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_decimal" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_MASTER_POWER">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_2" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_PIVOT_INTERACT">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_8" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_PIVOT_ANGLE_PLUS">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_6" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_PIVOT_ANGLE_MINUS">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_4" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_PIVOT_AUTO_MIN_UP">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_7" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_PIVOT_SWEEP_MIN_DN">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_1" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_PIVOT_AUTO_MAX_UP">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_9" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_PIVOT_SWEEP_MAX_DN">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_3" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_PIVOT_SPRAY">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_5" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_END_GUN">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_0" axisComponent="+" />
+        </actionBinding>
+        <actionBinding action="REINKE_SPEED_CYCLE">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_enter" axisComponent="+" />
         </actionBinding>
     </inputBinding>
 
@@ -258,27 +309,26 @@ FUNKTIONER:
     </vehicleTypes>
 
     <placeableSpecializations>
-        <specialization name="irrigationPivot" className="IrrigationPivot" filename="placeables/centerPivot/centerPivot.lua"/>
-        <specialization name="waterPump"        className="WaterPump"        filename="placeables/waterPump/waterPump.lua"/>
-        <specialization name="dripLine"         className="DripIrrigationLine" filename="placeables/dripIrrigationLine/dripLine.lua"/>
+        <!-- Reinke A22 pivot (vendored from FS25_ReinkeA22, Antler22). Self-integrates
+             with IrrigationManager at load; E opens the SCS schedule dialog. -->
+        <specialization name="reinkeIrrigationPivot" className="ReinkeIrrigationPivot" filename="placeables/reinkeA22/scripts/centerPivot.lua"/>
+        <specialization name="waterPump"             className="WaterPump"             filename="placeables/waterPump/waterPump.lua"/>
     </placeableSpecializations>
 
     <placeableTypes>
-        <type name="irrigationPivot" parent="simplePlaceable" filename="$dataS/scripts/placeables/Placeable.lua">
-            <specialization name="irrigationPivot"/>
+        <type name="reinkeIrrigationPivot" parent="simplePlaceable" filename="$dataS/scripts/placeables/Placeable.lua">
+            <specialization name="reinkeIrrigationPivot"/>
         </type>
         <type name="waterPump" parent="simplePlaceable" filename="$dataS/scripts/placeables/Placeable.lua">
             <specialization name="waterPump"/>
         </type>
-        <type name="dripLine" parent="simplePlaceable" filename="$dataS/scripts/placeables/Placeable.lua">
-            <specialization name="dripLine"/>
-        </type>
     </placeableTypes>
 
     <storeItems>
-        <storeItem xmlFilename="placeables/centerPivot/centerPivot.xml"/>
+        <storeItem xmlFilename="placeables/reinkeA22/xml/centerPivot3.xml"/>
+        <storeItem xmlFilename="placeables/reinkeA22/xml/centerPivot5.xml"/>
+        <storeItem xmlFilename="placeables/reinkeA22/xml/centerPivot10.xml"/>
         <storeItem xmlFilename="placeables/waterPump/waterPump.xml"/>
-        <storeItem xmlFilename="placeables/dripIrrigationLine/dripLine.xml"/>
         <storeItem xmlFilename="vehicles/irrigatorPlay/Aggregat.xml"/>
         <storeItem xmlFilename="vehicles/irrigatorPlay/Rainstar.xml"/>
         <storeItem xmlFilename="vehicles/irrigatorPlay/Schiene.xml"/>

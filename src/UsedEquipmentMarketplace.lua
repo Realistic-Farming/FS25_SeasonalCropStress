@@ -9,7 +9,7 @@ local function csLog(msg)
     else print("[CropStress] " .. tostring(msg)) end
 end
 
--- Primary path: g_currentMission.usedPlusAPI (UP v2.15.4.96+ — the only reliable
+-- Primary path: g_currentMission.usedPlusAPI (UP v2.15.4.96+ â€” the only reliable
 -- cross-mod path in FS25's sandboxed environment). Bare globals kept as fallbacks.
 local function getUPAPI()
     return (g_currentMission and g_currentMission.usedPlusAPI) or UsedPlusAPI or g_usedPlusManager
@@ -40,33 +40,33 @@ end
 
 -- Register pre-owned irrigation equipment with UsedPlus marketplace.
 -- Uses getUPAPI() (g_currentMission.usedPlusAPI primary, bare globals as fallback).
--- registerUsedEquipment() is NOT in the confirmed public API — guarded with nil check
+-- registerUsedEquipment() is NOT in the confirmed public API â€” guarded with nil check
 -- and pcall so this silently no-ops if the method doesn't exist.
 function UsedEquipmentMarketplace:registerUsedEquipment()
     if not self.usedPlusActive then return end
     local api = getUPAPI()
     if api == nil or api.registerUsedEquipment == nil then
-        csLog("UsedEquipmentMarketplace: registerUsedEquipment not available — marketplace registration skipped")
+        csLog("UsedEquipmentMarketplace: registerUsedEquipment not available â€” marketplace registration skipped")
         return
     end
 
-    -- Center Pivot used equipment entries
+    -- Center Pivot used equipment entries (Reinke A22, the vendored pivot type)
     local pivotConfigs = {
         {
-            name = "Used Center Pivot Irrigation System",
-            type = "irrigationPivot",
+            name = "Used Reinke A22 Center Pivot",
+            type = "reinkeIrrigationPivot",
             basePrice = 42500,  -- 50% of new price (85000)
             conditionRange = {0.4, 0.8},  -- 40-80% condition
-            description = "Pre-owned center pivot irrigation system. Covers up to 200m radius. Includes mounting hardware.",
-            image = "placeables/centerPivot/centerPivot_shop.dds"
+            description = "Pre-owned Reinke A22 center pivot irrigation system.",
+            image = "placeables/reinkeA22/store_Reinke3.dds"
         },
         {
-            name = "Used Heavy-Duty Center Pivot",
-            type = "irrigationPivot",
+            name = "Used Reinke A22 Center Pivot (Heavy)",
+            type = "reinkeIrrigationPivot",
             basePrice = 51000,  -- 60% of new price
             conditionRange = {0.6, 0.9},  -- 60-90% condition
-            description = "High-capacity center pivot with reinforced arm. Covers up to 250m radius.",
-            image = "placeables/centerPivot/centerPivot_shop.dds"
+            description = "High-capacity Reinke A22 center pivot with reinforced arm.",
+            image = "placeables/reinkeA22/store_Reinke5.dds"
         }
     }
 
@@ -78,7 +78,7 @@ function UsedEquipmentMarketplace:registerUsedEquipment()
             basePrice = 18000,  -- 60% of new price (30000)
             conditionRange = {0.4, 0.8},
             description = "Pre-owned water pump unit. Connects to any water source within 500m.",
-            image = "placeables/waterPump/waterPump_shop.dds"
+            image = "$data/placeables/brandless/waterTanks/level02/store_waterTankLevel02.dds"
         },
         {
             name = "Used High-Flow Water Pump",
@@ -86,19 +86,7 @@ function UsedEquipmentMarketplace:registerUsedEquipment()
             basePrice = 22500,  -- 75% of new price
             conditionRange = {0.5, 0.85},
             description = "Industrial-grade water pump with increased flow capacity.",
-            image = "placeables/waterPump/waterPump_shop.dds"
-        }
-    }
-
-    -- Drip Irrigation Line used equipment entries
-    local dripConfigs = {
-        {
-            name = "Used Drip Irrigation Line Kit",
-            type = "dripLine",
-            basePrice = 22500,  -- 50% of new price (45000)
-            conditionRange = {0.4, 0.8},
-            description = "Pre-owned drip irrigation line system. Covers linear field sections up to 100m.",
-            image = "placeables/dripIrrigationLine/dripLine_shop.dds"
+            image = "$data/placeables/brandless/waterTanks/level02/store_waterTankLevel02.dds"
         }
     }
 
@@ -108,10 +96,6 @@ function UsedEquipmentMarketplace:registerUsedEquipment()
     end
 
     for _, config in ipairs(pumpConfigs) do
-        self:registerSingleEquipment(config)
-    end
-
-    for _, config in ipairs(dripConfigs) do
         self:registerSingleEquipment(config)
     end
 end

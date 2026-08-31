@@ -1604,11 +1604,10 @@ end
 
 --- Light-tick safe: text + needle angles only. No SmoothList / no element rebuild.
 --- BUILD 16:44c: the Esc dial face is the Reinke pivot panel's own POSITION scale.
---- The texture is resolved from the LIVE Reinke mod at runtime rather than vendored:
---- nothing of theirs is redistributed, and if that mod is absent the face simply does
---- not paint instead of showing a broken or invented dial. The UV crop lives in the
---- RF_CsPivotDialFace profile (atlas pixel rect 288 354 400 400).
-local REINKE_DECALS = "textures/ControlDecals.dds"
+--- The texture now ships inside this mod (the Reinke A22 pivot is vendored), so the
+--- path resolves from SCS's own directory; the UV crop lives in the RF_CsPivotDialFace
+--- profile (atlas pixel rect 288 354 400 400).
+local REINKE_DECALS = "placeables/reinkeA22/textures/ControlDecals.dds"
 local reinkeDecalPathCache = nil
 
 local function reinkeDecalPath()
@@ -1627,8 +1626,12 @@ local function reinkeDecalPath()
         end
         return false
     end
-    -- Prefer the mod manager so a renamed or differently-versioned Reinke still resolves.
-    if g_modManager ~= nil and type(g_modManager.getMods) == "function" then
+    -- The pivot is vendored, so SCS's own mod directory is the primary source.
+    if g_currentModDirectory ~= nil then
+        try(g_currentModDirectory)
+    end
+    -- Fall back to a live external Reinke mod if one is still installed.
+    if reinkeDecalPathCache == "" and g_modManager ~= nil and type(g_modManager.getMods) == "function" then
         local ok, mods = pcall(function() return g_modManager:getMods() end)
         if ok and type(mods) == "table" then
             for _, m in pairs(mods) do

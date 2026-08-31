@@ -5,20 +5,20 @@
     <text name="cs_hud_title"         text="BODENFEUCHTE"/>
     <text name="cs_hud_healthy"       text="Gesund"/>
     <text name="cs_hud_warning"       text="Trockenstress"/>
-    <text name="cs_hud_critical"      text="KRITISCH — Jetzt bewässern!"/>
+    <text name="cs_hud_critical"      text="KRITISCH â€” Jetzt bewÃ¤ssern!"/>
     <text name="cs_hud_no_crop"       text="Keine Frucht"/>
     <text name="cs_hud_forecast"      text="5-Tage-Prognose"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 geladen. Alt+M öffnet das Feuchte-HUD. Neu dabei? Öffne das Hilfe-Menü (ESC → Hilfe) und suche nach Seasonal Crop Stress, um alles zu erfahren."/>
-    <text name="cs_hud_click_forecast" text="Zeile anklicken für 5-Tage-Prognose"/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 geladen. Alt+M Ã¶ffnet das Feuchte-HUD. Neu dabei? Ã–ffne das Hilfe-MenÃ¼ (ESC â†’ Hilfe) und suche nach Seasonal Crop Stress, um alles zu erfahren."/>
+    <text name="cs_hud_click_forecast" text="Zeile anklicken fÃ¼r 5-Tage-Prognose"/>
     <text name="cs_hud_vehicle_disabled" text="Overlay im Fahrzeug deaktiviert"/>
 
     <!-- ========== FIELD STATUS ========== -->
     <text name="cs_field_moisture"        text="Feuchte"/>
     <text name="cs_field_soil_type"       text="Bodentyp"/>
     <text name="cs_field_stress"          text="Akkumulierter Stress"/>
-    <text name="cs_field_yield_impact"    text="Gesch. Ertragseinbuße"/>
+    <text name="cs_field_yield_impact"    text="Gesch. ErtragseinbuÃŸe"/>
     <text name="cs_field_critical_window" text="Kritisches Fenster: JETZT"/>
-    <text name="cs_field_nearest_water"   text="Nächstes Wasser"/>
+    <text name="cs_field_nearest_water"   text="NÃ¤chstes Wasser"/>
 
     <!-- ========== SOIL TYPES ========== -->
     <text name="cs_soil_sandy"  text="Sandig"/>
@@ -26,12 +26,12 @@
     <text name="cs_soil_clay"   text="Tonig"/>
 
     <!-- ========== ALERTS ========== -->
-    <text name="cs_alert_info"     text="Feld %d: %s Feuchte sinkt — Lage beobachten."/>
-    <text name="cs_alert_warning"  text="Feld %d: %s Feuchte niedrig — Bewässerung empfohlen."/>
-    <text name="cs_alert_critical" text="Feld %d: %s Trockenstress-Grenzwert — jetzt bewässern!"/>
+    <text name="cs_alert_info"     text="Feld %d: %s Feuchte sinkt â€” Lage beobachten."/>
+    <text name="cs_alert_warning"  text="Feld %d: %s Feuchte niedrig â€” BewÃ¤sserung empfohlen."/>
+    <text name="cs_alert_critical" text="Feld %d: %s Trockenstress-Grenzwert â€” jetzt bewÃ¤ssern!"/>
 
     <!-- ========== IRRIGATION ========== -->
-    <text name="cs_irr_title"          text="Bewässerungssystem — %s"/>
+    <text name="cs_irr_title"          text="BewÃ¤sserungssystem â€” %s"/>
     <text name="cs_irr_water_source"   text="Wasserquelle"/>
     <text name="cs_irr_connected"      text="Angeschlossen"/>
     <text name="cs_irr_disconnected"   text="Nicht angeschlossen"/>
@@ -39,18 +39,18 @@
     <text name="cs_irr_flow_rate"      text="Durchflussrate"/>
     <text name="cs_irr_efficiency"     text="Effizienz"/>
     <text name="cs_irr_cost"           text="Gesch. Kosten"/>
-    <text name="cs_irr_wear"           text="Verschleiß"/>
-    <text name="cs_irr_covered_fields" text="Bewässerte Felder"/>
-    <text name="cs_irr_irrigate_now"   text="Jetzt bewässern"/>
+    <text name="cs_irr_wear"           text="VerschleiÃŸ"/>
+    <text name="cs_irr_covered_fields" text="BewÃ¤sserte Felder"/>
+    <text name="cs_irr_irrigate_now"   text="Jetzt bewÃ¤ssern"/>
     <text name="cs_irr_save_schedule"  text="Zeitplan speichern"/>
-    <text name="cs_irr_pivot"          text="Kreisbewässerung"/>
-    <text name="cs_irr_drip"           text="Tröpfchenbewässerung"/>
+    <text name="cs_irr_pivot"          text="KreisbewÃ¤sserung"/>
+    <text name="cs_irr_drip"           text="TrÃ¶pfchenbewÃ¤sserung"/>
     <text name="cs_irr_pump"           text="Wasserpumpe"/>
     <text name="cs_irr_start_time"     text="Startzeit"/>
     <text name="cs_irr_end_time"       text="Endzeit"/>
     <text name="cs_irr_performance"    text="Leistung"/>
-    <text name="cs_irr_started"        text="Bewässerung gestartet."/>
-    <text name="cs_irr_open_schedule"  text="Bewässerungszeitplan öffnen"/>
+    <text name="cs_irr_started"        text="BewÃ¤sserung gestartet."/>
+    <text name="cs_irr_open_schedule"  text="BewÃ¤sserungszeitplan Ã¶ffnen"/>
     <text name="cs_schedule_saved"     text="Zeitplan gespeichert."/>
 
     <!-- ========== DAY LABELS ========== -->
@@ -68,49 +68,49 @@
     <text name="cs_consultant_relationship"    text="Beziehung zu Alex:"/>
     <text name="cs_consultant_field_status"    text="Feldrisiko-Zusammenfassung (Top 5)"/>
     <text name="cs_consultant_recommendation"  text="Empfehlungen"/>
-    <text name="cs_consultant_open_irrigation" text="Bewässerungsmanager öffnen"/>
-    <text name="cs_consultant_no_data"         text="Keine Felddaten verfügbar."/>
+    <text name="cs_consultant_open_irrigation" text="BewÃ¤sserungsmanager Ã¶ffnen"/>
+    <text name="cs_consultant_no_data"         text="Keine Felddaten verfÃ¼gbar."/>
 
     <!-- ========== NPC FAVOR QUESTS ========== -->
     <text name="cs_favor_soil_sample"     text="Bodenprobe von Feld %d nehmen"/>
-    <text name="cs_favor_irr_check"       text="Bewässerungssystem bei Feld %d inspizieren"/>
-    <text name="cs_favor_emergency_water" text="Feld %d vor Sonnenuntergang bewässern!"/>
-    <text name="cs_favor_seasonal_plan"   text="Saisonalen Bewässerungsplan überprüfen"/>
+    <text name="cs_favor_irr_check"       text="BewÃ¤sserungssystem bei Feld %d inspizieren"/>
+    <text name="cs_favor_emergency_water" text="Feld %d vor Sonnenuntergang bewÃ¤ssern!"/>
+    <text name="cs_favor_seasonal_plan"   text="Saisonalen BewÃ¤sserungsplan Ã¼berprÃ¼fen"/>
 
     <!-- ========== PLACEABLES ========== -->
-    <text name="cs_pivot_name"     text="Kreisbewässerung"/>
+    <text name="cs_pivot_name"     text="KreisbewÃ¤sserung"/>
     <text name="cs_pump_name"      text="Wasserpumpe"/>
-    <text name="cs_drip_name"      text="Tropfbewässerungsleitung"/>
-    <text name="cs_pivot_function" text="Großflächige Kreisbewässerung. Deckt kreisförmige Feldbereiche ab. Benötigt eine Wasserpumpe."/>
-    <text name="cs_pump_function"  text="Versorgt Kreis- und Tropfbewässerungsanlagen. In Wassernähe aufstellen."/>
-    <text name="cs_drip_function"  text="Präzise Reihenbewässerung mit niedrigem Durchfluss. Benötigt eine Wasserpumpe."/>
+    <text name="cs_drip_name"      text="TropfbewÃ¤sserungsleitung"/>
+    <text name="cs_pivot_function" text="GroÃŸflÃ¤chige KreisbewÃ¤sserung. Deckt kreisfÃ¶rmige Feldbereiche ab. BenÃ¶tigt eine Wasserpumpe."/>
+    <text name="cs_pump_function"  text="Versorgt Kreis- und TropfbewÃ¤sserungsanlagen. In WassernÃ¤he aufstellen."/>
+    <text name="cs_drip_function"  text="PrÃ¤zise ReihenbewÃ¤sserung mit niedrigem Durchfluss. BenÃ¶tigt eine Wasserpumpe."/>
 
     <!-- ========== IRRIGATION PERFORMANCE VALUES (dynamic, format strings) ========== -->
     <text name="cs_irr_flow_rate_value"   text="Durchfluss: %.3f/Std."/>
     <text name="cs_irr_efficiency_value"  text="Effizienz: %d%%"/>
-    <text name="cs_irr_cost_value"        text="Gesch. Kosten: €%d/Std."/>
-    <text name="cs_irr_wear_value"        text="Verschleiß: %d%%"/>
-    <text name="cs_irr_already_active"    text="Bewässerungssystem läuft bereits."/>
+    <text name="cs_irr_cost_value"        text="Gesch. Kosten: â‚¬%d/Std."/>
+    <text name="cs_irr_wear_value"        text="VerschleiÃŸ: %d%%"/>
+    <text name="cs_irr_already_active"    text="BewÃ¤sserungssystem lÃ¤uft bereits."/>
     <text name="cs_irr_no_covered_fields" text="Keine Felder durch dieses System abgedeckt."/>
 
     <!-- ========== CONSULTANT RECOMMENDATIONS (dynamic, format strings) ========== -->
-    <text name="cs_rec_urgent"          text="DRINGEND: Feld %d bei %.0f%% Feuchte — sofort bewässern!"/>
-    <text name="cs_rec_warning"         text="Feld %d bei %.0f%% Feuchte — Bewässerung innerhalb von 24h empfohlen."/>
+    <text name="cs_rec_urgent"          text="DRINGEND: Feld %d bei %.0f%% Feuchte â€” sofort bewÃ¤ssern!"/>
+    <text name="cs_rec_warning"         text="Feld %d bei %.0f%% Feuchte â€” BewÃ¤sserung innerhalb von 24h empfohlen."/>
     <text name="cs_rec_ok"              text="Alle Felder im akzeptablen Feuchtebereich."/>
     <text name="cs_rec_forecast"        text="Prognose: ~ T+1 %.0f%%  T+2 %.0f%%  T+3 %.0f%%"/>
-    <text name="cs_rec_systems_running" text="%d Bewässerungssystem(e) aktiv."/>
-    <text name="cs_rec_no_systems"      text="Keine Bewässerungssysteme aktiv."/>
+    <text name="cs_rec_systems_running" text="%d BewÃ¤sserungssystem(e) aktiv."/>
+    <text name="cs_rec_no_systems"      text="Keine BewÃ¤sserungssysteme aktiv."/>
     <text name="cs_rec_all_healthy"     text="Alle Felder erscheinen gesund."/>
 
     <!-- ========== SHARED ========== -->
-    <text name="cs_close"                 text="Schließen"/>
-    <text name="cs_no_irrigation_systems" text="Noch keine Bewässerungssysteme platziert."/>
+    <text name="cs_close"                 text="SchlieÃŸen"/>
+    <text name="cs_no_irrigation_systems" text="Noch keine BewÃ¤sserungssysteme platziert."/>
 
     <!-- ========== INPUT ACTION DESCRIPTIONS ========== -->
     <text name="input_CS_TOGGLE_HUD"      text="Feuchte-HUD umschalten"/>
-    <text name="input_CS_OPEN_IRRIGATION" text="Bewässerungsmanager öffnen"/>
-    <text name="input_CS_OPEN_CONSULTANT" text="Pflanzenberater öffnen"/>
-    <text name="input_CS_OPEN_SETTINGS"   text="Feldstress-Einstellungen öffnen"/>
+    <text name="input_CS_OPEN_IRRIGATION" text="BewÃ¤sserungsmanager Ã¶ffnen"/>
+    <text name="input_CS_OPEN_CONSULTANT" text="Pflanzenberater Ã¶ffnen"/>
+    <text name="input_CS_OPEN_SETTINGS"   text="Feldstress-Einstellungen Ã¶ffnen"/>
     <text name="input_CS_EDIT_HUD"        text="Feuchte-HUD verschieben/skalieren"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
@@ -132,20 +132,20 @@
     <text name="cs_settings_evap_normal"       text="Normal"/>
     <text name="cs_settings_evap_fast"         text="Schnell"/>
     <text name="cs_settings_yield_loss_short"  text="Max. Ertragsverlust"/>
-    <text name="cs_settings_yield_loss_long"   text="Maximaler Prozentsatz des Ertrags, der durch Dürrestress verloren gehen kann"/>
+    <text name="cs_settings_yield_loss_long"   text="Maximaler Prozentsatz des Ertrags, der durch DÃ¼rrestress verloren gehen kann"/>
     <text name="cs_settings_threshold_short"   text="Kritische Schwelle"/>
     <text name="cs_settings_threshold_long"    text="Feuchtigkeitsniveau, unterhalb dessen Stress akkumuliert"/>
-    <text name="cs_settings_irr_costs_short"   text="Bewässerungskosten"/>
-    <text name="cs_settings_irr_costs_long"    text="Aktivieren oder deaktivieren Sie die finanziellen Kosten für den Betrieb von Bewässerungssystemen"/>
+    <text name="cs_settings_irr_costs_short"   text="BewÃ¤sserungskosten"/>
+    <text name="cs_settings_irr_costs_long"    text="Aktivieren oder deaktivieren Sie die finanziellen Kosten fÃ¼r den Betrieb von BewÃ¤sserungssystemen"/>
     <text name="cs_settings_alerts_short"      text="Warnungen aktiviert"/>
-    <text name="cs_settings_alerts_long"       text="Zeigen Sie Warnhinweise an, wenn Felder Wasser benötigen"/>
+    <text name="cs_settings_alerts_long"       text="Zeigen Sie Warnhinweise an, wenn Felder Wasser benÃ¶tigen"/>
     <text name="cs_settings_cooldown_short"    text="Warnungs-Cooldown"/>
-    <text name="cs_settings_cooldown_long"     text="Mindeststunden zwischen Warnungen für dasselbe Feld"/>
+    <text name="cs_settings_cooldown_long"     text="Mindeststunden zwischen Warnungen fÃ¼r dasselbe Feld"/>
     <text name="cs_settings_debug_short"       text="Debug-Modus"/>
-    <text name="cs_settings_debug_long"        text="Aktivieren Sie ausführliche Protokollierung zur Fehlerbehebung"/>
+    <text name="cs_settings_debug_long"        text="Aktivieren Sie ausfÃ¼hrliche Protokollierung zur Fehlerbehebung"/>
 
     <!-- ========== HELP LINES ========== -->
-    <!-- Veralteter Schlüssel für Kompatibilität behalten -->
+    <!-- Veralteter SchlÃ¼ssel fÃ¼r KompatibilitÃ¤t behalten -->
     <text name="helpLine_cs_category"          text="Saisonaler Pflanzenstress"/>
     <!-- Kategorietitel -->
     <text name="helpLine_cs_cat_overview"      text="Allgemein"/>
@@ -153,93 +153,93 @@
     <text name="helpLine_cs_cat_tips"          text="Tipps &amp; Tricks"/>
     <text name="helpLine_cs_cat_info"          text="Mod-Informationen"/>
 
-    <!-- Übersicht: Seite 1 -->
-    <text name="helpLine_cs_p1_title"          text="Übersicht"/>
-    <text name="helpLine_cs_p1_intro_title"    text="Was diese Mod hinzufügt"/>
-    <text name="helpLine_cs_p1_intro_text"     text="Saisonaler Pflanzenstress fügt jedem Feld eine Bodenfeuchtesimulation hinzu. Pflanzen brauchen Wasser in wichtigen Wachstumsphasen. Fehlt es, fällt die Ernte geringer aus. Bewässerungssysteme ermöglichen die Kontrolle über die Wasserversorgung."/>
+    <!-- Ãœbersicht: Seite 1 -->
+    <text name="helpLine_cs_p1_title"          text="Ãœbersicht"/>
+    <text name="helpLine_cs_p1_intro_title"    text="Was diese Mod hinzufÃ¼gt"/>
+    <text name="helpLine_cs_p1_intro_text"     text="Saisonaler Pflanzenstress fÃ¼gt jedem Feld eine Bodenfeuchtesimulation hinzu. Pflanzen brauchen Wasser in wichtigen Wachstumsphasen. Fehlt es, fÃ¤llt die Ernte geringer aus. BewÃ¤sserungssysteme ermÃ¶glichen die Kontrolle Ã¼ber die Wasserversorgung."/>
     <text name="helpLine_cs_p1_start_title"    text="Erste Schritte"/>
-    <text name="helpLine_cs_p1_start_text"     text="Alt+M öffnet das Feuchte-HUD mit einer Übersicht aller Felder. Rote Felder benötigen dringend Wasser, grüne Felder sind in Ordnung. 'Pflanzenberater öffnen' öffnet den Pflanzenberater mit detaillierten Empfehlungen und Risikowerten."/>
+    <text name="helpLine_cs_p1_start_text"     text="Alt+M Ã¶ffnet das Feuchte-HUD mit einer Ãœbersicht aller Felder. Rote Felder benÃ¶tigen dringend Wasser, grÃ¼ne Felder sind in Ordnung. 'Pflanzenberater Ã¶ffnen' Ã¶ffnet den Pflanzenberater mit detaillierten Empfehlungen und Risikowerten."/>
 
-    <!-- Übersicht: Seite 2 -->
+    <!-- Ãœbersicht: Seite 2 -->
     <text name="helpLine_cs_p2_title"          text="Bodenfeuchte"/>
     <text name="helpLine_cs_p2_how_title"      text="Wie Feuchte funktioniert"/>
-    <text name="helpLine_cs_p2_how_text"       text="Regen füllt den Boden, Hitze trocknet ihn aus. Jedes Feld verfolgt seinen eigenen Feuchteanteil von 0% (knochentrocken) bis 100% (gesättigt). Die Austrocknungsrate hängt vom Wetter, der Jahreszeit und dem Bodentyp ab."/>
+    <text name="helpLine_cs_p2_how_text"       text="Regen fÃ¼llt den Boden, Hitze trocknet ihn aus. Jedes Feld verfolgt seinen eigenen Feuchteanteil von 0% (knochentrocken) bis 100% (gesÃ¤ttigt). Die Austrocknungsrate hÃ¤ngt vom Wetter, der Jahreszeit und dem Bodentyp ab."/>
     <text name="helpLine_cs_p2_soil_title"     text="Bodentypen"/>
-    <text name="helpLine_cs_p2_soil_text"      text="Sandboden trocknet schnell aus und benötigt häufige Bewässerung. Tonboden hält Wasser länger, kann aber staunass werden. Lehmboden liegt dazwischen und ist am einfachsten zu bewirtschaften. Der Bodentyp wird im HUD und im Pflanzenberater angezeigt."/>
+    <text name="helpLine_cs_p2_soil_text"      text="Sandboden trocknet schnell aus und benÃ¶tigt hÃ¤ufige BewÃ¤sserung. Tonboden hÃ¤lt Wasser lÃ¤nger, kann aber staunass werden. Lehmboden liegt dazwischen und ist am einfachsten zu bewirtschaften. Der Bodentyp wird im HUD und im Pflanzenberater angezeigt."/>
 
-    <!-- Übersicht: Seite 3 -->
+    <!-- Ãœbersicht: Seite 3 -->
     <text name="helpLine_cs_p3_title"          text="Pflanzenstress &amp; Ertrag"/>
     <text name="helpLine_cs_p3_window_title"   text="Kritische Wachstumsphasen"/>
-    <text name="helpLine_cs_p3_window_text"    text="Jede Pflanze hat eine Phase, in der sie am meisten Wasser benötigt. Weizen ist im Frühling am empfindlichsten, Mais leidet bei Sommerhitze, Raps ist im Herbst sensibel. Zu wenig Feuchte in dieser Phase baut Stress auf dem Feld auf."/>
+    <text name="helpLine_cs_p3_window_text"    text="Jede Pflanze hat eine Phase, in der sie am meisten Wasser benÃ¶tigt. Weizen ist im FrÃ¼hling am empfindlichsten, Mais leidet bei Sommerhitze, Raps ist im Herbst sensibel. Zu wenig Feuchte in dieser Phase baut Stress auf dem Feld auf."/>
     <text name="helpLine_cs_p3_yield_title"    text="Ertragsverluste bei der Ernte"/>
-    <text name="helpLine_cs_p3_yield_text"     text="Angesammelter Stress reduziert die Ernte. Geringer Stress bedeutet kleine Verluste. Schwerer Trockenstress kann die Ernte um bis zu 60% senken. Der Pflanzenberater zeigt das aktuelle Ertragsrisiko je Feld, damit du die Bewässerung priorisieren kannst."/>
+    <text name="helpLine_cs_p3_yield_text"     text="Angesammelter Stress reduziert die Ernte. Geringer Stress bedeutet kleine Verluste. Schwerer Trockenstress kann die Ernte um bis zu 60% senken. Der Pflanzenberater zeigt das aktuelle Ertragsrisiko je Feld, damit du die BewÃ¤sserung priorisieren kannst."/>
 
-    <!-- Übersicht: Seite 4 (Bewässerung) -->
-    <text name="helpLine_cs_p5_title"          text="Bewässerung"/>
-    <text name="helpLine_cs_p5_types_title"    text="Bewässerungstypen"/>
-    <text name="helpLine_cs_p5_types_text"     text="Im Baumenü stehen drei Bewässerungstypen zur Verfügung. Die Kreisbewässerung deckt eine große Kreisfläche ab. Die Tröpfchenbewässerung sorgt für gezielte Abdeckung entlang einer Feldreihe. Die Wasserpumpe treibt die Systeme an und muss zuerst in der Nähe einer Wasserquelle platziert werden."/>
+    <!-- Ãœbersicht: Seite 4 (BewÃ¤sserung) -->
+    <text name="helpLine_cs_p5_title"          text="BewÃ¤sserung"/>
+    <text name="helpLine_cs_p5_types_title"    text="BewÃ¤sserungstypen"/>
+    <text name="helpLine_cs_p5_types_text"     text="Im BaumenÃ¼ stehen drei BewÃ¤sserungstypen zur VerfÃ¼gung. Die KreisbewÃ¤sserung deckt eine groÃŸe KreisflÃ¤che ab. Die TrÃ¶pfchenbewÃ¤sserung sorgt fÃ¼r gezielte Abdeckung entlang einer Feldreihe. Die Wasserpumpe treibt die Systeme an und muss zuerst in der NÃ¤he einer Wasserquelle platziert werden."/>
     <text name="helpLine_cs_p5_schedule_title" text="Zeitplan &amp; Betrieb"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Wähle ein Bewässerungssystem aus und drücke 'Bewässerungsmanager öffnen', um den Zeitplan zu öffnen. Wähle Wochentage und stelle tägliche Start- und Endzeiten ein. Mit Jetzt bewässern kannst du die abgedeckten Felder sofort wässern, ohne auf den Zeitplan zu warten."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="WÃ¤hle ein BewÃ¤sserungssystem aus und drÃ¼cke 'BewÃ¤sserungsmanager Ã¶ffnen', um den Zeitplan zu Ã¶ffnen. WÃ¤hle Wochentage und stelle tÃ¤gliche Start- und Endzeiten ein. Mit Jetzt bewÃ¤ssern kannst du die abgedeckten Felder sofort wÃ¤ssern, ohne auf den Zeitplan zu warten."/>
 
-    <!-- Übersicht: Seite 5 (Pflanzenberater) -->
+    <!-- Ãœbersicht: Seite 5 (Pflanzenberater) -->
     <text name="helpLine_cs_p6_title"          text="Pflanzenberater"/>
     <text name="helpLine_cs_p6_what_title"     text="Was der Berater zeigt"/>
-    <text name="helpLine_cs_p6_what_text"      text="'Pflanzenberater öffnen' öffnet den Pflanzenberater. Er zeigt die fünf risikoreichsten Felder nach Feuchte und Stressniveau sowie eine verständliche Empfehlung für die nächsten 24 Stunden und eine 3-Tage-Feuchtprognose."/>
+    <text name="helpLine_cs_p6_what_text"      text="'Pflanzenberater Ã¶ffnen' Ã¶ffnet den Pflanzenberater. Er zeigt die fÃ¼nf risikoreichsten Felder nach Feuchte und Stressniveau sowie eine verstÃ¤ndliche Empfehlung fÃ¼r die nÃ¤chsten 24 Stunden und eine 3-Tage-Feuchtprognose."/>
     <text name="helpLine_cs_p6_act_title"      text="Empfehlungen umsetzen"/>
-    <text name="helpLine_cs_p6_act_text"       text="Mit KRITISCH markierte Felder müssen heute bewässert werden, um Ernteverluste zu verhindern. Mit WARNUNG markierte Felder sollten innerhalb von ein bis zwei Tagen bewässert werden. Nutze die Schaltfläche Bewässerungsmanager öffnen, um schnell einen Zeitplan für das schlimmste Feld einzurichten."/>
+    <text name="helpLine_cs_p6_act_text"       text="Mit KRITISCH markierte Felder mÃ¼ssen heute bewÃ¤ssert werden, um Ernteverluste zu verhindern. Mit WARNUNG markierte Felder sollten innerhalb von ein bis zwei Tagen bewÃ¤ssert werden. Nutze die SchaltflÃ¤che BewÃ¤sserungsmanager Ã¶ffnen, um schnell einen Zeitplan fÃ¼r das schlimmste Feld einzurichten."/>
     <text name="helpLine_cs_p6_npc_title"      text="Optionale Integrationen"/>
-    <text name="helpLine_cs_p6_npc_text"       text="Mehrere optionale Mods erweitern das System. FS25_NPCFavor: Alex Chen erscheint als Agronom-NPC — absolviere Gefälligkeiten, um frühe Dürrewarnings und Spezialberatung zu erhalten. FS25_SoilFertilizer: Boden-pH und organische Substanz beeinflussen die Evapotranspiration je Feld. FS25_UsedPlus: Betriebskosten und Maschinenverschleiß werden erfasst. CoursePlay: Aktive Fahrzeuganzahl erscheint in Feldwarnungen. AutoDrive: Wasserziele werden in kritischen Warnungen angezeigt. Precision Farming DLC: Bodenfeuchtedaten sind in der PF-Kartenansicht verfügbar."/>
+    <text name="helpLine_cs_p6_npc_text"       text="Mehrere optionale Mods erweitern das System. FS25_NPCFavor: Alex Chen erscheint als Agronom-NPC â€” absolviere GefÃ¤lligkeiten, um frÃ¼he DÃ¼rrewarnings und Spezialberatung zu erhalten. FS25_SoilFertilizer: Boden-pH und organische Substanz beeinflussen die Evapotranspiration je Feld. FS25_UsedPlus: Betriebskosten und MaschinenverschleiÃŸ werden erfasst. CoursePlay: Aktive Fahrzeuganzahl erscheint in Feldwarnungen. AutoDrive: Wasserziele werden in kritischen Warnungen angezeigt. Precision Farming DLC: Bodenfeuchtedaten sind in der PF-Kartenansicht verfÃ¼gbar."/>
 
-    <!-- Einstellungen: Seite 1 — Allgemeine Einstellungen -->
+    <!-- Einstellungen: Seite 1 â€” Allgemeine Einstellungen -->
     <text name="helpLine_cs_s1_title"          text="Allgemeine Einstellungen"/>
     <text name="helpLine_cs_s1_gen_title"      text="Mod aktivieren"/>
-    <text name="helpLine_cs_s1_gen_text"       text="Öffne die Spieleinstellungen (ESC → Einstellungen → Seasonal Crop Stress). Mit Mod aktivieren schaltest du das gesamte System ein oder aus, ohne deine Bewässerungsinfrastruktur zu entfernen. Die Schwierigkeit bestimmt, wie schnell Pflanzen Trockenstress akkumulieren — Einfach ist vergebend, Schwer erfordert proaktive Bewässerung."/>
+    <text name="helpLine_cs_s1_gen_text"       text="Ã–ffne die Spieleinstellungen (ESC â†’ Einstellungen â†’ Seasonal Crop Stress). Mit Mod aktivieren schaltest du das gesamte System ein oder aus, ohne deine BewÃ¤sserungsinfrastruktur zu entfernen. Die Schwierigkeit bestimmt, wie schnell Pflanzen Trockenstress akkumulieren â€” Einfach ist vergebend, Schwer erfordert proaktive BewÃ¤sserung."/>
     <text name="helpLine_cs_s1_evap_title"     text="Evapotranspirationsrate"/>
-    <text name="helpLine_cs_s1_evap_text"      text="Evapotranspiration steuert, wie schnell der Boden zwischen Regenfällen austrocknet. Langsam bedeutet, dass Felder Feuchtigkeit gut halten und Regen viel bewirkt. Schnell bedeutet, dass Felder bei heißem Wetter innerhalb eines Spieltages austrocknen können — aktives Bewässerungsmanagement wird dann unerlässlich."/>
+    <text name="helpLine_cs_s1_evap_text"      text="Evapotranspiration steuert, wie schnell der Boden zwischen RegenfÃ¤llen austrocknet. Langsam bedeutet, dass Felder Feuchtigkeit gut halten und Regen viel bewirkt. Schnell bedeutet, dass Felder bei heiÃŸem Wetter innerhalb eines Spieltages austrocknen kÃ¶nnen â€” aktives BewÃ¤sserungsmanagement wird dann unerlÃ¤sslich."/>
 
-    <!-- Einstellungen: Seite 2 — Erweiterte Einstellungen -->
+    <!-- Einstellungen: Seite 2 â€” Erweiterte Einstellungen -->
     <text name="helpLine_cs_s2_title"          text="Erweiterte Einstellungen"/>
     <text name="helpLine_cs_s2_yield_title"    text="Ertragsverlust &amp; Stressschwelle"/>
-    <text name="helpLine_cs_s2_yield_text"     text="Max. Ertragsverlust begrenzt den Prozentsatz der Ernte, den Trockenstress reduzieren kann. Bei Standard-60% erbringt ein komplett gestresstes Feld noch 40% der normalen Ernte. Die kritische Schwelle ist der Feuchteanteil, unterhalb dessen Stress beginnt — erhöhe ihn für empfindlichere Pflanzen, senke ihn für mehr Toleranz."/>
-    <text name="helpLine_cs_s2_alerts_title"   text="Bewässerungskosten &amp; Warnungen"/>
-    <text name="helpLine_cs_s2_alerts_text"    text="Bewässerungskosten erhebt eine stündliche Gebühr für laufende Bewässerungssysteme und fügt eine Finanzverwaltungsebene hinzu. Deaktiviere dies für ein einfacheres Spielerlebnis. Warnungen aktiviert zeigt Benachrichtigungen, wenn Felder Wasser benötigen. Der Warnungs-Cooldown legt die Mindestspielstunden zwischen Warnungen für dasselbe Feld fest, um Benachrichtigungsstaus zu vermeiden."/>
+    <text name="helpLine_cs_s2_yield_text"     text="Max. Ertragsverlust begrenzt den Prozentsatz der Ernte, den Trockenstress reduzieren kann. Bei Standard-60% erbringt ein komplett gestresstes Feld noch 40% der normalen Ernte. Die kritische Schwelle ist der Feuchteanteil, unterhalb dessen Stress beginnt â€” erhÃ¶he ihn fÃ¼r empfindlichere Pflanzen, senke ihn fÃ¼r mehr Toleranz."/>
+    <text name="helpLine_cs_s2_alerts_title"   text="BewÃ¤sserungskosten &amp; Warnungen"/>
+    <text name="helpLine_cs_s2_alerts_text"    text="BewÃ¤sserungskosten erhebt eine stÃ¼ndliche GebÃ¼hr fÃ¼r laufende BewÃ¤sserungssysteme und fÃ¼gt eine Finanzverwaltungsebene hinzu. Deaktiviere dies fÃ¼r ein einfacheres Spielerlebnis. Warnungen aktiviert zeigt Benachrichtigungen, wenn Felder Wasser benÃ¶tigen. Der Warnungs-Cooldown legt die Mindestspielstunden zwischen Warnungen fÃ¼r dasselbe Feld fest, um Benachrichtigungsstaus zu vermeiden."/>
 
     <!-- Tipps & Tricks: Seite 1 (HUD & Steuerung) -->
     <text name="helpLine_cs_p4_title"          text="HUD &amp; Steuerung"/>
     <text name="helpLine_cs_p4_hud_title"      text="Feuchte-HUD-Overlay"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Alt+M schaltet das Feuchte-HUD ein oder aus. Es listet alle Felder mit Feuchtestand, Fruchttyp und Stressstatus. Eine 5-Tage-Prognose zeigt, ob die Feuchte steigt oder sinkt, sodass du vorausplanen kannst. Das Panel lässt sich durch Klicken und Loslassen an eine beliebige Bildschirmposition verschieben."/>
+    <text name="helpLine_cs_p4_hud_text"       text="Alt+M schaltet das Feuchte-HUD ein oder aus. Es listet alle Felder mit Feuchtestand, Fruchttyp und Stressstatus. Eine 5-Tage-Prognose zeigt, ob die Feuchte steigt oder sinkt, sodass du vorausplanen kannst. Das Panel lÃ¤sst sich durch Klicken und Loslassen an eine beliebige Bildschirmposition verschieben."/>
     <text name="helpLine_cs_p4_reading_title"  text="Eine Feldzeile lesen"/>
-    <text name="helpLine_cs_p4_reading_text"   text="Jede Zeile zeigt: Feldnummer (F1), Fruchtname (Weizen), aktuelle Wachstumsphase (Phase 3), einen farbcodierten Feuchtebalken und den Feuchteprozentsatz. Endet die Zeile mit einem Ausrufezeichen (!), baut dieses Feld bereits Trockenstress auf und Ertragsverlust hat begonnen — sofort bewässern. Nur Früchte, die Trockenstress erleiden können, erscheinen in der Liste."/>
+    <text name="helpLine_cs_p4_reading_text"   text="Jede Zeile zeigt: Feldnummer (F1), Fruchtname (Weizen), aktuelle Wachstumsphase (Phase 3), einen farbcodierten Feuchtebalken und den Feuchteprozentsatz. Endet die Zeile mit einem Ausrufezeichen (!), baut dieses Feld bereits Trockenstress auf und Ertragsverlust hat begonnen â€” sofort bewÃ¤ssern. Nur FrÃ¼chte, die Trockenstress erleiden kÃ¶nnen, erscheinen in der Liste."/>
     <text name="helpLine_cs_p4_status_title"   text="Statusfarben"/>
-    <text name="helpLine_cs_p4_status_text"    text="Grün bedeutet gesundes Feld, kein Handlungsbedarf. Gelb ist eine Warnung: Feuchte sinkt, Bewässerung bald empfohlen. Rot ist kritisch: Die Pflanze leidet unter Trockenstress und der Ertragsverlust wächst — sofort bewässern."/>
-    <text name="helpLine_cs_p4_keys_title"     text="Tastenkürzel"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Alt+M schaltet das Feuchte-HUD um. 'Bewässerungsmanager öffnen' öffnet den Bewässerungsmanager für ein ausgewähltes System. 'Pflanzenberater öffnen' öffnet den Pflanzenberater mit Feldrisiken und personalisierten Empfehlungen."/>
+    <text name="helpLine_cs_p4_status_text"    text="GrÃ¼n bedeutet gesundes Feld, kein Handlungsbedarf. Gelb ist eine Warnung: Feuchte sinkt, BewÃ¤sserung bald empfohlen. Rot ist kritisch: Die Pflanze leidet unter Trockenstress und der Ertragsverlust wÃ¤chst â€” sofort bewÃ¤ssern."/>
+    <text name="helpLine_cs_p4_keys_title"     text="TastenkÃ¼rzel"/>
+    <text name="helpLine_cs_p4_keys_text"      text="Alt+M schaltet das Feuchte-HUD um. 'BewÃ¤sserungsmanager Ã¶ffnen' Ã¶ffnet den BewÃ¤sserungsmanager fÃ¼r ein ausgewÃ¤hltes System. 'Pflanzenberater Ã¶ffnen' Ã¶ffnet den Pflanzenberater mit Feldrisiken und personalisierten Empfehlungen."/>
 
-    <!-- Tipps & Tricks: Seite 2 — Landwirtschaftsstrategien -->
+    <!-- Tipps & Tricks: Seite 2 â€” Landwirtschaftsstrategien -->
     <text name="helpLine_cs_t2_title"          text="Landwirtschaftsstrategien"/>
     <text name="helpLine_cs_t2_sandy_title"    text="Sandfelder priorisieren"/>
-    <text name="helpLine_cs_t2_sandy_text"     text="Sandboden trocknet doppelt so schnell aus wie Lehmboden. Bei gemischten Bodentypen lohnt es sich, zuerst Bewässerung auf Sandfeldern zu installieren. Eine Kreisbewässerung auf einer großen Sandfläche ist oft eine bessere Investition als eine Tröpfchenbewässerung auf einem kleinen Tonfeld, das Wasser gut hält."/>
+    <text name="helpLine_cs_t2_sandy_text"     text="Sandboden trocknet doppelt so schnell aus wie Lehmboden. Bei gemischten Bodentypen lohnt es sich, zuerst BewÃ¤sserung auf Sandfeldern zu installieren. Eine KreisbewÃ¤sserung auf einer groÃŸen SandflÃ¤che ist oft eine bessere Investition als eine TrÃ¶pfchenbewÃ¤sserung auf einem kleinen Tonfeld, das Wasser gut hÃ¤lt."/>
     <text name="helpLine_cs_t2_forecast_title" text="Prognose nutzen"/>
-    <text name="helpLine_cs_t2_forecast_text"  text="Die 5-Tage-Prognose im HUD zeigt, ob die Feuchte steigt oder sinkt. Wenn Regen vorhergesagt ist und die Felder nur im Warnbereich liegen, warte auf den Regen statt zu bewässern — so sparst du Geld und schonst die Ausrüstung. Handle frühzeitig, wenn die Prognose mehrere trockene Tage in einer kritischen Wachstumsphase zeigt."/>
+    <text name="helpLine_cs_t2_forecast_text"  text="Die 5-Tage-Prognose im HUD zeigt, ob die Feuchte steigt oder sinkt. Wenn Regen vorhergesagt ist und die Felder nur im Warnbereich liegen, warte auf den Regen statt zu bewÃ¤ssern â€” so sparst du Geld und schonst die AusrÃ¼stung. Handle frÃ¼hzeitig, wenn die Prognose mehrere trockene Tage in einer kritischen Wachstumsphase zeigt."/>
 
-    <!-- Mod-Informationen: Seite 1 — Über diesen Mod -->
-    <text name="helpLine_cs_i1_title"           text="Über diesen Mod"/>
+    <!-- Mod-Informationen: Seite 1 â€” Ãœber diesen Mod -->
+    <text name="helpLine_cs_i1_title"           text="Ãœber diesen Mod"/>
     <text name="helpLine_cs_i1_about_title"     text="Seasonal Crop Stress v1.0.5.0"/>
-    <text name="helpLine_cs_i1_about_text"      text="Erstellt von TisonK. Fügt eine realistische Bodenfeuchtesimulation, saisonalen Pflanzenstress und Bewässerungsinfrastrukturverwaltung zu Farming Simulator 25 hinzu. Entwickelt, um das Feldmanagement strategischer zu gestalten — jedes Feld, jede Saison, jede Entscheidung zählt."/>
+    <text name="helpLine_cs_i1_about_text"      text="Erstellt von TisonK. FÃ¼gt eine realistische Bodenfeuchtesimulation, saisonalen Pflanzenstress und BewÃ¤sserungsinfrastrukturverwaltung zu Farming Simulator 25 hinzu. Entwickelt, um das Feldmanagement strategischer zu gestalten â€” jedes Feld, jede Saison, jede Entscheidung zÃ¤hlt."/>
     <text name="helpLine_cs_i1_community_title" text="Community &amp; Support"/>
-    <text name="helpLine_cs_i1_community_text"  text="Diesen Mod findest du im Farming Simulator ModHub. Für Fragen, Fehlerberichte und Updates besuche die Mod-Seite im ModHub oder das GitHub-Repository. Schau in die Community-Foren, um Tipps mit anderen Spielern zu teilen."/>
+    <text name="helpLine_cs_i1_community_text"  text="Diesen Mod findest du im Farming Simulator ModHub. FÃ¼r Fragen, Fehlerberichte und Updates besuche die Mod-Seite im ModHub oder das GitHub-Repository. Schau in die Community-Foren, um Tipps mit anderen Spielern zu teilen."/>
 
-    <!-- Mod-Informationen: Seite 2 — Optionale Integrationen -->
+    <!-- Mod-Informationen: Seite 2 â€” Optionale Integrationen -->
     <text name="helpLine_cs_i2_title"          text="Optionale Integrationen"/>
     <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor &amp; FS25_SoilFertilizer"/>
-    <text name="helpLine_cs_i2_npc_text"       text="Mit FS25_NPCFavor erscheint Alex Chen als Agronom-NPC auf deiner Farm. Durch Gefälligkeiten für Alex baust du die Beziehung aus und schaltest frühe Dürrewarnings und Spezialberatung frei. Mit FS25_SoilFertilizer passt Boden-pH und organische Substanz die Evapotranspiration je Feld an — Felder mit schlechter Bodenqualität trocknen schneller aus und machen gutes Bodenmanagement neben der Bewässerung lohnenswert."/>
+    <text name="helpLine_cs_i2_npc_text"       text="Mit FS25_NPCFavor erscheint Alex Chen als Agronom-NPC auf deiner Farm. Durch GefÃ¤lligkeiten fÃ¼r Alex baust du die Beziehung aus und schaltest frÃ¼he DÃ¼rrewarnings und Spezialberatung frei. Mit FS25_SoilFertilizer passt Boden-pH und organische Substanz die Evapotranspiration je Feld an â€” Felder mit schlechter BodenqualitÃ¤t trocknen schneller aus und machen gutes Bodenmanagement neben der BewÃ¤sserung lohnenswert."/>
     <text name="helpLine_cs_i2_vehicle_title"  text="CoursePlay, AutoDrive &amp; Precision Farming"/>
-    <text name="helpLine_cs_i2_vehicle_text"   text="Bei aktivem CoursePlay wird die Anzahl autonomer Fahrzeuge auf einem gestressten Feld in der Feldwarnung angezeigt. AutoDrive ergänzt kritische Dürrealarme um verfügbare Wasserzielpunkte und einen Hinweis zur Wasserroute. Mit FS25_UsedPlus werden stündliche Betriebskosten abgerechnet und Maschinenverschleiß akkumuliert realistisch. Mit dem Precision Farming DLC werden Bodenfeuchtedaten direkt in der PF-Bodenkartenansicht angezeigt."/>
+    <text name="helpLine_cs_i2_vehicle_text"   text="Bei aktivem CoursePlay wird die Anzahl autonomer Fahrzeuge auf einem gestressten Feld in der Feldwarnung angezeigt. AutoDrive ergÃ¤nzt kritische DÃ¼rrealarme um verfÃ¼gbare Wasserzielpunkte und einen Hinweis zur Wasserroute. Mit FS25_UsedPlus werden stÃ¼ndliche Betriebskosten abgerechnet und MaschinenverschleiÃŸ akkumuliert realistisch. Mit dem Precision Farming DLC werden Bodenfeuchtedaten direkt in der PF-Bodenkartenansicht angezeigt."/>
 
-    <!-- Tips & Tricks: Seite 3 — Spritzen & Bewässern -->
-    <text name="helpLine_cs_t3_title"          text="Spritzen &amp; Bewässern"/>
-    <text name="helpLine_cs_t3_sprayer_title"  text="Feldspritzen zur Bewässerung nutzen"/>
-    <text name="helpLine_cs_t3_sprayer_text"   text="Standard-Feldspritzen können als manuelle Alternative zu fest installierten Bewässerungssystemen verwendet werden. Wenn Sie eine Spritze mit WASSER füllen, erhält jeder Bereich, den Sie besprühen, einen sofortigen Feuchtigkeitsschub. Dies ist nützlich für kleine Felder oder als Übergangsmaßnahme, bis Sie sich eine Kreis- oder Tröpfchenbewässerung leisten können."/>
+    <!-- Tips & Tricks: Seite 3 â€” Spritzen & BewÃ¤ssern -->
+    <text name="helpLine_cs_t3_title"          text="Spritzen &amp; BewÃ¤ssern"/>
+    <text name="helpLine_cs_t3_sprayer_title"  text="Feldspritzen zur BewÃ¤sserung nutzen"/>
+    <text name="helpLine_cs_t3_sprayer_text"   text="Standard-Feldspritzen kÃ¶nnen als manuelle Alternative zu fest installierten BewÃ¤sserungssystemen verwendet werden. Wenn Sie eine Spritze mit WASSER fÃ¼llen, erhÃ¤lt jeder Bereich, den Sie besprÃ¼hen, einen sofortigen Feuchtigkeitsschub. Dies ist nÃ¼tzlich fÃ¼r kleine Felder oder als ÃœbergangsmaÃŸnahme, bis Sie sich eine Kreis- oder TrÃ¶pfchenbewÃ¤sserung leisten kÃ¶nnen."/>
 
     <!-- ========== PDA SCREEN ========== -->
     <text name="cs_pda_screen_title"           text="Crop Moisture Monitor"/>
@@ -301,7 +301,7 @@
 
     <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d Fahrzeug arbeitet auf diesem Feld"/>
     <text name="cs_cp_vehicles_on_field" text="CoursePlay: %d Fahrzeuge arbeiten auf diesem Feld"/>
-    <text name="cs_ad_water_hint"    text="AutoDrive: %d Wasserpunkt(e) verfügbar — Wasserroute einrichten"/>
+    <text name="cs_ad_water_hint"    text="AutoDrive: %d Wasserpunkt(e) verfÃ¼gbar â€” Wasserroute einrichten"/>
     <text name="cs_ad_destinations"  text="AutoDrive: %d Ziel(e) konfiguriert"/>
 
     
@@ -388,18 +388,18 @@
     <text name="cs_rf_pda_next_covered_idle" text="[EN] Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
     <text name="cs_rf_pda_next_looking_good" text="[EN] Looking good - recheck later; handle Critical fields first."/>
     <text name="cs_rf_pda_yield_keep" text="[EN] Yield keep: %d%%"/>
-    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0f°C, dry pull %.1f"/>
-    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %d–%d"/>
+    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0fÂ°C, dry pull %.1f"/>
+    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %dâ€“%d"/>
     <text name="cs_rf_pda_sched_daily" text=" daily"/>
     <text name="cs_rf_pda_sched_weekdays" text=" weekdays"/>
     <text name="cs_rf_pda_sched_none" text="[EN] no schedule"/>
-    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered · no schedule"/>
+    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered Â· no schedule"/>
     <text name="cs_rf_pda_no_coverage" text="[EN] No coverage"/>
     <text name="cs_rf_pda_rate_off" text="[EN] Rate off"/>
     <text name="cs_rf_pda_rate_on" text="[EN] Rate +%.2f/h"/>
     <text name="cs_rf_pda_alert_prefix" text="[EN] Alert: %s"/>
-    <text name="cs_rf_pda_next_alert_sep" text=" · %s"/>
-    <text name="cs_rf_pda_status_join" text="[EN] %s  ·  Status: %s"/>
+    <text name="cs_rf_pda_next_alert_sep" text=" Â· %s"/>
+    <text name="cs_rf_pda_status_join" text="[EN] %s  Â·  Status: %s"/>
     <!-- Esc CS PIVOT card (2026-08-09) -->
     <text name="cs_rf_pda_pivot_title" text="[EN] PIVOT"/>
     <text name="cs_rf_pda_pivot_title_irrig" text="[EN] IRRIGATION"/>
@@ -408,21 +408,21 @@
 <text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur —"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min —"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max —"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
     <text name="cs_rf_pda_pivot_watering_off" text="[EN] Watering now: Off"/>
     <text name="cs_rf_pda_pivot_pressure" text="[EN] Pressure: %d%%"/>
-    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: —"/>
+    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: â€”"/>
     <text name="cs_rf_pda_pivot_rate" text="[EN] Rate: +%.3f/h"/>
-    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: —"/>
-    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00–%02d:00%s"/>
+    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: â€”"/>
+    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00â€“%02d:00%s"/>
     <text name="cs_rf_pda_pivot_sched_none" text="[EN] Schedule: No schedule"/>
     <text name="cs_rf_pda_pivot_warn_none" text="[EN] No pivot on this field"/>
     <text name="cs_rf_pda_pivot_warn_owner" text="[EN] Not your pivot"/>
@@ -437,11 +437,11 @@
     <text name="cs_rf_pda_pivot_btn_start" text="[EN] Start"/>
     <text name="cs_rf_pda_pivot_btn_stop" text="[EN] Stop"/>
     <text name="cs_rf_pda_pivot_btn_min_up" text="[EN] Min+"/>
-    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Min−"/>
+    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Minâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_max_up" text="[EN] Max+"/>
-    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Max−"/>
+    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Maxâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_arm_plus" text="[EN] Arm+"/>
-    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Arm−"/>
+    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Armâˆ’"/>
     <text name="cs_rf_pda_pivot_btn_schedule" text="[EN] Schedule"/>
     <text name="cs_rf_pda_page_fields" text="[EN] Fields"/>
     <text name="cs_rf_pda_page_pivot" text="[EN] Pivot"/>
@@ -461,27 +461,46 @@
     <text name="action_RAINSTAR_REEL_STOP" text="Automatischen Schlaucheinzug stoppen"/>
     <text name="rwsm_hoseAlmostEmpty" text="Achtung: nur noch wenig Schlauch auf der Trommel."/>
     <text name="status_RAINSTAR_REEL_ACTIVE" text="aktiv"/>
-    <text name="status_RAINSTAR_REEL_COMPLETE_SHUTDOWN" text="Schlauch vollständig eingezogen - Regnerwagen verriegelt und Motorpumpe ausgeschaltet."/>
+    <text name="status_RAINSTAR_REEL_COMPLETE_SHUTDOWN" text="Schlauch vollstÃ¤ndig eingezogen - Regnerwagen verriegelt und Motorpumpe ausgeschaltet."/>
     <text name="status_RAINSTAR_REEL_READY" text="bereit"/>
     <text name="warning_RAINSTAR_CART_ATTACHED" text="Traktor zuerst vom Regnerwagen abkuppeln, bevor der Einzug gestartet wird."/>
     <text name="warning_RAINSTAR_HOSE_10M" text="Achtung: nur noch 10 m Schlauch auf der Trommel."/>
     <text name="warning_RAINSTAR_HOSE_30M" text="Achtung: nur noch 30 m Schlauch auf der Trommel."/>
-    <text name="warning_RAINSTAR_HOSE_MAX" text="Maximale Schlauchlänge von 220 m erreicht."/>
+    <text name="warning_RAINSTAR_HOSE_MAX" text="Maximale SchlauchlÃ¤nge von 220 m erreicht."/>
     <text name="warning_RAINSTAR_HOSE_NOT_EXTENDED" text="Der Regnerwagen steht bereits an der Trommel."/>
     <text name="warning_RAINSTAR_PUMP_NOT_CONNECTED" text="Wasserschlauch zuerst zwischen Motorpumpe und Rainstar ankuppeln."/>
     <text name="warning_RAINSTAR_PUMP_NOT_RUNNING" text="Motorpumpe vor dem Schlaucheinzug starten."/>
-    <text name="warning_RAINSTAR_SELECT_WORKMODE" text="Vor dem Schlaucheinzug zuerst den Arbeitsmodus auswählen."/>
-    <!-- BUILD 19:27 - suite EMP↔Rainstar hose walk-up verbs -->
+    <text name="warning_RAINSTAR_SELECT_WORKMODE" text="Vor dem Schlaucheinzug zuerst den Arbeitsmodus auswÃ¤hlen."/>
+    <!-- BUILD 19:27 - suite EMPâ†”Rainstar hose walk-up verbs -->
     <text name="action_SCS_CONNECT_HOSE" text="Schlauch verbinden"/>
     <text name="action_SCS_DISCONNECT_HOSE" text="Schlauch trennen"/>
     <text name="cs_rainstar_needs_pump" text="[EN] Connect the supply hose from the pump and start the pump. This reel runs on pump pressure, not a tractor."/>
     <text name="cs_playkit_pump_power_teach" text="[EN] The pump is the power. Hitch the reel only to tow it: to spray, run the hose from the pump, start the pump, then switch the reel on. Stop the pump or pull the hose and the spray stops."/>
     <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
     <text name="cs_rf_pda_crop_mixed" text="[EN] Mixed"/>
-    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s · covers %s of this block"/>
+    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s Â· covers %s of this block"/>
         <!-- BUILD 11:27 F155 Esc RF button labels -->
-        <text name="wc_rf_pda_open_manager" text="Arbeitermanager öffnen" />
+        <text name="wc_rf_pda_open_manager" text="Arbeitermanager Ã¶ffnen" />
         <text name="sf_pda_btn_rotation_planner" text="Fruchtfolgeplaner" />
         <text name="sf_pda_btn_field_detail" text="Felddetails" />
+    <!-- ========== REINKE A22 PIVOT (vendored) ========== -->
+    <text name="reinke_pivot_3_name"      text="Reinke A22 Center Pivot - 3 Tower (~115m)"/>
+    <text name="reinke_pivot_5_name"      text="Reinke A22 Center Pivot - 5 Tower (~188m)"/>
+    <text name="reinke_pivot_10_name"     text="Reinke A22 Center Pivot - 10 Tower (~369m)"/>
+    <text name="reinke_pivot_function"    text="Center pivot irrigation system"/>
+    <text name="reinke_pivot_open_dialog" text="Open Pivot Schedule"/>
+    <text name="reinke_pivot_toggle"      text="Toggle Pivot Rotation"/>
+    <text name="input_REINKE_DOOR_TOGGLE"           text="Open / Close Control Panel"/>
+    <text name="input_REINKE_MASTER_POWER"          text="Master Power On / Off"/>
+    <text name="input_REINKE_PIVOT_INTERACT"        text="Toggle Auto Rotation (KP8)"/>
+    <text name="input_REINKE_PIVOT_ANGLE_PLUS"      text="Step Arm +10 deg (Manual)"/>
+    <text name="input_REINKE_PIVOT_ANGLE_MINUS"     text="Step Arm -10 deg (Manual)"/>
+    <text name="input_REINKE_PIVOT_AUTO_MIN_UP"     text="Raise Min Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SWEEP_MIN_DN"    text="Lower Min Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_AUTO_MAX_UP"     text="Raise Max Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SWEEP_MAX_DN"    text="Lower Max Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
+    <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
+    <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
 </texts>
 </l10n>
