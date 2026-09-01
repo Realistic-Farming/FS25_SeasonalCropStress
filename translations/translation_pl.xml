@@ -406,12 +406,12 @@
 <text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="Ramie %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="Poczatek luku %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="Koniec luku %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="Ramie -"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="Poczatek luku -"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="Koniec luku -"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
@@ -500,5 +500,19 @@
     <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
     <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
     <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
+    <text name="cs_rf_pda_rk_suffix" text="  ·  czujnik deszczu %s / %.1f mm modelowane" />
+    <text name="cs_rf_pda_rk_unknown" text="nieznany" />
+    <text name="cs_rf_pda_rk_warn_tripped" text="Czujnik deszczu zadzialal" />
+    <text name="cs_rf_pda_rk_warn_tripped_in" text="Czujnik zadzialal, reset po %d min suszy" />
+    <text name="cs_rf_pda_rk_warn_noinput" text="Czujnik nie odczytuje pogody" />
+    <text name="cs_rf_pda_rk_btn_fit" text="Montuj" />
+    <text name="cs_rf_pda_rk_btn_remove" text="Zdejmij" />
+    <text name="cs_rf_pda_rk_btn_trip_minus" text="Prog-" />
+    <text name="cs_rf_pda_rk_btn_trip_plus" text="Prog+" />
+    <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Nawadnianie: pauza deszczowa" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Poczatek luku" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Koniec luku" />
+        <text name="cs_rf_pda_cap_rain_key" text="Czujnik deszczu" />
 </texts>
 </l10n>

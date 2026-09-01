@@ -278,6 +278,9 @@ function ReinkeIrrigationPivot.registerFunctions(placeableType)
     SpecializationUtil.registerFunction(placeableType, "onAngleMinusPressed",       ReinkeIrrigationPivot.onAngleMinusPressed)
     SpecializationUtil.registerFunction(placeableType, "onAutoMaxUpPressed",        ReinkeIrrigationPivot.onAutoMaxUpPressed)
     SpecializationUtil.registerFunction(placeableType, "onAutoMinUpPressed",        ReinkeIrrigationPivot.onAutoMinUpPressed)
+    SpecializationUtil.registerFunction(placeableType, "toggleDoor",               ReinkeIrrigationPivot.toggleDoor)
+    SpecializationUtil.registerFunction(placeableType, "adjustSweepMin",            ReinkeIrrigationPivot.adjustSweepMin)
+    SpecializationUtil.registerFunction(placeableType, "adjustSweepMax",            ReinkeIrrigationPivot.adjustSweepMax)
     SpecializationUtil.registerFunction(placeableType, "stepTargetAngle",           ReinkeIrrigationPivot.stepTargetAngle)
 
     SpecializationUtil.registerFunction(placeableType, "updateDriveShaftAnimation", ReinkeIrrigationPivot.updateDriveShaftAnimation)
@@ -1944,26 +1947,43 @@ end
 -- The door rotates around ControlBoxDoorROT's local Y axis.
 -- Open = -120Â° (Y), Closed = 0Â°.
 -- ============================================================
-function ReinkeIrrigationPivot.onDoorPressed(self)
+--- Flip the control box door. No proximity check: this is the shared flip, used
+--- by the keypad below AFTER its range test and by the Esc card directly.
+---
+--- [BUILD 14:05] CropStressPivotRemoteEvent has always called toggleDoor, and
+--- this spec never had one, so the Esc Door remote did nothing. That single
+--- absence disabled the WHOLE card, because power is gated on doorOpen and
+--- every other remote returns early on "not doorOpen or not powered". One
+--- missing function, every button dead.
+---
+--- Open = -120 deg on local Y (confirmed in GE: open state is (0,-120,0)).
+--- Closed = 0 deg. Animation uses absolute rotation so it is independent of the
+--- i3d baked pose: make sure the Shape is saved at (0,0,0) in GE.
+function ReinkeIrrigationPivot.toggleDoor(self)
     local spec = self[ReinkeIrrigationPivot.SPEC_TABLE_NAME]
-    rInfo(string.format("pivot %d: onDoorPressed FIRED playerInRange=%s doorOpen=%s",
-        self.id or -1, tostring(spec.playerInRange), tostring(spec.doorOpen)))
-    if not spec.playerInRange then return end
+    if spec == nil then return end
     spec.doorOpen = not spec.doorOpen
     if self.isClient then
         sndPlay1(spec.doorOpen and spec.samples.hydraulicOpen or spec.samples.hydraulicClose)
     end
     self:raiseDirtyFlags(spec.dirtyFlag)
-    -- Open = -120Â° on local Y (confirmed in GE: open state is (0,-120,0)).
-    -- Closed = 0Â°.  Animation uses absolute rotation so it is independent of
-    -- the i3d baked pose  -  make sure the Shape is saved at (0,0,0) in GE.
     spec.doorAngleTgt = spec.doorOpen and math.rad(-120) or 0
-    rInfo(string.format("pivot %d: door %s (tgt=%.1fÂ°)",
+    rInfo(string.format("pivot %d: door %s (tgt=%.1f deg)",
         self.id or -1, spec.doorOpen and "OPENING" or "CLOSING",
         math.deg(spec.doorAngleTgt)))
-    -- Immediately refresh F1 hint visibility: show/hide control keys based on door state.
-    -- Door key itself stays visible (player may want to close the box again).
+    -- Refresh F1 hint visibility: show or hide control keys based on door state.
+    -- The door key itself stays visible, the player may want to close the box.
     self:setInteractionHintsVisible(true)
+end
+
+function ReinkeIrrigationPivot.onDoorPressed(self)
+    local spec = self[ReinkeIrrigationPivot.SPEC_TABLE_NAME]
+    rInfo(string.format("pivot %d: onDoorPressed FIRED playerInRange=%s doorOpen=%s",
+        self.id or -1, tostring(spec.playerInRange), tostring(spec.doorOpen)))
+    -- The physical keypad keeps its proximity rule; only the flip is shared, so
+    -- the two routes cannot drift into different door behaviour.
+    if not spec.playerInRange then return end
+    self:toggleDoor()
 end
 
 -- ============================================================
@@ -2096,7 +2116,51 @@ local function clampSweepBounds(minDeg, maxDeg)
 end
 
 -- ============================================================
--- KP 6 — step arm +10° CW (manual mode only; no-op in AUTO)
+-- Esc PDA sweep adjust (BUILD 12:51)
+-- ============================================================
+-- CropStressPivotRemoteEvent has always called adjustSweepMin / adjustSweepMax,
+-- and this vendored spec never registered them, so the Min and Max remotes on
+-- the Esc card were a silent no-op: the event found no function, took its
+-- guarded branch and returned, and the dial marks could not move from the menu.
+--
+-- These are NOT the keypad handlers. The keypad ones bail on playerInRange,
+-- which is correct for a physical panel and wrong from a menu the farmer opens
+-- from anywhere. Door and power honesty is kept, because those model the
+-- machine's own state rather than where the player is standing, and the Esc
+-- chips are already gated on the same two.
+--
+-- The clamp is the SAME clampSweepBounds the keypad uses, so a bound set from
+-- the menu and one set from the panel cannot land on different rules.
+---@param deltaDeg number degrees to add, may be negative
+function ReinkeIrrigationPivot.adjustSweepMin(self, deltaDeg)
+    local spec = self[ReinkeIrrigationPivot.SPEC_TABLE_NAME]
+    if spec == nil then return end
+    if not spec.doorOpen then return end
+    if not spec.masterPower then return end
+    local newMin = (spec.autoMinAngleDeg or 0) + (tonumber(deltaDeg) or 0)
+    spec.autoMinAngleDeg, spec.autoMaxAngleDeg =
+        clampSweepBounds(newMin, spec.autoMaxAngleDeg or 360)
+    self:raiseDirtyFlags(spec.dirtyFlag)
+    rInfo(string.format("pivot %d: Esc MIN %+d -> sweep %.0f to %.0f",
+        self.id or -1, tonumber(deltaDeg) or 0, spec.autoMinAngleDeg, spec.autoMaxAngleDeg))
+end
+
+---@param deltaDeg number degrees to add, may be negative
+function ReinkeIrrigationPivot.adjustSweepMax(self, deltaDeg)
+    local spec = self[ReinkeIrrigationPivot.SPEC_TABLE_NAME]
+    if spec == nil then return end
+    if not spec.doorOpen then return end
+    if not spec.masterPower then return end
+    local newMax = (spec.autoMaxAngleDeg or 360) + (tonumber(deltaDeg) or 0)
+    spec.autoMinAngleDeg, spec.autoMaxAngleDeg =
+        clampSweepBounds(spec.autoMinAngleDeg or 0, newMax)
+    self:raiseDirtyFlags(spec.dirtyFlag)
+    rInfo(string.format("pivot %d: Esc MAX %+d -> sweep %.0f to %.0f",
+        self.id or -1, tonumber(deltaDeg) or 0, spec.autoMinAngleDeg, spec.autoMaxAngleDeg))
+end
+
+-- ============================================================
+-- KP 6 - step arm +10 deg CW (manual mode only; no-op in AUTO)
 -- ============================================================
 function ReinkeIrrigationPivot.onAnglePlusPressed(self)
     local spec = self[ReinkeIrrigationPivot.SPEC_TABLE_NAME]

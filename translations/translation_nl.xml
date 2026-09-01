@@ -406,12 +406,12 @@
 <text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="Arm %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="Start zwenk %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="Einde zwenk %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="Arm -"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="Start zwenk -"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="Einde zwenk -"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
@@ -500,5 +500,19 @@
     <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
     <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
     <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
+    <text name="cs_rf_pda_rk_suffix" text="  ·  regensensor %s / %.1f mm gemodelleerd" />
+    <text name="cs_rf_pda_rk_unknown" text="onbekend" />
+    <text name="cs_rf_pda_rk_warn_tripped" text="Regensensor geactiveerd" />
+    <text name="cs_rf_pda_rk_warn_tripped_in" text="Sensor geactiveerd, droge reset over %d min" />
+    <text name="cs_rf_pda_rk_warn_noinput" text="Regensensor kan het weer niet lezen" />
+    <text name="cs_rf_pda_rk_btn_fit" text="Monteer" />
+    <text name="cs_rf_pda_rk_btn_remove" text="Haal weg" />
+    <text name="cs_rf_pda_rk_btn_trip_minus" text="Drempel-" />
+    <text name="cs_rf_pda_rk_btn_trip_plus" text="Drempel+" />
+    <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Bewatering: regenpauze" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Start zwenk" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Einde zwenk" />
+        <text name="cs_rf_pda_cap_rain_key" text="Regensensor" />
 </texts>
 </l10n>

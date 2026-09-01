@@ -412,12 +412,12 @@
 <text name="cs_rf_pda_pivot_warn_rainstar" text="Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_switch" text="Pivot %s Â· covers %s of this block"/>
     <text name="cs_rf_pda_pivot_drip_label" text="Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="Cur %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="Min %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="Max %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="Cur â€”"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="Min â€”"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="Max â€”"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="Arm %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="Sweep start %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="Sweep end %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="Arm -"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="Sweep start -"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="Sweep end -"/>
     <text name="cs_rf_pda_pivot_coverage" text="Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="Watering now: On"/>
@@ -507,5 +507,19 @@
     <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
     <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
     <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
+    <text name="cs_rf_pda_rk_suffix" text="  ·  rain key %s / %.1f mm modelled" />
+    <text name="cs_rf_pda_rk_unknown" text="unknown" />
+    <text name="cs_rf_pda_rk_warn_tripped" text="Rain key tripped" />
+    <text name="cs_rf_pda_rk_warn_tripped_in" text="Rain key tripped, dry reset in %d min" />
+    <text name="cs_rf_pda_rk_warn_noinput" text="Rain key cannot read weather" />
+    <text name="cs_rf_pda_rk_btn_fit" text="Fit" />
+    <text name="cs_rf_pda_rk_btn_remove" text="Remove" />
+    <text name="cs_rf_pda_rk_btn_trip_minus" text="Trip-" />
+    <text name="cs_rf_pda_rk_btn_trip_plus" text="Trip+" />
+    <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Watering now: Rain paused" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Sweep start" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Sweep end" />
+        <text name="cs_rf_pda_cap_rain_key" text="Rain key" />
 </texts>
 </l10n>

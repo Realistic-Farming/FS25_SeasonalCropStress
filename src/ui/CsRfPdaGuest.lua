@@ -789,7 +789,7 @@ local function refreshPivotSwitcher(container, mgr, memberIds, cands)
             for _, id in ipairs(subset) do parts[#parts + 1] = tostring(id) end
             subsetText = table.concat(parts, ", ")
         end
-        local tpl = tr("cs_rf_pda_pivot_switch", "Pivot %s · covers %s of this block")
+        local tpl = tr("cs_rf_pda_pivot_switch", "Pivot %s - covers %s of this block")
         local ok, label = pcall(string.format, tpl, tostring(c.id), subsetText)
         texts[i] = ok and label or string.format("Pivot %s · covers %s of this block", tostring(c.id), subsetText)
         if selectedId ~= nil and fieldIdEquals(c.id, selectedId) then
@@ -1315,7 +1315,7 @@ local function buildScheduleRateClause(fieldId, covered)
 
     if schedule ~= nil then
         local hours = string.format(
-            tr("cs_rf_pda_sched_hours", "Sched %d–%d"),
+            tr("cs_rf_pda_sched_hours", "Sched %d-%d"),
             schedule.startHour or 0,
             schedule.endHour or 0
         )
@@ -1326,7 +1326,7 @@ local function buildScheduleRateClause(fieldId, covered)
     if rate > 0 then
         return "No schedule · " .. rateStr
     end
-    return tr("cs_rf_pda_covered_no_sched", "Covered · no schedule") .. " · " .. rateStr
+    return tr("cs_rf_pda_covered_no_sched", "Covered - no schedule") .. " · " .. rateStr
 end
 
 --- Pack Status line: optional Alert + schedule/rate + Status. Never duplicate Alert on Next.
@@ -1334,7 +1334,7 @@ end
 local function buildStatusLine(fieldId, covered, statusWord, alertHint, alertOnStatus)
     local schedRate = buildScheduleRateClause(fieldId, covered)
     local statusJoin = string.format(
-        tr("cs_rf_pda_status_join", "%s  ·  Status: %s"),
+        tr("cs_rf_pda_status_join", "%s  -  Status: %s"),
         schedRate,
         statusWord or "-"
     )
@@ -1368,7 +1368,7 @@ local function buildStatusLine(fieldId, covered, statusWord, alertHint, alertOnS
         shortLeft = rateStr
     end
     return alertPrefix .. " · " .. string.format(
-        tr("cs_rf_pda_status_join", "%s  ·  Status: %s"),
+        tr("cs_rf_pda_status_join", "%s  -  Status: %s"),
         shortLeft,
         statusWord or "-"
     )
@@ -1430,13 +1430,15 @@ end
 --- label is stored on the element rather than written into its TextElement. Two
 --- things must never draw at once: the TextElement label and the chip. Leaving
 --- setText(label) on gave the DOOR-over-SPACE overlap Wizard was looking at.
-local function setPivotBtn(container, id, label, enabled, dead)
+---@param latched boolean|nil  true when this function is currently ON
+local function setPivotBtn(container, id, label, enabled, dead, latched)
     local el = findDescendant(container, id)
     if el == nil then return end
     if el.setVisible then el:setVisible(true) end
     if el.setText then el:setText("") end
     el.rfPivotChipLabel = label
     el.rfPivotChipEnabled = enabled and true or false
+    el.rfPivotChipLatched = latched and true or false
     -- BUILD 15:26: "dead" means there is no system behind this card at all, which
     -- is different from a gated remote on a real pivot. Gated still shows a grey
     -- chip so the farmer can see what is locked; dead paints nothing, because a
@@ -1462,6 +1464,9 @@ local PIVOT_CHIP_IDS = {
     "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop",
     "csPivotBtnMinUp", "csPivotBtnMinDn", "csPivotBtnMaxUp", "csPivotBtnMaxDn",
     "csPivotBtnArmPlus", "csPivotBtnArmMinus", "csBtnSchedule",
+    -- [SCS-046] Rain key. csPivotTripLabel is a Text, not a chip, so it is
+    -- deliberately absent from this list.
+    "csPivotBtnFit", "csPivotBtnTripMinus", "csPivotBtnTripPlus",
 }
 
 --- Paint one remote as a vanilla key chip, centred in its hit box.
@@ -1482,7 +1487,14 @@ local function renderPivotChip(el, overlay)
 
     local enabled = el.rfPivotChipEnabled
     local t, b, ta, ba
-    if enabled then
+    if enabled and el.rfPivotChipLatched then
+        -- [BUILD 18:42] LATCHED: this function is currently ON. A true invert of
+        -- the live chip, text and background swapped, so open reads differently
+        -- from closed at a glance without inventing a third colour that would
+        -- then need its own meaning. Only the live tier inverts: a gated chip
+        -- stays grey, because "locked" must never look like "on".
+        t, b, ta, ba = PIVOT_CHIP_BG, PIVOT_CHIP_TEXT, 1.0, 1.0
+    elseif enabled then
         t, b, ta, ba = PIVOT_CHIP_TEXT, PIVOT_CHIP_BG, 1.0, 1.0
     else
         -- GATED: real pivot, this tier locked (door / power / ownership / autoRotate).
@@ -1527,6 +1539,91 @@ local function wirePivotChipPaint(container)
         setTextAlignment(RenderText.ALIGN_LEFT)
         setTextVerticalAlignment(RenderText.VERTICAL_ALIGN_BASELINE)
         setTextColor(1, 1, 1, 1)
+    end
+end
+
+--- [BUILD 17:16] Deliver the Fit and Trip clicks ourselves.
+---
+--- Evidence first: with the 15:58 prints in place, a whole session of clicking
+--- Fit produced ZERO "[CropStress] Esc rain key" lines while Door and Power
+--- logged normally. So the click was never reaching onClickCsPivotFit at all;
+--- the event shape was worth fixing but was never the reason the chip looked
+--- dead.
+---
+--- Why the click goes missing, from the engine source: ButtonElement.mouseEvent
+--- hit-tests absPosition plus `size`, while the chip overlay is painted from
+--- absPosition plus `absSize`. When those disagree the chip is drawn where the
+--- mouse is not, so the press falls through to the sibling walk, and that walk
+--- runs last-to-first: Door sits earlier in the XML than Fit, which is exactly
+--- why Wizard's Fit presses show up in the log as Door and Power events.
+---
+--- So the card hit-tests the three rain-key chips itself, using the SAME
+--- absPosition and absSize the overlay draws with, and consumes the click by
+--- returning true. Fit therefore works whether or not Giants ever delivers its
+--- Button onClick, and because we consume it, it cannot double-fire.
+local RAIN_KEY_CHIPS = {
+    { id = "csPivotBtnFit",       token = "FIT_TOGGLE" },
+    { id = "csPivotBtnTripMinus", token = "TRIP_MINUS" },
+    { id = "csPivotBtnTripPlus",  token = "TRIP_PLUS"  },
+}
+
+local function wirePivotFitMouse(container)
+    local card = findDescendant(container, "csPivotCard")
+    -- A NEW flag on purpose: sharing _rfPivotChipWired would mean a card that
+    -- already had its draw wrapped (hot reload, or the light tick) would skip
+    -- the mouse wrap forever.
+    if card == nil or card._rfPivotFitMouseWired then return end
+    card._rfPivotFitMouseWired = true
+
+    local prevMouse = card.mouseEvent
+
+    function card:mouseEvent(posX, posY, isDown, isUp, button, eventUsed)
+        -- Some call paths in this file arrive with a nil button (see the
+        -- mouseUp guard further up), so nil counts as left rather than
+        -- silently dropping the click.
+        if not eventUsed and (isDown or isUp)
+           and (button == nil or button == Input.MOUSE_BUTTON_LEFT)
+           and GuiUtils ~= nil and type(GuiUtils.checkOverlayOverlap) == "function" then
+            for _, chip in ipairs(RAIN_KEY_CHIPS) do
+                local el = findDescendant(self, chip.id) or findDescendant(container, chip.id)
+                if el ~= nil and el.absPosition ~= nil and el.rfPivotChipDead ~= true then
+                    -- absSize is what the overlay paints with. If the layout has
+                    -- not resolved one yet, borrow Door's: every remote on this
+                    -- row is declared the same 80x32, so it is the right box
+                    -- rather than a guess.
+                    local w, h = nil, nil
+                    if el.absSize ~= nil then w, h = el.absSize[1], el.absSize[2] end
+                    if w == nil or h == nil or w <= 0 or h <= 0 then
+                        local door = findDescendant(self, "csPivotBtnDoor")
+                                  or findDescendant(container, "csPivotBtnDoor")
+                        if door ~= nil and door.absSize ~= nil then
+                            w, h = door.absSize[1], door.absSize[2]
+                        end
+                    end
+                    if w ~= nil and h ~= nil and w > 0 and h > 0
+                       and GuiUtils.checkOverlayOverlap(posX, posY,
+                            el.absPosition[1], el.absPosition[2], w, h, nil) then
+                        print(string.format(
+                            "[CropStress] Esc Fit chip mouse hit id=%s token=%s %s",
+                            chip.id, chip.token, isUp and "UP" or "DOWN"))
+                        -- Act on release only, the way a button behaves, but
+                        -- consume the press too so no sibling can claim it.
+                        if isUp and type(CsRfPdaGuest.onRainKeyCommand) == "function" then
+                            local ok, err = pcall(CsRfPdaGuest.onRainKeyCommand, container, chip.token)
+                            if not ok then
+                                print(string.format("[CropStress] Esc rain key %s FAILED: %s",
+                                    chip.token, tostring(err)))
+                            end
+                        end
+                        return true
+                    end
+                end
+            end
+        end
+        if prevMouse ~= nil then
+            return prevMouse(self, posX, posY, isDown, isUp, button, eventUsed)
+        end
+        return false
     end
 end
 
@@ -1581,7 +1678,7 @@ local function formatScheduleGlance(sys)
     local endH = tonumber(s.endHour) or 0
     local tag = scheduleDaysTag(s.activeDays)
     return string.format(
-        tr("cs_rf_pda_pivot_sched", "Schedule: %02d:00–%02d:00%s"),
+        tr("cs_rf_pda_pivot_sched", "Schedule: %02d:00-%02d:00%s"),
         startH, endH, tag or ""
     )
 end
@@ -1681,6 +1778,7 @@ updatePivotCard = function(container, fieldId)
         return
     end
     wirePivotChipPaint(container)
+    wirePivotFitMouse(container)
     applyDialFace(container)
     if card.setVisible then card:setVisible(true) end
 
@@ -1700,21 +1798,26 @@ updatePivotCard = function(container, fieldId)
 
     if sysId == nil or sys == nil then
         setPivotText(container, "csPivotTitle", tr("cs_rf_pda_pivot_title", "PIVOT"))
-        setPivotText(container, "csPivotDialCur", tr("cs_rf_pda_pivot_dial_empty", "Cur —"))
-        setPivotText(container, "csPivotDialMin", tr("cs_rf_pda_pivot_dial_min_empty", "Min —"))
-        setPivotText(container, "csPivotDialMax", tr("cs_rf_pda_pivot_dial_max_empty", "Max —"))
+        setPivotText(container, "csPivotDialCur", tr("cs_rf_pda_pivot_dial_empty", "Arm -"))
+        setPivotText(container, "csPivotDialMin", tr("cs_rf_pda_pivot_dial_min_empty", "Sweep start -"))
+        setPivotText(container, "csPivotDialMax", tr("cs_rf_pda_pivot_dial_max_empty", "Sweep end -"))
         setPivotText(container, "csPivotCoverage", tr("cs_rf_pda_pivot_coverage_none", "Coverage: No fields covered"))
         setPivotText(container, "csPivotWatering", tr("cs_rf_pda_pivot_watering_off", "Watering now: Off"))
-        setPivotText(container, "csPivotPressure", tr("cs_rf_pda_pivot_pressure_na", "Pressure: —"))
-        setPivotText(container, "csPivotRate", tr("cs_rf_pda_pivot_rate_na", "Rate: —"))
+        setPivotText(container, "csPivotPressure", tr("cs_rf_pda_pivot_pressure_na", "Pressure: -"))
+        setPivotText(container, "csPivotRate", tr("cs_rf_pda_pivot_rate_na", "Rate: -"))
         setPivotText(container, "csPivotSchedule", tr("cs_rf_pda_pivot_sched_none", "Schedule: No schedule"))
         setPivotText(container, "csPivotWarn",
             tr("cs_rf_pda_pivot_warn_none", "No pivot on this field"))
+        setPivotText(container, "csPivotTripLabel", "")
+        setPivotText(container, "csPivotCapMin", "")
+        setPivotText(container, "csPivotCapMax", "")
+        setPivotText(container, "csPivotCapFit", "")
         local dead = {
             "csPivotBtnDoor", "csPivotBtnPower", "csPivotBtnSpray", "csPivotBtnEndGun",
             "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop",
             "csPivotBtnMinUp", "csPivotBtnMinDn", "csPivotBtnMaxUp", "csPivotBtnMaxDn",
             "csPivotBtnArmPlus", "csPivotBtnArmMinus", "csBtnSchedule",
+            "csPivotBtnFit", "csPivotBtnTripMinus", "csPivotBtnTripPlus",
         }
         local labels = {
             csPivotBtnDoor = tr("cs_rf_pda_pivot_btn_door", "Door"),
@@ -1725,12 +1828,15 @@ updatePivotCard = function(container, fieldId)
             csPivotBtnStart = tr("cs_rf_pda_pivot_btn_start", "Start"),
             csPivotBtnStop = tr("cs_rf_pda_pivot_btn_stop", "Stop"),
             csPivotBtnMinUp = tr("cs_rf_pda_pivot_btn_min_up", "Min+"),
-            csPivotBtnMinDn = tr("cs_rf_pda_pivot_btn_min_dn", "Min−"),
+            csPivotBtnMinDn = tr("cs_rf_pda_pivot_btn_min_dn", "Min-"),
             csPivotBtnMaxUp = tr("cs_rf_pda_pivot_btn_max_up", "Max+"),
-            csPivotBtnMaxDn = tr("cs_rf_pda_pivot_btn_max_dn", "Max−"),
+            csPivotBtnMaxDn = tr("cs_rf_pda_pivot_btn_max_dn", "Max-"),
             csPivotBtnArmPlus = tr("cs_rf_pda_pivot_btn_arm_plus", "Arm+"),
-            csPivotBtnArmMinus = tr("cs_rf_pda_pivot_btn_arm_minus", "Arm−"),
+            csPivotBtnArmMinus = tr("cs_rf_pda_pivot_btn_arm_minus", "Arm-"),
             csBtnSchedule = tr("cs_rf_pda_pivot_btn_schedule", "Schedule"),
+            csPivotBtnFit = tr("cs_rf_pda_rk_btn_fit", "Fit"),
+            csPivotBtnTripMinus = tr("cs_rf_pda_rk_btn_trip_minus", "Trip-"),
+            csPivotBtnTripPlus = tr("cs_rf_pda_rk_btn_trip_plus", "Trip+"),
         }
 
         -- RAINSTAR SEAT: a vehicle irrigator is not a placeable system, so no
@@ -1780,9 +1886,9 @@ updatePivotCard = function(container, fieldId)
                 and tr("cs_rf_pda_pivot_watering_on", "Watering now: On")
                 or tr("cs_rf_pda_pivot_watering_off", "Watering now: Off"))
             setPivotText(container, "csPivotPressure",
-                tr("cs_rf_pda_pivot_pressure_na", "Pressure: —"))
+                tr("cs_rf_pda_pivot_pressure_na", "Pressure: -"))
             setPivotText(container, "csPivotRate",
-                tr("cs_rf_pda_pivot_rate_na", "Rate: —"))
+                tr("cs_rf_pda_pivot_rate_na", "Rate: -"))
             setPivotText(container, "csPivotSchedule",
                 tr("cs_rf_pda_pivot_sched_none", "Schedule: No schedule"))
             setPivotText(container, "csPivotWarn",
@@ -1806,43 +1912,87 @@ updatePivotCard = function(container, fieldId)
     -- Title surfaces resolved covering systemId for the selected field (multi-cover honesty).
     local sysTag = tostring(sysId)
     if not reinke then
-        -- Drip / non-pivot: honest status, no fake needles.
-        setPivotText(container, "csPivotTitle",
-            string.format("%s #%s", tr("cs_rf_pda_pivot_title_irrig", "IRRIGATION"), sysTag))
-        setPivotText(container, "csPivotDialCur", tr("cs_rf_pda_pivot_drip_label", "Drip line"))
+        -- No Reinke controller: no needles and no angles, which is honest.
+        -- [SCS-046] But the TYPE is not the controller. A shop center pivot
+        -- without a Reinke spec is still a pivot, and calling it IRRIGATION and
+        -- labelling it "Drip line" is what made Wizard's #1139 read as a drip
+        -- line on the Esc card while the tablet correctly called it a pivot.
+        -- Title follows sys.type; the drip label appears only for a drip row.
+        local isPivotType = (sys ~= nil) and (sys.type == "pivot")
+        setPivotText(container, "csPivotTitle", string.format("%s #%s",
+            isPivotType and tr("cs_rf_pda_pivot_title", "PIVOT")
+                        or tr("cs_rf_pda_pivot_title_irrig", "IRRIGATION"), sysTag))
+        if sys ~= nil and sys.type == "drip" then
+            setPivotText(container, "csPivotDialCur", tr("cs_rf_pda_pivot_drip_label", "Drip line"))
+        else
+            setPivotText(container, "csPivotDialCur", "")
+        end
         setPivotText(container, "csPivotDialMin", "")
         setPivotText(container, "csPivotDialMax", "")
     else
         setPivotText(container, "csPivotTitle",
             string.format("%s #%s", tr("cs_rf_pda_pivot_title", "PIVOT"), sysTag))
-        local curDeg, minDeg, maxDeg = 0, 0, 0
+        -- [BUILD 12:51] The two sweep marks ALWAYS show the machine's real sweep
+        -- bounds. They used to collapse onto the arm target whenever autoRotate
+        -- was off, so a farmer setting his arc while watering was off watched
+        -- both marks sit on the arm and reasonably concluded the buttons did
+        -- nothing. The bounds exist and persist in either mode; only the arm is
+        -- mode-dependent.
+        local curDeg, minDeg, maxDeg = 0, 0, 360
         if spec ~= nil then
             curDeg = math.deg(spec.armAngle or 0) % 360
-            if spec.autoRotate then
-                minDeg = spec.autoMinAngleDeg or 0
-                maxDeg = spec.autoMaxAngleDeg or 360
-            else
-                local tgt = spec.targetAngle or spec.armAngle or 0
-                minDeg = math.deg(tgt) % 360
-                maxDeg = minDeg
-            end
+            minDeg = spec.autoMinAngleDeg or 0
+            maxDeg = spec.autoMaxAngleDeg or 360
         end
         setPivotText(container, "csPivotDialCur",
-            string.format(tr("cs_rf_pda_pivot_dial_cur", "Cur %.0f°"), curDeg))
+            string.format(tr("cs_rf_pda_pivot_dial_cur", "Arm %.0f deg"), curDeg))
         setPivotText(container, "csPivotDialMin",
-            string.format(tr("cs_rf_pda_pivot_dial_min", "Min %.0f°"), minDeg))
+            string.format(tr("cs_rf_pda_pivot_dial_min", "Sweep start %.0f deg"), minDeg))
         setPivotText(container, "csPivotDialMax",
-            string.format(tr("cs_rf_pda_pivot_dial_max", "Max %.0f°"), maxDeg))
+            string.format(tr("cs_rf_pda_pivot_dial_max", "Sweep end %.0f deg"), maxDeg))
         rotateNeedle(findDescendant(container, "csPivotNeedleCur"), curDeg)
         rotateNeedle(findDescendant(container, "csPivotNeedleMin"), minDeg)
         rotateNeedle(findDescendant(container, "csPivotNeedleMax"), maxDeg)
     end
 
     setPivotText(container, "csPivotCoverage", formatCoverageFields(sys))
-    local watering = sys.isActive == true
-    setPivotText(container, "csPivotWatering", watering
-        and tr("cs_rf_pda_pivot_watering_on", "Watering now: On")
-        or tr("cs_rf_pda_pivot_watering_off", "Watering now: Off"))
+
+    -- [SCS-046] Activity comes from the SAME resolver the snapshot publishes to
+    -- FarmTablet, so the card and the tablet cannot describe one pivot two ways
+    -- (acceptance point 4). A rain-paused machine says so rather than showing
+    -- the bare "Off" that used to make a tripped key look like an idle pivot.
+    local irrMgrRK = (getMgr() ~= nil) and getMgr().irrigationManager or nil
+    local rkActivity, rkReason = nil, nil
+    if irrMgrRK ~= nil and type(irrMgrRK.getActivityState) == "function" then
+        rkActivity, rkReason = irrMgrRK:getActivityState(sys)
+    end
+    local wateringText
+    if rkActivity == "RAIN_PAUSED" then
+        wateringText = tr("cs_rf_pda_pivot_watering_rain", "Watering now: Rain paused")
+    elseif rkActivity == "RUNNING" or (rkActivity == nil and sys.isActive == true) then
+        wateringText = tr("cs_rf_pda_pivot_watering_on", "Watering now: On")
+    else
+        wateringText = tr("cs_rf_pda_pivot_watering_off", "Watering now: Off")
+    end
+
+    -- [SCS-046] The rain-key reading rides the existing full-width status line
+    -- rather than a new row. The card's rows are laid out on fixed pixel
+    -- offsets with the warning line last, so adding one would mean moving
+    -- Wizard's layout, and pixels are explicitly his. Modelled mm is this
+    -- feature's own sensor unit and is labelled every time it is shown, so it
+    -- can never read as a soil-moisture percentage.
+    if sys.rainKeyFitted == true then
+        local collected
+        if sys.rainKeyInputState == "INPUT_UNAVAILABLE" then
+            collected = tr("cs_rf_pda_rk_unknown", "unknown")
+        else
+            collected = string.format("%.1f", sys.rainKeyAccumulatedMm or 0)
+        end
+        wateringText = wateringText .. string.format(
+            tr("cs_rf_pda_rk_suffix", "  -  rain key %s / %.1f mm modelled"),
+            collected, sys.rainKeyTripMm or 2.5)
+    end
+    setPivotText(container, "csPivotWatering", wateringText)
 
     local pressurePct = math.floor((sys.pressureMultiplier or 0) * 100 + 0.5)
     setPivotText(container, "csPivotPressure",
@@ -1854,13 +2004,29 @@ updatePivotCard = function(container, fieldId)
         setPivotText(container, "csPivotRate",
             string.format(tr("cs_rf_pda_pivot_rate", "Rate: +%.3f/h"), rate))
     else
-        setPivotText(container, "csPivotRate", tr("cs_rf_pda_pivot_rate_na", "Rate: —"))
+        setPivotText(container, "csPivotRate", tr("cs_rf_pda_pivot_rate_na", "Rate: -"))
     end
     setPivotText(container, "csPivotSchedule", formatScheduleGlance(sys))
 
     local warn = ""
     if not owned then
         warn = tr("cs_rf_pda_pivot_warn_owner", "Not your pivot")
+    elseif rkReason == "RAIN_KEY_TRIPPED" then
+        -- The most actionable thing a farmer can be told about this machine
+        -- right now, so it outranks the door and power hints below.
+        local wakeKind, wakeMin = nil, -1
+        if irrMgrRK ~= nil and type(irrMgrRK.getNextWake) == "function" then
+            wakeKind, wakeMin = irrMgrRK:getNextWake(sys)
+        end
+        if wakeKind == "DRY_RESET" and wakeMin ~= nil and wakeMin >= 0 then
+            warn = string.format(
+                tr("cs_rf_pda_rk_warn_tripped_in", "Rain key tripped, dry reset in %d min"),
+                math.floor(wakeMin + 0.5))
+        else
+            warn = tr("cs_rf_pda_rk_warn_tripped", "Rain key tripped")
+        end
+    elseif rkReason == "INPUT_UNAVAILABLE" then
+        warn = tr("cs_rf_pda_rk_warn_noinput", "Rain key cannot read weather")
     elseif reinke and spec ~= nil and not spec.doorOpen then
         warn = tr("cs_rf_pda_pivot_warn_door", "Open door for ops")
     elseif reinke and spec ~= nil and not spec.masterPower then
@@ -1886,20 +2052,65 @@ updatePivotCard = function(container, fieldId)
         end
     end
 
-    setPivotBtn(container, "csPivotBtnDoor", tr("cs_rf_pda_pivot_btn_door", "Door"), doorOk)
-    setPivotBtn(container, "csPivotBtnPower", tr("cs_rf_pda_pivot_btn_power", "Power"), powerOk)
-    setPivotBtn(container, "csPivotBtnSpray", tr("cs_rf_pda_pivot_btn_spray", "Spray"), opsOk)
-    setPivotBtn(container, "csPivotBtnEndGun", tr("cs_rf_pda_pivot_btn_endgun", "End gun"), opsOk)
+    -- [BUILD 18:42] Latch state per chip: what is ON right now. Speed, Min/Max,
+    -- Arm, Schedule, Fit and Trip are deliberately never latched: they are steps
+    -- and actions, not states, so an inverted chip would be claiming a mode that
+    -- does not exist.
+    local sprayOn  = spec ~= nil and spec.isSprayActive == true
+    local endGunOn = spec ~= nil and spec.endGunActive == true
+    local wateringOn = (spec ~= nil and spec.autoRotate == true)
+                       or (spec == nil and sys ~= nil and sys.isActive == true)
+    setPivotBtn(container, "csPivotBtnDoor", tr("cs_rf_pda_pivot_btn_door", "Door"), doorOk, false, doorOpen)
+    setPivotBtn(container, "csPivotBtnPower", tr("cs_rf_pda_pivot_btn_power", "Power"), powerOk, false, powered)
+    setPivotBtn(container, "csPivotBtnSpray", tr("cs_rf_pda_pivot_btn_spray", "Spray"), opsOk, false, sprayOn)
+    setPivotBtn(container, "csPivotBtnEndGun", tr("cs_rf_pda_pivot_btn_endgun", "End gun"), opsOk, false, endGunOn)
     setPivotBtn(container, "csPivotBtnSpeed", speedLabel, opsOk)
-    setPivotBtn(container, "csPivotBtnStart", tr("cs_rf_pda_pivot_btn_start", "Start"), owned and (reinke or sys ~= nil))
-    setPivotBtn(container, "csPivotBtnStop", tr("cs_rf_pda_pivot_btn_stop", "Stop"), owned and (reinke or sys ~= nil))
+    setPivotBtn(container, "csPivotBtnStart", tr("cs_rf_pda_pivot_btn_start", "Start"),
+        owned and (reinke or sys ~= nil), false, wateringOn)
+    -- Stop latches when the machine is stopped, so the pair always shows which
+    -- of the two modes you are actually in rather than leaving both dark.
+    setPivotBtn(container, "csPivotBtnStop", tr("cs_rf_pda_pivot_btn_stop", "Stop"),
+        owned and (reinke or sys ~= nil), false, owned and not wateringOn)
     setPivotBtn(container, "csPivotBtnMinUp", tr("cs_rf_pda_pivot_btn_min_up", "Min+"), opsOk)
-    setPivotBtn(container, "csPivotBtnMinDn", tr("cs_rf_pda_pivot_btn_min_dn", "Min−"), opsOk)
+    setPivotBtn(container, "csPivotBtnMinDn", tr("cs_rf_pda_pivot_btn_min_dn", "Min-"), opsOk)
     setPivotBtn(container, "csPivotBtnMaxUp", tr("cs_rf_pda_pivot_btn_max_up", "Max+"), opsOk)
-    setPivotBtn(container, "csPivotBtnMaxDn", tr("cs_rf_pda_pivot_btn_max_dn", "Max−"), opsOk)
+    setPivotBtn(container, "csPivotBtnMaxDn", tr("cs_rf_pda_pivot_btn_max_dn", "Max-"), opsOk)
     setPivotBtn(container, "csPivotBtnArmPlus", tr("cs_rf_pda_pivot_btn_arm_plus", "Arm+"), armOk)
-    setPivotBtn(container, "csPivotBtnArmMinus", tr("cs_rf_pda_pivot_btn_arm_minus", "Arm−"), armOk)
+    setPivotBtn(container, "csPivotBtnArmMinus", tr("cs_rf_pda_pivot_btn_arm_minus", "Arm-"), armOk)
     setPivotBtn(container, "csBtnSchedule", tr("cs_rf_pda_pivot_btn_schedule", "Schedule"), true)
+
+    -- [SCS-046] Rain key remotes. A key is pivot equipment, so Fit is dead on a
+    -- drip line or a Rainstar rather than gated: there is nothing to fit it to.
+    local isPivotRow = (sys ~= nil) and (sys.type == "pivot")
+    local fitted     = sys ~= nil and sys.rainKeyFitted == true
+    local fitOk      = owned and isPivotRow
+    setPivotBtn(container, "csPivotBtnFit",
+        fitted and tr("cs_rf_pda_rk_btn_remove", "Remove") or tr("cs_rf_pda_rk_btn_fit", "Fit"),
+        fitOk, not isPivotRow)
+
+    -- The stepper is gated, not dead, while unfitted: the control exists for this
+    -- machine, it simply has nothing to step until a key is on it.
+    local tripOk = fitOk and fitted
+    setPivotBtn(container, "csPivotBtnTripMinus", tr("cs_rf_pda_rk_btn_trip_minus", "Trip-"), tripOk)
+    setPivotBtn(container, "csPivotBtnTripPlus", tr("cs_rf_pda_rk_btn_trip_plus", "Trip+"), tripOk)
+
+    if isPivotRow then
+        -- Unfitted shows the default it would be fitted at, so the number the
+        -- player is about to accept is visible before they accept it.
+        local tripMm = (sys ~= nil and tonumber(sys.rainKeyTripMm)) or 2.5
+        setPivotText(container, "csPivotTripLabel",
+            string.format(tr("cs_rf_pda_rk_trip_label", "%.1fmm"), tripMm))
+        setPivotText(container, "csPivotCapFit", tr("cs_rf_pda_cap_rain_key", "Rain key"))
+    else
+        setPivotText(container, "csPivotTripLabel", "")
+        setPivotText(container, "csPivotCapFit", "")
+    end
+
+    -- [BUILD 18:42] Say what the two angle pairs are for. The dial already names
+    -- sweep start and sweep end; these put the same words over the buttons that
+    -- move them, so "Min 45" stops being a number without a subject.
+    setPivotText(container, "csPivotCapMin", tr("cs_rf_pda_cap_sweep_start", "Sweep start"))
+    setPivotText(container, "csPivotCapMax", tr("cs_rf_pda_cap_sweep_end", "Sweep end"))
 end
 
 
@@ -1985,6 +2196,80 @@ local function updateAgronomistCard(container, fieldId)
 end
 
 --- Esc PIVOT remote: send CropStressPivotRemoteEvent (server authority).
+--- [SCS-046] Esc rain-key remotes. This is the ONLY write path from the card:
+--- it sends CropStressRainKeyCommandEvent and never touches
+--- irrigationManager.systems, so a client cannot paint a state the server has
+--- not agreed to. The current revision travels with the request, so a card that
+--- was showing stale state is refused rather than applied.
+function CsRfPdaGuest.onRainKeyCommand(container, token)
+    local mgr = getMgr()
+    local members = selectedMemberIds(container)
+    local fieldId = selectedFieldId(container)
+    if (members == nil or #members == 0) and fieldId ~= nil then
+        members = { fieldId }
+    end
+    local sysId = select(1, selectedSystemId(container, mgr, members))
+    if sysId == nil then
+        print(string.format(
+            "[CropStress] Esc rain key %s IGNORED: no system resolved for fieldId=%s",
+            tostring(token), tostring(fieldId)))
+        return
+    end
+
+    local irr = mgr ~= nil and mgr.irrigationManager or nil
+    local sys = irr ~= nil and irr.systems ~= nil and irr.systems[sysId] or nil
+    if sys == nil then
+        print(string.format("[CropStress] Esc rain key %s IGNORED: system %s unknown",
+            tostring(token), tostring(sysId)))
+        return
+    end
+    if sys.type ~= "pivot" then
+        print("[CropStress] Esc rain key IGNORED: not a center pivot")
+        return
+    end
+
+    local revision = sys.rainKeyStateRevision or 0
+    local action, value = nil, nil
+    if token == "FIT_TOGGLE" then
+        action = (sys.rainKeyFitted == true) and "REMOVE" or "FIT"
+    elseif token == "TRIP_MINUS" or token == "TRIP_PLUS" then
+        if sys.rainKeyFitted ~= true then
+            print("[CropStress] Esc rain key trip IGNORED: no key fitted")
+            return
+        end
+        local step = (token == "TRIP_PLUS") and 0.5 or -0.5
+        local cur  = tonumber(sys.rainKeyTripMm) or 2.5
+        value = cur + step
+        -- Clamp on the way out so the stepper stops at the ends instead of
+        -- sending a value the server will refuse. The server validates again:
+        -- this is convenience, not the authority.
+        if value < 0.5 then value = 0.5 end
+        if value > 10.0 then value = 10.0 end
+        -- Round to the exact half step, because repeated float addition drifts
+        -- and the server refuses anything off the step.
+        value = math.floor((value * 2) + 0.5) / 2
+        if value == cur then return end
+        action = "SET_TRIP_MM"
+    else
+        print(string.format("[CropStress] Esc rain key IGNORED: unknown token %s", tostring(token)))
+        return
+    end
+
+    if CropStressRainKeyCommandEvent ~= nil
+       and type(CropStressRainKeyCommandEvent.sendToServer) == "function" then
+        print(string.format(
+            "[CropStress] Esc rain key %s -> sendToServer(sysId=%s, action=%s, value=%s, rev=%d)",
+            tostring(token), tostring(sysId), tostring(action), tostring(value), revision))
+        CropStressRainKeyCommandEvent.sendToServer(sysId, action, value, revision)
+    else
+        print("[CropStress] Esc rain key IGNORED: CropStressRainKeyCommandEvent.sendToServer unavailable")
+    end
+
+    if type(CsRfPdaGuest.onShow) == "function" then
+        CsRfPdaGuest.onShow(container, true)
+    end
+end
+
 function CsRfPdaGuest.onPivotRemote(container, actionToken)
     local A = CropStressPivotRemoteEvent ~= nil and CropStressPivotRemoteEvent.ACTION or PIVOT_ACTION
     local action = A[actionToken]
@@ -2139,7 +2424,7 @@ local function updateDetailBand(container)
     local nextBody, nextColor = CsRfPdaGuest.buildNextStepLine(fieldId)
     local alertOnStatus = false
     if alertHint ~= nil and nextBody ~= nil and nextBody ~= "" and moisture < 0.25 then
-        local sepTpl = tr("cs_rf_pda_next_alert_sep", " · %s")
+        local sepTpl = tr("cs_rf_pda_next_alert_sep", " - %s")
         local append = string.format(sepTpl, alertHint)
         if (#nextBody + #append) <= 110 then
             nextBody = nextBody .. append
@@ -2194,7 +2479,7 @@ local function updateDetailBand(container)
         local stressLabel = string.format("%s: %s",
             tr("cs_rf_pda_col_stress", "Stress"), entry.stressText or "-")
         local heatClause = string.format(
-            tr("cs_rf_pda_heat_clause", "Air %.0f°C, dry pull %.1f"),
+            tr("cs_rf_pda_heat_clause", "Air %.0f deg C, dry pull %.1f"),
             tempC,
             evap
         )

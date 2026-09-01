@@ -406,12 +406,12 @@
 <text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="Braccio %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="Inizio settore %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="Fine settore %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="Braccio -"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="Inizio settore -"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="Fine settore -"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
@@ -500,5 +500,19 @@
     <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
     <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
     <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
+    <text name="cs_rf_pda_rk_suffix" text="  ·  sensore pioggia %s / %.1f mm modellati" />
+    <text name="cs_rf_pda_rk_unknown" text="sconosciuto" />
+    <text name="cs_rf_pda_rk_warn_tripped" text="Sensore pioggia scattato" />
+    <text name="cs_rf_pda_rk_warn_tripped_in" text="Sensore scattato, reset asciutto tra %d min" />
+    <text name="cs_rf_pda_rk_warn_noinput" text="Il sensore non legge il meteo" />
+    <text name="cs_rf_pda_rk_btn_fit" text="Monta" />
+    <text name="cs_rf_pda_rk_btn_remove" text="Togli" />
+    <text name="cs_rf_pda_rk_btn_trip_minus" text="Soglia-" />
+    <text name="cs_rf_pda_rk_btn_trip_plus" text="Soglia+" />
+    <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Irrigazione: pausa pioggia" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Inizio settore" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Fine settore" />
+        <text name="cs_rf_pda_cap_rain_key" text="Sensore pioggia" />
 </texts>
 </l10n>

@@ -402,12 +402,12 @@
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s Â· covers %s of this block"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="Стрела %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="Начало сектора %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="Конец сектора %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="Стрела -"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="Начало сектора -"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="Конец сектора -"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
@@ -468,5 +468,19 @@
     <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
     <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
     <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
+    <text name="cs_rf_pda_rk_suffix" text="  ·  датчик дождя %s / %.1f мм расчетных" />
+    <text name="cs_rf_pda_rk_unknown" text="неизвестно" />
+    <text name="cs_rf_pda_rk_warn_tripped" text="Датчик дождя сработал" />
+    <text name="cs_rf_pda_rk_warn_tripped_in" text="Датчик сработал, сухой сброс через %d мин" />
+    <text name="cs_rf_pda_rk_warn_noinput" text="Датчик не читает погоду" />
+    <text name="cs_rf_pda_rk_btn_fit" text="Уст." />
+    <text name="cs_rf_pda_rk_btn_remove" text="Снять" />
+    <text name="cs_rf_pda_rk_btn_trip_minus" text="Порог-" />
+    <text name="cs_rf_pda_rk_btn_trip_plus" text="Порог+" />
+    <text name="cs_rf_pda_rk_trip_label" text="%.1fмм" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Полив: пауза по дождю" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Начало сектора" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Конец сектора" />
+        <text name="cs_rf_pda_cap_rain_key" text="Датчик дождя" />
 </texts>
 </l10n>

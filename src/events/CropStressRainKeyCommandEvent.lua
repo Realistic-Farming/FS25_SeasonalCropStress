@@ -13,11 +13,11 @@ CropStressRainKeyCommandEvent_mt = Class(CropStressRainKeyCommandEvent, Event)
 InitEventClass(CropStressRainKeyCommandEvent, "CropStressRainKeyCommandEvent")
 
 function CropStressRainKeyCommandEvent.emptyNew()
-    return CropStressRainKeyCommandEvent:new()
+    return Event.new(CropStressRainKeyCommandEvent_mt)
 end
 
-function CropStressRainKeyCommandEvent:new(systemId, action, value)
-    local self = setmetatable({}, CropStressRainKeyCommandEvent_mt)
+function CropStressRainKeyCommandEvent.new(systemId, action, value)
+    local self = CropStressRainKeyCommandEvent.emptyNew()
     self.systemId = systemId or 0
     self.action   = action or ""
     self.value    = value
