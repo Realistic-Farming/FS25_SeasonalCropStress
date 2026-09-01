@@ -33,7 +33,7 @@ local function getPlaceablePosition(placeable)
     if node ~= nil then
         return getWorldTranslation(node)
     end
-    -- Final fallback — placeable may store position directly on some versions
+    -- Final fallback â€” placeable may store position directly on some versions
     return placeable.posX or 0, 0, placeable.posZ or 0
 end
 
@@ -93,23 +93,41 @@ end
 -- ============================================================
 function IrrigationManager:registerWaterSource(placeable)
     local x, y, z = getPlaceablePosition(placeable)
+    -- SCS-023: the source row carries finite-water state. waterRemaining is the
+    -- sole mutable truth; hasWater derives from it. Unlimited (capacity <= 0)
+    -- never writes or draws remainder. farmId comes from the pump placeable.
+    local capacity = tonumber(placeable.waterUnitsCapacity)
+    local finite = capacity ~= nil and capacity > 0
+    local remaining = placeable.waterRemaining
+    if remaining == nil then
+        remaining = finite and capacity or nil  -- full for a new pump
+    end
     self.waterSources[placeable.id] = {
         id           = placeable.id,
         x            = x,
         y            = y,  -- SCS-038: the LIFT term's source height, read once at registration
         z            = z,
-        hasWater     = true,  -- Phase 2: always true; Phase 4: could be finite
+        hasWater     = not finite or (remaining or 0) > 0,
         flowCapacity = placeable.waterFlowCapacity or 1000,
+        -- SCS-023 finite water
+        finite       = finite,
+        capacity     = finite and capacity or nil,
+        waterRemaining = remaining,
+        farmId       = placeable.ownerFarmId
+            or (placeable.getOwnerFarmId and placeable:getOwnerFarmId() or nil),
     }
-    csLog(string.format("Water source %d registered at (%.1f, %.1f)", placeable.id, x, z))
+    csLog(string.format("Water source %d registered at (%.1f, %.1f) finite=%s",
+        placeable.id, x, z, tostring(finite)))
 
     -- Re-connect any irrigation systems that registered before this pump was placed.
     -- Placement order (pivot first, then pump) would otherwise leave systems permanently
     -- disconnected since findNearestWaterSource() is only called once at system registration.
+    -- SCS-023: registration/rebinding passes requireWater=false, so a dry source remains
+    -- a deterministic peer/load candidate.
     local reconnected = 0
     for sysId, sys in pairs(self.systems) do
         if sys.waterSourceId == nil then
-            local sourceId, dist = self:findNearestWaterSource(sys.x, sys.z)
+            local sourceId, dist = self:findNearestWaterSource(sys.x, sys.z, sys.ownerFarmId, false)
             if sourceId ~= nil then
                 sys.waterSourceId      = sourceId
                 sys.distanceToSource   = dist
@@ -135,6 +153,73 @@ function IrrigationManager:deregisterWaterSource(placeableId)
     end
 end
 
+-- SCS-023: revalidate a source's bindings after an owner change. Fills only nil
+-- bindings; a dry source may bind. New wet pumps do not steal a valid retained
+-- binding.
+function IrrigationManager:rebindWaterSource(sourceId, newFarmId)
+    local source = self.waterSources[sourceId]
+    if source == nil then return end
+    source.farmId = newFarmId
+    for sysId, sys in pairs(self.systems) do
+        if sys.waterSourceId == nil then
+            local srcId, dist = self:findNearestWaterSource(sys.x, sys.z, sys.ownerFarmId, false)
+            if srcId ~= nil then
+                sys.waterSourceId      = srcId
+                sys.distanceToSource   = dist
+                sys.pressureMultiplier = self:calculatePressureMultiplier(dist)
+            end
+        end
+    end
+end
+
+-- ============================================================
+-- SCS-023 FINITE WATER SOURCE STATE
+-- ============================================================
+
+--- Set a finite source's waterRemaining (authoritative server change). Clamps,
+--- writes the placeable, derives hasWater, and raises the pump dirty flag only
+--- for an authoritative server change (fromSync clients never originate dirt).
+function IrrigationManager:setSourceWaterRemaining(sourceId, value, fromSync)
+    local source = self.waterSources[sourceId]
+    if source == nil or not source.finite then return end
+    local clamped = math.max(0, tonumber(value) or 0)
+    source.waterRemaining = clamped
+    source.hasWater = clamped > 0
+    if source.placeable ~= nil then
+        source.placeable.waterRemaining = clamped
+        if not fromSync and g_server ~= nil and source.placeable.setDirtyFlag ~= nil then
+            source.placeable:setDirtyFlag(true)
+        end
+    end
+end
+
+--- Effective finite-water mode. False unless settings exist, settings.finiteWater
+--- is true, and the release gate reports the system live.
+function IrrigationManager:isFiniteWaterActive()
+    local settings = self.manager ~= nil and self.manager.settings or nil
+    if settings == nil then return false end
+    if settings.finiteWater ~= true then return false end
+    if ReleaseGate ~= nil and type(ReleaseGate.isSystemLive) == "function" then
+        return ReleaseGate.isSystemLive("finite_irrigation_water") == true
+    end
+    return true
+end
+
+--- Resolve the OptionScaling finiteWaterDrawScale once per hourly act.
+function IrrigationManager:resolveFiniteWaterDrawScale()
+    -- Agronomy declaration, base/neutral 1.0. Delegate-when-present.
+    local resolver = g_currentMission ~= nil and g_currentMission.optionScalingResolver or nil
+    if resolver == nil then return 1.0 end
+    if type(resolver.readProfile) == "function" and type(resolver.resolve) == "function" then
+        local profile = resolver:readProfile()
+        if profile ~= nil then
+            local v = resolver:resolve(profile, "AGRO", "finiteWaterDrawScale")
+            if type(v) == "number" and v > 0 then return v end
+        end
+    end
+    return 1.0
+end
+
 -- ============================================================
 -- Irrigation System Registration
 -- ============================================================
@@ -142,8 +227,12 @@ function IrrigationManager:registerIrrigationSystem(placeable)
     local x, y, z = getPlaceablePosition(placeable)
     local coveredFields = self:detectCoveredFields(placeable, x, z)
 
-    -- Find nearest water source within range
-    local waterSourceId, distance = self:findNearestWaterSource(x, z)
+    -- SCS-023: system registration passes the owning farm id (F158-style, read
+    -- once) and binds WITHOUT requiring water, so a dry source remains the
+    -- deterministic peer/load candidate. Activation validates hasWater separately.
+    local ownerFarmId = placeable.ownerFarmId
+        or (placeable.getOwnerFarmId and placeable:getOwnerFarmId() or nil)
+    local waterSourceId, distance = self:findNearestWaterSource(x, z, ownerFarmId, false)
     local pressureMultiplier = 0
     if waterSourceId ~= nil then
         pressureMultiplier = self:calculatePressureMultiplier(distance)
@@ -189,9 +278,9 @@ function IrrigationManager:registerIrrigationSystem(placeable)
         rainKeyTripped             = false,
         rainKeyInputState          = "UNAVAILABLE",
         rainKeyStateRevision       = 0,
-        -- Authoritative owner farm, read once at registration (F158-style).
-        ownerFarmId                = placeable.ownerFarmId
-            or (placeable.getOwnerFarmId and placeable:getOwnerFarmId() or nil),
+        -- Authoritative owner farm, read once at registration (F158-style). The
+        -- SCS-023 local variable and the SCS-046 placeable read are the same value.
+        ownerFarmId                = ownerFarmId,
         -- Runtime-only fractional accumulator (never persisted).
         activeGameHoursSinceSettle = 0.0,
         _lastRainKeyPausePublished = false,
@@ -207,7 +296,7 @@ function IrrigationManager:registerIrrigationSystem(placeable)
     ))
     if #coveredFields == 0 then
         csLog(string.format(
-            "WARNING: system %d covers 0 fields — pivot at (%.1f, %.1f) radius=%.0f. " ..
+            "WARNING: system %d covers 0 fields â€” pivot at (%.1f, %.1f) radius=%.0f. " ..
             "Check pivot placement relative to field boundaries.",
             placeable.id, x, z, placeable.radius or 200
         ))
@@ -227,7 +316,7 @@ end
 function IrrigationManager:detectCoveredFields(placeable, cx, cz)
     local covered = {}
 
-    -- Use g_fieldManager.fields directly — same source as SoilMoistureSystem and buildFieldMap.
+    -- Use g_fieldManager.fields directly â€” same source as SoilMoistureSystem and buildFieldMap.
     -- g_currentMission.fieldManager:getFields() returns empty at placeable placement time.
     if g_fieldManager == nil or g_fieldManager.fields == nil then return covered end
     local fields = g_fieldManager.fields
@@ -257,7 +346,7 @@ end
 
 -- ============================================================
 -- Field polygon (world space)
--- FS25 Field.polygonPoints holds scene-node ids, not coordinates — each
+-- FS25 Field.polygonPoints holds scene-node ids, not coordinates â€” each
 -- vertex world position comes from getWorldTranslation(node). Returns
 -- vx, vz, n, or nil when the field has no usable polygon.
 -- ============================================================
@@ -346,18 +435,26 @@ end
 -- ============================================================
 -- Water Source Lookup
 -- ============================================================
-function IrrigationManager:findNearestWaterSource(x, z)
+-- SCS-023: split binding from activation. Always filter to the same current owner
+-- farm and the existing 500 m cap. Distance wins; equal distance chooses the lower
+-- numeric source id. requireWater=false keeps a dry source a deterministic
+-- peer/load candidate; activation validates hasWater separately.
+function IrrigationManager:findNearestWaterSource(x, z, farmId, requireWater)
     local nearestId = nil
     local minDist   = math.huge
 
     for id, source in pairs(self.waterSources) do
-        if source.hasWater then
-            local dx   = source.x - x
-            local dz   = source.z - z
-            local dist = math.sqrt(dx * dx + dz * dz)
-            if dist <= IrrigationManager.MAX_PUMP_DISTANCE and dist < minDist then
-                minDist   = dist
-                nearestId = id
+        if requireWater ~= true or source.hasWater then
+            if farmId == nil or farmId <= 0 or source.farmId == farmId then
+                local dx   = source.x - x
+                local dz   = source.z - z
+                local dist = math.sqrt(dx * dx + dz * dz)
+                if dist <= IrrigationManager.MAX_PUMP_DISTANCE then
+                    if dist < minDist or (dist == minDist and (nearestId == nil or id < nearestId)) then
+                        minDist   = dist
+                        nearestId = id
+                    end
+                end
             end
         end
     end
@@ -637,6 +734,135 @@ function IrrigationManager:applyOneTimeIrrigation(systemId)
         tostring(systemId), effectiveRate, applied, #system.coveredFields
     ))
     return applied > 0
+end
+
+-- ============================================================
+-- SCS-023 IRRIGATE NOW TRANSACTION
+--
+-- Irrigate Now is an extra one-hour draw even if the schedule also served that
+-- hour. When finite mode is inactive, it routes through the incumbent one-shot
+-- and returns its result without source draw. When active it is the fixed
+-- requestedDraw = 1.0 transaction with servedFraction, committedHours, and the
+-- six result codes. Server-authoritative.
+--
+-- Result fields: accepted, resultCode, servedFraction, acceptedTargetCount,
+-- committedHours.
+-- ============================================================
+
+--- Run the finite-aware Irrigate Now transaction for a system.
+---@param systemId number
+---@param requesterFarmId number|nil  farm id to authorise against
+---@return table result
+function IrrigationManager:applyIrrigateNowTransaction(systemId, requesterFarmId)
+    local result = {
+        accepted = false, resultCode = "no_source", servedFraction = 0,
+        acceptedTargetCount = 0, committedHours = 0,
+    }
+    local system = self.systems[systemId]
+    if system == nil then
+        result.resultCode = "no_source"
+        return result
+    end
+
+    -- Authorise: numeric farm match against the system's owner.
+    if requesterFarmId == nil or requesterFarmId <= 0
+       or system.ownerFarmId == nil or system.ownerFarmId <= 0
+       or requesterFarmId ~= system.ownerFarmId then
+        result.resultCode = "wrong_farm"
+        return result
+    end
+
+    local source = self.waterSources[system.waterSourceId]
+    if source == nil or (system.pressureMultiplier or 0) <= 0 then
+        result.resultCode = "no_source"
+        return result
+    end
+
+    -- When finite mode is inactive, route through the incumbent one-shot.
+    if not self:isFiniteWaterActive() then
+        local applied = self:applyOneTimeIrrigation(systemId)
+        result.accepted = applied
+        result.resultCode = applied and "success" or "no_ground"
+        result.servedFraction = 1
+        return result
+    end
+
+    if source.finite then
+        local requestedDraw = 1.0
+        local remaining = source.waterRemaining or 0
+        if remaining <= 0 then
+            result.resultCode = "dry_source"
+            return result
+        end
+        local servedFraction = math.min(1, remaining / requestedDraw)
+        local gain = (system.flowRatePerHour or 0) * (system.pressureMultiplier or 0) * servedFraction
+        local acceptedCount = self:_applyOneShotGain(system, gain)
+        if acceptedCount > 0 then
+            local committedHours = requestedDraw * servedFraction
+            self:setSourceWaterRemaining(system.waterSourceId, remaining - committedHours, false)
+            result.accepted = true
+            result.resultCode = servedFraction >= 1 and "success" or "partial"
+            result.servedFraction = servedFraction
+            result.acceptedTargetCount = acceptedCount
+            result.committedHours = committedHours
+        else
+            result.resultCode = "no_ground"
+        end
+        return result
+    end
+
+    -- Unlimited: same active transaction path, fraction 1, never mutates remainder.
+    local gain = (system.flowRatePerHour or 0) * (system.pressureMultiplier or 0)
+    local acceptedCount = self:_applyOneShotGain(system, gain)
+    result.accepted = acceptedCount > 0
+    result.resultCode = acceptedCount > 0 and "success" or "no_ground"
+    result.servedFraction = 1
+    result.acceptedTargetCount = acceptedCount
+    result.committedHours = 0
+    return result
+end
+
+--- Shared positional one-shot gain writer. Returns the count of cells that
+--- accepted the application path.
+function IrrigationManager:_applyOneShotGain(system, gain)
+    if system == nil or gain <= 0 then return 0 end
+    local soilSystem = self.manager ~= nil and self.manager.soilSystem or nil
+    if soilSystem == nil or soilSystem.fieldData == nil then return 0 end
+    local x0 = system.x or 0
+    local z0 = system.z or 0
+    local count = 0
+    for _, fieldId in ipairs(system.coveredFields or {}) do
+        local d = soilSystem.fieldData[fieldId]
+        if d ~= nil then
+            for _, field in ipairs(self:_fieldsForId(fieldId)) do
+                local vx, vz, n = self:getFieldPolygonWorld(field)
+                if vx ~= nil then
+                    local cs = soilSystem:getCellSize()
+                    for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cs)) do
+                        local hit = false
+                        if system.type == "pivot" then
+                            local radius = system.radius or 200
+                            local dx = entry.wx - x0
+                            local dz = entry.wz - z0
+                            hit = dx * dx + dz * dz <= radius * radius
+                        elseif system.type == "drip" then
+                            local startX = x0
+                            local startZ = z0
+                            local endX = system.endX or (x0 + 100)
+                            local endZ = system.endZ or z0
+                            local spacing = system.lineSpacing or 0.8
+                            hit = pointSegDistSq(entry.wx, entry.wz, startX, startZ, endX, endZ) <= (spacing * 0.5) ^ 2
+                        end
+                        if hit then
+                            local accepted = soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, gain)
+                            if accepted then count = count + 1 end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return count
 end
 
 -- ============================================================
@@ -962,4 +1188,229 @@ function IrrigationManager:settleFittedSystem(system, reason)
     system.activeGameHoursSinceSettle = 0
     system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
     return reason
+end
+
+-- SCS-023 FINITE IRRIGATION WATER ENGINE
+--
+-- A pump carries a finite store in irrigation-hours. Scheduled systems and
+-- Irrigate Now consume it; rain refills it; a dry source stops its systems and
+-- says why. Finite water applies only to placed pivot/drip infrastructure.
+-- The existing 500 m pump range is unchanged.
+--
+-- The sole mutable truth is source.waterRemaining (written onto the pump
+-- placeable). Fitted/legacy modes: finite (capacity > 0), unlimited (capacity
+-- <= 0), and inactive (settings.finiteWater false or release-gated off).
+-- ============================================================
+
+--- Is this system's bound source wet right now?
+---@return boolean, string|nil reason
+function IrrigationManager:systemHasUsableWater(system)
+    if system == nil then return false, "NO_SOURCE" end
+    local source = self.waterSources[system.waterSourceId]
+    if source == nil then return false, "NO_SOURCE" end
+    if source.finite and not source.hasWater then return false, "DRY_SOURCE" end
+    if (system.pressureMultiplier or 0) <= 0 then return false, "PRESSURE_UNAVAILABLE" end
+    return true, nil
+end
+
+--- Enriched stop reason for a farm-filtered system row.
+---@return string|nil  dry_source | no_source | nil
+function IrrigationManager:getSystemStopReason(system)
+    if system == nil then return nil end
+    local source = self.waterSources[system.waterSourceId]
+    if source == nil then return "no_source" end
+    if source.finite and not source.hasWater then return "dry_source" end
+    return nil
+end
+
+--- Pure: is this system scheduled at a given hour-key? Uses the day/hour
+--- calculation directly (F160-safe, no currentDay ambiguity).
+---@param system table
+---@param hourKey number  day*24+hour
+---@return boolean
+function IrrigationManager:isScheduledAtHour(system, hourKey)
+    if system == nil or system.schedule == nil then return false end
+    local day = math.floor(hourKey / 24)
+    local hour = hourKey - day * 24
+    local dow = ((day - 1) % 7) + 1
+    local sched = system.schedule
+    if sched.activeDays == nil or sched.activeDays[dow] ~= true then return false end
+    local startHour = sched.startHour or 0
+    local endHour   = sched.endHour   or 24
+    if startHour <= endHour then
+        return hour >= startHour and hour < endHour
+    end
+    return hour >= startHour or hour < endHour
+end
+
+--- Collect incumbent scheduled hours with fraction 1.0 for each scheduled system
+--- that has its valid binding and pressure, mutating no source. Pure mode when
+--- finite water is inactive. Returns servedHoursBySystem (systemId -> hours).
+function IrrigationManager:collectScheduledHours(elapsedHours, currentHourKey)
+    local served = {}
+    for i = 1, elapsedHours do
+        local hourKey = currentHourKey - elapsedHours + i
+        for id, system in pairs(self.systems) do
+            if self:isScheduledAtHour(system, hourKey) then
+                local usable = self:systemHasUsableWater(system)
+                if usable then
+                    served[id] = (served[id] or 0) + 1
+                end
+            end
+        end
+    end
+    return served
+end
+
+--- The bounded finite-water planner. Server-only. For each represented hour:
+---   1. group scheduled systems by bound same-farm source,
+---   2. iterate every registered source (dry and inactive included),
+---   3. finite source: compose rain refill and requested pressure draw, distribute
+---      one shared service fraction to its scheduled systems, update remainder,
+---   4. unlimited source: give every scheduled system fraction 1.0, no remainder write,
+---   5. add fraction to each system's served-hours total.
+---@return table servedHoursBySystem, table sourceRows (updated finite sources)
+function IrrigationManager:planFiniteWater(elapsedHours, currentHourKey, rainScale, isRaining)
+    local served = {}
+    local refillPerRainHour = 2.0
+    -- Source rows updated in place for persistence; return them for the caller.
+    for i = 1, elapsedHours do
+        local hourKey = currentHourKey - elapsedHours + i
+        -- Group scheduled systems by bound same-farm source.
+        local bySource = {}
+        for id, system in pairs(self.systems) do
+            if self:isScheduledAtHour(system, hourKey) and system.waterSourceId ~= nil then
+                local sid = system.waterSourceId
+                bySource[sid] = bySource[sid] or {}
+                bySource[sid][#bySource[sid] + 1] = system
+            end
+        end
+        for sourceId, source in pairs(self.waterSources) do
+            local group = bySource[sourceId]
+            if group ~= nil and #group > 0 then
+                -- Rain refill applies once per hour for a finite source (endpoint sky).
+                if source.finite and isRaining == true and type(rainScale) == "number" then
+                    local refill = refillPerRainHour * rainScale
+                    self:setSourceWaterRemaining(sourceId, (source.waterRemaining or 0) + refill, false)
+                end
+                if source.finite then
+                    -- requested draw per scheduled system-hour: pressure-scaled.
+                    local requested = 0
+                    for _, system in ipairs(group) do
+                        requested = requested + (system.pressureMultiplier or 0)
+                    end
+                    local remaining = source.waterRemaining or 0
+                    local fraction = 0
+                    if requested > 0 and remaining > 0 then
+                        fraction = math.min(1, remaining / requested)
+                    end
+                    for _, system in ipairs(group) do
+                        served[system.id] = (served[system.id] or 0) + fraction
+                    end
+                    local consumed = requested * fraction
+                    self:setSourceWaterRemaining(sourceId, remaining - consumed, false)
+                else
+                    for _, system in ipairs(group) do
+                        served[system.id] = (served[system.id] or 0) + 1
+                    end
+                end
+            end
+        end
+    end
+    return served
+end
+
+--- Apply accumulated served hours through the system's real coverage geometry.
+--- Positional per-cell write; one shared helper for scheduled + Irrigate Now.
+function IrrigationManager:applyGainToSystemCoverage(system, gain)
+    if system == nil or gain <= 0 then return end
+    local soilSystem = self.manager ~= nil and self.manager.soilSystem or nil
+    if soilSystem == nil or soilSystem.fieldData == nil then return end
+    local x0 = system.x or 0
+    local z0 = system.z or 0
+    for _, fieldId in ipairs(system.coveredFields or {}) do
+        local d = soilSystem.fieldData[fieldId]
+        if d ~= nil then
+            for _, field in ipairs(self:_fieldsForId(fieldId)) do
+                local vx, vz, n = self:getFieldPolygonWorld(field)
+                if vx ~= nil then
+                    local cs = soilSystem:getCellSize()
+                    for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cs)) do
+                        if system.type == "pivot" then
+                            local radius = system.radius or 200
+                            local dx = entry.wx - x0
+                            local dz = entry.wz - z0
+                            if dx * dx + dz * dz <= radius * radius then
+                                soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, gain)
+                            end
+                        elseif system.type == "drip" then
+                            local startX = x0
+                            local startZ = z0
+                            local endX = system.endX or (x0 + 100)
+                            local endZ = system.endZ or z0
+                            local spacing = system.lineSpacing or 0.8
+                            local half = spacing * 0.5
+                            if pointSegDistSq(entry.wx, entry.wz, startX, startZ, endX, endZ) <= half * half then
+                                soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, gain)
+                            end
+                        else
+                            -- Unknown type: no legal field-wide fallback. Honest skip.
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+--- Farm-filtered enriched read rows. When farmId is supplied, rows carry
+--- ownerFarmId, waterSourceId and derived stopReason.
+function IrrigationManager:getIrrigationSystemsRows(farmId)
+    local out = {}
+    for id, sys in pairs(self.systems) do
+        local row = {
+            id = id,
+            type = sys.type,
+            isActive = sys.isActive == true,
+            coveredFields = sys.coveredFields,
+            schedule = sys.schedule,
+            flowRatePerHour = sys.flowRatePerHour,
+            operationalCostPerHour = sys.operationalCostPerHour,
+        }
+        if farmId ~= nil then
+            row.ownerFarmId = sys.ownerFarmId
+            row.waterSourceId = sys.waterSourceId
+            row.stopReason = self:getSystemStopReason(sys)
+        end
+        out[#out + 1] = row
+    end
+    return out
+end
+
+--- Farm-filtered water-source read rows (capacity, remainder/Unlimited, label,
+--- availability, sorted connected ids).
+function IrrigationManager:getIrrigationWaterSources(farmId)
+    local out = {}
+    for id, source in pairs(self.waterSources) do
+        if farmId == nil or farmId <= 0 or source.farmId == farmId then
+            local connected = {}
+            for sysId, sys in pairs(self.systems) do
+                if sys.waterSourceId == id then connected[#connected + 1] = sysId end
+            end
+            table.sort(connected)
+            out[#out + 1] = {
+                id = id,
+                ownerFarmId = source.farmId,
+                capacity = source.capacity,
+                waterRemaining = source.finite and source.waterRemaining or nil,
+                unlimited = not source.finite,
+                hasWater = source.hasWater == true,
+                label = (g_i18n ~= nil and g_i18n:getText("cs_water_source_label"))
+                    or "Water source",
+                connectedSystems = connected,
+            }
+        end
+    end
+    table.sort(out, function(a, b) return (a.id or 0) < (b.id or 0) end)
+    return out
 end

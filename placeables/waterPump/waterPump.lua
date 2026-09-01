@@ -27,8 +27,15 @@ function WaterPump.registerFunctions(placeableType)
 end
 
 function WaterPump.registerEventListeners(placeableType)
-    SpecializationUtil.registerEventListener(placeableType, "onLoad",   WaterPump)
-    SpecializationUtil.registerEventListener(placeableType, "onDelete", WaterPump)
+    SpecializationUtil.registerEventListener(placeableType, "onLoad",        WaterPump)
+    SpecializationUtil.registerEventListener(placeableType, "onDelete",      WaterPump)
+    -- SCS-023 finite water: save/load + MP stream for the finite remainder.
+    SpecializationUtil.registerEventListener(placeableType, "loadFromXMLFile", WaterPump)
+    SpecializationUtil.registerEventListener(placeableType, "saveToXMLFile",   WaterPump)
+    SpecializationUtil.registerEventListener(placeableType, "onWriteStream",   WaterPump)
+    SpecializationUtil.registerEventListener(placeableType, "onReadStream",    WaterPump)
+    SpecializationUtil.registerEventListener(placeableType, "onFinalizePlacement", WaterPump)
+    SpecializationUtil.registerEventListener(placeableType, "onOwnerChanged",  WaterPump)
 end
 
 -- ============================================================
@@ -42,21 +49,103 @@ function WaterPump.onLoad(self, savegame)
     if self.xmlFile ~= nil then
         local base = "placeable.pumpConfig"
         self.waterFlowCapacity = self.xmlFile:getFloat(base .. "#waterFlowCapacity", self.waterFlowCapacity)
+        -- SCS-023: finite irrigation water. capacity <= 0 means Unlimited.
+        self.waterUnitsCapacity = self.xmlFile:getFloat(base .. "#waterUnitsCapacity", 48.0)
+        self.waterUnitsRefillPerRainHour = self.xmlFile:getFloat(base .. "#waterUnitsRefillPerRainHour", 2.0)
     end
 
-    -- waterFlowCapacity must be set BEFORE registerWaterSource so the
-    -- manager records the correct capacity on first registration
+    -- SCS-023: onLoad reads config and initializes full or Unlimited state; it
+    -- does NOT register the source. Registration happens at finalize placement
+    -- (or the mission-start sweep) so saved state is applied first.
+    local capacity = self.waterUnitsCapacity or 48.0
+    if capacity <= 0 then
+        self.waterRemaining = nil
+        self.waterFinite = false
+    else
+        self.waterRemaining = capacity
+        self.waterFinite = true
+    end
+    self.waterDirty = false
+
+    -- Do not register here; onFinalizePlacement (or the manager's sweep) does it
+    -- once load state is available.
+end
+
+function WaterPump.loadFromXMLFile(self, xmlFile, key)
+    -- SCS-023: apply a saved finite remainder when present. Missing means full.
+    if self.waterFinite and xmlFile ~= nil then
+        local v = xmlFile:getFloat(key .. ".finiteWaterRemaining")
+        if v ~= nil then
+            self.waterRemaining = math.max(0, v)
+        else
+            self.waterRemaining = self.waterUnitsCapacity or self.waterRemaining
+        end
+    end
+end
+
+function WaterPump.saveToXMLFile(self, xmlFile, key)
+    -- SCS-023: persist the finite remainder; unlimited writes nothing.
+    if self.waterFinite and xmlFile ~= nil and self.waterRemaining ~= nil then
+        xmlFile:setFloat(key .. ".finiteWaterRemaining", self.waterRemaining)
+    end
+end
+
+function WaterPump.onFinalizePlacement(self)
+    if self.isPreviewMode == true or self.isConstructionPreview == true then return end
+    self:registerWithIrrigationManager()
+end
+
+function WaterPump.onOwnerChanged(self, farmId)
+    -- SCS-023: revalidate bindings. Farm id <= 0 freezes refill and supplies
+    -- nothing until a valid owner returns.
+    if self.irrigationManager ~= nil and self.irrigationManager.rebindWaterSource ~= nil then
+        self.irrigationManager:rebindWaterSource(self.id, farmId)
+    end
+end
+
+-- Register once with the manager after load state is available. Marks pending if
+-- the manager is unavailable; the manager performs one mission-start sweep.
+function WaterPump:registerWithIrrigationManager()
     self.irrigationManager = g_cropStressManager and g_cropStressManager.irrigationManager or nil
     if self.irrigationManager ~= nil then
         self.irrigationManager:registerWaterSource(self)
     else
-        csLog("waterPump: IrrigationManager not available at onLoad — pump not registered")
+        csLog("waterPump: IrrigationManager not available — pump marked pending")
+        self.pendingRegistration = true
     end
 end
 
 function WaterPump.onDelete(self)
     if self.irrigationManager ~= nil then
         self.irrigationManager:deregisterWaterSource(self.id)
+    end
+end
+
+-- SCS-023 MP stream: the finite remainder must reach clients.
+function WaterPump.onWriteStream(self, streamId, connection)
+    if self.waterFinite then
+        local dirty = self.waterDirty == true
+        streamWriteBool(streamId, dirty)
+        streamWriteFloat32(streamId, self.waterRemaining or 0)
+        self.waterDirty = false
+    else
+        streamWriteBool(streamId, false)
+    end
+end
+
+function WaterPump.onReadStream(self, streamId, connection)
+    local dirty = streamReadBool(streamId)
+    if self.waterFinite then
+        local v = streamReadFloat32(streamId)
+        if dirty then
+            -- Client read applies the server value with fromSync=true semantics;
+            -- the manager's setter derives hasWater without originating dirt.
+            if self.irrigationManager ~= nil then
+                self.irrigationManager:setSourceWaterRemaining(self.id, v, true)
+            else
+                self.waterRemaining = math.max(0, v)
+            end
+        end
     end
 end
 

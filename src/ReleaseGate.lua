@@ -52,6 +52,14 @@ ReleaseGate.EXPERIMENTAL = {
         name = "Center-pivot rain key",
         status = "new; awaiting runtime trip/reset, surfaces, dedi transport and balance",
     },
+    -- SCS-023 FINITE IRRIGATION WATER. LOCKED at merge. Unlock requires all five
+    -- named observations (built in a real save, both surfaces, save/load + dedi
+    -- source equality, HIGH-defect closure, and the balance call). The feature is
+    -- inert (settings.finiteWater false) until released.
+    finite_irrigation_water = {
+        name = "Finite irrigation water",
+        status = "new; awaiting real-save build, surfaces, dedi equality, defects and balance",
+    },
 }
 
 -- Console command -> systemId, so command refusals route through the same registry.

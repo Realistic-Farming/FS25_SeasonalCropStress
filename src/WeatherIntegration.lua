@@ -344,6 +344,22 @@ function WeatherIntegration:getRainFromWeather()
     local rainScale = 0.0
     local isRaining = false
 
+    -- SCS-023: WeatherGuard is the suite sky authority. When both rainScale and
+    -- isRaining are readable they are authoritative; a readable isRaining=false
+    -- yields planner rain scale zero. When the WeatherGuard handle, sky row, or
+    -- either required field is unavailable, fall through to the existing route.
+    local wg = g_currentMission ~= nil and g_currentMission.weatherGuard or nil
+    if wg ~= nil and type(wg.getCurrentSky) == "function" then
+        local ok, sky = pcall(function() return wg:getCurrentSky() end)
+        if ok and type(sky) == "table"
+           and type(sky.rainScale) == "number"
+           and type(sky.isRaining) == "boolean" then
+            rainScale = sky.rainScale
+            isRaining = sky.isRaining
+            return rainScale, isRaining
+        end
+    end
+
     -- Try RealisticWeather first if active
     if self.realisticWeatherActive then
         local rw = self:_rwHandle()
