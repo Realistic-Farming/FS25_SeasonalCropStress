@@ -527,6 +527,16 @@ function CropStressManager:update(dt)
         self.irrigatorSectorIntegration:update(dt)
     end
 
+    -- SCS-046 RAIN KEY SENSOR (server only, continuous). Runs BEFORE the hour-key
+    -- branch so a long skipped span still settles correctly and the latch trips
+    -- on the first meaningful rain. Returns edge changes for the notification
+    -- contract; the quiet-baseline/one-notify-per-edge rule is enforced by the
+    -- _lastRainKeyPausePublished flag on each system.
+    if g_server ~= nil and self.irrigationManager ~= nil
+       and self.irrigationManager.updateRainKeySensor ~= nil then
+        self.irrigationManager:updateRainKeySensor(dt)
+    end
+
     local env = g_currentMission.environment
     if env == nil then return end
 
@@ -606,6 +616,18 @@ function CropStressManager:onHourlyTick(elapsedHours)
         -- 2b. Activate/deactivate irrigation systems BEFORE moisture update so
         --     gains set by activateSystem() are included in this tick.
         self.irrigationManager:hourlyScheduleCheck()
+
+        -- SCS-046: settle fitted-pivot fractional hours at the hour boundary.
+        -- A fitted pivot accumulates continuous active game hours and settles
+        -- water + cost here (and at any trip/Stop), so it never also runs through
+        -- the legacy whole-hour gain or chargeHourlyCosts() pass.
+        if self.irrigationManager.settleFittedSystem ~= nil then
+            for _, sys in pairs(self.irrigationManager.systems) do
+                if sys.rainKeyFitted == true and sys.isActive then
+                    sys.activeGameHoursSinceSettle = (sys.activeGameHoursSinceSettle or 0) + hours
+                end
+            end
+        end
 
         -- SCS-018: when Time Guard is absent, the daily settle rides the
         -- fallback day-change hook (accepts the known skipped-day limitation).
@@ -915,6 +937,30 @@ function CropStressManager:getIrrigationSystems()
             schedule               = schedule,
             flowRatePerHour        = sys.flowRatePerHour,
             operationalCostPerHour = sys.operationalCostPerHour,
+            -- SCS-046: the rain-key build expands the same copy-only surface. Only
+            -- filled for fitted pivots; unfitted rows carry the neutral defaults so
+            -- the old field shape is preserved for older FarmTablet versions.
+            rainKeyFitted          = sys.rainKeyFitted == true,
+            rainKeyTripMm          = sys.rainKeyTripMm,
+            rainKeyAccumulatedMm   = sys.rainKeyAccumulatedMm or 0,
+            rainKeyDryElapsedMinutes = sys.rainKeyDryElapsedMinutes or 0,
+            weatherReadable        = sys.rainKeyInputState == "OK",
+            rainKeyState           = (self.irrigationManager.getRainKeyState
+                and self.irrigationManager:getRainKeyState(sys)) or
+                (sys.rainKeyFitted == true and "ARMED" or "UNFITTED"),
+            rainKeyTripped         = sys.rainKeyTripped == true,
+            activityState          = sys.rainKeyFitted == true
+                and (sys.rainKeyTripped == true and "RAIN_PAUSED"
+                     or (sys.isActive == true and "RUNNING" or "OFF"))
+                or (sys.isActive == true and "RUNNING" or "OFF"),
+            pauseReason            = sys.rainKeyFitted == true and sys.rainKeyTripped == true
+                and "RAIN_KEY_TRIPPED"
+                or (sys.rainKeyFitted == true and sys.rainKeyInputState ~= "OK"
+                     and "INPUT_UNAVAILABLE" or "NONE"),
+            nextWakeKind           = sys.rainKeyFitted == true and sys.rainKeyTripped == true
+                and "DRY_RESET" or "NONE",
+            nextWakeGameMinutes    = nil,
+            stateRevision          = sys.rainKeyStateRevision or 0,
         }
     end
     return out
@@ -1273,6 +1319,46 @@ function CropStressManager:consoleRelease()
     end
     local optIn = self.settings ~= nil and self.settings.experimentalSystems == true or nil
     print(ReleaseGate.status(optIn))
+end
+
+-- SCS-046: diagnostic read of one system's rain-key state. Compares both player
+-- surfaces against the same shipped state (the UI brief's cross-check contract).
+function CropStressManager:consoleRainKeyCheck(systemIdStr)
+    local systemId = tonumber(systemIdStr)
+    local irr = self.irrigationManager
+    if irr == nil or irr.systems == nil then
+        print("[CropStress] Irrigation manager not available")
+        return
+    end
+    if systemId == nil then
+        print("Usage: csRainKeyCheck <systemId>")
+        print("Fitted systems:")
+        local any = false
+        for id, sys in pairs(irr.systems) do
+            if sys.rainKeyFitted == true then
+                print(string.format("  #%d", id))
+                any = true
+            end
+        end
+        if not any then print("  (none fitted)") end
+        return
+    end
+    local sys = irr.systems[systemId]
+    if sys == nil then
+        print(string.format("System %d not found", systemId))
+        return
+    end
+    local snap = irr:getRainKeySnapshot(sys)
+    print(string.format("=== Rain-key #%d ===", systemId))
+    print(string.format("  fitted=%s trip=%.1fmm accum=%.2fmm dry=%.0fmin",
+        tostring(snap.rainKeyFitted), snap.rainKeyTripMm or 0,
+        snap.rainKeyAccumulatedMm or 0, snap.rainKeyDryElapsedMinutes or 0))
+    print(string.format("  weatherReadable=%s state=%s tripped=%s revision=%d",
+        tostring(snap.weatherReadable), snap.rainKeyState,
+        tostring(snap.rainKeyTripped), snap.stateRevision or 0))
+    print(string.format("  activity=%s reason=%s nextWake=%s",
+        snap.activityState, snap.pauseReason, snap.nextWakeKind))
+    print(string.format("  ownerFarmId=%s", tostring(snap.ownerFarmId)))
 end
 
 function CropStressManager:consoleSetMoisture(fieldIdStr, valueStr)

@@ -178,6 +178,23 @@ function IrrigationManager:registerIrrigationSystem(placeable)
         },
         isActive             = false,
         effectiveRatePerField = {},
+        -- SCS-046 RAIN KEY. Optional per-pivot equipment. A fitted pivot watches
+        -- current rain at that machine; meaningful rain trips the key and stops
+        -- controlled irrigation water, pivot movement and operating cost together.
+        -- Unfitted pivots are bit-for-bit the old behaviour.
+        rainKeyFitted              = placeable.rainKeyFitted == true,
+        rainKeyTripMm              = tonumber(placeable.rainKeyTripMm) or 2.5,
+        rainKeyAccumulatedMm       = 0.0,
+        rainKeyDryElapsedMinutes   = 0,
+        rainKeyTripped             = false,
+        rainKeyInputState          = "UNAVAILABLE",
+        rainKeyStateRevision       = 0,
+        -- Authoritative owner farm, read once at registration (F158-style).
+        ownerFarmId                = placeable.ownerFarmId
+            or (placeable.getOwnerFarmId and placeable:getOwnerFarmId() or nil),
+        -- Runtime-only fractional accumulator (never persisted).
+        activeGameHoursSinceSettle = 0.0,
+        _lastRainKeyPausePublished = false,
     }
 
     self.systems[placeable.id] = system
@@ -408,7 +425,16 @@ function IrrigationManager:hourlyScheduleCheck()
         end
 
         if shouldBeActive and not system.isActive then
-            self:activateSystem(id)
+            -- SCS-046: scheduled activation routes through the same gate. A fitted
+            -- tripped or input-unavailable row stays off; the reason is honest.
+            local gateOpen = self:isRainKeyGateOpen(system)
+            if gateOpen then
+                self:activateSystem(id)
+            else
+                csLog(string.format(
+                    "Irrigation system %d schedule skipped (%s)",
+                    id, select(2, self:isRainKeyGateOpen(system))))
+            end
         elseif not shouldBeActive and system.isActive then
             self:deactivateSystem(id)
         end
@@ -461,6 +487,14 @@ function IrrigationManager:activateSystem(id)
     local system = self.systems[id]
     if system == nil or system.isActive then return end
 
+    -- SCS-046: the ordinary water-on gate lives here. A fitted tripped row refuses
+    -- every automatic and remote start; input-unavailable also holds water off.
+    local gateOpen, gateReason = self:isRainKeyGateOpen(system)
+    if not gateOpen then
+        csLog(string.format("Irrigation system %d activation refused (%s)", id, gateReason))
+        return false, gateReason
+    end
+
     -- F154: the wear factor is gone rather than dormant. It read UsedPlus DNA,
     -- which never has an entry for a placeable, so it was provably 1.0 at every
     -- activation this mod has ever performed. NO RATE MOVES.
@@ -469,7 +503,11 @@ function IrrigationManager:activateSystem(id)
     system.effectiveRatePerField = {}
     for _, fieldId in ipairs(system.coveredFields) do
         system.effectiveRatePerField[fieldId] = effectiveRate
-        if self.manager ~= nil and self.manager.eventBus ~= nil then
+        -- SCS-046: fitted pivots settle through the fractional active-hour path
+        -- (settleFittedSystem) and must NEVER add to the legacy whole-hour gain.
+        -- Unfitted systems keep the incumbent event.
+        if not (system.rainKeyFitted == true)
+           and self.manager ~= nil and self.manager.eventBus ~= nil then
             self.manager.eventBus.publish("CS_IRRIGATION_STARTED", {
                 placeableId = id,
                 fieldId     = fieldId,
@@ -480,6 +518,7 @@ function IrrigationManager:activateSystem(id)
 
     system.isActive = true
     csLog(string.format("Irrigation system %d activated, rate=%.4f", id, effectiveRate))
+    return true, nil
 end
 
 function IrrigationManager:deactivateSystem(id)
@@ -664,3 +703,263 @@ end
 -- keeping it would have made it a built-and-uncalled mechanism the moment that
 -- bridge went, and this suite already carries several of those. Build the setter
 -- when a design actually needs it.
+
+-- ============================================================
+-- SCS-046 RAIN KEY ENGINE
+--
+-- A center pivot may carry an optional rain key that watches current rain at
+-- that machine. Meaningful rain trips the key and stops controlled irrigation
+-- water, pivot movement and operating cost together while the farmer's schedule
+-- stays intact. Thirty readable dry game minutes clear the latch without
+-- surprise-starting the pivot.
+--
+-- Effective rain is isRaining == true AND rainScale >= 0.05 (the brief's
+-- threshold). While a fitted system is active, only actual continuous active
+-- game hours add to activeGameHoursSinceSettle; the fractional water and cost
+-- are settled before a trip, Stop, source loss, hour boundary, save, remove,
+-- transfer or master disable. Fitted pivots never contribute to the legacy
+-- whole-hour irrigation gain or chargeHourlyCosts() pass.
+--
+-- Input unreadable freezes event state and shows INPUT_UNAVAILABLE. Unreadable
+-- weather is unknown, never dry. Nil rain is never treated as zero.
+-- ============================================================
+
+-- Effective rain scale threshold (modelled mm-equivalent rain intensity).
+IrrigationManager.RAIN_KEY_EFFECTIVE_SCALE = 0.05
+-- Design-owned calibration: modelled mm accumulated per rainScale game hour at
+-- full scale. The build brief pins 5.0 modelled mm per game hour at scale 1.0.
+IrrigationManager.RAIN_KEY_MM_PER_HOUR_FULL_SCALE = 5.0
+-- Continuous readable dry game minutes that clear the latch.
+IrrigationManager.RAIN_KEY_DRY_RESET_MINUTES = 30
+
+--- Is effective rain falling right now for this system?
+---@param system table a fitted system row
+---@param rainScale number|nil current rain scale
+---@param isRaining boolean|nil current isRaining
+---@return boolean
+function IrrigationManager:rainKeyEffectiveRain(system, rainScale, isRaining)
+    if type(rainScale) ~= "number" or type(isRaining) ~= "boolean" then return false end
+    return isRaining == true and rainScale >= IrrigationManager.RAIN_KEY_EFFECTIVE_SCALE
+end
+
+--- Derived rain-key state enum for a system row.
+---@return string  UNFITTED | ARMED | COLLECTING | TRIPPED | INPUT_UNAVAILABLE
+function IrrigationManager:getRainKeyState(system)
+    if system == nil or system.rainKeyFitted ~= true then return "UNFITTED" end
+    if system.rainKeyTripped == true then return "TRIPPED" end
+    if system.rainKeyInputState ~= "OK" then return "INPUT_UNAVAILABLE" end
+    if system.rainKeyAccumulatedMm and system.rainKeyAccumulatedMm > 0 then return "COLLECTING" end
+    return "ARMED"
+end
+
+--- Advance the rain-key sensor for every fitted system. Server-only continuous
+--- update. Called from CropStressManager:update(dt) BEFORE the hour-key branch so
+--- a long skipped span still settles correctly.
+---@param dt number frame delta ms
+---@return table changes  { [systemId] = { publish=true, reason=string } }
+function IrrigationManager:updateRainKeySensor(dt)
+    if self.manager == nil or self.manager.weatherIntegration == nil then return {} end
+    if g_server == nil then return {} end
+
+    -- The one current-rain read per tick. UNAVAILABLE when both routes fail.
+    local readable, rainScale, isRaining = self.manager.weatherIntegration:getCurrentRainKey()
+    local effectiveRain = readable and self:rainKeyEffectiveRain(nil, rainScale, isRaining) or false
+
+    local elapsedGameHours = 0
+    if g_currentMission ~= nil and g_currentMission.getEffectiveTimeScale ~= nil then
+        elapsedGameHours = dt * g_currentMission:getEffectiveTimeScale() / 3600000
+    elseif g_currentMission ~= nil and g_currentMission.missionInfo ~= nil then
+        elapsedGameHours = dt * (g_currentMission.missionInfo.timeScale or 1) / 3600000
+    end
+    if elapsedGameHours < 0 then elapsedGameHours = 0 end
+
+    local changes = {}
+    for id, system in pairs(self.systems) do
+        if system.rainKeyFitted == true then
+            system.rainKeyInputState = readable and "OK" or "UNAVAILABLE"
+            local before = system.rainKeyTripped
+            local hadEvent = system._lastRainKeyPausePublished == true
+
+            if not readable then
+                -- Unreadable input freezes event state. No accumulation, no dry time.
+            elseif effectiveRain then
+                -- Effective rain clears dry elapsed and adds modelled mm.
+                system.rainKeyDryElapsedMinutes = 0
+                local mm = IrrigationManager.RAIN_KEY_MM_PER_HOUR_FULL_SCALE
+                    * rainScale * elapsedGameHours
+                system.rainKeyAccumulatedMm = (system.rainKeyAccumulatedMm or 0) + mm
+                -- First crossing at or above the dial: settle, latch, deactivate, publish once.
+                if not system.rainKeyTripped
+                   and system.rainKeyAccumulatedMm >= system.rainKeyTripMm then
+                    system.rainKeyTripped = true
+                    system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
+                    if system.isActive then
+                        self:deactivateSystem(id)
+                    end
+                    changes[id] = { publish = true, reason = "RAIN_KEY_TRIPPED" }
+                end
+            else
+                -- Dry gap: only continuous readable dry game minutes count toward reset.
+                local dryMinutes = elapsedGameHours * 60
+                if system.rainKeyDryElapsedMinutes == nil then system.rainKeyDryElapsedMinutes = 0 end
+                system.rainKeyDryElapsedMinutes = system.rainKeyDryElapsedMinutes + dryMinutes
+                if system.rainKeyTripped and system.rainKeyDryElapsedMinutes
+                   >= IrrigationManager.RAIN_KEY_DRY_RESET_MINUTES then
+                    -- 30 continuous dry game minutes clear event and latch, do not start.
+                    system.rainKeyTripped = false
+                    system.rainKeyAccumulatedMm = 0
+                    system.rainKeyDryElapsedMinutes = 0
+                    system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
+                    changes[id] = { publish = true, reason = "DRY_RESET" }
+                end
+            end
+
+            -- Publish the RAIN_PAUSED enter/leave edge once (quiet baseline for joins).
+            local nowPaused = system.rainKeyTripped == true
+            if nowPaused and not hadEvent then
+                system._lastRainKeyPausePublished = true
+                if changes[id] == nil then changes[id] = { publish = true, reason = "RAIN_KEY_TRIPPED" } end
+            elseif not nowPaused and hadEvent then
+                system._lastRainKeyPausePublished = false
+                if changes[id] == nil then changes[id] = { publish = true, reason = "RESUMED" } end
+            end
+        end
+    end
+    return changes
+end
+
+--- Is this system's operational gate open? Returns true, or false plus a stable
+--- reason. A fitted tripped row refuses every automatic and remote start.
+---@return boolean, string|nil
+function IrrigationManager:isRainKeyGateOpen(system)
+    if system == nil then return true, nil end
+    if system.rainKeyFitted ~= true then return true, nil end
+    if system.rainKeyTripped == true then return false, "RAIN_KEY_TRIPPED" end
+    if system.rainKeyInputState ~= "OK" then
+        -- INPUT_UNAVAILABLE freezes event state: water stays off, reason is honest.
+        return false, "INPUT_UNAVAILABLE"
+    end
+    return true, nil
+end
+
+--- Get a snapshot row for the rain-key read contract (SCS-046 UI companion).
+--- Copy-only; mutating it cannot affect the live system.
+---@param system table
+---@return table
+function IrrigationManager:getRainKeySnapshot(system)
+    local snap = {
+        systemId          = system.id,
+        ownerFarmId       = system.ownerFarmId,
+        rainKeyFitted     = system.rainKeyFitted == true,
+        rainKeyTripMm     = system.rainKeyTripMm,
+        rainKeyAccumulatedMm = system.rainKeyAccumulatedMm or 0,
+        rainKeyDryElapsedMinutes = system.rainKeyDryElapsedMinutes or 0,
+        weatherReadable   = system.rainKeyInputState == "OK",
+        rainKeyState      = self:getRainKeyState(system),
+        rainKeyTripped    = system.rainKeyTripped == true,
+        activityState     = system.isActive == true and "RUNNING" or "OFF",
+        pauseReason       = "NONE",
+        nextWakeKind      = "NONE",
+        nextWakeGameMinutes = nil,
+        stateRevision     = system.rainKeyStateRevision or 0,
+    }
+    if system.rainKeyFitted == true and system.rainKeyTripped == true then
+        snap.activityState = "RAIN_PAUSED"
+        snap.pauseReason   = "RAIN_KEY_TRIPPED"
+        snap.nextWakeKind  = "DRY_RESET"
+    elseif system.rainKeyFitted == true and system.rainKeyInputState ~= "OK" then
+        snap.pauseReason   = "INPUT_UNAVAILABLE"
+        snap.nextWakeKind  = "PLAYER_ACTION"
+    end
+    return snap
+end
+
+--- Fit or remove a rain key, set the dial, all through the one server command path.
+---@param systemId number
+---@param action string  FIT | REMOVE | SET_TRIP_MM
+---@param value number|nil
+---@return boolean ok, string|nil error
+function IrrigationManager:applyRainKeyCommand(systemId, action, value)
+    local system = self.systems[systemId]
+    if system == nil then return false, "UNKNOWN_SYSTEM" end
+    if action == "FIT" then
+        if system.type ~= "pivot" then return false, "NOT_A_PIVOT" end
+        system.rainKeyFitted = true
+        system.rainKeyTripMm = tonumber(system.rainKeyTripMm) or 2.5
+        system.rainKeyAccumulatedMm = 0
+        system.rainKeyDryElapsedMinutes = 0
+        system.rainKeyTripped = false
+        system.rainKeyInputState = "UNAVAILABLE"
+        system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
+        system._lastRainKeyPausePublished = false
+        return true, nil
+    elseif action == "REMOVE" then
+        system.rainKeyFitted = false
+        system.rainKeyTripMm = 2.5
+        system.rainKeyAccumulatedMm = 0
+        system.rainKeyDryElapsedMinutes = 0
+        system.rainKeyTripped = false
+        system.rainKeyInputState = "UNAVAILABLE"
+        system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
+        system._lastRainKeyPausePublished = false
+        return true, nil
+    elseif action == "SET_TRIP_MM" then
+        local v = tonumber(value)
+        if v == nil then return false, "INVALID_TRIP_MM" end
+        -- Operator range 0.5 to 10.0 in exact 0.5 steps. Never round or clamp malformed input.
+        if v < 0.5 or v > 10.0 or (math.abs(v * 2 - math.floor(v * 2 + 0.5)) > 1e-9) then
+            return false, "INVALID_TRIP_MM"
+        end
+        -- Lowering the dial through current accumulation trips in the same transaction.
+        if system.rainKeyFitted and not system.rainKeyTripped
+           and (system.rainKeyAccumulatedMm or 0) >= v then
+            system.rainKeyTripped = true
+            system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
+            if system.isActive then self:deactivateSystem(id) end
+            system._lastRainKeyPausePublished = true
+        end
+        system.rainKeyTripMm = v
+        system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
+        return true, nil
+    end
+    return false, "UNKNOWN_ACTION"
+end
+
+-- ============================================================
+-- SCS-046 FRACTIONAL ACCOUNTING (water + cost for a trip/stop/etc.)
+-- Fitted pivots settle continuous active game hours through the existing
+-- footprint, then zero the accumulator. Unfitted systems keep the legacy
+-- whole-hour path. The same interval never reaches both.
+-- ============================================================
+function IrrigationManager:settleFittedSystem(system, reason)
+    if system == nil or system.rainKeyFitted ~= true then return end
+    local hours = system.activeGameHoursSinceSettle or 0
+    if hours <= 0 then return end
+
+    -- Apply effectiveRatePerHour * hours through the existing pivot footprint
+    -- (per-cell positional water), and charge effectiveCostPerHour * hours to the
+    -- row's current owner farm.
+    local rate = (system.flowRatePerHour or 0) * (system.pressureMultiplier or 0)
+    if rate > 0 and self.manager ~= nil and self.manager.soilSystem ~= nil then
+        local soil = self.manager.soilSystem
+        if soil.fieldData ~= nil then
+            for _, fieldId in ipairs(system.coveredFields or {}) do
+                local d = soil.fieldData[fieldId]
+                if d ~= nil then
+                    soil:applyWaterAtCell(fieldId, d.centerX or 0, d.centerZ or 0, rate * hours)
+                end
+            end
+        end
+    end
+    if self.manager ~= nil and self.manager.financeIntegration ~= nil
+       and self.manager.financeIntegration.deductFundsVanilla ~= nil then
+        local effCost = self:getEffectiveCostPerHour(system) or (system.operationalCostPerHour or 0)
+        local farmId = system.ownerFarmId
+        if farmId and farmId ~= 0 then
+            self.manager.financeIntegration:deductFundsVanilla(effCost * hours, farmId)
+        end
+    end
+    system.activeGameHoursSinceSettle = 0
+    system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
+    return reason
+end

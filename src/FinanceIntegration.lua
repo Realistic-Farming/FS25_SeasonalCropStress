@@ -57,7 +57,10 @@ function FinanceIntegration:chargeHourlyCosts(elapsedHours)
     if irrMgr.costsEnabled == false then return end
 
     for _, system in pairs(irrMgr.systems) do
-        if system.isActive then
+        -- SCS-046: fitted pivots settle water AND cost through the fractional
+        -- active-hour path (settleFittedSystem), never this legacy whole-hour
+        -- pass. Unfitted systems keep the exact incumbent behaviour.
+        if system.isActive and not (system.rainKeyFitted == true) then
             -- [SCS-038] Deduct the PRICED draw: the effective cost varies with
             -- the water actually drawn (base / pressure, plus the neutral LIFT
             -- term). Falls back to the flat per-hour number when the getter is
