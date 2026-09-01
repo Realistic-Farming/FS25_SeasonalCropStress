@@ -45,7 +45,18 @@ end
 --- moisture path already multiplied irrigation GAIN by the elapsed count, so
 --- leaving the charge at one hour would hand a player 72 hours of free water.
 ---@param elapsedHours number|nil
-function FinanceIntegration:chargeHourlyCosts(elapsedHours)
+--- SCS-037: `elapsedHours` is how many in-game hours this tick stands for. The
+--- pump ran for all of them, so the running cost is charged for all of them.
+--- Defaults to 1, which is arithmetically identical to what shipped.
+---
+--- THE WATER AND THE MONEY ARE NOW ON THE SAME CLOCK, which is the point: the
+--- moisture path already multiplied irrigation GAIN by the elapsed count, so
+--- leaving the charge at one hour would hand a player 72 hours of free water.
+---@param elapsedHours number|nil
+---@param servedHoursBySystem table|nil  SCS-023: when the finite planner's served
+---   map is present, charge getEffectiveCostPerHour * servedHours per system even
+---   if the endpoint schedule left the system inactive. nil keeps isActive * hours.
+function FinanceIntegration:chargeHourlyCosts(elapsedHours, servedHoursBySystem)
     if not self.isInitialized then return end
     local irrMgr = self.manager.irrigationManager
     if irrMgr == nil then return end
@@ -60,7 +71,14 @@ function FinanceIntegration:chargeHourlyCosts(elapsedHours)
         -- SCS-046: fitted pivots settle water AND cost through the fractional
         -- active-hour path (settleFittedSystem), never this legacy whole-hour
         -- pass. Unfitted systems keep the exact incumbent behaviour.
+        -- SCS-023: charge from the served-hours map when present, even for a
+        -- system the endpoint schedule left inactive this hour.
         if system.isActive and not (system.rainKeyFitted == true) then
+            local servedHours = nil
+            if servedHoursBySystem ~= nil then
+                servedHours = servedHoursBySystem[system.id]
+            end
+            local chargeHours = servedHours ~= nil and servedHours or hours
             -- [SCS-038] Deduct the PRICED draw: the effective cost varies with
             -- the water actually drawn (base / pressure, plus the neutral LIFT
             -- term). Falls back to the flat per-hour number when the getter is
@@ -81,7 +99,7 @@ function FinanceIntegration:chargeHourlyCosts(elapsedHours)
                 farmId = system.placeable:getOwnerFarmId()
             end
             if farmId and farmId ~= 0 then
-                self:deductFundsVanilla((effCost or (system.operationalCostPerHour or 0)) * hours, farmId)
+                self:deductFundsVanilla((effCost or (system.operationalCostPerHour or 0)) * chargeHours, farmId)
             end
         end
     end

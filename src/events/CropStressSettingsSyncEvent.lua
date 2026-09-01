@@ -45,7 +45,8 @@ CropStressSettingsSyncEvent.TYPE_BULK = 2
 -- display preferences and must NOT be overwritten by a server-pushed sync.
 -- If you add or remove a synced setting, update this constant and the
 -- writeSetting() calls in writeStream() together.
-CropStressSettingsSyncEvent.BULK_COUNT = 11
+-- SCS-023: BULK_COUNT is 11 -> 12 (finiteWater joins the synced set).
+CropStressSettingsSyncEvent.BULK_COUNT = 12
 
 -- Value type constants for serialization
 CropStressSettingsSyncEvent.VALUE_TYPE_BOOL = 1
@@ -95,6 +96,7 @@ function CropStressSettingsSyncEvent:writeStream(streamId, connection)
         self:writeSetting(streamId, "alertsEnabled",      settings.alertsEnabled)
         self:writeSetting(streamId, "alertCooldown",      settings.alertCooldown)
         self:writeSetting(streamId, "debugMode",          settings.debugMode)
+        self:writeSetting(streamId, "finiteWater",        settings.finiteWater)
         self:writeSetting(streamId, "experimentalSystems", settings.experimentalSystems)
     end
 end

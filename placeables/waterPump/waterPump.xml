@@ -63,8 +63,12 @@
     </i3dMappings>
 
     <!-- Custom pump parameters — read by WaterPump:onLoad() via getXMLFloat -->
+    <!-- SCS-023 finite water: waterUnitsCapacity in irrigation-hours (<= 0 =
+         Unlimited), refill per raining hour at rain scale 1.0. -->
     <pumpConfig
         waterFlowCapacity="1000"
+        waterUnitsCapacity="48.0"
+        waterUnitsRefillPerRainHour="2.0"
     />
 
 </placeable>

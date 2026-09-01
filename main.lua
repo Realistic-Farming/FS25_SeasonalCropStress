@@ -324,6 +324,7 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
         addConsoleCommand("csRelease",     "Release gate: show STABLE vs experimental-LOCKED systems",     "consoleRelease",     g_csManager)
         addConsoleCommand("csMapStats",    "Moisture value map: grain, settle cost, sync progress",       "consoleMapStats",    g_csManager)
         addConsoleCommand("csRainKeyCheck","SCS-046 rain key: state of one system (csRainKeyCheck <id>)", "consoleRainKeyCheck",g_csManager)
+        addConsoleCommand("csWaterStatus","SCS-023 finite water: sources + mode (csWaterStatus <farmId>)","consoleWaterStatus", g_csManager)
     end
 end)
 
@@ -390,6 +391,7 @@ FSBaseMission.delete = Utils.appendedFunction(FSBaseMission.delete, function(sel
             removeConsoleCommand("csRelease")
             removeConsoleCommand("csMapStats")
             removeConsoleCommand("csRainKeyCheck")
+            removeConsoleCommand("csWaterStatus")
         end
     end
 end)

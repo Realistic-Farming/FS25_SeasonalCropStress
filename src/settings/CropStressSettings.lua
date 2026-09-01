@@ -36,6 +36,11 @@ local DEFAULTS = {
     alertsEnabled = true,
     alertCooldown = 12,
     debugMode = false,
+    -- SCS-023 finite irrigation water: OFF by default. When on (and the release
+    -- gate is live) a pump carries a finite store in irrigation-hours; scheduled
+    -- systems and Irrigate Now consume it and rain refills it. Off keeps the
+    -- incumbent unlimited behaviour bit for bit.
+    finiteWater = false,
     -- Release-gate opt-in (default false), orthogonal to difficulty. See ReleaseGate.lua.
     experimentalSystems = false,
     -- Wizard 2026-08-21: factory home is the suite layout Wizard arranged
@@ -182,6 +187,7 @@ function CropStressSettings:load(missionInfo)
     self.alertsEnabled      = readBool(xmlFile, "cropStressSettings.alertsEnabled",      DEFAULTS.alertsEnabled)
     self.alertCooldown      = xmlFile:getInt("cropStressSettings.alertCooldown")         or DEFAULTS.alertCooldown
     self.debugMode          = readBool(xmlFile, "cropStressSettings.debugMode",          DEFAULTS.debugMode)
+    self.finiteWater        = readBool(xmlFile, "cropStressSettings.finiteWater",        DEFAULTS.finiteWater)
     self.experimentalSystems = readBool(xmlFile, "cropStressSettings.experimentalSystems", DEFAULTS.experimentalSystems)
     self.hudPanelX          = xmlFile:getFloat("cropStressSettings.hudPanelX")           or DEFAULTS.hudPanelX
     self.hudPanelY          = xmlFile:getFloat("cropStressSettings.hudPanelY")           or DEFAULTS.hudPanelY
@@ -267,6 +273,7 @@ function CropStressSettings:saveToXMLFile(missionInfo)
     xmlFile:setBool("cropStressSettings.alertsEnabled", self.alertsEnabled)
     xmlFile:setInt("cropStressSettings.alertCooldown", self.alertCooldown)
     xmlFile:setBool("cropStressSettings.debugMode", self.debugMode)
+    xmlFile:setBool("cropStressSettings.finiteWater", self.finiteWater)
     xmlFile:setBool("cropStressSettings.experimentalSystems", self.experimentalSystems)
     xmlFile:setFloat("cropStressSettings.hudPanelX", self.hudPanelX)
     xmlFile:setFloat("cropStressSettings.hudPanelY", self.hudPanelY)
@@ -344,6 +351,7 @@ function CropStressSettings:validateSettings()
     self.irrigationCosts = not not self.irrigationCosts
     self.alertsEnabled = not not self.alertsEnabled
     self.debugMode = not not self.debugMode
+    self.finiteWater = not not self.finiteWater
     self.experimentalSystems = not not self.experimentalSystems
 end
 

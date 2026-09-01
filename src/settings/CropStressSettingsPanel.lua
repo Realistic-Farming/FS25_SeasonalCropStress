@@ -87,7 +87,7 @@ local CATEGORIES = {
         sections = {
             { header = "Core Systems",       items = { "enabled", "difficulty", "evapotranspiration" } },
             { header = "Yield & Thresholds", items = { "maxYieldLoss", "criticalThreshold" } },
-            { header = "Finance",            items = { "irrigationCosts" } },
+            { header = "Finance",            items = { "irrigationCosts", "finiteWater" } },
         },
     },
     {
@@ -144,6 +144,11 @@ local SETTINGS_META = {
     irrigationCosts = {
         label = "Irrigation Costs",
         desc  = "Charge hourly running costs for active irrigation systems",
+        stype = "bool",
+    },
+    finiteWater = {
+        label = "Finite Irrigation Water",
+        desc  = "Pumps carry a finite store in irrigation-hours, refilled by rain",
         stype = "bool",
     },
     hudVisible = {

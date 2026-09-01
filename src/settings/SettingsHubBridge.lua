@@ -45,6 +45,7 @@ function SeasonalSettingsHubBridge.register(mgr)
         { id = "alertsEnabled",      type = "bool",  default = s.alertsEnabled,      adminOnly = false, label = "Stress Alerts" },
         { id = "alertCooldown",      type = "int",   default = s.alertCooldown,      adminOnly = false, min = 4, max = 24, label = "Alert Cooldown (hours)" },
         { id = "debugMode",          type = "bool",  default = s.debugMode,          adminOnly = false, label = "Debug Mode" },
+        { id = "finiteWater",        type = "bool",  default = s.finiteWater,        adminOnly = true,  label = "Finite Irrigation Water" },
         { id = "experimentalSystems", type = "bool", default = s.experimentalSystems, adminOnly = true, label = "Experimental Systems" },
     }
 

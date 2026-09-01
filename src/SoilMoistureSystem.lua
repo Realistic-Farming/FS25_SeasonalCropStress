@@ -494,10 +494,14 @@ end
 ---  rain, reconstructed from SoilFertilizer's Water Record. nil (the normal case)
 ---  means the sky is held at its last-known state for the whole span, which is
 ---  round-1 behaviour and identical to what shipped.
-function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours)
+function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, positionalScheduleApplied)
     if not self.isInitialized then return end
     if weather == nil then return end
     local hours = math.max(1, math.floor(elapsedHours or 1))
+    -- SCS-023: when the finite planner's positional pass already delivered the
+    -- scheduled moisture, the incumbent field-wide accumulator is suppressed.
+    -- Finite mode controls pump scarcity, not spatial truth.
+    self._positionalScheduleApplied = positionalScheduleApplied == true
     -- Clamped to the span: the record can never say it rained for more hours than
     -- the skip actually lasted.
     local wetHours = hours
@@ -575,7 +579,12 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours)
         -- Rain gain (modulated by soil absorption). Charged over `wetHours`, which
         -- is the whole span unless the Water Record narrowed it (SCS-037 round 2).
         local rainGain  = rainAmount * soilParams.rainAbsorb * wetHours
-        local irrigGain = (self.irrigationGains[fieldId] or 0.0) * hours
+        -- SCS-023: when the positional schedule pass ran, the positional writes
+        -- already delivered the scheduled moisture; the field-wide accumulator is
+        -- ignored (never both applied in one act).
+        local irrigGain = self._positionalScheduleApplied
+            and 0.0
+            or ((self.irrigationGains[fieldId] or 0.0) * hours)
 
         local prevMoisture = self:getFieldAggregate(data)
         -- SCS-039 MAP PATH. The hourly net is almost always SMALLER than one raw
