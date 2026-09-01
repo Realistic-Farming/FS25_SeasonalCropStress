@@ -82,6 +82,13 @@ function WeatherIntegration.new(manager)
     self.rainScale        = 0.0
     self.isRaining        = false
 
+    -- SCS-046 RAIN KEY SENSOR. A center-pivot rain key watches current rain at
+    -- that machine. The read is WeatherGuard-first, base-game second, UNAVAILABLE
+    -- only when both routes fail. It never treats nil as zero or dry.
+    self.rainKeyInputState  = "UNAVAILABLE"  -- "OK" | "UNAVAILABLE"
+    self.rainKeyRainScale   = 0.0            -- normalized intensity (0.0-1.0)
+    self.rainKeyIsRaining   = false
+
     -- Accumulated rain for the current hour (in moisture fraction units)
     -- Calculated from rainScale * absorption coefficient
     self.hourlyRainAmount = 0.0
@@ -386,6 +393,68 @@ function WeatherIntegration:getRainFromWeather()
     isRaining = rainScale > 0.01
 
     return rainScale, isRaining
+end
+
+-- ============================================================
+-- SCS-046 RAIN KEY CURRENT-RAIN READ
+--
+-- A fitted rain key needs current rain AT THE MACHINE. This is the one
+-- rain-key read, ordered per the build brief:
+--   1. WeatherGuard first: g_currentMission.weatherGuard:getCurrentSky()
+--      under pcall. When both rainScale and isRaining are readable they are
+--      authoritative.
+--   2. Base-game fallback: environment.weather:getRainFallScale() plus
+--      getIsRaining().
+--   3. Both routes fail: UNAVAILABLE, and the caller accumulates neither rain
+--      nor dry time. A nil rain field is NEVER treated as zero or dry.
+--
+-- Return values: readable (boolean), rainScale (number|nil), isRaining (boolean|nil).
+-- ============================================================
+function WeatherIntegration:getCurrentRainKey()
+    -- WeatherGuard first (the suite sky authority). Both fields must be readable.
+    local wg = g_currentMission ~= nil and g_currentMission.weatherGuard or nil
+    if wg ~= nil and type(wg.getCurrentSky) == "function" then
+        local ok, sky = pcall(function() return wg:getCurrentSky() end)
+        if ok and type(sky) == "table"
+           and type(sky.rainScale) == "number"
+           and type(sky.isRaining) == "boolean" then
+            self.rainKeyInputState = "OK"
+            self.rainKeyRainScale  = sky.rainScale
+            self.rainKeyIsRaining  = sky.isRaining
+            return true, sky.rainScale, sky.isRaining
+        end
+    end
+
+    -- Base-game fallback: environment.weather:getRainFallScale() + getIsRaining().
+    local env = g_currentMission ~= nil and g_currentMission.environment or nil
+    if env ~= nil and env.weather ~= nil then
+        local ok, rainScale, isRaining = pcall(function()
+            local rs = env.weather:getRainFallScale()
+            local ir = env.weather:getIsRaining()
+            if type(rs) ~= "number" then rs = nil end
+            if type(ir) ~= "boolean" then ir = nil end
+            return rs, ir
+        end)
+        if ok and type(rainScale) == "number" and type(isRaining) == "boolean" then
+            self.rainKeyInputState = "OK"
+            self.rainKeyRainScale  = rainScale
+            self.rainKeyIsRaining  = isRaining
+            return true, rainScale, isRaining
+        end
+    end
+
+    -- Both routes failed. UNAVAILABLE, never zero or dry.
+    self.rainKeyInputState = "UNAVAILABLE"
+    self.rainKeyRainScale  = 0.0
+    self.rainKeyIsRaining  = false
+    return false, nil, nil
+end
+
+-- ============================================================
+-- RAIN KEY INPUT READABILITY (pure, no side effects)
+-- ============================================================
+function WeatherIntegration:getRainKeyInputState()
+    return self.rainKeyInputState
 end
 
 -- Evaporation multiplier for the current hour, combining temperature and season.

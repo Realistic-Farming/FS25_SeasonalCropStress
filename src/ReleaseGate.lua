@@ -45,6 +45,13 @@ ReleaseGate.EXPERIMENTAL = {
         name = "Moisture on the 2m grid",
         status = "new; awaiting the in-game layer look",
     },
+    -- SCS-046 RAIN KEY. LOCKED until all four named observations pass: runtime
+    -- trip/reset, both player surfaces, dedicated-server activity transport and
+    -- balance observation. The feature is inert (unfitted pivots) until released.
+    rain_key_pause = {
+        name = "Center-pivot rain key",
+        status = "new; awaiting runtime trip/reset, surfaces, dedi transport and balance",
+    },
 }
 
 -- Console command -> systemId, so command refusals route through the same registry.
