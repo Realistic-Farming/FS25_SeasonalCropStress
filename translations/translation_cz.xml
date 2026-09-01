@@ -409,12 +409,12 @@
 <text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="Rameno %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="Zacatek vysece %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="Konec vysece %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="Rameno -"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="Zacatek vysece -"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="Konec vysece -"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
@@ -503,5 +503,15 @@
     <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
     <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
     <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
+    <text name="cs_rf_pda_rk_suffix" text="  ·  cidlo deste %s / %.1f mm modelovanych" />
+    <text name="cs_rf_pda_rk_unknown" text="neznamo" />
+    <text name="cs_rf_pda_rk_warn_tripped" text="Cidlo deste sepnulo" />
+    <text name="cs_rf_pda_rk_warn_tripped_in" text="Cidlo sepnulo, suchy reset za %d min" />
+    <text name="cs_rf_pda_rk_warn_noinput" text="Cidlo neprecte pocasi" />
+    <text name="cs_rf_pda_rk_btn_fit" text="Osadit" />
+    <text name="cs_rf_pda_rk_btn_remove" text="Sejmout" />
+    <text name="cs_rf_pda_rk_btn_trip_minus" text="Prah-" />
+    <text name="cs_rf_pda_rk_btn_trip_plus" text="Prah+" />
+    <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
 </texts>
 </l10n>

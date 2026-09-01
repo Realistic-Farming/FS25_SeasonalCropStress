@@ -11,11 +11,11 @@ CropStressRainKeyResultEvent_mt = Class(CropStressRainKeyResultEvent, Event)
 InitEventClass(CropStressRainKeyResultEvent, "CropStressRainKeyResultEvent")
 
 function CropStressRainKeyResultEvent.emptyNew()
-    return CropStressRainKeyResultEvent:new()
+    return Event.new(CropStressRainKeyResultEvent_mt)
 end
 
-function CropStressRainKeyResultEvent:new(systemId, accepted, resultCode)
-    local self = setmetatable({}, CropStressRainKeyResultEvent_mt)
+function CropStressRainKeyResultEvent.new(systemId, accepted, resultCode)
+    local self = CropStressRainKeyResultEvent.emptyNew()
     self.systemId   = systemId or 0
     self.accepted   = accepted == true
     self.resultCode = resultCode or "OK"

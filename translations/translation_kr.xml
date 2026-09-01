@@ -402,12 +402,12 @@
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s Â· covers %s of this block"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="암 %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="스윙 시작 %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="스윙 끝 %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="암 -"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="스윙 시작 -"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="스윙 끝 -"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
@@ -468,5 +468,15 @@
     <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
     <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
     <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
+    <text name="cs_rf_pda_rk_suffix" text="  ·  레인 센서 %s / %.1f mm 모델링" />
+    <text name="cs_rf_pda_rk_unknown" text="알 수 없음" />
+    <text name="cs_rf_pda_rk_warn_tripped" text="레인 센서 작동됨" />
+    <text name="cs_rf_pda_rk_warn_tripped_in" text="센서 작동됨, %d분 후 건조 초기화" />
+    <text name="cs_rf_pda_rk_warn_noinput" text="레인 센서가 날씨를 읽을 수 없음" />
+    <text name="cs_rf_pda_rk_btn_fit" text="장착" />
+    <text name="cs_rf_pda_rk_btn_remove" text="제거" />
+    <text name="cs_rf_pda_rk_btn_trip_minus" text="기준-" />
+    <text name="cs_rf_pda_rk_btn_trip_plus" text="기준+" />
+    <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
 </texts>
 </l10n>

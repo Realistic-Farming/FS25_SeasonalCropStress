@@ -402,12 +402,12 @@
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s Â· covers %s of this block"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0fÂ°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur â€”"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min â€”"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max â€”"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="Braco %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="Inicio varredura %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="Fim varredura %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="Braco -"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="Inicio varredura -"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="Fim varredura -"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
@@ -468,5 +468,15 @@
     <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
     <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
     <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
+    <text name="cs_rf_pda_rk_suffix" text="  ·  sensor de chuva %s / %.1f mm modelados" />
+    <text name="cs_rf_pda_rk_unknown" text="desconhecido" />
+    <text name="cs_rf_pda_rk_warn_tripped" text="Sensor de chuva disparado" />
+    <text name="cs_rf_pda_rk_warn_tripped_in" text="Sensor disparado, reinicio seco em %d min" />
+    <text name="cs_rf_pda_rk_warn_noinput" text="O sensor nao consegue ler o clima" />
+    <text name="cs_rf_pda_rk_btn_fit" text="Montar" />
+    <text name="cs_rf_pda_rk_btn_remove" text="Remover" />
+    <text name="cs_rf_pda_rk_btn_trip_minus" text="Limite-" />
+    <text name="cs_rf_pda_rk_btn_trip_plus" text="Limite+" />
+    <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
 </texts>
 </l10n>
