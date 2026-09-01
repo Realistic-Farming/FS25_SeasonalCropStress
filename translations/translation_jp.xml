@@ -478,5 +478,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="しきい-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="しきい+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="かん水: 降雨で一時停止" />
+        <text name="cs_rf_pda_cap_sweep_start" text="スイープ開始" />
+        <text name="cs_rf_pda_cap_sweep_end" text="スイープ終了" />
+        <text name="cs_rf_pda_cap_rain_key" text="レインセンサー" />
 </texts>
 </l10n>

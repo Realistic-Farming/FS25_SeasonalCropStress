@@ -497,5 +497,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Поріг-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Поріг+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fмм" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Полив: пауза через дощ" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Початок сектора" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Кінець сектора" />
+        <text name="cs_rf_pda_cap_rain_key" text="Датчик дощу" />
 </texts>
 </l10n>

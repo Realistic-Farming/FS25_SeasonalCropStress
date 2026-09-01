@@ -512,5 +512,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Schw-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Schw+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Bewaesserung: Regenpause" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Schwenk Start" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Schwenk Ende" />
+        <text name="cs_rf_pda_cap_rain_key" text="Regensensor" />
 </texts>
 </l10n>

@@ -1430,13 +1430,15 @@ end
 --- label is stored on the element rather than written into its TextElement. Two
 --- things must never draw at once: the TextElement label and the chip. Leaving
 --- setText(label) on gave the DOOR-over-SPACE overlap Wizard was looking at.
-local function setPivotBtn(container, id, label, enabled, dead)
+---@param latched boolean|nil  true when this function is currently ON
+local function setPivotBtn(container, id, label, enabled, dead, latched)
     local el = findDescendant(container, id)
     if el == nil then return end
     if el.setVisible then el:setVisible(true) end
     if el.setText then el:setText("") end
     el.rfPivotChipLabel = label
     el.rfPivotChipEnabled = enabled and true or false
+    el.rfPivotChipLatched = latched and true or false
     -- BUILD 15:26: "dead" means there is no system behind this card at all, which
     -- is different from a gated remote on a real pivot. Gated still shows a grey
     -- chip so the farmer can see what is locked; dead paints nothing, because a
@@ -1485,7 +1487,14 @@ local function renderPivotChip(el, overlay)
 
     local enabled = el.rfPivotChipEnabled
     local t, b, ta, ba
-    if enabled then
+    if enabled and el.rfPivotChipLatched then
+        -- [BUILD 18:42] LATCHED: this function is currently ON. A true invert of
+        -- the live chip, text and background swapped, so open reads differently
+        -- from closed at a glance without inventing a third colour that would
+        -- then need its own meaning. Only the live tier inverts: a gated chip
+        -- stays grey, because "locked" must never look like "on".
+        t, b, ta, ba = PIVOT_CHIP_BG, PIVOT_CHIP_TEXT, 1.0, 1.0
+    elseif enabled then
         t, b, ta, ba = PIVOT_CHIP_TEXT, PIVOT_CHIP_BG, 1.0, 1.0
     else
         -- GATED: real pivot, this tier locked (door / power / ownership / autoRotate).
@@ -1800,6 +1809,9 @@ updatePivotCard = function(container, fieldId)
         setPivotText(container, "csPivotWarn",
             tr("cs_rf_pda_pivot_warn_none", "No pivot on this field"))
         setPivotText(container, "csPivotTripLabel", "")
+        setPivotText(container, "csPivotCapMin", "")
+        setPivotText(container, "csPivotCapMax", "")
+        setPivotText(container, "csPivotCapFit", "")
         local dead = {
             "csPivotBtnDoor", "csPivotBtnPower", "csPivotBtnSpray", "csPivotBtnEndGun",
             "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop",
@@ -2040,13 +2052,25 @@ updatePivotCard = function(container, fieldId)
         end
     end
 
-    setPivotBtn(container, "csPivotBtnDoor", tr("cs_rf_pda_pivot_btn_door", "Door"), doorOk)
-    setPivotBtn(container, "csPivotBtnPower", tr("cs_rf_pda_pivot_btn_power", "Power"), powerOk)
-    setPivotBtn(container, "csPivotBtnSpray", tr("cs_rf_pda_pivot_btn_spray", "Spray"), opsOk)
-    setPivotBtn(container, "csPivotBtnEndGun", tr("cs_rf_pda_pivot_btn_endgun", "End gun"), opsOk)
+    -- [BUILD 18:42] Latch state per chip: what is ON right now. Speed, Min/Max,
+    -- Arm, Schedule, Fit and Trip are deliberately never latched: they are steps
+    -- and actions, not states, so an inverted chip would be claiming a mode that
+    -- does not exist.
+    local sprayOn  = spec ~= nil and spec.isSprayActive == true
+    local endGunOn = spec ~= nil and spec.endGunActive == true
+    local wateringOn = (spec ~= nil and spec.autoRotate == true)
+                       or (spec == nil and sys ~= nil and sys.isActive == true)
+    setPivotBtn(container, "csPivotBtnDoor", tr("cs_rf_pda_pivot_btn_door", "Door"), doorOk, false, doorOpen)
+    setPivotBtn(container, "csPivotBtnPower", tr("cs_rf_pda_pivot_btn_power", "Power"), powerOk, false, powered)
+    setPivotBtn(container, "csPivotBtnSpray", tr("cs_rf_pda_pivot_btn_spray", "Spray"), opsOk, false, sprayOn)
+    setPivotBtn(container, "csPivotBtnEndGun", tr("cs_rf_pda_pivot_btn_endgun", "End gun"), opsOk, false, endGunOn)
     setPivotBtn(container, "csPivotBtnSpeed", speedLabel, opsOk)
-    setPivotBtn(container, "csPivotBtnStart", tr("cs_rf_pda_pivot_btn_start", "Start"), owned and (reinke or sys ~= nil))
-    setPivotBtn(container, "csPivotBtnStop", tr("cs_rf_pda_pivot_btn_stop", "Stop"), owned and (reinke or sys ~= nil))
+    setPivotBtn(container, "csPivotBtnStart", tr("cs_rf_pda_pivot_btn_start", "Start"),
+        owned and (reinke or sys ~= nil), false, wateringOn)
+    -- Stop latches when the machine is stopped, so the pair always shows which
+    -- of the two modes you are actually in rather than leaving both dark.
+    setPivotBtn(container, "csPivotBtnStop", tr("cs_rf_pda_pivot_btn_stop", "Stop"),
+        owned and (reinke or sys ~= nil), false, owned and not wateringOn)
     setPivotBtn(container, "csPivotBtnMinUp", tr("cs_rf_pda_pivot_btn_min_up", "Min+"), opsOk)
     setPivotBtn(container, "csPivotBtnMinDn", tr("cs_rf_pda_pivot_btn_min_dn", "Min-"), opsOk)
     setPivotBtn(container, "csPivotBtnMaxUp", tr("cs_rf_pda_pivot_btn_max_up", "Max+"), opsOk)
@@ -2076,9 +2100,17 @@ updatePivotCard = function(container, fieldId)
         local tripMm = (sys ~= nil and tonumber(sys.rainKeyTripMm)) or 2.5
         setPivotText(container, "csPivotTripLabel",
             string.format(tr("cs_rf_pda_rk_trip_label", "%.1fmm"), tripMm))
+        setPivotText(container, "csPivotCapFit", tr("cs_rf_pda_cap_rain_key", "Rain key"))
     else
         setPivotText(container, "csPivotTripLabel", "")
+        setPivotText(container, "csPivotCapFit", "")
     end
+
+    -- [BUILD 18:42] Say what the two angle pairs are for. The dial already names
+    -- sweep start and sweep end; these put the same words over the buttons that
+    -- move them, so "Min 45" stops being a number without a subject.
+    setPivotText(container, "csPivotCapMin", tr("cs_rf_pda_cap_sweep_start", "Sweep start"))
+    setPivotText(container, "csPivotCapMax", tr("cs_rf_pda_cap_sweep_end", "Sweep end"))
 end
 
 

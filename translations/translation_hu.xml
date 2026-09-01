@@ -478,5 +478,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Kuszob-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Kuszob+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Ontozes: eso miatt szunetel" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Iv kezdete" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Iv vege" />
+        <text name="cs_rf_pda_cap_rain_key" text="Esoerzekelo" />
 </texts>
 </l10n>

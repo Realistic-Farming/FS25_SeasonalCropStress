@@ -478,5 +478,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Raja-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Raja+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Kastelu: sadetauko" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Kaaren alku" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Kaaren loppu" />
+        <text name="cs_rf_pda_cap_rain_key" text="Sadeanturi" />
 </texts>
 </l10n>

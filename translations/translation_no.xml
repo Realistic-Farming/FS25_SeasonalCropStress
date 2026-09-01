@@ -478,5 +478,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Terskel-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Terskel+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Vanning: regnpause" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Sving start" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Sving slutt" />
+        <text name="cs_rf_pda_cap_rain_key" text="Regnsensor" />
 </texts>
 </l10n>

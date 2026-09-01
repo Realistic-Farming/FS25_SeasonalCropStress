@@ -517,5 +517,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Trip-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Trip+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Watering now: Rain paused" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Sweep start" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Sweep end" />
+        <text name="cs_rf_pda_cap_rain_key" text="Rain key" />
 </texts>
 </l10n>

@@ -478,5 +478,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Prag-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Prag+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Irigare: pauza de ploaie" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Start baleiaj" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Final baleiaj" />
+        <text name="cs_rf_pda_cap_rain_key" text="Senzor ploaie" />
 </texts>
 </l10n>

@@ -510,5 +510,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Seuil-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Seuil+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Arrosage: pause pluie" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Debut balayage" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Fin balayage" />
+        <text name="cs_rf_pda_cap_rain_key" text="Capteur pluie" />
 </texts>
 </l10n>

@@ -497,5 +497,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Graense-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Graense+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Vanding: regnpause" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Sving start" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Sving slut" />
+        <text name="cs_rf_pda_cap_rain_key" text="Regnsensor" />
 </texts>
 </l10n>

@@ -478,5 +478,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="기준-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="기준+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="관수: 강우 일시정지" />
+        <text name="cs_rf_pda_cap_sweep_start" text="스윙 시작" />
+        <text name="cs_rf_pda_cap_sweep_end" text="스윙 끝" />
+        <text name="cs_rf_pda_cap_rain_key" text="레인 센서" />
 </texts>
 </l10n>

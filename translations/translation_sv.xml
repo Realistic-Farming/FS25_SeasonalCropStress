@@ -478,5 +478,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Troskel-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Troskel+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Bevattning: regnpaus" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Svep start" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Svep slut" />
+        <text name="cs_rf_pda_cap_rain_key" text="Regnsensor" />
 </texts>
 </l10n>

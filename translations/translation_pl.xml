@@ -510,5 +510,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Prog-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Prog+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Nawadnianie: pauza deszczowa" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Poczatek luku" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Koniec luku" />
+        <text name="cs_rf_pda_cap_rain_key" text="Czujnik deszczu" />
 </texts>
 </l10n>

@@ -513,5 +513,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Prah-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Prah+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Zavlaha: pauza kvuli desti" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Zacatek vysece" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Konec vysece" />
+        <text name="cs_rf_pda_cap_rain_key" text="Cidlo deste" />
 </texts>
 </l10n>

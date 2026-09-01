@@ -478,5 +478,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="Ngưỡng-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="Ngưỡng+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Tưới: tạm dừng do mưa" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Bat dau quet" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Ket thuc quet" />
+        <text name="cs_rf_pda_cap_rain_key" text="Cam bien mua" />
 </texts>
 </l10n>

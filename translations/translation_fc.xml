@@ -478,5 +478,9 @@
     <text name="cs_rf_pda_rk_btn_trip_minus" text="阈值-" />
     <text name="cs_rf_pda_rk_btn_trip_plus" text="阈值+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="灌溉: 因雨暂停" />
+        <text name="cs_rf_pda_cap_sweep_start" text="扫描起点" />
+        <text name="cs_rf_pda_cap_sweep_end" text="扫描终点" />
+        <text name="cs_rf_pda_cap_rain_key" text="雨量传感器" />
 </texts>
 </l10n>
