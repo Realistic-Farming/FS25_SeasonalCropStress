@@ -37090,46 +37090,51 @@
     "watchers": 4
   },
   {
-    "timestamp": "2026-09-02T00:44:49Z",
+    "timestamp": "2026-09-02T18:19:17Z",
     "date": "2026-09-02",
     "views": {
-      "count": 681,
-      "uniques": 182
+      "count": 629,
+      "uniques": 175
     },
     "clones": {
-      "count": 446,
-      "uniques": 118
+      "count": 427,
+      "uniques": 115
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 295,
-        "uniques": 107
+        "count": 279,
+        "uniques": 101
       },
       {
         "referrer": "Google",
-        "count": 62,
-        "uniques": 30
+        "count": 59,
+        "uniques": 29
       },
       {
         "referrer": "Bing",
-        "count": 25,
-        "uniques": 7
+        "count": 26,
+        "uniques": 8
       },
       {
         "referrer": "patreon.com",
-        "count": 17,
-        "uniques": 12
-      },
-      {
-        "referrer": "realisticfarming.com",
-        "count": 6,
-        "uniques": 5
+        "count": 18,
+        "uniques": 13
       },
       {
         "referrer": "chatgpt.com",
         "count": 6,
         "uniques": 3
+      },
+      {
+        "referrer": "realisticfarming.com",
+        "count": 3,
+        "uniques": 3
+      },
+      {
+        "referrer": "yandex.ru",
+        "count": 3,
+        "uniques": 1
       },
       {
         "referrer": "DuckDuckGo",
@@ -37140,37 +37145,32 @@
         "referrer": "kingmods.net",
         "count": 1,
         "uniques": 1
-      },
-      {
-        "referrer": "yandex.ru",
-        "count": 1,
-        "uniques": 1
       }
     ],
     "popular_paths": [
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress",
         "title": "Overview",
-        "count": 305,
-        "uniques": 163
+        "count": 298,
+        "uniques": 156
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/releases",
         "title": "/releases",
-        "count": 77,
-        "uniques": 43
+        "count": 72,
+        "uniques": 40
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.5.0",
         "title": "/releases/tag/v1.2.5.0",
-        "count": 66,
-        "uniques": 51
+        "count": 63,
+        "uniques": 48
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/issues",
         "title": "/issues",
-        "count": 23,
-        "uniques": 15
+        "count": 19,
+        "uniques": 12
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/branches",
@@ -37182,19 +37182,7 @@
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/tree/development",
         "title": "/tree/development",
         "count": 11,
-        "uniques": 5
-      },
-      {
-        "path": "/Realistic-Farming/FS25_SeasonalCropStress/pull/109",
-        "title": "/pull/109",
-        "count": 8,
-        "uniques": 3
-      },
-      {
-        "path": "/Realistic-Farming/FS25_SeasonalCropStress/pull/115",
-        "title": "/pull/115",
-        "count": 8,
-        "uniques": 3
+        "uniques": 4
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/pull/126",
@@ -37207,13 +37195,25 @@
         "title": "/issues/162",
         "count": 7,
         "uniques": 1
+      },
+      {
+        "path": "/Realistic-Farming/FS25_SeasonalCropStress/pull/109",
+        "title": "/pull/109",
+        "count": 6,
+        "uniques": 3
+      },
+      {
+        "path": "/Realistic-Farming/FS25_SeasonalCropStress/pull/115",
+        "title": "/pull/115",
+        "count": 6,
+        "uniques": 3
       }
     ],
     "releases": [
       {
         "assets": [
           {
-            "downloads": 40,
+            "downloads": 41,
             "name": "FS25_SeasonalCropStress.zip"
           }
         ],
