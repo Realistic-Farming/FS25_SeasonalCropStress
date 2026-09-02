@@ -1405,8 +1405,11 @@ function IrrigationManager:getIrrigationWaterSources(farmId)
                 waterRemaining = source.finite and source.waterRemaining or nil,
                 unlimited = not source.finite,
                 hasWater = source.hasWater == true,
-                label = (g_i18n ~= nil and g_i18n:getText("cs_water_source_label"))
-                    or "Water source",
+                -- BUILD 07:10: getText on a key absent from l10n returns the truthy
+                -- "Missing '...'" string, so an `or` fallback after it never fires.
+                -- Ask hasText first, for the key the 26 translation files carry.
+                label = (g_i18n ~= nil and g_i18n:hasText("cs_irr_water_source")
+                    and g_i18n:getText("cs_irr_water_source")) or "Water source",
                 connectedSystems = connected,
             }
         end
