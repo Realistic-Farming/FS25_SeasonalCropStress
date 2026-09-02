@@ -569,6 +569,22 @@ function CropStressManager:update(dt)
         end
     end
 
+    -- Apply-on-load. The schedule window only ran on the hour edge, so a save
+    -- loaded at 07:30 with a 06-10 window sat dry until 08:00. This fires once,
+    -- on the first frame after the player has actually entered, with the restored
+    -- schedules and Auto/Manual flags already in place. Server only, like
+    -- onHourlyTick; a disabled mod applies nothing; lastHourKey is untouched and no
+    -- skipped compile hour is charged here.
+    if not self._scheduleAppliedAtStart
+        and g_currentMission ~= nil and g_currentMission.isMissionStarted == true then
+        self._scheduleAppliedAtStart = true
+        if g_server ~= nil and self.settings ~= nil and self.settings.enabled
+            and self.irrigationManager ~= nil
+            and type(self.irrigationManager.applyScheduleNow) == "function" then
+            self.irrigationManager:applyScheduleNow()
+        end
+    end
+
     -- HUD frame update (handles auto-show, input response)
     self.hudOverlay:update(dt)
 
@@ -1025,14 +1041,16 @@ function CropStressManager:getIrrigationWaterSources(farmId)
     return irrMgr:getIrrigationWaterSources(farmId)
 end
 
--- Active irrigation schedule covering a field: a COPY of
--- {startHour, endHour, activeDays} from the first active system whose
--- coveredFields include the field, or nil when nothing active covers it.
+-- Irrigation schedule covering a field: a COPY of
+-- {startHour, endHour, activeDays} from the first scheduled system whose
+-- coveredFields include the field, or nil when no scheduled system covers it.
+-- A schedule is a standing window, not a running machine; an idle pivot that is
+-- scheduled for tonight still has hours the Esc desk must show.
 function CropStressManager:getIrrigationSchedule(fieldId)
     local irrMgr = self.irrigationManager
     if irrMgr == nil or irrMgr.systems == nil then return nil end
     for _, sys in pairs(irrMgr.systems) do
-        if sys.isActive and sys.coveredFields ~= nil and sys.schedule ~= nil then
+        if sys.coveredFields ~= nil and sys.schedule ~= nil then
             for _, fid in ipairs(sys.coveredFields) do
                 if fid == fieldId then
                     local days = {}

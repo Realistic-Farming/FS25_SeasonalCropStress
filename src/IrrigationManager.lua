@@ -266,6 +266,11 @@ function IrrigationManager:registerIrrigationSystem(placeable)
             activeDays = placeable.defaultActiveDays or {true, true, true, true, true, false, false},
         },
         isActive             = false,
+        -- [BUILD 00:33] Auto/Manual. false = the weekly schedule drives start and
+        -- stop through hourlyScheduleCheck; true = the player owns Start/Stop and
+        -- the schedule check leaves this row alone. Persisted by SaveLoadHandler
+        -- (absent flag = Auto).
+        manualMode           = false,
         effectiveRatePerField = {},
         -- SCS-046 RAIN KEY. Optional per-pivot equipment. A fitted pivot watches
         -- current rain at that machine; meaningful rain trips the key and stops
@@ -508,34 +513,49 @@ function IrrigationManager:hourlyScheduleCheck()
             system.pressureMultiplier = 0
         end
 
-        local shouldBeActive = false
-        if system.waterSourceId ~= nil and system.pressureMultiplier > 0 then
-            local sched = system.schedule
-            if sched.activeDays[dayOfWeek] == true then
-                -- Support wrap-around schedules (e.g. startHour=23, endHour=2)
-                if sched.startHour <= sched.endHour then
-                    shouldBeActive = hour >= sched.startHour and hour < sched.endHour
-                else
-                    shouldBeActive = hour >= sched.startHour or hour < sched.endHour
+        -- [BUILD 00:33] Manual hands Start/Stop to the player: the window neither
+        -- auto-starts nor auto-stops this row. The water-source-loss stop above is
+        -- deliberately outside this gate (a row with no source cannot water).
+        if not system.manualMode then
+            local shouldBeActive = false
+            if system.waterSourceId ~= nil and system.pressureMultiplier > 0 then
+                local sched = system.schedule
+                if sched.activeDays[dayOfWeek] == true then
+                    -- Support wrap-around schedules (e.g. startHour=23, endHour=2)
+                    if sched.startHour <= sched.endHour then
+                        shouldBeActive = hour >= sched.startHour and hour < sched.endHour
+                    else
+                        shouldBeActive = hour >= sched.startHour or hour < sched.endHour
+                    end
                 end
             end
-        end
 
-        if shouldBeActive and not system.isActive then
-            -- SCS-046: scheduled activation routes through the same gate. A fitted
-            -- tripped or input-unavailable row stays off; the reason is honest.
-            local gateOpen = self:isRainKeyGateOpen(system)
-            if gateOpen then
-                self:activateSystem(id)
-            else
-                csLog(string.format(
-                    "Irrigation system %d schedule skipped (%s)",
-                    id, select(2, self:isRainKeyGateOpen(system))))
+            if shouldBeActive and not system.isActive then
+                -- SCS-046: scheduled activation routes through the same gate. A fitted
+                -- tripped or input-unavailable row stays off; the reason is honest.
+                local gateOpen = self:isRainKeyGateOpen(system)
+                if gateOpen then
+                    self:activateSystem(id)
+                else
+                    csLog(string.format(
+                        "Irrigation system %d schedule skipped (%s)",
+                        id, select(2, self:isRainKeyGateOpen(system))))
+                end
+            elseif not shouldBeActive and system.isActive then
+                self:deactivateSystem(id)
             end
-        elseif not shouldBeActive and system.isActive then
-            self:deactivateSystem(id)
         end
     end
+end
+
+--- [BUILD 00:33] One-shot schedule apply. Called on the first update frame after
+--- isMissionStarted flips true (CropStressManager.update) and whenever a schedule
+--- or the Auto/Manual mode changes on the server (CropStressScheduleSyncEvent,
+--- AUTO_MANUAL_TOGGLE). It runs the hourly window check only: never the Finite
+--- Water Planner (planFiniteWater / collectScheduledHours), which stays on the
+--- hourly tick, and it charges nothing.
+function IrrigationManager:applyScheduleNow()
+    self:hourlyScheduleCheck()
 end
 
 -- ============================================================
@@ -578,6 +598,62 @@ function IrrigationManager:getEffectiveCostPerHour(system)
 end
 
 -- ============================================================
+-- REINKE SPRAY HELPER (BUILD 22:43)
+-- One water-on flag: system.isActive. A Reinke pivot's spray
+-- (spec.isSprayActive) is derived from it here, on the server, inside
+-- activateSystem / deactivateSystem, so a scheduled, remote or AUTO_START
+-- water-on also wets the field visually instead of only ticking the model.
+-- The spec is soft-detected from system.placeable with the same scan as
+-- getReinkeSpec in CropStressPivotRemoteEvent.lua (named table first, then
+-- the key scan), so drip and Rainstar systems, which have no spec, no-op.
+-- Mirrors toggleSprayActive in centerPivot.lua: write the flag, raise the
+-- pivot's dirty flag so the stream carries it to clients, start or stop the
+-- particles (client-only inside the pivot), and sync lastSprayLogged so the
+-- spray-flip check in onUpdateTick does not fire the particles a second time.
+-- ============================================================
+local function getReinkeSpec(placeable)
+    if placeable == nil then
+        return nil
+    end
+    if ReinkeIrrigationPivot ~= nil and type(ReinkeIrrigationPivot.SPEC_TABLE_NAME) == "string" then
+        local spec = placeable[ReinkeIrrigationPivot.SPEC_TABLE_NAME]
+        if spec ~= nil then
+            return spec
+        end
+    end
+    for k, v in pairs(placeable) do
+        if type(k) == "string" and k:find("reinkeIrrigationPivot", 1, true) and type(v) == "table" then
+            if v.armAngle ~= nil or v.autoMinAngleDeg ~= nil or v.doorOpen ~= nil then
+                return v
+            end
+        end
+    end
+    return nil
+end
+
+local function setReinkeSpray(system, on)
+    local placeable = system ~= nil and system.placeable or nil
+    local spec = getReinkeSpec(placeable)
+    if spec == nil then
+        return false
+    end
+    spec.isSprayActive = on
+    if type(placeable.raiseDirtyFlags) == "function" and spec.dirtyFlag ~= nil then
+        placeable:raiseDirtyFlags(spec.dirtyFlag)
+    end
+    local particles = on and placeable.startSprayerParticles or placeable.stopSprayerParticles
+    if type(particles) == "function" then
+        local okCall, err = pcall(particles, placeable)
+        if not okCall then
+            csLog(string.format("Irrigation system %s spray particles %s failed: %s",
+                tostring(system.id), on and "start" or "stop", tostring(err)))
+        end
+    end
+    spec.lastSprayLogged = on
+    return true
+end
+
+-- ============================================================
 -- Activation / Deactivation
 -- ============================================================
 function IrrigationManager:activateSystem(id)
@@ -614,6 +690,8 @@ function IrrigationManager:activateSystem(id)
     end
 
     system.isActive = true
+    -- BUILD 22:43: spray follows the one water-on flag (no-op without a Reinke spec).
+    setReinkeSpray(system, true)
     csLog(string.format("Irrigation system %d activated, rate=%.4f", id, effectiveRate))
     return true, nil
 end
@@ -634,6 +712,7 @@ function IrrigationManager:deactivateSystem(id)
 
     system.effectiveRatePerField = {}
     system.isActive = false
+    setReinkeSpray(system, false)
     csLog(string.format("Irrigation system %d deactivated", id))
 end
 

@@ -345,7 +345,7 @@
     <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d vehicle working this field"/>
     <text name="cs_cp_vehicles_on_field" text="CoursePlay: %d vehicles working this field"/>
     <!-- AutoDrive context appended to CRITICAL alerts -->
-    <text name="cs_ad_water_hint"    text="AutoDrive: %d water destination(s) available â€” consider a hauling route"/>
+    <text name="cs_ad_water_hint"    text="AutoDrive: %d water destination(s) available - consider a hauling route"/>
     <text name="cs_ad_destinations"  text="AutoDrive: %d destination(s) configured"/>
 
         <text name="rf_pda_side_info_crop_stress" text="[EN] Crop Stress&#10;&#10;This table lists every field you own. One row = one field.&#10;&#10;Columns: Field # / Crop, Moisture (how wet the soil is), Stress (how hard the crop is fighting dry spells), Irrigation (water help covering this field), Status (Healthy / Warning / Critical).&#10;&#10;Click a row. The strip below names the field, then Next says what to do first:&#10;- Critical or Warning Moisture â†’ water that field (turn on irrigation if covered, or spray WATER / place coverage)&#10;- High Stress or a sensitive growth window â†’ protect now; stress today cuts harvest later&#10;- Looking fine â†’ recheck later; worse fields first&#10;&#10;Irrigation: Yes means a system can cover this field. Schedules and running systems live deeper on Farm Tablet / Crop Consultant when you need them.&#10;&#10;If Soil Fertilizer is also loaded, check nutrients there too. Dry soil drains faster when soil health is poor.&#10;&#10;Start with Critical Status, follow Next, then work up the list."/>
@@ -382,25 +382,25 @@
     <text name="cs_rf_pda_no_coverage_act" text="[EN] No irrigation covers this field - place a system in the shop, then schedule it here."/>
     <text name="cs_rf_pda_crop_mixed" text="[EN] Mixed"/>
     <text name="cs_rf_pda_yield_keep" text="[EN] Yield keep: %d%%"/>
-    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0fÂ°C, dry pull %.1f"/>
-    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %dâ€“%d"/>
+    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0f deg C, dry pull %.1f"/>
+    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %d-%d"/>
     <text name="cs_rf_pda_sched_daily" text="[EN]  daily"/>
     <text name="cs_rf_pda_sched_weekdays" text="[EN]  weekdays"/>
     <text name="cs_rf_pda_sched_none" text="[EN] no schedule"/>
-    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered Â· no schedule"/>
+    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered - no schedule"/>
     <text name="cs_rf_pda_no_coverage" text="[EN] No coverage"/>
     <text name="cs_rf_pda_rate_off" text="[EN] Rate off"/>
     <text name="cs_rf_pda_rate_on" text="[EN] Rate +%.2f/h"/>
     <text name="cs_rf_pda_alert_prefix" text="[EN] Alert: %s"/>
-    <text name="cs_rf_pda_next_alert_sep" text="[EN]  Â· %s"/>
-    <text name="cs_rf_pda_status_join" text="[EN] %s  Â·  Status: %s"/>
+    <text name="cs_rf_pda_next_alert_sep" text="[EN]  - %s"/>
+    <text name="cs_rf_pda_status_join" text="[EN] %s  -  Status: %s"/>
     <text name="cs_rf_pda_pivot_title" text="[EN] PIVOT"/>
     <text name="cs_rf_pda_pivot_title_irrig" text="[EN] IRRIGATION"/>
 <text name="cs_rf_pda_pivot_title_rainstar" text="RAINSTAR"/>
 <text name="cs_rf_pda_pivot_rainstar_label" text="[EN] Vehicle irrigator"/>
 <text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
-    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s Â· covers %s of this block"/>
+    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s - covers %s of this block"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
     <text name="cs_rf_pda_pivot_dial_cur" text="臂杆 %.0f deg"/>
     <text name="cs_rf_pda_pivot_dial_min" text="扫描起点 %.0f deg"/>
@@ -413,10 +413,10 @@
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
     <text name="cs_rf_pda_pivot_watering_off" text="[EN] Watering now: Off"/>
     <text name="cs_rf_pda_pivot_pressure" text="[EN] Pressure: %d%%"/>
-    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: â€”"/>
+    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: -"/>
     <text name="cs_rf_pda_pivot_rate" text="[EN] Rate: +%.3f/h"/>
-    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: â€”"/>
-    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00â€“%02d:00%s"/>
+    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: -"/>
+    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00-%02d:00%s"/>
     <text name="cs_rf_pda_pivot_sched_none" text="[EN] Schedule: No schedule"/>
     <text name="cs_rf_pda_pivot_warn_none" text="[EN] No pivot on this field"/>
     <text name="cs_rf_pda_pivot_warn_owner" text="[EN] Not your pivot"/>
@@ -430,12 +430,14 @@
     <text name="cs_rf_pda_pivot_btn_speed" text="[EN] Speed"/>
     <text name="cs_rf_pda_pivot_btn_start" text="[EN] Start"/>
     <text name="cs_rf_pda_pivot_btn_stop" text="[EN] Stop"/>
+    <text name="cs_rf_pda_pivot_btn_auto" text="Auto"/>
+    <text name="cs_rf_pda_pivot_btn_manual" text="Manuel"/>
     <text name="cs_rf_pda_pivot_btn_min_up" text="[EN] Min+"/>
-    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Minâˆ’"/>
+    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Min-"/>
     <text name="cs_rf_pda_pivot_btn_max_up" text="[EN] Max+"/>
-    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Maxâˆ’"/>
+    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Max-"/>
     <text name="cs_rf_pda_pivot_btn_arm_plus" text="[EN] Arm+"/>
-    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Armâˆ’"/>
+    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Arm-"/>
     <text name="cs_rf_pda_pivot_btn_schedule" text="[EN] Schedule"/>
     <text name="cs_rf_pda_page_fields" text="[EN] Fields"/>
     <text name="cs_rf_pda_page_pivot" text="[EN] Pivot"/>
@@ -468,7 +470,7 @@
     <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
     <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
     <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
-    <text name="cs_rf_pda_rk_suffix" text="  ·  雨量传感器 %s / %.1f mm 模拟" />
+    <text name="cs_rf_pda_rk_suffix" text="  -  雨量传感器 %s / %.1f mm 模拟" />
     <text name="cs_rf_pda_rk_unknown" text="未知" />
     <text name="cs_rf_pda_rk_warn_tripped" text="雨量传感器已触发" />
     <text name="cs_rf_pda_rk_warn_tripped_in" text="传感器已触发, %d 分钟后干燥重置" />

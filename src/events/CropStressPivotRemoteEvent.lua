@@ -24,6 +24,9 @@ CropStressPivotRemoteEvent.ACTION = {
     SWEEP_MAX_DN    = 11,
     ARM_STEP_PLUS   = 12,
     ARM_STEP_MINUS  = 13,
+    -- [BUILD 00:33] Auto/Manual chip. Flips manualMode on the SCS row; no-op for
+    -- a standalone Reinke (there is no schedule to hand over).
+    AUTO_MANUAL_TOGGLE = 14,
 }
 
 local function resolvePlaceable(systemId)
@@ -123,6 +126,28 @@ local function getReinkeSpec(placeable)
     return nil
 end
 
+--- [BUILD 00:33] Auto/Manual on the SCS row. Manual hands Start/Stop to the player
+--- (hourlyScheduleCheck leaves the row alone); flipping back to Auto applies the
+--- window right away so the pivot lands where the schedule says without waiting for
+--- the next hour edge. The accepted state goes out on the schedule sync event so
+--- client cards follow (the server row is the truth).
+local function toggleManualMode(irr, sys)
+    if irr == nil or sys == nil then
+        return
+    end
+    sys.manualMode = not (sys.manualMode == true)
+    if not sys.manualMode and type(irr.applyScheduleNow) == "function" then
+        irr:applyScheduleNow()
+    end
+    if g_server ~= nil and CropStressScheduleSyncEvent ~= nil
+        and type(CropStressScheduleSyncEvent.fromSystem) == "function" then
+        local evt = CropStressScheduleSyncEvent.fromSystem(sys)
+        if evt ~= nil then
+            g_server:broadcastEvent(evt, false)
+        end
+    end
+end
+
 local function applyAction(placeable, action)
     local A = CropStressPivotRemoteEvent.ACTION
     local spec = getReinkeSpec(placeable)
@@ -167,7 +192,7 @@ local function applyAction(placeable, action)
         return
     end
 
-    if action == A.AUTO_START or action == A.AUTO_STOP then
+    if action == A.AUTO_START or action == A.AUTO_STOP or action == A.AUTO_MANUAL_TOGGLE then
         local mgr = g_cropStressManager or (g_currentMission and g_currentMission.cropStressManager)
         local irr = mgr ~= nil and mgr.irrigationManager or nil
         local scsRow = irr ~= nil and irr.systems ~= nil and irr.systems[placeable.id] or nil
@@ -176,7 +201,13 @@ local function applyAction(placeable, action)
                 irr:activateSystem(placeable.id)
             elseif action == A.AUTO_STOP and type(irr.deactivateSystem) == "function" then
                 irr:deactivateSystem(placeable.id)
+            elseif action == A.AUTO_MANUAL_TOGGLE then
+                toggleManualMode(irr, scsRow)
             end
+            return
+        end
+        if action == A.AUTO_MANUAL_TOGGLE then
+            -- No SCS row: nothing to hand over.
             return
         end
         if action == A.AUTO_START and type(placeable.remoteAutoStart) == "function" then
@@ -272,7 +303,7 @@ function CropStressPivotRemoteEvent:run(connection)
     local function deny(why, ...)
         print("[CropStress] pivot Event DENIED (" .. tostring(why) .. "): " .. string.format(...))
     end
-    if systemId == nil or systemId == 0 or action == nil or action < 1 or action > 13 then
+    if systemId == nil or systemId == 0 or action == nil or action < 1 or action > 14 then
         deny("bad payload", "systemId=%s action=%s", tostring(systemId), tostring(action))
         return
     end
@@ -285,8 +316,9 @@ function CropStressPivotRemoteEvent:run(connection)
         return
     end
 
-    -- AUTO_START/STOP may target any SCS irrigation system (pivot or drip).
-    if action == A.AUTO_START or action == A.AUTO_STOP then
+    -- AUTO_START/STOP (and the BUILD 00:33 AUTO_MANUAL_TOGGLE) may target any SCS
+    -- irrigation system (pivot or drip).
+    if action == A.AUTO_START or action == A.AUTO_STOP or action == A.AUTO_MANUAL_TOGGLE then
         local mgr = g_cropStressManager or (g_currentMission and g_currentMission.cropStressManager)
         local irr = mgr ~= nil and mgr.irrigationManager or nil
         local sys = irr ~= nil and irr.systems ~= nil and irr.systems[systemId] or nil
@@ -294,6 +326,8 @@ function CropStressPivotRemoteEvent:run(connection)
             if placeable ~= nil and type(placeable.getOwnerFarmId) == "function" then
                 local ownerId = placeable:getOwnerFarmId()
                 if ownerId == nil or ownerId ~= farmId then
+                    deny("ownership", "owner=%s farmId=%s systemId=%s action=%s",
+                        tostring(ownerId), tostring(farmId), tostring(systemId), tostring(action))
                     return
                 end
             end
@@ -301,7 +335,15 @@ function CropStressPivotRemoteEvent:run(connection)
                 irr:activateSystem(systemId)
             elseif action == A.AUTO_STOP and type(irr.deactivateSystem) == "function" then
                 irr:deactivateSystem(systemId)
+            elseif action == A.AUTO_MANUAL_TOGGLE then
+                toggleManualMode(irr, sys)
+                print(string.format("[CropStress] pivot Event APPLY action=%s systemId=%s farmId=%s manualMode=%s",
+                    tostring(action), tostring(systemId), tostring(farmId), tostring(sys.manualMode)))
             end
+            return
+        end
+        if action == A.AUTO_MANUAL_TOGGLE then
+            deny("no SCS row", "systemId=%s action=%s", tostring(systemId), tostring(action))
             return
         end
         -- Standalone Reinke (no SCS row): placeable mutators.
