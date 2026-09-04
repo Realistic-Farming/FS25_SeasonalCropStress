@@ -60,8 +60,8 @@ local function currentSystem()
 end
 
 -- GROUP A: PROVIDER CONFORMANCE TRIPWIRE (re-pointed as slices land).
--- Slice 1 (Fred, PENDING DESIGN REVIEW): A1, A3, A5, A7, A9, A11 and A13 are
--- re-pointed from absence to PRESENCE against the built SCS-039 surfaces. A6, A8,
+-- Slices 1-2 (Fred, PENDING DESIGN REVIEW): A1, A3, A5, A6, A7, A8, A9, A11 and
+-- A13 are re-pointed from absence to PRESENCE against the built SCS-039 surfaces.
 -- A12 and A14 remain absence assertions for the still-unbuilt later slices, so
 -- the tripwire keeps tracking what has not landed yet.
 -- Source coordinates: SoilMoistureSystem.lua:69, 178-190, 680-712, 748-768,
@@ -88,8 +88,8 @@ do
     aggregateSys.fieldData[1].cells = { [0] = { [0] = { moisture = 0.20 } } }
     aggregateSys.fieldData[1].cellSum = 0.20
     aggregateSys.fieldData[1].cellCount = 1
-    T.near("A6 current active-map aggregate still prefers retained cells",
-        aggregateSys:getMoisture(1), 0.20, 1e-12)
+    T.near("A6 BUILT: active-map field read uses the native aggregate, not retained cells",
+        aggregateSys:getMoisture(1), 0.80, 1e-12)
 
     local deleteSys = currentSystem()
     deleteSys.valueMap = currentStubMap(2)
@@ -99,9 +99,12 @@ do
     local capSys = currentSystem()
     capSys.fieldData[1].cellCount = SoilMoistureSystem.CELL_BACKSTOP_CAP
     capSys.fieldData[1].cellSum = SoilMoistureSystem.CELL_BACKSTOP_CAP * 0.60
-    capSys:applyWaterAtCell(1, 10, 10, 0.10)
-    T.eq("A8 current ZONE event water stops at the relief backstop",
+    local a8accepted = capSys:applyWaterAtCell(1, 10, 10, 0.10)
+    T.eq("A8 BUILT: ZONE water beyond the cap is accepted, not discarded", a8accepted, true)
+    T.eq("A8b the cap still limits cell materialisation",
         capSys.fieldData[1].cellCount, SoilMoistureSystem.CELL_BACKSTOP_CAP)
+    T.near("A8c over-cap ZONE water is preserved as field pending",
+        capSys.fieldData[1].mapPending, 0.10, 1e-12)
     T.eq("A9 BUILT: currentness getter exists and is false without a current TRUTH map",
         capSys:isMoistureMapCurrent(), false)
     T.eq("A10 current source exposes the 400-operation technical precedent",

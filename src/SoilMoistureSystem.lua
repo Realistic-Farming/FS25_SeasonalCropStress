@@ -714,10 +714,10 @@ function SoilMoistureSystem:getMoisture(fieldId, x, z)
             local v, grain = self.valueMap:readValueAtWorld(x, z)
             -- A written pixel answers with its ACTUAL carrier grain.
             if v ~= nil then return v, grain, rev end
-            -- In-domain but unwritten: the field aggregate answers, and it is NOT
-            -- a local reading, so it carries NIL grain rather than the map's. A
-            -- consumer must never mistake a field mean for a 2 m local sample.
-            return self:getFieldAggregate(d), nil, rev
+            -- In-domain but unwritten: the NATIVE field aggregate answers, at nil
+            -- grain (it is not a local reading). Never the retained zone cells.
+            self:_refreshFieldAggregate(fieldId, d)
+            return d.moisture, nil, rev
         end
         local cx, cz = self:worldToCell(x, z)
         local row = d.cells and d.cells[cx]
@@ -726,8 +726,14 @@ function SoilMoistureSystem:getMoisture(fieldId, x, z)
         return self:getFieldAggregate(d), self:getCellSize(), rev
     end
 
-    -- Field-level read: the scalar is the derived aggregate either way, so the
-    -- grain reported is the field itself rather than any cell size.
+    -- Field-level read.
+    if self:mapActive() then
+        -- SCS-039 v2.1 (SDS 3.2): under the native map the field scalar is the
+        -- revisioned polygon aggregate, refreshed when a positional write marked
+        -- it dirty. It is NEVER derived from the retained zone cells.
+        self:_refreshFieldAggregate(fieldId, d)
+        return d.moisture, nil, rev
+    end
     return self:getFieldAggregate(d), nil, rev
 end
 
@@ -739,6 +745,23 @@ function SoilMoistureSystem:getFieldAggregate(d)
         return d.cellSum / d.cellCount
     end
     return d.moisture
+end
+
+--- SCS-039 v2.1 (SDS 3.2): refresh the cached native field aggregate when a
+--- positional write has marked it dirty. Under TRUTH the scalar `d.moisture`
+--- holds the polygon mean read from the map, never a mean of the zone cells. A
+--- nil native answer leaves the last cached scalar in place rather than zeroing.
+function SoilMoistureSystem:_refreshFieldAggregate(fieldId, d)
+    if not self:mapActive() then return end
+    if d.aggregateDirty == false then return end
+    if self.valueMap.readAverageOfPolygon == nil then return end
+    local vx, vz, n = self:_getFieldVerts(fieldId)
+    if vx == nil then return end
+    local mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+    if mean ~= nil then
+        d.moisture = mean
+        d.aggregateDirty = false
+    end
 end
 
 -- ============================================================
@@ -832,6 +855,8 @@ function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
         d.mapPending = 0
         self._mapWaterPending[fieldId] = nil
         d.moisture = newValue
+        -- A uniform paint makes the polygon mean exactly newValue: cache is clean.
+        d.aggregateDirty = false
         self:_advanceMoistureRevision()
         return newValue
     end
@@ -995,7 +1020,9 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
             local current = self.valueMap:readValueAtWorld(x, z)
             if current == nil then current = self:getFieldAggregate(d) or 0 end
             self.valueMap:writeValueAtWorld(x, z, math.max(0.0, math.min(1.0, current + applied)), grain * 0.5)
-            -- A whole-raw-step spend moved readable ground: advance the revision.
+            -- A whole-raw-step spend moved readable ground: the cached field
+            -- aggregate is now stale, and the revision advances once.
+            d.aggregateDirty = true
             self:_advanceMoistureRevision()
         end
         -- Accepted. The field aggregate is re-derived from the map on the daily
@@ -1006,13 +1033,27 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
     local cx, cz = self:worldToCell(x, z)
     local row = d.cells[cx]
     if row == nil then
-        if (d.cellCount or 0) >= SoilMoistureSystem.CELL_BACKSTOP_CAP then return false end
+        if (d.cellCount or 0) >= SoilMoistureSystem.CELL_BACKSTOP_CAP then
+            -- SCS-039 v2.1 (SDS 3.4): at the relief cap we cannot materialise a new
+            -- cell, but accepted water is NEVER discarded. Keep it as field-wide
+            -- pending so a later flush can spend it once cells free up. Pending-only
+            -- does not advance the readable revision.
+            d.mapPending = (d.mapPending or 0) + gain
+            return true
+        end
         row = {}
         d.cells[cx] = row
     end
     local cell = row[cz]
     if cell == nil then
-        if (d.cellCount or 0) >= SoilMoistureSystem.CELL_BACKSTOP_CAP then return false end
+        if (d.cellCount or 0) >= SoilMoistureSystem.CELL_BACKSTOP_CAP then
+            -- SCS-039 v2.1 (SDS 3.4): at the relief cap we cannot materialise a new
+            -- cell, but accepted water is NEVER discarded. Keep it as field-wide
+            -- pending so a later flush can spend it once cells free up. Pending-only
+            -- does not advance the readable revision.
+            d.mapPending = (d.mapPending or 0) + gain
+            return true
+        end
         cell = { moisture = self:getFieldAggregate(d) }
         row[cz] = cell
         d.cellCount = d.cellCount + 1
