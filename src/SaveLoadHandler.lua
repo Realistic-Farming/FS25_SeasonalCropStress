@@ -129,6 +129,17 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
             end
             i = i + 1
         end
+
+        -- SCS-039 v2.1 (SDS 3.4): persist the positional accepted-water store
+        -- deterministically, so slice-3 UNRESOLVED world leaves and resolved
+        -- pixel remainders survive save and reload instead of dying in-mission.
+        -- nil when nothing is pending; the string form round-trips exactly.
+        if soilSystem.packMapWaterPendingString ~= nil then
+            local pendingPacked = soilSystem:packMapWaterPendingString()
+            if pendingPacked ~= nil then
+                setString(root .. "#mapWaterPending", pendingPacked)
+            end
+        end
     end
 
     -- HUD state
@@ -257,6 +268,18 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
             end
             i = i + 1
         end
+
+        -- SCS-039 v2.1 (SDS 3.4): restore the positional accepted-water store.
+        -- The leaves are pending-only (nothing spends them until the provider
+        -- accepts water again), so restoring before the map is seeded is safe
+        -- and nothing is lost even if the reload selects a ZONE carrier.
+        local pendingPacked = getString(root .. "#mapWaterPending", nil)
+        if pendingPacked ~= nil and soilSystem.unpackMapWaterPendingString ~= nil then
+            local restored = soilSystem:unpackMapWaterPendingString(pendingPacked)
+            if restored > 0 then
+                csLog(string.format("SaveLoadHandler: restored %d positional water leaves", restored))
+            end
+        end
         csLog(string.format("SaveLoadHandler: loaded moisture/stress for %d fields", i))
     end
 
@@ -337,6 +360,13 @@ function SaveLoadHandler:buildStateTable()
             end
             out.fields[fieldId] = entry
         end
+
+        -- SCS-039 v2.1 (SDS 3.4): the deterministic positional row array rides
+        -- the ledger table so StateLedger mirrors the own-XML pending store.
+        if soilSystem.packMapWaterPending ~= nil then
+            local pendingRows = soilSystem:packMapWaterPending()
+            if #pendingRows > 0 then out.mapWaterPending = pendingRows end
+        end
     end
 
     -- HUD state
@@ -396,6 +426,16 @@ function SaveLoadHandler:applyStateTable(data)
                     soilSystem:unpackCells(fieldId, f.cells)
                 end
                 n = n + 1
+            end
+        end
+
+        -- SCS-039 v2.1 (SDS 3.4): restore the positional pending store from the
+        -- ledger-packed row array (mirror of the own-XML string path above).
+        if soilSystem.unpackMapWaterPending ~= nil
+           and type(data.mapWaterPending) == "table" then
+            local restored = soilSystem:unpackMapWaterPending(data.mapWaterPending)
+            if restored > 0 then
+                csLog(string.format("SaveLoadHandler: restored %d ledger positional water leaves", restored))
             end
         end
         csLog(string.format("SaveLoadHandler: applied ledger moisture/stress for %d fields", n))

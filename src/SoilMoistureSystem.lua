@@ -187,6 +187,11 @@ function SoilMoistureSystem.new(manager)
     -- a float so it never floors; the 2 m map has 254 raw steps, so a single
     -- irrigator tick's gain (liters over the whole sector) must accumulate here
     -- and spend only whole raw steps, or water lands on the map as nothing.
+    -- Two key kinds coexist without collision (SDS 3.4):
+    --   resolved    [px*4096+pz] (a number)      = sub-step remainder
+    --   unresolved  ["WORLD:x,z"] (a string)     = {status, worldX, worldZ,
+    --                                               sourceWidth, amount} leaf
+    -- packMapWaterPending / unpackMapWaterPending persist both deterministically.
     self._mapWaterPending = {} -- fieldId -> resolved [px*4096+pz]=remainder | unresolved ["WORLD:x,z"]=leaf
 
     -- SCS-039 v2.1: the persisted server integer that stamps every readable
@@ -1522,6 +1527,146 @@ function SoilMoistureSystem:unpackCells(fieldId, packed)
     -- Sibling of the F1 path: rebuilding cells on load moves the aggregate, so the
     -- scalar has to follow or a reloaded save paints the pre-save number.
     d.moisture = self:getFieldAggregate(d)
+end
+
+-- ============================================================
+-- SCS-039 v2.1 POSITIONAL PENDING PERSISTENCE (SDS 3.4 tail, slice 8)
+--
+-- The accepted-water store (_mapWaterPending) held resolved pixel remainders and
+-- UNRESOLVED world leaves in-mission only; slice 3 preserved the leaves until a
+-- reload but nothing wrote them to the save. These seams pack the store into a
+-- deterministic ordered row list (and a string form for the own-XML path) so no
+-- accepted water is lost across save and reload. The rows are what the later
+-- SDS 3.5 compact envelope will pack, so this is not throwaway work.
+--
+-- ORDER (SDS 3.4): resolved leaves ascend by field id then pixel key, then
+-- unresolved leaves ascend by field id then canonical world coordinates. Only
+-- non-zero amounts are emitted and there is no 1024-entry ceiling (Group C).
+-- ============================================================
+
+--- Pack the whole positional pending store into a deterministic row array.
+---@return table rows  {fieldId, status, ...} sorted; empty array when nothing
+---  is pending. RESOLVED rows carry pixelKey + amount; UNRESOLVED rows carry
+---  worldX, worldZ, sourceWidth + amount.
+function SoilMoistureSystem:packMapWaterPending()
+    local rows = {}
+    if type(self._mapWaterPending) ~= "table" then return rows end
+    local fieldIds = {}
+    for fieldId in pairs(self._mapWaterPending) do fieldIds[#fieldIds + 1] = fieldId end
+    table.sort(fieldIds)
+    for i = 1, #fieldIds do
+        local fieldId = fieldIds[i]
+        local acc = self._mapWaterPending[fieldId]
+        local resolved, unresolved = {}, {}
+        for key, value in pairs(acc or {}) do
+            if type(key) == "number" then
+                if value ~= nil and value ~= 0 then
+                    resolved[#resolved + 1] = { pixelKey = key, amount = value }
+                end
+            elseif type(key) == "string" and type(value) == "table" then
+                if value.amount ~= nil and value.amount ~= 0 then
+                    unresolved[#unresolved + 1] = {
+                        worldX = value.worldX, worldZ = value.worldZ,
+                        sourceWidth = value.sourceWidth, amount = value.amount,
+                    }
+                end
+            end
+        end
+        table.sort(resolved, function(a, b) return a.pixelKey < b.pixelKey end)
+        table.sort(unresolved, function(a, b)
+            local ax = tostring(a.worldX)
+            local az = tostring(a.worldZ)
+            local bx = tostring(b.worldX)
+            local bz = tostring(b.worldZ)
+            return ax .. "," .. az < bx .. "," .. bz
+        end)
+        for j = 1, #resolved do
+            rows[#rows + 1] = {
+                fieldId = fieldId, status = "RESOLVED",
+                pixelKey = resolved[j].pixelKey, amount = resolved[j].amount,
+            }
+        end
+        for j = 1, #unresolved do
+            rows[#rows + 1] = {
+                fieldId = fieldId, status = "UNRESOLVED",
+                worldX = unresolved[j].worldX, worldZ = unresolved[j].worldZ,
+                sourceWidth = unresolved[j].sourceWidth, amount = unresolved[j].amount,
+            }
+        end
+    end
+    return rows
+end
+
+--- Rebuild the whole positional pending store from a packMapWaterPending row
+--- array. The store is replaced, mirroring unpackCells (a load is a fresh
+--- mission store). Returns the number of leaves restored.
+function SoilMoistureSystem:unpackMapWaterPending(rows)
+    self._mapWaterPending = {}
+    if type(rows) ~= "table" then return 0 end
+    local count = 0
+    for i = 1, #rows do
+        local r = rows[i]
+        if type(r) == "table" and r.fieldId ~= nil then
+            local acc = self._mapWaterPending[r.fieldId]
+            if acc == nil then acc = {}; self._mapWaterPending[r.fieldId] = acc end
+            if r.status == "RESOLVED" and type(r.pixelKey) == "number" then
+                acc[r.pixelKey] = r.amount
+                count = count + 1
+            elseif r.status == "UNRESOLVED" and r.worldX ~= nil and r.worldZ ~= nil then
+                local leafKey = "WORLD:" .. tostring(r.worldX) .. "," .. tostring(r.worldZ)
+                acc[leafKey] = {
+                    status = "UNRESOLVED", worldX = r.worldX, worldZ = r.worldZ,
+                    sourceWidth = r.sourceWidth, amount = r.amount,
+                }
+                count = count + 1
+            end
+        end
+    end
+    return count
+end
+
+--- String form of packMapWaterPending for the own-XML save path. Rows are
+--- ';'-separated and fields '|'-separated; numbers use tostring/tonumber, so a
+--- load returns the exact same doubles the save captured. nil when empty.
+function SoilMoistureSystem:packMapWaterPendingString()
+    local rows = self:packMapWaterPending()
+    if #rows == 0 then return nil end
+    local parts = {}
+    for i = 1, #rows do
+        local r = rows[i]
+        if r.status == "RESOLVED" then
+            parts[#parts + 1] = table.concat(
+                { "R", tostring(r.fieldId), tostring(r.pixelKey), tostring(r.amount) }, "|")
+        else
+            parts[#parts + 1] = table.concat(
+                { "U", tostring(r.fieldId), tostring(r.worldX), tostring(r.worldZ),
+                  tostring(r.sourceWidth), tostring(r.amount) }, "|")
+        end
+    end
+    return table.concat(parts, ";")
+end
+
+--- Inverse of packMapWaterPendingString. Returns the number of leaves restored.
+function SoilMoistureSystem:unpackMapWaterPendingString(packed)
+    if packed == nil or packed == "" then return 0 end
+    local rows = {}
+    for part in string.gmatch(packed, "[^;]+") do
+        local fields = {}
+        for token in string.gmatch(part, "[^|]+") do fields[#fields + 1] = token end
+        if fields[1] == "R" and #fields == 4 then
+            rows[#rows + 1] = {
+                status = "RESOLVED", fieldId = tonumber(fields[2]),
+                pixelKey = tonumber(fields[3]), amount = tonumber(fields[4]),
+            }
+        elseif fields[1] == "U" and #fields == 6 then
+            rows[#rows + 1] = {
+                status = "UNRESOLVED", fieldId = tonumber(fields[2]),
+                worldX = tonumber(fields[3]), worldZ = tonumber(fields[4]),
+                sourceWidth = tonumber(fields[5]), amount = tonumber(fields[6]),
+            }
+        end
+    end
+    return self:unpackMapWaterPending(rows)
 end
 
 -- Returns a sorted list of {fieldId, moisture, soilType} for HUD display
