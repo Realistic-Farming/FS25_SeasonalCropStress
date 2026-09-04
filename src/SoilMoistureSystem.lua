@@ -716,13 +716,21 @@ function SoilMoistureSystem:getMoisture(fieldId, x, z)
 
     if x ~= nil and z ~= nil then
         if self:mapActive() then
-            local v, grain = self.valueMap:readValueAtWorld(x, z)
-            -- A written pixel answers with its ACTUAL carrier grain.
+            -- SCS-039 v2.1 (SDS 3.2/3.3): the point read is TYPED. A written
+            -- pixel answers with its ACTUAL carrier grain; a benign unwritten or
+            -- out-of-range pixel keeps the aggregate fallback at nil grain; a
+            -- genuine native refusal (pcall threw) fails the provider closed for
+            -- the mission, exactly like the polygon-aggregate refusal.
+            local v, grain, outcome = self.valueMap:readValueAtWorld(x, z)
             if v ~= nil then return v, grain, rev end
-            -- In-domain but unwritten: the NATIVE field aggregate answers, at nil
-            -- grain (it is not a local reading). Never the retained zone cells.
-            self:_refreshFieldAggregate(fieldId, d)
-            return d.moisture, nil, rev
+            if outcome == "PROVIDER_REFUSAL" then
+                self:_failNativeClosed("native point-read refusal")
+                -- Fall through to the retained cell store below, which answers
+                -- exactly as a ZONE read would for the rest of the mission.
+            else
+                self:_refreshFieldAggregate(fieldId, d)
+                return d.moisture, nil, rev
+            end
         end
         local cx, cz = self:worldToCell(x, z)
         local row = d.cells and d.cells[cx]

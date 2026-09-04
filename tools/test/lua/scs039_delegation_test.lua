@@ -37,7 +37,11 @@ local function stubMap(grain)
     return true
   end
   function m:readValueAtWorld(x, z)
-    return self.pixels[string.format("%d:%d", math.floor(x), math.floor(z))], self.grain
+    -- SCS-039 v2.1 typed contract: an unwritten pixel is EMPTY (benign), a
+    -- written one is OK; only a throw would be a PROVIDER_REFUSAL.
+    local v = self.pixels[string.format("%d:%d", math.floor(x), math.floor(z))]
+    if v == nil then return nil, self.grain, "EMPTY" end
+    return v, self.grain, "OK"
   end
   function m:applyDeltaToPolygon(_vx, _vz, _n, delta)
     self.deltas[#self.deltas + 1] = delta

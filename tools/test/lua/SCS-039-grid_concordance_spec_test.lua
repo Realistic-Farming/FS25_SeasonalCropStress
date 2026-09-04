@@ -27,7 +27,9 @@ local function currentStubMap(grain)
         return true
     end
     function m:readValueAtWorld(_x, _z)
-        return nil, self.grain
+        -- SCS-039 v2.1 typed contract: a resolvable pixel with nothing written
+        -- is EMPTY (benign), never a provider refusal.
+        return nil, self.grain, "EMPTY"
     end
     function m:worldToPixel(_x, _z) return 1, 1 end
     function m:writeValueAtWorld(_x, _z, _value, _radius) return true end
@@ -60,13 +62,14 @@ local function currentSystem()
 end
 
 -- GROUP A: PROVIDER CONFORMANCE TRIPWIRE (re-pointed as slices land).
--- Slices 1-4 (Fred, PENDING DESIGN REVIEW): every Group A assertion A1-A14 is now
--- re-pointed from absence to PRESENCE against the built SCS-039 surfaces. Slice 4
--- lands the native-refusal fail-closed path (A12), so no Group A tripwire remains
--- on absence. (The member is not complete: SDS 3.5-3.9 live wiring -- atomic save
--- generations, daily plan + Time Guard subscribeTick, snapshot/delta events,
--- NetworkSync compat, overlay gate -- are still later slices, modelled by the
--- pure-contract Groups B-P.)
+-- Slices 1-6 (Fred): every Group A assertion A1-A15 is now re-pointed from
+-- absence to PRESENCE against the built SCS-039 surfaces. Slice 4 lands the
+-- polygon-aggregate fail-closed path (A12); slice 6 lands the point-read
+-- fail-closed path (A15). No Group A tripwire remains on absence. (The member
+-- is not complete: SDS 3.5-3.9 live wiring, atomic save generations, daily
+-- plan + Time Guard subscribeTick, snapshot/delta events, NetworkSync compat
+-- and the overlay gate, are still later slices, modelled by the pure-contract
+-- Groups B-P.)
 -- Source coordinates: SoilMoistureSystem.lua:69, 178-190, 680-712, 748-768,
 -- 893-943, 1038-1064, 1364-1366. Design corrections: SDS 3.2-3.11.
 do
@@ -140,6 +143,24 @@ do
         meanSys:isMoistureMapCurrent(), false)
     T.eq("A12c BUILT: failing closed holds the readable revision",
         meanSys.moistureRevision, a12revBefore)
+
+    -- SCS-039 slice 6 re-point: a genuine native POINT-READ refusal at the
+    -- public positional getMoisture read fails the provider closed (SDS 3.3)
+    -- instead of silently serving the retained field scalar as if the pixel
+    -- were merely unwritten. The typed readValueAtWorld outcome is what makes a
+    -- refusal distinct from a benign EMPTY/OUT_OF_RANGE pixel (A4/A5).
+    local pointSys = currentSystem()
+    pointSys.valueMap = currentStubMap(2)
+    pointSys.providerMode = "TRUTH"
+    pointSys.valueMap.readValueAtWorld = function() return nil, nil, "PROVIDER_REFUSAL" end
+    local a15revBefore = pointSys.moistureRevision
+    pointSys:getMoisture(1, 10, 10)
+    T.eq("A15 BUILT: a native point-read refusal after TRUTH fails the provider closed",
+        pointSys.providerMode, "UNAVAILABLE_PENDING_RELOAD")
+    T.eq("A15b BUILT: the point-read failed-closed provider is no longer current",
+        pointSys:isMoistureMapCurrent(), false)
+    T.eq("A15c BUILT: point-read fail-closed holds the readable revision",
+        pointSys.moistureRevision, a15revBefore)
 
     local acceptedSys = currentSystem()
     acceptedSys.valueMap = currentStubMap(2)

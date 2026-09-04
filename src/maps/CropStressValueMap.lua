@@ -250,16 +250,30 @@ end
 -- ─────────────────────────────────────────────────────────
 
 --- Read moisture at a world position.
----@return number|nil value  0..1, or nil where nothing has been written
----@return number|nil grain  metres per pixel of the reading (the concordance)
+--- SCS-039 v2.1 (SDS 3.2/3.3): the third return is a TYPED outcome, so a caller
+--- can tell a genuine native provider refusal (which fails the provider closed
+--- for the mission) apart from a benign unwritten or out-of-range position;
+--- neither of the latter is a refusal. Returns: value, grain, outcome.
+---   "PROVIDER_REFUSAL" - the native provider did not answer
+---   "OUT_OF_RANGE"     - the position maps outside the pixel grid
+---   "EMPTY"            - a resolvable pixel that has never been written
+---   "OK"               - a written pixel's decoded value
+---@return number|nil value  0..1, nil when not answered or nothing written
+---@return number|nil grain  metres per pixel (nil for refusal and out-of-range)
+---@return string outcome     one of the typed outcomes above
 function CropStressValueMap:readValueAtWorld(worldX, worldZ)
-    if not self.available then return nil, nil end
-    if getBitVectorMapPoint == nil then return nil, nil end
+    if not self.available then return nil, nil, "PROVIDER_REFUSAL" end
+    if getBitVectorMapPoint == nil then return nil, nil, "PROVIDER_REFUSAL" end
     local px, pz = self:worldToPixel(worldX, worldZ)
-    if px == nil then return nil, nil end
+    if px == nil then return nil, nil, "OUT_OF_RANGE" end
     local ok, raw = pcall(getBitVectorMapPoint, self.bvm, px, pz, 0, NUM_CHANNELS)
-    if not ok or raw == nil then return nil, nil end
-    return decode(raw, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
+    -- A nil raw answer is the provider not answering, never a written pixel: an
+    -- unwritten pixel reads back the raw-0 no-data sentinel (a number), so nil
+    -- here is treated as a refusal exactly as readAverageOfPolygon treats a nil
+    -- executeGet accumulator.
+    if not ok or raw == nil then return nil, nil, "PROVIDER_REFUSAL" end
+    if raw <= 0 then return nil, self:getGrainMetres(), "EMPTY" end
+    return decode(raw, CropStressValueMap.LAYER_DEF), self:getGrainMetres(), "OK"
 end
 
 --- World position to map pixel. Terrain is centred on the origin, so the
