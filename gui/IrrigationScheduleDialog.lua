@@ -468,6 +468,17 @@ function IrrigationScheduleDialog:onIrrigateNow()
 end
 
 function IrrigationScheduleDialog:onSaveSchedule()
+    local system = self:getCurrentSystem()
+    if system ~= nil and CropStressScheduleSyncEvent ~= nil
+        and type(CropStressScheduleSyncEvent.sendToServer) == "function"
+        and system.schedule ~= nil then
+        CropStressScheduleSyncEvent.sendToServer(
+            system.id,
+            system.manualMode == true,
+            system.schedule.startHour,
+            system.schedule.endHour,
+            system.schedule.activeDays)
+    end
     if g_currentMission ~= nil then
         g_currentMission:showBlinkingWarning(
             (g_i18n ~= nil and g_i18n:getText("cs_schedule_saved")) or "Schedule saved.", 2000)

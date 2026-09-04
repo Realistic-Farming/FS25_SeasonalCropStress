@@ -20,7 +20,7 @@
 --     <hud visible="true" firstRunShown="true"/>
 --     <irrigation>
 --       <system id="42" startHour="6" endHour="10" isActive="false"
---               activeDays="1,1,1,1,1,0,0"/>
+--               activeDays="1,1,1,1,1,0,0" manualMode="false"/>
 --       ...
 --     </irrigation>
 --     <npc relationship="35"/>
@@ -143,6 +143,8 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
             setInt(   key .. "#startHour", system.schedule.startHour)
             setInt(   key .. "#endHour",   system.schedule.endHour)
             setBool(  key .. "#isActive",  system.isActive or false)
+            -- [BUILD 00:33] Auto/Manual; absent on load = Auto.
+            setBool(  key .. "#manualMode", system.manualMode == true)
             local dayStrs = {}
             for _, v in ipairs(system.schedule.activeDays) do
                 table.insert(dayStrs, v and "1" or "0")
@@ -283,6 +285,8 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
                     end
                     if #days == 7 then system.schedule.activeDays = days end
                 end
+                -- [BUILD 00:33] Absent flag = AUTO (false).
+                system.manualMode = getBool(key .. "#manualMode", false) == true
                 local wasActive = getBool(key .. "#isActive", false)
                 if wasActive and not system.isActive then
                     irrMgr:activateSystem(sysId)
@@ -350,6 +354,7 @@ function SaveLoadHandler:buildStateTable()
                 startHour  = system.schedule.startHour,
                 endHour    = system.schedule.endHour,
                 isActive   = system.isActive or false,
+                manualMode = system.manualMode == true,
                 activeDays = days,
             }
         end
@@ -416,6 +421,8 @@ function SaveLoadHandler:applyStateTable(data)
                     for _, v in ipairs(s.activeDays) do days[#days + 1] = (tonumber(v) ~= 0) end
                     system.schedule.activeDays = days
                 end
+                -- [BUILD 00:33] Absent flag = AUTO (false).
+                system.manualMode = s.manualMode == true
                 if s.isActive and not system.isActive then
                     irrMgr:activateSystem(sysId)
                 end

@@ -791,7 +791,7 @@ local function refreshPivotSwitcher(container, mgr, memberIds, cands)
         end
         local tpl = tr("cs_rf_pda_pivot_switch", "Pivot %s - covers %s of this block")
         local ok, label = pcall(string.format, tpl, tostring(c.id), subsetText)
-        texts[i] = ok and label or string.format("Pivot %s · covers %s of this block", tostring(c.id), subsetText)
+        texts[i] = ok and label or string.format("Pivot %s - covers %s of this block", tostring(c.id), subsetText)
         if selectedId ~= nil and fieldIdEquals(c.id, selectedId) then
             state = i
         end
@@ -1129,7 +1129,7 @@ end
 --- gated chip is not clickable, so focusing it would repeat the original problem.
 local PIVOT_FOCUS_ORDER = {
     "csPivotBtnDoor", "csPivotBtnPower", "csPivotBtnSpray", "csPivotBtnEndGun",
-    "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop",
+    "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop", "csPivotBtnAutoManual",
     "csPivotBtnMinUp", "csPivotBtnMinDn", "csPivotBtnMaxUp", "csPivotBtnMaxDn",
     "csPivotBtnArmPlus", "csPivotBtnArmMinus", "csBtnSchedule",
 }
@@ -1310,7 +1310,7 @@ local function buildScheduleRateClause(fieldId, covered)
     end
 
     if not covered then
-        return tr("cs_rf_pda_no_coverage", "No coverage") .. " · " .. rateStr
+        return tr("cs_rf_pda_no_coverage", "No coverage") .. " - " .. rateStr
     end
 
     if schedule ~= nil then
@@ -1319,14 +1319,14 @@ local function buildScheduleRateClause(fieldId, covered)
             schedule.startHour or 0,
             schedule.endHour or 0
         )
-        return hours .. scheduleDaysTag(schedule.activeDays) .. " · " .. rateStr
+        return hours .. scheduleDaysTag(schedule.activeDays) .. " - " .. rateStr
     end
 
     -- Covered, no active schedule on covering system.
     if rate > 0 then
-        return "No schedule · " .. rateStr
+        return "No schedule - " .. rateStr
     end
-    return tr("cs_rf_pda_covered_no_sched", "Covered - no schedule") .. " · " .. rateStr
+    return tr("cs_rf_pda_covered_no_sched", "Covered - no schedule") .. " - " .. rateStr
 end
 
 --- Pack Status line: optional Alert + schedule/rate + Status. Never duplicate Alert on Next.
@@ -1344,7 +1344,7 @@ local function buildStatusLine(fieldId, covered, statusWord, alertHint, alertOnS
     end
 
     local alertPrefix = string.format(tr("cs_rf_pda_alert_prefix", "Alert: %s"), alertHint)
-    local full = alertPrefix .. " · " .. statusJoin
+    local full = alertPrefix .. " - " .. statusJoin
     -- If over budget, keep Alert + rate/coverage + Status; drop schedule hours when needed.
     if #full <= 120 then
         return full
@@ -1363,11 +1363,11 @@ local function buildStatusLine(fieldId, covered, statusWord, alertHint, alertOnS
     end
     local shortLeft
     if not covered then
-        shortLeft = tr("cs_rf_pda_no_coverage", "No coverage") .. " · " .. rateStr
+        shortLeft = tr("cs_rf_pda_no_coverage", "No coverage") .. " - " .. rateStr
     else
         shortLeft = rateStr
     end
-    return alertPrefix .. " · " .. string.format(
+    return alertPrefix .. " - " .. string.format(
         tr("cs_rf_pda_status_join", "%s  -  Status: %s"),
         shortLeft,
         statusWord or "-"
@@ -1384,6 +1384,7 @@ local PIVOT_ACTION = {
     SPEED_CYCLE = 5, AUTO_START = 6, AUTO_STOP = 7,
     SWEEP_MIN_UP = 8, SWEEP_MIN_DN = 9, SWEEP_MAX_UP = 10, SWEEP_MAX_DN = 11,
     ARM_STEP_PLUS = 12, ARM_STEP_MINUS = 13,
+    AUTO_MANUAL_TOGGLE = 14,
 }
 
 local function resolvePlaceableById(systemId)
@@ -1461,7 +1462,7 @@ local PIVOT_CHIP_GATED_BG   = { 0.06, 0.06, 0.065 }
 
 local PIVOT_CHIP_IDS = {
     "csPivotBtnDoor", "csPivotBtnPower", "csPivotBtnSpray", "csPivotBtnEndGun",
-    "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop",
+    "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop", "csPivotBtnAutoManual",
     "csPivotBtnMinUp", "csPivotBtnMinDn", "csPivotBtnMaxUp", "csPivotBtnMaxDn",
     "csPivotBtnArmPlus", "csPivotBtnArmMinus", "csBtnSchedule",
     -- [SCS-046] Rain key. csPivotTripLabel is a Text, not a chip, so it is
@@ -1664,7 +1665,7 @@ local function formatCoverageFields(sys)
     end
     local list = table.concat(parts, ", ")
     if #sys.coveredFields > 6 then
-        list = list .. "…"
+        list = list .. "..."
     end
     return string.format(tr("cs_rf_pda_pivot_coverage", "Coverage: Fields %s"), list)
 end
@@ -1814,7 +1815,7 @@ updatePivotCard = function(container, fieldId)
         setPivotText(container, "csPivotCapFit", "")
         local dead = {
             "csPivotBtnDoor", "csPivotBtnPower", "csPivotBtnSpray", "csPivotBtnEndGun",
-            "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop",
+            "csPivotBtnSpeed", "csPivotBtnStart", "csPivotBtnStop", "csPivotBtnAutoManual",
             "csPivotBtnMinUp", "csPivotBtnMinDn", "csPivotBtnMaxUp", "csPivotBtnMaxDn",
             "csPivotBtnArmPlus", "csPivotBtnArmMinus", "csBtnSchedule",
             "csPivotBtnFit", "csPivotBtnTripMinus", "csPivotBtnTripPlus",
@@ -1827,6 +1828,7 @@ updatePivotCard = function(container, fieldId)
             csPivotBtnSpeed = tr("cs_rf_pda_pivot_btn_speed", "Speed"),
             csPivotBtnStart = tr("cs_rf_pda_pivot_btn_start", "Start"),
             csPivotBtnStop = tr("cs_rf_pda_pivot_btn_stop", "Stop"),
+            csPivotBtnAutoManual = tr("cs_rf_pda_pivot_btn_auto", "Auto"),
             csPivotBtnMinUp = tr("cs_rf_pda_pivot_btn_min_up", "Min+"),
             csPivotBtnMinDn = tr("cs_rf_pda_pivot_btn_min_dn", "Min-"),
             csPivotBtnMaxUp = tr("cs_rf_pda_pivot_btn_max_up", "Max+"),
@@ -1957,19 +1959,21 @@ updatePivotCard = function(container, fieldId)
 
     setPivotText(container, "csPivotCoverage", formatCoverageFields(sys))
 
-    -- [SCS-046] Activity comes from the SAME resolver the snapshot publishes to
-    -- FarmTablet, so the card and the tablet cannot describe one pivot two ways
-    -- (acceptance point 4). A rain-paused machine says so rather than showing
-    -- the bare "Off" that used to make a tripped key look like an idle pivot.
+    -- [BUILD 22:43] One water-on flag: sys.isActive, the flag the manager's
+    -- hourly tick, the remote and the Reinke onUpdateTick SCS block all read
+    -- and write. The old resolver asked the manager for getActivityState,
+    -- which no manager defines, so this row always fell through to
+    -- sys.isActive anyway; the dead branch and its "Rain paused" wording are
+    -- gone (a tripped key is told on the warning line below, which now reads
+    -- the real gate, isRainKeyGateOpen). irrMgrRK stays for that ladder.
     local irrMgrRK = (getMgr() ~= nil) and getMgr().irrigationManager or nil
-    local rkActivity, rkReason = nil, nil
-    if irrMgrRK ~= nil and type(irrMgrRK.getActivityState) == "function" then
-        rkActivity, rkReason = irrMgrRK:getActivityState(sys)
+    local rkReason = nil
+    if irrMgrRK ~= nil and type(irrMgrRK.isRainKeyGateOpen) == "function" then
+        local gateOpen, gateReason = irrMgrRK:isRainKeyGateOpen(sys)
+        if gateOpen == false then rkReason = gateReason end
     end
     local wateringText
-    if rkActivity == "RAIN_PAUSED" then
-        wateringText = tr("cs_rf_pda_pivot_watering_rain", "Watering now: Rain paused")
-    elseif rkActivity == "RUNNING" or (rkActivity == nil and sys.isActive == true) then
+    if sys.isActive == true then
         wateringText = tr("cs_rf_pda_pivot_watering_on", "Watering now: On")
     else
         wateringText = tr("cs_rf_pda_pivot_watering_off", "Watering now: Off")
@@ -2053,13 +2057,32 @@ updatePivotCard = function(container, fieldId)
     end
 
     -- [BUILD 18:42] Latch state per chip: what is ON right now. Speed, Min/Max,
-    -- Arm, Schedule, Fit and Trip are deliberately never latched: they are steps
-    -- and actions, not states, so an inverted chip would be claiming a mode that
+    -- Arm, Fit and Trip are deliberately never latched: they are steps and
+    -- actions, not states, so an inverted chip would be claiming a mode that
     -- does not exist.
+    -- [BUILD 21:44] Schedule is a state: it latches while the weekly window
+    -- covers this hour, read through the same isScheduledAtHour and hourKey
+    -- (day*24+hour) the manager's hourly tick uses, so the chip cannot claim a
+    -- window the tick would not honour. Start/Stop stay the watering pair; a
+    -- lit Schedule beside a lit Start is correct, the window is now and the
+    -- machine is running in it. The chip is always enabled and the click still
+    -- opens the schedule dialog.
+    -- [BUILD 22:43] Start/Stop latch on the same sys.isActive the Watering now
+    -- row reads, so the pair and the row cannot disagree; the pivot's own
+    -- autoRotate follows that flag through the SCS block in its onUpdateTick.
+    -- Spray keeps reading spec.isSprayActive, which the manager now sets from
+    -- the same flag in activateSystem / deactivateSystem.
     local sprayOn  = spec ~= nil and spec.isSprayActive == true
     local endGunOn = spec ~= nil and spec.endGunActive == true
-    local wateringOn = (spec ~= nil and spec.autoRotate == true)
-                       or (spec == nil and sys ~= nil and sys.isActive == true)
+    local wateringOn = sys ~= nil and sys.isActive == true
+    -- [BUILD 00:33] Auto/Manual lamp: lit only in Manual (George CLOSED DESIGN 00:06).
+    local manualOn = sys ~= nil and sys.manualMode == true
+    local schedOn = false
+    if sys ~= nil and irr ~= nil and type(irr.isScheduledAtHour) == "function" then
+        local env = g_currentMission ~= nil and g_currentMission.environment or nil
+        local hourKey = (env and env.currentMonotonicDay or 0) * 24 + (env and env.currentHour or 0)
+        schedOn = irr:isScheduledAtHour(sys, hourKey) == true
+    end
     setPivotBtn(container, "csPivotBtnDoor", tr("cs_rf_pda_pivot_btn_door", "Door"), doorOk, false, doorOpen)
     setPivotBtn(container, "csPivotBtnPower", tr("cs_rf_pda_pivot_btn_power", "Power"), powerOk, false, powered)
     setPivotBtn(container, "csPivotBtnSpray", tr("cs_rf_pda_pivot_btn_spray", "Spray"), opsOk, false, sprayOn)
@@ -2071,13 +2094,19 @@ updatePivotCard = function(container, fieldId)
     -- of the two modes you are actually in rather than leaving both dark.
     setPivotBtn(container, "csPivotBtnStop", tr("cs_rf_pda_pivot_btn_stop", "Stop"),
         owned and (reinke or sys ~= nil), false, owned and not wateringOn)
+    -- Auto/Manual lives on the SCS row only (a standalone Reinke has no schedule to
+    -- hand over, so the chip is gated there). Text follows the mode, lamp follows Manual.
+    setPivotBtn(container, "csPivotBtnAutoManual",
+        manualOn and tr("cs_rf_pda_pivot_btn_manual", "Manual") or tr("cs_rf_pda_pivot_btn_auto", "Auto"),
+        owned and sys ~= nil, false, manualOn)
     setPivotBtn(container, "csPivotBtnMinUp", tr("cs_rf_pda_pivot_btn_min_up", "Min+"), opsOk)
     setPivotBtn(container, "csPivotBtnMinDn", tr("cs_rf_pda_pivot_btn_min_dn", "Min-"), opsOk)
     setPivotBtn(container, "csPivotBtnMaxUp", tr("cs_rf_pda_pivot_btn_max_up", "Max+"), opsOk)
     setPivotBtn(container, "csPivotBtnMaxDn", tr("cs_rf_pda_pivot_btn_max_dn", "Max-"), opsOk)
     setPivotBtn(container, "csPivotBtnArmPlus", tr("cs_rf_pda_pivot_btn_arm_plus", "Arm+"), armOk)
     setPivotBtn(container, "csPivotBtnArmMinus", tr("cs_rf_pda_pivot_btn_arm_minus", "Arm-"), armOk)
-    setPivotBtn(container, "csBtnSchedule", tr("cs_rf_pda_pivot_btn_schedule", "Schedule"), true)
+    setPivotBtn(container, "csBtnSchedule", tr("cs_rf_pda_pivot_btn_schedule", "Schedule"),
+        true, false, schedOn)
 
     -- [SCS-046] Rain key remotes. A key is pivot equipment, so Fit is dead on a
     -- drip line or a Rainstar rather than gated: there is nothing to fit it to.
@@ -2458,7 +2487,7 @@ local function updateDetailBand(container)
         local moistLabel = string.format("%s: %s",
             tr("cs_rf_pda_col_moisture", "Moisture"), entry.moistureText or "-")
         local keepLabel = string.format(tr("cs_rf_pda_yield_keep", "Yield keep: %d%%"), keepPct)
-        moistEl:setText(moistLabel .. "  ·  " .. keepLabel)
+        moistEl:setText(moistLabel .. "  -  " .. keepLabel)
         if entry.moistureColor and moistEl.setTextColor then
             moistEl:setTextColor(unpack(entry.moistureColor))
         end
@@ -2483,7 +2512,7 @@ local function updateDetailBand(container)
             tempC,
             evap
         )
-        stressEl:setText(stressLabel .. "  ·  " .. heatClause)
+        stressEl:setText(stressLabel .. "  -  " .. heatClause)
         if stressEl.setTextColor then
             stressEl:setTextColor(0.659, 0.678, 0.702, 1)
         end
