@@ -46,14 +46,17 @@ end
 
 --- @param rowIndex number  map row (0-based)
 --- @param packed table     run-length pairs from CropStressValueMap.packRow
-function CropStressMoistureRowEvent.new(rowIndex, packed)
+--- @param snapshotGeneration number  SDS 3.7 join snapshot generation (0 = legacy)
+function CropStressMoistureRowEvent.new(rowIndex, packed, snapshotGeneration)
     local self = Event.new(CropStressMoistureRowEvent_mt)
     self.rowIndex = rowIndex or 0
     self.packed   = packed or {}
+    self.snapshotGeneration = snapshotGeneration or 0
     return self
 end
 
 function CropStressMoistureRowEvent:writeStream(streamId, connection)
+    streamWriteInt32(streamId, self.snapshotGeneration)
     streamWriteUInt16(streamId, self.rowIndex)
     local runs = math.floor(#self.packed / 2)
     streamWriteUInt16(streamId, runs)
@@ -66,6 +69,7 @@ function CropStressMoistureRowEvent:writeStream(streamId, connection)
 end
 
 function CropStressMoistureRowEvent:readStream(streamId, connection)
+    self.snapshotGeneration = streamReadInt32(streamId)
     self.rowIndex = streamReadUInt16(streamId)
     local runs = streamReadUInt16(streamId)
     self.packed = {}
@@ -85,9 +89,20 @@ function CropStressMoistureRowEvent:run(connection)
     local mgr = g_cropStressManager
     local soilSystem = mgr and mgr.soilSystem
     if soilSystem == nil or soilSystem.valueMap == nil then return end
+
+    -- SCS-039 v2.1 (SDS 3.7): a row for an open snapshot generation stages
+    -- behind the CONTROL barrier and never touches the live map directly. A
+    -- legacy server (no CONTROL envelope) leaves the snapshot unopened, so the
+    -- row still applies directly and an old server with a new client stays
+    -- compatible.
+    local fine = soilSystem.fineSnapshot
+    if fine ~= nil and fine.snapshotGeneration ~= nil and not fine.current then
+        fine:receiveRow(self.snapshotGeneration, self.rowIndex, self.packed)
+        return
+    end
+
     local vm = soilSystem.valueMap
     if not vm.available then return end
-
     local row = CropStressValueMap.unpackRow(self.packed, vm.resolution)
     vm:applySyncRow(self.rowIndex, row)
 end
