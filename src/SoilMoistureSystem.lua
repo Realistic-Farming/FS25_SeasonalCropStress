@@ -187,7 +187,7 @@ function SoilMoistureSystem.new(manager)
     -- a float so it never floors; the 2 m map has 254 raw steps, so a single
     -- irrigator tick's gain (liters over the whole sector) must accumulate here
     -- and spend only whole raw steps, or water lands on the map as nothing.
-    self._mapWaterPending = {} -- fieldId -> [px * 4096 + pz] -> remainder
+    self._mapWaterPending = {} -- fieldId -> resolved [px*4096+pz]=remainder | unresolved ["WORLD:x,z"]=leaf
 
     -- SCS-039 v2.1: the persisted server integer that stamps every readable
     -- moisture answer. Advanced ONCE per successful readable mutation (native or
@@ -1004,10 +1004,25 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
         self:migrateFieldToMap(fieldId)
         local px, pz = self.valueMap:worldToPixel(x, z)
         if px == nil then
-            -- Slice 1: an unresolved member pixel is refused rather than swallowed
-            -- into a fabricated pixel id. Preserving it as an UNRESOLVED positional
-            -- leaf (finite world coords + source grain) is a later SCS-039 slice.
-            return false
+            -- SCS-039 v2.1 (SDS 3.4): a member position whose native pixel cannot
+            -- yet resolve is NOT dropped. Accepted water is never lost. Keep it as
+            -- an UNRESOLVED positional leaf keyed by canonical world coordinates
+            -- (never a fabricated pixel id) and carrying the source grain, so a
+            -- later membership revalidation can re-key it onto a real pixel. This
+            -- is pending-only: the readable revision does not advance.
+            -- (Deterministic persistence + geometry-change re-key are a later slice.)
+            local grain = (type(self.valueMap.getGrainMetres) == "function"
+                and self.valueMap:getGrainMetres()) or 2
+            local fieldAcc = self._mapWaterPending[fieldId]
+            if fieldAcc == nil then fieldAcc = {}; self._mapWaterPending[fieldId] = fieldAcc end
+            local leafKey = "WORLD:" .. x .. "," .. z
+            local leaf = fieldAcc[leafKey]
+            if leaf == nil then
+                leaf = { status = "UNRESOLVED", worldX = x, worldZ = z, sourceWidth = grain, amount = 0 }
+                fieldAcc[leafKey] = leaf
+            end
+            leaf.amount = leaf.amount + gain
+            return true
         end
         local fieldAcc = self._mapWaterPending[fieldId]
         if fieldAcc == nil then fieldAcc = {}; self._mapWaterPending[fieldId] = fieldAcc end

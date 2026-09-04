@@ -60,10 +60,10 @@ local function currentSystem()
 end
 
 -- GROUP A: PROVIDER CONFORMANCE TRIPWIRE (re-pointed as slices land).
--- Slices 1-2 (Fred, PENDING DESIGN REVIEW): A1, A3, A5, A6, A7, A8, A9, A11 and
--- A13 are re-pointed from absence to PRESENCE against the built SCS-039 surfaces.
--- A12 and A14 remain absence assertions for the still-unbuilt later slices, so
--- the tripwire keeps tracking what has not landed yet.
+-- Slices 1-3 (Fred, PENDING DESIGN REVIEW): A1, A3, A5, A6, A7, A8, A9, A11, A13
+-- and A14 are re-pointed from absence to PRESENCE against the built SCS-039
+-- surfaces. A12 alone remains an absence assertion for the still-unbuilt native
+-- refusal fail-closed slice, so the tripwire keeps tracking what has not landed yet.
 -- Source coordinates: SoilMoistureSystem.lua:69, 178-190, 680-712, 748-768,
 -- 893-943, 1038-1064, 1364-1366. Design corrections: SDS 3.2-3.11.
 do
@@ -139,9 +139,19 @@ do
     local unresolvedSys = currentSystem()
     unresolvedSys.valueMap = currentStubMap(2)
     unresolvedSys.valueMap.worldToPixel = function() return nil, nil end
-    unresolvedSys:applyWaterAtCell(1, 10, 10, 0.01)
-    T.eq("A14 current unresolved native pixel preserves no positional leaf",
-        unresolvedSys._mapWaterPending[1], nil)
+    local a14revBefore = unresolvedSys.moistureRevision
+    local a14accepted = unresolvedSys:applyWaterAtCell(1, 10, 10, 0.01)
+    T.eq("A14 BUILT: an unresolved native pixel accepts water instead of dropping it",
+        a14accepted, true)
+    local a14leaf = unresolvedSys._mapWaterPending[1] and unresolvedSys._mapWaterPending[1]["WORLD:10,10"]
+    T.eq("A14b BUILT: accepted water is held as an UNRESOLVED positional leaf",
+        a14leaf ~= nil and a14leaf.status or nil, "UNRESOLVED")
+    T.near("A14c BUILT: the unresolved leaf preserves the full accepted gain",
+        a14leaf and a14leaf.amount or -1, 0.01, 1e-12)
+    T.eq("A14d BUILT: the unresolved leaf records the source grain",
+        a14leaf and a14leaf.sourceWidth or nil, 2)
+    T.eq("A14e BUILT: unresolved pending-only water mints no readable revision",
+        unresolvedSys.moistureRevision, a14revBefore)
 end
 
 local Ref = {}
