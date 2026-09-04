@@ -124,21 +124,23 @@ CropStressManager.MAX_CATCHUP_HOURS = 168
 
 --- Hours elapsed between two hour keys, as the hourly path should charge them.
 --- Pure and static so the bench can drive it without a mission.
---- Returns 1 (today's behaviour exactly) for the first tick, for a key that did
---- not advance, and for any key that moved backwards.
+--- Returns 1 for the FIRST observation (nil, nonnumeric or negative prior key).
+--- Returns 0 — no hourly work — for a lower, equal, fractional-under-one or
+--- invalid observed key: the live clock never re-runs already-consumed hours.
+--- Otherwise returns the positive floored span, capped at MAX_CATCHUP_HOURS.
 ---@param lastKey number|nil  the previously seen key, or -1/nil before the first
 ---@param hourKey number      the key just observed
----@return number hours       1 .. MAX_CATCHUP_HOURS
+---@return number hours       0 .. MAX_CATCHUP_HOURS
 function CropStressManager.elapsedHoursFrom(lastKey, hourKey)
+    local now = tonumber(hourKey)
+    if now == nil then return 0 end
+
     local last = tonumber(lastKey)
-    local now  = tonumber(hourKey)
-    if last == nil or now == nil or last < 0 then return 1 end
-    local delta = now - last
-    if delta < 1 then return 1 end
-    if delta > CropStressManager.MAX_CATCHUP_HOURS then
-        return CropStressManager.MAX_CATCHUP_HOURS
-    end
-    return math.floor(delta)
+    if last == nil or last < 0 then return 1 end
+
+    local delta = math.floor(now - last)
+    if delta <= 0 then return 0 end
+    return math.min(delta, CropStressManager.MAX_CATCHUP_HOURS)
 end
 
 
@@ -550,14 +552,20 @@ function CropStressManager:update(dt)
         -- SCS-037: the delta this detector already holds is the elapsed count.
         -- Read it BEFORE the key is advanced, or it is gone.
         local elapsedHours = CropStressManager.elapsedHoursFrom(self.lastHourKey, hourKey)
-        self.lastHourKey = hourKey
-        -- BUILD 19:47: nothing hourly runs until the player has actually entered. During a
-        -- long 4x compile this loop was rebuilding a 122-field map every thirty seconds for
-        -- a world nobody was looking at yet, on the same machine that was trying to finish
-        -- loading. The key is still advanced above, so no hours are lost or double counted
-        -- when the gate opens; only the work is held.
-        if g_currentMission ~= nil and g_currentMission.isMissionStarted == true then
-            self:onHourlyTick(elapsedHours)
+        -- A lower, equal or invalid observed key returns 0: no hourly work runs and
+        -- the forward frontier is NOT rewound. Only a positive span advances the key.
+        -- NO function-level return here — the HUD/settings tail below must still run
+        -- every frame, including the refused ones.
+        if elapsedHours > 0 then
+            self.lastHourKey = hourKey
+            -- BUILD 19:47: nothing hourly runs until the player has actually entered. During a
+            -- long 4x compile this loop was rebuilding a 122-field map every thirty seconds for
+            -- a world nobody was looking at yet, on the same machine that was trying to finish
+            -- loading. The key is still advanced above, so no hours are lost or double counted
+            -- when the gate opens; only the work is held.
+            if g_currentMission ~= nil and g_currentMission.isMissionStarted == true then
+                self:onHourlyTick(elapsedHours)
+            end
         end
     end
 

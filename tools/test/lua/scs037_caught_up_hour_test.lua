@@ -23,10 +23,19 @@ do
   T.eq("elapsed.firstTickIsOne", f(-1, 5000), 1)
   T.eq("elapsed.nilLastIsOne", f(nil, 5000), 1)
 
-  -- The key cannot move backwards (currentMonotonicDay is monotonic), but a
-  -- reseed on savegame switch could make it look that way. Never charge negative.
-  T.eq("elapsed.backwardsIsOne", f(200, 100), 1)
-  T.eq("elapsed.sameKeyIsOne", f(200, 200), 1)
+  -- A lower or equal observed key performs ZERO hourly work and does not rewind
+  -- the forward frontier. The live clock never re-runs already-consumed hours; the
+  -- only witness is a developer gsTimeSet to an earlier hour of the same day.
+  T.eq("elapsed.backwardsIsZero", f(200, 100), 0)
+  T.eq("elapsed.sameKeyIsZero", f(200, 200), 0)
+
+  -- An invalid observed key is refused as zero, never charged as a stray hour.
+  T.eq("elapsed.invalidObservedIsZero", f(100, nil), 0)
+  T.eq("elapsed.invalidObservedNaNIsZero", f(100, "x"), 0)
+
+  -- A fractional positive delta below one hour has not crossed an hour boundary
+  -- yet: it floors to zero and waits, rather than charging a premature hour.
+  T.eq("elapsed.fractionalUnderOneIsZero", f(100, 100.5), 0)
 
   -- THE CAP is one in-game week, and it is a ceiling rather than a tuning number.
   T.eq("elapsed.capAtWeek", f(0, 168), 168)
