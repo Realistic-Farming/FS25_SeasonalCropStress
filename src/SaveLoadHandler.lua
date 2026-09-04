@@ -127,7 +127,22 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
                     setString(key .. "#cells", packed)
                 end
             end
+            -- SCS-039 v2.1 (SDS 3.5 capture groundwork): the field-wide pending
+            -- sub-step carry is accepted water that must survive save and reload
+            -- like the positional store. Zero is written explicitly so a cleared
+            -- carry is not mistaken for a pre-feature save.
+            setFloat(key .. "#mapPending", data.mapPending or 0)
             i = i + 1
+        end
+
+        -- SCS-039 v2.1 (SDS 3.2/3.5): the provider revision and the settled-day
+        -- cursor are persisted server integers. Clients adopt them on load and
+        -- never mint their own; the SDS 3.5 COMPLETE envelope carries them. The
+        -- cursor is written only once seeded, so a fresh save keeps nil and the
+        -- first wake seeds the current day without inventing history.
+        setInt(root .. "#moistureRevision", soilSystem.moistureRevision or 1)
+        if soilSystem._lastSettledDay ~= nil then
+            setInt(root .. "#lastSettledDay", soilSystem._lastSettledDay)
         end
 
         -- SCS-039 v2.1 (SDS 3.4): persist the positional accepted-water store
@@ -265,9 +280,22 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
                 if cellsStr ~= nil and soilSystem.unpackCells ~= nil then
                     soilSystem:unpackCells(fieldId, cellsStr)
                 end
+                -- SCS-039 v2.1 (SDS 3.5): restore the field-wide pending carry.
+                local mapPending = getFloat(key .. "#mapPending", nil)
+                if mapPending ~= nil then
+                    soilSystem.fieldData[fieldId].mapPending = mapPending
+                end
             end
             i = i + 1
         end
+
+        -- SCS-039 v2.1 (SDS 3.2/3.5): adopt the persisted provider revision and
+        -- settled-day cursor on the server. Clients adopt the server value via
+        -- the sync path and never mint their own.
+        local revision = getInt(root .. "#moistureRevision", nil)
+        if revision ~= nil then soilSystem.moistureRevision = revision end
+        local settledDay = getInt(root .. "#lastSettledDay", nil)
+        if settledDay ~= nil then soilSystem._lastSettledDay = settledDay end
 
         -- SCS-039 v2.1 (SDS 3.4): restore the positional accepted-water store.
         -- The leaves are pending-only (nothing spends them until the provider
@@ -354,11 +382,24 @@ function SaveLoadHandler:buildStateTable()
                 stress   = (stressModifier ~= nil) and stressModifier:getStress(fieldId) or 0.0,
                 soilType = data.soilType or "loamy",
             }
+            -- SCS-039 v2.1 (SDS 3.5): carry the field-wide pending sub-step
+            -- remainder on the ledger table mirror (own-XML writes it too).
+            if data.mapPending ~= nil and data.mapPending ~= 0 then
+                entry.mapPending = data.mapPending
+            end
             -- SCS-018 3.8: packed cell leaf rides the ledger table (nil when no cells).
             if soilSystem.packCells ~= nil then
                 entry.cells = soilSystem:packCells(fieldId)
             end
             out.fields[fieldId] = entry
+        end
+
+        -- SCS-039 v2.1 (SDS 3.2/3.5): the revision and settled-day cursor ride
+        -- the ledger so the mirror matches the own-XML carrier. The cursor is
+        -- carried only once seeded (nil otherwise, mirroring the XML path).
+        out.moistureRevision = soilSystem.moistureRevision or 1
+        if soilSystem._lastSettledDay ~= nil then
+            out.lastSettledDay = soilSystem._lastSettledDay
         end
 
         -- SCS-039 v2.1 (SDS 3.4): the deterministic positional row array rides
@@ -421,6 +462,10 @@ function SaveLoadHandler:applyStateTable(data)
                 if f.soilType ~= nil and SoilMoistureSystem.SOIL_PARAMS[f.soilType] ~= nil then
                     soilSystem.fieldData[fieldId].soilType = f.soilType
                 end
+                -- SCS-039 v2.1 (SDS 3.5): restore the field-wide pending carry.
+                if f.mapPending ~= nil then
+                    soilSystem.fieldData[fieldId].mapPending = f.mapPending
+                end
                 -- SCS-018 3.8: install cells from the ledger-packed leaf.
                 if f.cells ~= nil and soilSystem.unpackCells ~= nil then
                     soilSystem:unpackCells(fieldId, f.cells)
@@ -428,6 +473,10 @@ function SaveLoadHandler:applyStateTable(data)
                 n = n + 1
             end
         end
+
+        -- SCS-039 v2.1 (SDS 3.2/3.5): adopt the ledger revision and cursor.
+        if data.moistureRevision ~= nil then soilSystem.moistureRevision = data.moistureRevision end
+        if data.lastSettledDay ~= nil then soilSystem._lastSettledDay = data.lastSettledDay end
 
         -- SCS-039 v2.1 (SDS 3.4): restore the positional pending store from the
         -- ledger-packed row array (mirror of the own-XML string path above).
