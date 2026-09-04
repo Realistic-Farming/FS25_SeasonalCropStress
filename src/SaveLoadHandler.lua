@@ -40,6 +40,18 @@ function SaveLoadHandler.new(manager)
     self.manager = manager
     self.isInitialized = false
     self._saveDataLoaded = false  -- set true once we successfully read from xmlFile
+
+    -- SCS-039 v2.1 (SDS 3.5): the two retained COMPLETE generations. Generation 0
+    -- is the legacy/fresh baseline (a pre-feature .grle is imported as generation
+    -- 0); a COMPLETE commit advances it only after the native write AND the
+    -- compact write both succeed. A native failure with a usable compact write
+    -- records one PENDING_ONLY payload bound to the base generation instead.
+    self._completePair = {
+        current  = { generation = 0, digest = nil, revision = 1, lastSettledMonotonicDay = nil },
+        previous = nil,
+    }
+    self._pendingOnly = nil
+    self._saveEnvelopeSchema = 2
     return self
 end
 
@@ -60,6 +72,7 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
     -- posture. The per-field scalar rows written below stay exactly as they are
     -- and become the DEGRADE layer: if the .grle is missing or refuses to load,
     -- the field scalars still restore and the cell store carries the save.
+    local nativeSaveOk = false
     local soilSystemForMap = self.manager ~= nil and self.manager.soilSystem or nil
     if soilSystemForMap ~= nil and soilSystemForMap.valueMap ~= nil
        and soilSystemForMap.valueMap.available then
@@ -71,7 +84,7 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
             -- then carry the save as the honest degrade layer, and the next load
             -- re-selects a readable carrier rather than trusting bytes that never
             -- reached disk.
-            soilSystemForMap:saveNativeMap(sgDir)
+            nativeSaveOk = soilSystemForMap:saveNativeMap(sgDir) == true
         end
     end
 
@@ -153,6 +166,25 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
             local pendingPacked = soilSystem:packMapWaterPendingString()
             if pendingPacked ~= nil then
                 setString(root .. "#mapWaterPending", pendingPacked)
+            end
+        end
+
+        -- SCS-039 v2.1 (SDS 3.5): when the native carrier is current, capture one
+        -- immutable envelope at this save's revision and commit it against the
+        -- native and compact write receipts. The compact write (this own-XML
+        -- block) is what just succeeded; the generation advances only when the
+        -- native write did too, and a native failure records a PENDING_ONLY
+        -- bound to the base generation. The current generation is persisted so
+        -- the next load knows which pair to reconcile against. ZONE missions
+        -- (no native map) keep the scalar carrier and no generation bookkeeping.
+        if soilSystem.valueMap ~= nil and soilSystem.valueMap.available
+           and self.captureMoistureEnvelope ~= nil and self.commitMoistureEnvelope ~= nil then
+            local capture = self:captureMoistureEnvelope()
+            if capture ~= nil then
+                local outcome = self:commitMoistureEnvelope(capture, nativeSaveOk, true)
+                if outcome == "COMPLETE" or outcome == "PENDING_ONLY" then
+                    setInt(root .. "#saveGeneration", self._completePair.current.generation)
+                end
             end
         end
     end
@@ -296,6 +328,12 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
         if revision ~= nil then soilSystem.moistureRevision = revision end
         local settledDay = getInt(root .. "#lastSettledDay", nil)
         if settledDay ~= nil then soilSystem._lastSettledDay = settledDay end
+        -- SCS-039 v2.1 (SDS 3.5): resume the retained-pair bookkeeping at the
+        -- persisted generation so the next COMPLETE commit builds on it.
+        local saveGeneration = getInt(root .. "#saveGeneration", nil)
+        if saveGeneration ~= nil then
+            self._completePair.current.generation = saveGeneration
+        end
 
         -- SCS-039 v2.1 (SDS 3.4): restore the positional accepted-water store.
         -- The leaves are pending-only (nothing spends them until the provider
@@ -524,6 +562,226 @@ function SaveLoadHandler:applyStateTable(data)
     end
 
     return true
+end
+
+-- ============================================================
+-- SCS-039 v2.1 (SDS 3.5): SYNCHRONOUS IMMUTABLE SAVE CAPTURE.
+--
+-- The save act freezes ONE envelope at the current provider revision (revision,
+-- settled-day cursor, refreshed aggregates, both pending packs) and commits it
+-- as a new COMPLETE generation ONLY after the native write AND the compact
+-- write both succeed exactly. A native failure with a usable compact write
+-- records one PENDING_ONLY payload bound to the base generation; it names no
+-- native file and never advances the generation. On load, candidates from the
+-- mirrors are grouped by generation and canonical digest, identical mirrors
+-- deduplicate, conflicting digests reject that generation, and the highest
+-- valid COMPLETE native pair wins (Group D and Group K mirror this contract).
+-- The generation-qualified native FILE names, on-disk retention of both pairs
+-- and interrupted-file cleanup are wired by the follow-on slices; this core is
+-- the engine-free state machine the file layer will drive.
+-- ============================================================
+
+--- Deterministic canonical digest of one envelope's logical payload. Two
+--- identical logical payloads produce the same string; any drift (revision,
+--- cursor, aggregate, pending amount) changes it. Used to reconcile identical
+--- mirrors and reject conflicting ones at the same generation.
+function SaveLoadHandler:compactDigest(env)
+    if env == nil then return nil end
+    local parts = {}
+    parts[#parts + 1] = "s=" .. tostring(env.schema)
+    parts[#parts + 1] = "p=" .. tostring(env.payloadKind)
+    parts[#parts + 1] = "g=" .. tostring(env.generation)
+    parts[#parts + 1] = "r=" .. tostring(env.moistureRevision)
+    parts[#parts + 1] = "d=" .. tostring(env.lastSettledMonotonicDay or -1)
+    local aggKeys, fpKeys = {}, {}
+    for fieldId in pairs(env.aggregates or {}) do aggKeys[#aggKeys + 1] = fieldId end
+    for fieldId in pairs(env.fieldPending or {}) do fpKeys[#fpKeys + 1] = fieldId end
+    table.sort(aggKeys)
+    table.sort(fpKeys)
+    for i = 1, #aggKeys do
+        parts[#parts + 1] = string.format("a%d=%.6f", aggKeys[i], env.aggregates[aggKeys[i]] or 0)
+    end
+    for i = 1, #fpKeys do
+        parts[#parts + 1] = string.format("f%d=%.6f", fpKeys[i], env.fieldPending[fpKeys[i]] or 0)
+    end
+    local rows = env.positionalRows or {}
+    local posTotal = 0
+    for i = 1, #rows do posTotal = posTotal + (rows[i].amount or 0) end
+    parts[#parts + 1] = string.format("pos=%d:%.6f", #rows, posTotal)
+    return table.concat(parts, "|")
+end
+
+--- Capture one immutable COMPLETE envelope at the current provider revision.
+--- Returns nil when there is no soil system to capture.
+function SaveLoadHandler:captureMoistureEnvelope()
+    local soil = self.manager ~= nil and self.manager.soilSystem or nil
+    if soil == nil or type(soil.fieldData) ~= "table" then return nil end
+    local base = self._completePair.current
+    local env = {
+        schema   = self._saveEnvelopeSchema or 2,
+        payloadKind = "COMPLETE",
+        generation = base.generation or 0,
+        filename   = nil,
+        mapWidth   = nil,
+        grain      = nil,
+        moistureRevision = soil.moistureRevision or 1,
+        lastSettledMonotonicDay = soil._lastSettledDay,
+        aggregates = {},
+        fieldPending = {},
+        positionalRows = {},
+    }
+    local vm = soil.valueMap
+    if vm ~= nil and vm.available then
+        env.mapWidth = vm.resolution
+        if type(vm.getGrainMetres) == "function" then
+            env.grain = vm:getGrainMetres()
+        end
+    end
+    for fieldId, d in pairs(soil.fieldData) do
+        env.aggregates[fieldId] = d.moisture
+        if d.mapPending ~= nil and d.mapPending ~= 0 then
+            env.fieldPending[fieldId] = d.mapPending
+        end
+    end
+    if type(soil.packMapWaterPending) == "function" then
+        env.positionalRows = soil:packMapWaterPending()
+    end
+    env.digest = self:compactDigest(env)
+    return env
+end
+
+--- Commit a captured envelope. Mirrors Group K's synchronousSave exactly:
+---   "COMPLETE"    - native AND compact both true; previous pair retained, current
+---                   advances one generation, any PENDING_ONLY is superseded.
+---   "PENDING_ONLY" - native false but compact true; one PENDING_ONLY bound to the
+---                   base generation/revision/cursor is recorded, pair unchanged.
+---   "FAILED"      - compact also failed; pair unchanged, no recovery payload.
+function SaveLoadHandler:commitMoistureEnvelope(capture, nativeOk, compactOk)
+    if capture == nil then return "FAILED" end
+    local base = self._completePair.current
+    if nativeOk == true and compactOk == true then
+        self._completePair.previous = self._completePair.current
+        self._completePair.current = {
+            generation = (base.generation or 0) + 1,
+            digest     = capture.digest,
+            revision   = capture.moistureRevision,
+            lastSettledMonotonicDay = capture.lastSettledMonotonicDay,
+        }
+        self._pendingOnly = nil
+        return "COMPLETE"
+    end
+    if compactOk == true then
+        self._pendingOnly = {
+            payloadKind = "PENDING_ONLY",
+            baseGeneration = base.generation or 0,
+            baseRevision   = capture.moistureRevision,
+            baseLastSettledMonotonicDay = capture.lastSettledMonotonicDay,
+            aggregates = capture.aggregates,
+            fieldPending = capture.fieldPending,
+            positionalRows = capture.positionalRows,
+            zoneOk = true,
+            digest = "P:" .. tostring(self:compactDigest(capture)),
+        }
+        return "PENDING_ONLY"
+    end
+    return "FAILED"
+end
+
+--- Select the carrier from a candidate list gathered at load (own XML and the
+--- StateLedger mirror). Mirrors the bar's Group D selection: group candidates by
+--- generation and canonical digest, deduplicate identical mirrors, reject a
+--- generation whose mirrors conflict, then take the highest valid COMPLETE
+--- native pair, degrading to ZONE on a newer valid compact without a native
+--- file. A PENDING_ONLY row is applied only when its complete-pair identity
+--- (generation, revision, cursor) matches exactly.
+---@return string mode  "TRUTH" | "ZONE" | "NONE"
+---@return number|nil generation
+---@return string|nil digest
+---@return string|nil pendingDigest
+---@return string|nil pendingStatus  "APPLIED" | "CONFLICT" | "BASE_MISMATCH" | "NONE"
+---@return number|nil cursor
+---@return number|nil revision
+function SaveLoadHandler:selectMoistureCarrier(candidates)
+    -- Phase 1: pick the complete generation.
+    local byGeneration = {}
+    local order = {}
+    for _, c in ipairs(candidates or {}) do
+        if c.payloadKind ~= "PENDING_ONLY" and c.compactOk and type(c.generation) == "number" then
+            local g = byGeneration[c.generation]
+            if g == nil then
+                g = { digests = {}, rows = {} }
+                byGeneration[c.generation] = g
+                order[#order + 1] = c.generation
+            end
+            g.digests[c.digest] = true
+            g.rows[#g.rows + 1] = c
+        end
+    end
+    table.sort(order, function(a, b) return a > b end)
+
+    local function selectPendingOnly(baseGeneration, baseRevision, baseCursor)
+        local digests, rows = {}, {}
+        for _, c in ipairs(candidates or {}) do
+            if c.payloadKind == "PENDING_ONLY" and c.compactOk
+               and c.baseGeneration == baseGeneration then
+                digests[c.digest] = true
+                rows[#rows + 1] = c
+            end
+        end
+        local count = 0
+        for _ in pairs(digests) do count = count + 1 end
+        if count == 0 then return nil, "NONE" end
+        if count > 1 then return nil, "CONFLICT" end
+        local row = rows[1]
+        if baseRevision ~= nil and row.baseRevision ~= baseRevision then
+            return nil, "BASE_MISMATCH"
+        end
+        if baseCursor ~= nil and row.baseLastSettledMonotonicDay ~= baseCursor then
+            return nil, "BASE_MISMATCH"
+        end
+        return row, "APPLIED"
+    end
+
+    for i = 1, #order do
+        local generation = order[i]
+        local g = byGeneration[generation]
+        local digestCount = 0
+        for _ in pairs(g.digests) do digestCount = digestCount + 1 end
+        if digestCount == 1 then
+            local row = g.rows[1]
+            local cursor = row.lastSettledMonotonicDay
+            local revision = row.revision
+            if row.nativeOk then
+                local pending, pendingStatus =
+                    selectPendingOnly(generation, revision, cursor)
+                return "TRUTH", generation, row.digest,
+                    pending ~= nil and pending.digest or nil,
+                    pendingStatus, cursor, revision
+            end
+            return "ZONE", generation, row.digest,
+                nil, "NONE", cursor, revision
+        end
+    end
+
+    -- No complete pair: a PENDING_ONLY row may provide explicit ZONE recovery.
+    local bases = {}
+    for _, c in ipairs(candidates or {}) do
+        if c.payloadKind == "PENDING_ONLY" and c.compactOk and c.zoneOk
+           and type(c.baseGeneration) == "number" then
+            bases[c.baseGeneration] = true
+        end
+    end
+    local baseOrder = {}
+    for b in pairs(bases) do baseOrder[#baseOrder + 1] = b end
+    table.sort(baseOrder, function(a, b) return a > b end)
+    for i = 1, #baseOrder do
+        local pending, pendingStatus = selectPendingOnly(baseOrder[i], nil, nil)
+        if pending ~= nil and pending.zoneOk then
+            return "ZONE", baseOrder[i], nil, pending.digest, pendingStatus,
+                pending.baseLastSettledMonotonicDay, pending.baseRevision
+        end
+    end
+    return "NONE", nil, nil, nil, "NONE", nil, nil
 end
 
 function SaveLoadHandler:delete()
