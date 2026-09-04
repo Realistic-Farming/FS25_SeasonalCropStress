@@ -428,6 +428,18 @@ function SoilMoistureSystem:initialize()
         self.manager.eventBus.subscribe("CS_IRRIGATION_STOPPED", self.onIrrigationStopped, self)
     end
 
+    -- SCS-039 v2.1 (SDS 3.4): server-side farmland ownership change revalidates
+    -- pending positional membership. The engine installs the new ownership and
+    -- publishes (farmlandId, farmId, loadFromSavegame) after it, which is when
+    -- our cached field polygons go stale. Subscription is capability-guarded so
+    -- an engine without the message (or a client peer) never subscribes.
+    if g_server ~= nil and g_messageCenter ~= nil and MessageType ~= nil
+       and MessageType.FARMLAND_OWNER_CHANGED ~= nil
+       and g_messageCenter.subscribe ~= nil then
+        g_messageCenter:subscribe(MessageType.FARMLAND_OWNER_CHANGED, self.onFarmlandOwnerChanged, self)
+        self._farmlandSubscribed = true
+    end
+
     self.isInitialized = true
 end
 
@@ -1669,6 +1681,139 @@ function SoilMoistureSystem:unpackMapWaterPendingString(packed)
     return self:unpackMapWaterPending(rows)
 end
 
+-- ============================================================
+-- SCS-039 v2.1 GEOMETRY-CHANGE RE-KEY (SDS 3.4 tail, slice 9)
+--
+-- On a farmland ownership/geometry change the engine installs the new state and
+-- publishes FARMLAND_OWNER_CHANGED. Our cached field polygons go stale, so the
+-- handler invalidates them and revalidates every pending positional leaf against
+-- the CURRENT geometry. Accepted water is never lost and never moves by
+-- identifier accident: a leaf re-keys only when exactly one current field owns
+-- its world position. Ambiguous or missing membership stays an UNRESOLVED
+-- world leaf (a resolved pixel leaf whose membership vanished is demoted to
+-- one), so it is never applied to the wrong field.
+-- ============================================================
+
+--- Ordered polygon fingerprint for a field, as a stable string of the vertex
+--- world coordinates. Two equal polygons produce equal strings; a geometry
+--- change changes the string (the SDS 3.6 daily-plan pinning compares these).
+--- nil when the field has no resolvable polygon.
+function SoilMoistureSystem:fieldGeometryFingerprint(fieldId)
+    local vx, vz, n = self:_getFieldVerts(fieldId)
+    if vx == nil then return nil end
+    local parts = {}
+    for i = 1, n do
+        parts[i] = string.format("%.2f,%.2f", vx[i], vz[i])
+    end
+    return table.concat(parts, ";")
+end
+
+--- Exactly one current field contains the world position, else nil. A field
+--- whose polygon cannot be resolved (deleted farmland still in fieldData) can
+--- never own a point, and a point inside two fields is ambiguous, so neither
+--- answers.
+function SoilMoistureSystem:_uniqueFieldOwnerAt(worldX, worldZ)
+    local owner, count = nil, 0
+    for fieldId in pairs(self.fieldData) do
+        local vx, vz, n = self:_getFieldVerts(fieldId)
+        if vx ~= nil and csPointInPolygon(worldX, worldZ, vx, vz, n) then
+            count = count + 1
+            owner = fieldId
+        end
+    end
+    if count == 1 then return owner end
+    return nil
+end
+
+--- Revalidate every pending positional leaf against current field geometry and
+--- re-key the ones that now belong to a different field. Returns the number of
+--- leaves whose home changed (bucket move or a resolved demotion to unresolved).
+function SoilMoistureSystem:rekeyPositionalWaterForOwnership()
+    if type(self._mapWaterPending) ~= "table" then return 0 end
+
+    local m = self.valueMap
+    local hasPixelMap = m ~= nil and m.available == true
+        and type(m.resolution) == "number" and m.resolution > 0
+        and type(m.terrainSize) == "number" and m.terrainSize > 0
+    local function pixelToWorld(px, pz)
+        local g = m.terrainSize / m.resolution
+        local half = m.terrainSize * 0.5
+        return (px + 0.5) * g - half, (pz + 0.5) * g - half, g
+    end
+
+    local newStore = {}
+    local moved = 0
+    for fieldId, acc in pairs(self._mapWaterPending) do
+        for key, value in pairs(acc) do
+            local isResolved = type(key) == "number"
+            local amount = isResolved and value or (value ~= nil and value.amount) or 0
+            if amount == 0 then
+                -- Zero carries no water; pack never emits it, and re-key need not
+                -- preserve an empty remainder.
+            else
+                local worldX, worldZ, grain = nil, nil, nil
+                if isResolved then
+                    if not hasPixelMap then
+                        -- A resolved remainder without the map cannot be
+                        -- reconstructed to a world position: keep it exactly
+                        -- where it is rather than guess at a home.
+                        local acc2 = newStore[fieldId]
+                        if acc2 == nil then acc2 = {}; newStore[fieldId] = acc2 end
+                        acc2[key] = value
+                    else
+                        local px = math.floor(key / 4096)
+                        local pz = key - px * 4096
+                        worldX, worldZ, grain = pixelToWorld(px, pz)
+                    end
+                else
+                    worldX, worldZ = value.worldX, value.worldZ
+                    grain = value.sourceWidth
+                end
+                if worldX == nil then
+                    -- handled above for the no-map resolved case
+                else
+                    local owner = self:_uniqueFieldOwnerAt(worldX, worldZ)
+                    local destField = owner or fieldId
+                    local demote = (owner == nil and isResolved)
+                    if destField ~= fieldId or demote then moved = moved + 1 end
+                    local acc2 = newStore[destField]
+                    if acc2 == nil then acc2 = {}; newStore[destField] = acc2 end
+                    if isResolved and not demote then
+                        acc2[key] = (acc2[key] or 0) + amount
+                    else
+                        local leafKey = "WORLD:" .. tostring(worldX) .. "," .. tostring(worldZ)
+                        local leaf = acc2[leafKey]
+                        if leaf == nil then
+                            leaf = { status = "UNRESOLVED", worldX = worldX, worldZ = worldZ,
+                                     sourceWidth = grain, amount = 0 }
+                            acc2[leafKey] = leaf
+                        end
+                        leaf.amount = leaf.amount + amount
+                    end
+                end
+            end
+        end
+    end
+    self._mapWaterPending = newStore
+    return moved
+end
+
+--- Farmland ownership/geometry change handler (server). The engine installs the
+--- new ownership before publishing, which is exactly when our cached field
+--- polygons become stale. Replays during load (loadFromSavegame) only invalidate
+--- caches; the load door restores a fresh pending store afterwards, so re-keying
+--- now would run against the previous mission's leaves.
+function SoilMoistureSystem:onFarmlandOwnerChanged(farmlandId, farmId, loadFromSavegame)
+    if g_server == nil then return end
+    self._fieldVerts = {}
+    if loadFromSavegame then return end
+    local moved = self:rekeyPositionalWaterForOwnership()
+    if moved > 0 and csLog ~= nil then
+        csLog(string.format("Moisture: farmland change re-keyed %d positional water leaves (field %s)",
+            moved, tostring(farmlandId)))
+    end
+end
+
 -- Returns a sorted list of {fieldId, moisture, soilType} for HUD display
 function SoilMoistureSystem:getFieldsSortedByMoisture()
     local list = {}
@@ -1737,6 +1882,12 @@ function SoilMoistureSystem:delete()
     if self.valueMap ~= nil and self.valueMap.delete ~= nil then
         self.valueMap:delete()
     end
+    -- SCS-039 v2.1 (SDS 3.4): drop the farmland-ownership subscription so a
+    -- same-process reload does not keep a stale handler attached to the mission.
+    if g_messageCenter ~= nil and g_messageCenter.unsubscribeAll ~= nil then
+        g_messageCenter:unsubscribeAll(self)
+    end
+    self._farmlandSubscribed = false
     self.isInitialized = false
 end
 
