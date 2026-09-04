@@ -234,11 +234,15 @@ function CropStressValueMap:saveToSavegame(savegameDir)
     if not self.available or savegameDir == nil then return false end
     if saveBitVectorMapToFile == nil then return false end
     local path = savegameDir .. "/" .. CropStressValueMap.LAYER_DEF.file
-    local ok = pcall(saveBitVectorMapToFile, self.bvm, path)
-    if not ok then
+    -- SCS-039 v2.1: a native mutator succeeds only when BOTH the outer pcall
+    -- survived AND the engine returned literal true. A non-throwing false return
+    -- was previously misread as a saved file, a silent data-loss report.
+    local ok, nativeResult = pcall(saveBitVectorMapToFile, self.bvm, path)
+    local success = ok and nativeResult == true
+    if not success then
         csvmLog("Moisture map: native save failed; the StateLedger scalar degrade carries this save")
     end
-    return ok
+    return success
 end
 
 -- ─────────────────────────────────────────────────────────

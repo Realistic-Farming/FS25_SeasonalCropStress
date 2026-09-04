@@ -189,6 +189,17 @@ function SoilMoistureSystem.new(manager)
     -- and spend only whole raw steps, or water lands on the map as nothing.
     self._mapWaterPending = {} -- fieldId -> [px * 4096 + pz] -> remainder
 
+    -- SCS-039 v2.1: the persisted server integer that stamps every readable
+    -- moisture answer. Advanced ONCE per successful readable mutation (native or
+    -- zone write, whole-field replacement, committed settle, migration). A
+    -- pending-only sub-step remainder does not advance it. Clients adopt the
+    -- server value through the sync path and never mint their own.
+    self.moistureRevision = 1
+    -- The frozen per-mission carrier decision: "TRUTH" (the native 2 m map is
+    -- the current authority) or "ZONE" (the sparse cell store is). nil until
+    -- initValueMap runs and makes the one-way choice.
+    self.providerMode = nil
+
     self.isInitialized = false
     return self
 end
@@ -205,6 +216,10 @@ function SoilMoistureSystem:initValueMap(savegameDir)
     -- nil-on-failure below would make every caller retry the whole engine probe.
     if self._valueMapTried then return false end
     self._valueMapTried = true
+    -- SCS-039 v2.1: default the carrier to ZONE. Every decline path below leaves
+    -- it here; only a live native map promotes it to TRUTH. The choice is frozen
+    -- for the mission once made.
+    self.providerMode = "ZONE"
     if CropStressValueMap == nil then return false end
 
     -- SCS-039 ships LOCKED. Until the in-game layer look clears it, the map only
@@ -219,6 +234,7 @@ function SoilMoistureSystem:initValueMap(savegameDir)
     self.valueMap = CropStressValueMap.new()
     local ok = self.valueMap:initialize(savegameDir)
     if ok then
+        self.providerMode = "TRUTH"
         csLog("Moisture: the 2m value map is live; the cell store is now the fallback only")
     else
         -- THE DEGRADE, and it is the whole reason the scalar rows stay in the
@@ -687,27 +703,32 @@ end
 ---@return number|nil moisture 0..1
 ---@return number|nil grainMetres
 function SoilMoistureSystem:getMoisture(fieldId, x, z)
+    -- SCS-039 v2.1: the third return is the provider revision. It is additive, so
+    -- one- and two-value callers (FarmTablet, SoilFertilizer) stay compatible.
+    local rev = self.moistureRevision or 1
     local d = self.fieldData[fieldId]
-    if d == nil then return nil, nil end
+    if d == nil then return nil, nil, rev end
 
     if x ~= nil and z ~= nil then
         if self:mapActive() then
             local v, grain = self.valueMap:readValueAtWorld(x, z)
-            -- nil means nothing is written at that pixel (off-field or not yet
-            -- seeded), which is the aggregate's job to answer, not a hole.
-            if v ~= nil then return v, grain end
-            return self:getFieldAggregate(d), grain
+            -- A written pixel answers with its ACTUAL carrier grain.
+            if v ~= nil then return v, grain, rev end
+            -- In-domain but unwritten: the field aggregate answers, and it is NOT
+            -- a local reading, so it carries NIL grain rather than the map's. A
+            -- consumer must never mistake a field mean for a 2 m local sample.
+            return self:getFieldAggregate(d), nil, rev
         end
         local cx, cz = self:worldToCell(x, z)
         local row = d.cells and d.cells[cx]
         local cell = row and row[cz]
-        if cell ~= nil then return cell.moisture, self:getCellSize() end
-        return self:getFieldAggregate(d), self:getCellSize()
+        if cell ~= nil then return cell.moisture, self:getCellSize(), rev end
+        return self:getFieldAggregate(d), self:getCellSize(), rev
     end
 
     -- Field-level read: the scalar is the derived aggregate either way, so the
     -- grain reported is the field itself rather than any cell size.
-    return self:getFieldAggregate(d), nil
+    return self:getFieldAggregate(d), nil, rev
 end
 
 -- Derived field aggregate, O(1). Once a field has cells it is the mean of the
@@ -718,6 +739,39 @@ function SoilMoistureSystem:getFieldAggregate(d)
         return d.cellSum / d.cellCount
     end
     return d.moisture
+end
+
+-- ============================================================
+-- SCS-039 v2.1: PROVIDER REVISION AND HONEST PUBLIC READS (SDS 3.2).
+-- The revision is one persisted server integer; every readable answer carries
+-- it so an aggregate and a fine consumer can agree on which ground they saw.
+-- ============================================================
+
+--- The current server provider revision. Consumers stamp their reads with it and
+--- a client never mints its own; it adopts the server value through the sync path.
+function SoilMoistureSystem:getMoistureRevision()
+    return self.moistureRevision or 1
+end
+
+--- True only while the native 2 m map is the current authority. A ZONE carrier,
+--- an absent map, or a native provider that has failed closed for the mission all
+--- answer false, so a consumer never draws a stale or partial fine map as current.
+function SoilMoistureSystem:isMoistureMapCurrent()
+    return self:mapActive() and self.providerMode == "TRUTH"
+end
+
+--- The live native map, and ONLY while it is current. nil otherwise, so the host
+--- overlay falls back to the aggregate rather than drawing non-current bytes.
+function SoilMoistureSystem:getMoistureDisplayMap()
+    if not self:isMoistureMapCurrent() then return nil end
+    return self.valueMap
+end
+
+--- Advance the persisted revision exactly once for a successful readable mutation.
+--- A pending-only sub-step remainder must never call this.
+function SoilMoistureSystem:_advanceMoistureRevision()
+    self.moistureRevision = (self.moistureRevision or 1) + 1
+    return self.moistureRevision
 end
 
 -- THE SINGLE WRITE PATH (SCS-018 brief 3.3): read the cell, compute, write the
@@ -772,8 +826,13 @@ function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
         -- The scalar is the derived aggregate, and a uniform paint makes the
         -- mean exactly the painted value. Any carried sub-step delta is now
         -- stale: it was accumulated against ground that no longer exists.
+        -- SCS-039 v2.1: a whole-field replacement supersedes BOTH pending stores
+        -- together, the field-wide carry and every positional leaf, or a stale
+        -- leaf would re-spend onto ground the replacement already overwrote.
         d.mapPending = 0
+        self._mapWaterPending[fieldId] = nil
         d.moisture = newValue
+        self:_advanceMoistureRevision()
         return newValue
     end
 
@@ -787,6 +846,8 @@ function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
         d.cellSum = d.cellSum + delta * d.cellCount
     end
     d.moisture = newValue
+    -- ZONE whole-field replacement is a readable mutation too.
+    self:_advanceMoistureRevision()
     return newValue
 end
 
@@ -900,8 +961,12 @@ end
 -- materialising it if needed (the materialisation door for water application).
 -- ============================================================
 function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
+    -- SCS-039 v2.1: return a literal boolean receipt. true = the accepted water
+    -- joined its store (even a sub-step amount that floored to no write yet);
+    -- false = an invalid field, non-positive gain or an unresolved position.
+    -- SCS-023's COVER step consumes only this boolean.
     local d = self.fieldData[fieldId]
-    if d == nil or gain <= 0 then return end
+    if d == nil or type(gain) ~= "number" or gain <= 0 then return false end
 
     -- SCS-039: water lands on a PLACE, and on the map that place is a 2 m pixel
     -- instead of a 10-40 m cell. Read what is there, add the gain, write it back.
@@ -913,35 +978,41 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
     if self:mapActive() then
         self:migrateFieldToMap(fieldId)
         local px, pz = self.valueMap:worldToPixel(x, z)
-        if px ~= nil then
-            local fieldAcc = self._mapWaterPending[fieldId]
-            if fieldAcc == nil then fieldAcc = {}; self._mapWaterPending[fieldId] = fieldAcc end
-            local key = px * 4096 + pz
-            local pending = (fieldAcc[key] or 0) + gain
-            local applied, remainder = CropStressValueMap.quantiseDelta(pending)
-            fieldAcc[key] = remainder
-            if applied ~= 0 then
-                local grain = self.valueMap:getGrainMetres() or 2
-                local current = self.valueMap:readValueAtWorld(x, z)
-                if current == nil then current = self:getFieldAggregate(d) or 0 end
-                self.valueMap:writeValueAtWorld(x, z, math.max(0.0, math.min(1.0, current + applied)), grain * 0.5)
-            end
+        if px == nil then
+            -- Slice 1: an unresolved member pixel is refused rather than swallowed
+            -- into a fabricated pixel id. Preserving it as an UNRESOLVED positional
+            -- leaf (finite world coords + source grain) is a later SCS-039 slice.
+            return false
         end
-        -- The field aggregate is re-derived from the map on the daily settle;
-        -- a single pixel's gain is below the noise of the field mean until then.
-        return
+        local fieldAcc = self._mapWaterPending[fieldId]
+        if fieldAcc == nil then fieldAcc = {}; self._mapWaterPending[fieldId] = fieldAcc end
+        local key = px * 4096 + pz
+        local pending = (fieldAcc[key] or 0) + gain
+        local applied, remainder = CropStressValueMap.quantiseDelta(pending)
+        fieldAcc[key] = remainder
+        if applied ~= 0 then
+            local grain = self.valueMap:getGrainMetres() or 2
+            local current = self.valueMap:readValueAtWorld(x, z)
+            if current == nil then current = self:getFieldAggregate(d) or 0 end
+            self.valueMap:writeValueAtWorld(x, z, math.max(0.0, math.min(1.0, current + applied)), grain * 0.5)
+            -- A whole-raw-step spend moved readable ground: advance the revision.
+            self:_advanceMoistureRevision()
+        end
+        -- Accepted. The field aggregate is re-derived from the map on the daily
+        -- settle; a single pixel's gain is below the field-mean noise until then.
+        return true
     end
 
     local cx, cz = self:worldToCell(x, z)
     local row = d.cells[cx]
     if row == nil then
-        if (d.cellCount or 0) >= SoilMoistureSystem.CELL_BACKSTOP_CAP then return end
+        if (d.cellCount or 0) >= SoilMoistureSystem.CELL_BACKSTOP_CAP then return false end
         row = {}
         d.cells[cx] = row
     end
     local cell = row[cz]
     if cell == nil then
-        if (d.cellCount or 0) >= SoilMoistureSystem.CELL_BACKSTOP_CAP then return end
+        if (d.cellCount or 0) >= SoilMoistureSystem.CELL_BACKSTOP_CAP then return false end
         cell = { moisture = self:getFieldAggregate(d) }
         row[cz] = cell
         d.cellCount = d.cellCount + 1
@@ -956,6 +1027,10 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
     -- the raw d.moisture scalar. Without this line water lands, cells rise, and
     -- every surface the player actually looks at keeps showing the old number.
     d.moisture = self:getFieldAggregate(d)
+    -- ZONE positional water moved readable ground: advance the revision and
+    -- return the accept receipt.
+    self:_advanceMoistureRevision()
+    return true
 end
 
 -- ============================================================
@@ -1371,6 +1446,11 @@ function SoilMoistureSystem:setRWMoistureSystem(rwSystem)
 end
 
 function SoilMoistureSystem:delete()
+    -- SCS-039 v2.1: release the native carrier so its engine handle is freed and a
+    -- teardown or same-process reload starts from a clean map, not a stale one.
+    if self.valueMap ~= nil and self.valueMap.delete ~= nil then
+        self.valueMap:delete()
+    end
     self.isInitialized = false
 end
 
