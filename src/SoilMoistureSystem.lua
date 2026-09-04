@@ -902,9 +902,9 @@ end
 --- mission still trusting the fine map. The per-field scalar rows the save
 --- handler writes next are the honest degrade layer, and the next load re-selects
 --- a readable TRUTH or ZONE carrier. Returns the literal save receipt.
-function SoilMoistureSystem:saveNativeMap(savegameDir)
+function SoilMoistureSystem:saveNativeMap(savegameDir, generation)
     if self.valueMap == nil or not self.valueMap.available then return false end
-    local savedOk = self.valueMap:saveToSavegame(savegameDir) == true
+    local savedOk = self.valueMap:saveToSavegame(savegameDir, generation) == true
     if not savedOk then
         self:_failNativeClosed("native save refusal")
     end

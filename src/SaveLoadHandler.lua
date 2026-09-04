@@ -79,12 +79,14 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
         local sgDir = g_currentMission ~= nil and g_currentMission.missionInfo ~= nil
             and g_currentMission.missionInfo.savegameDirectory or nil
         if sgDir ~= nil then
-            -- SCS-039 v2.1 (SDS 3.3): route the native save through the soil system
-            -- so a refusal fails the provider closed. The scalar rows written below
-            -- then carry the save as the honest degrade layer, and the next load
-            -- re-selects a readable carrier rather than trusting bytes that never
-            -- reached disk.
-            nativeSaveOk = soilSystemForMap:saveNativeMap(sgDir) == true
+            -- SCS-039 v2.1 (SDS 3.3/3.5): route the native save through the soil
+            -- system so a refusal fails the provider closed. The file is written
+            -- for the CANDIDATE generation (current + 1): the COMPLETE commit
+            -- advances to it only after this native write AND the compact write
+            -- both succeed, and the generation-qualified name never clobbers the
+            -- legacy baseline or either retained complete pair.
+            nativeSaveOk = soilSystemForMap:saveNativeMap(sgDir,
+                (self._completePair.current.generation or 0) + 1) == true
         end
     end
 
