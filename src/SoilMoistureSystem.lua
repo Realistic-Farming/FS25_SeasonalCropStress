@@ -186,6 +186,12 @@ function SoilMoistureSystem.new(manager)
     -- aborts it without moving the cursor. Save, reload and teardown discard it.
     self._dailyPlan = nil
 
+    -- SCS-039 v2.1 (SDS 3.7): the client fine-snapshot currentness engine
+    -- (staging + delta barrier). Server instances carry it inert; only a client
+    -- stages rows and publishes once at COMPLETE.
+    self.fineSnapshot = (SoilFineSnapshot ~= nil) and SoilFineSnapshot.new() or nil
+    self._syncSnapshotGeneration = 0
+
     -- SCS-039: the vendored 2 m value map. nil until initValueMap runs, and
     -- still inert afterwards on any install where the engine cannot carry it.
     -- Every branch below tests mapActive(); when it is false NOTHING changes and
@@ -1395,17 +1401,27 @@ end
 SoilMoistureSystem.SYNC_ROWS_PER_FRAME = 8
 
 --- Queue the whole map for a connection. Safe to call for each joining client.
+--- SDS 3.7: each join is one immutable snapshot generation of its own.
 function SoilMoistureSystem:queueMapSync(connection)
     if not self:mapActive() or connection == nil then return false end
     if g_server == nil then return false end
     self._syncQueue = self._syncQueue or {}
-    self._syncQueue[#self._syncQueue + 1] = { conn = connection, nextRow = 0 }
+    self._syncSnapshotGeneration = (self._syncSnapshotGeneration or 0) + 1
+    self._syncQueue[#self._syncQueue + 1] = {
+        conn = connection,
+        nextRow = 0,
+        snapshotGeneration = self._syncSnapshotGeneration,
+        baseRevision = self.moistureRevision or 1,
+        controlSent = false,
+    }
     return true
 end
 
 --- Drive the queue. Called from the manager's per-frame update on the server.
 --- Returns the number of rows sent this frame (0 when there is nothing to do),
 --- which is also what makes the cost visible to the instrument below.
+--- SDS 3.7: CONTROL START opens the client snapshot before the first row and
+--- CONTROL COMPLETE is the publish barrier after the final row.
 function SoilMoistureSystem:updateMapSync()
     local q = self._syncQueue
     if q == nil or #q == 0 then return 0 end
@@ -1416,24 +1432,64 @@ function SoilMoistureSystem:updateMapSync()
 
     local job = q[1]
     local total = self.valueMap:getSyncRowCount()
+    if not job.controlSent then
+        if CropStressMoistureControlEvent ~= nil then
+            g_server:sendEvent(CropStressMoistureControlEvent.new(
+                CropStressMoistureControlEvent.KIND_START,
+                job.snapshotGeneration, job.baseRevision, total,
+                self.valueMap.resolution or 0), false, nil, job.conn)
+        end
+        job.controlSent = true
+    end
+
     local sent = 0
     while sent < SoilMoistureSystem.SYNC_ROWS_PER_FRAME and job.nextRow < total do
         local raw = self.valueMap:readSyncRow(job.nextRow)
         if raw ~= nil and CropStressMoistureRowEvent ~= nil then
             local packed = CropStressValueMap.packRow(raw)
-            g_server:sendEvent(CropStressMoistureRowEvent.new(job.nextRow, packed),
-                false, nil, job.conn)
+            g_server:sendEvent(CropStressMoistureRowEvent.new(job.nextRow, packed,
+                job.snapshotGeneration), false, nil, job.conn)
         end
         job.nextRow = job.nextRow + 1
         sent = sent + 1
     end
 
     if job.nextRow >= total then
+        if CropStressMoistureControlEvent ~= nil then
+            g_server:sendEvent(CropStressMoistureControlEvent.new(
+                CropStressMoistureControlEvent.KIND_COMPLETE,
+                job.snapshotGeneration, job.baseRevision, total,
+                self.valueMap.resolution or 0), false, nil, job.conn)
+        end
         table.remove(q, 1)
-        csLog(string.format("Moisture map: delivered %d rows to a client", total))
+        csLog(string.format("Moisture map: delivered %d rows to a client (snapshot gen %d)",
+            total, job.snapshotGeneration))
     end
     self._syncTotalRowsSent = (self._syncTotalRowsSent or 0) + sent
     return sent
+end
+
+--- SCS-039 v2.1 (SDS 3.7): the client publish barrier. Applies the staged raw
+--- rows of a completed snapshot to the live map, then stamps the published
+--- absolute per-pixel delta values, exactly once.
+function SoilMoistureSystem:_publishFineSnapshot(snapshot)
+    local vm = self.valueMap
+    if vm == nil or not vm.available then return end
+    local width = (snapshot.mapWidth and snapshot.mapWidth > 0) and snapshot.mapWidth
+        or (vm.resolution or 0)
+    if width <= 0 then return end
+    for index = 0, snapshot.totalRows - 1 do
+        local packed = snapshot.rows[index]
+        if packed ~= nil then
+            local row = CropStressValueMap.unpackRow(packed, width)
+            vm:applySyncRow(index, row)
+        end
+    end
+    for pixelKey, value in pairs(snapshot.pixelValues or {}) do
+        if type(vm.writePixelValue) == "function" then
+            vm:writePixelValue(pixelKey, value)
+        end
+    end
 end
 
 -- ============================================================

@@ -497,6 +497,20 @@ function CropStressValueMap:applySyncRow(gy, row)
     return true
 end
 
+--- SCS-039 v2.1 (SDS 3.7): set ONE pixel from a semantic moisture value by its
+--- composite pixel key (px*4096+pz). Absolute deltas that a snapshot publishes
+--- land here after the raw rows are applied.
+function CropStressValueMap:writePixelValue(pixelKey, value)
+    if not self.available then return false end
+    if setBitVectorMapPoint == nil then return false end
+    local px = math.floor(pixelKey / 4096)
+    local pz = pixelKey - px * 4096
+    if px < 0 or pz < 0 or px >= self.resolution or pz >= self.resolution then return false end
+    local raw = encode(value, CropStressValueMap.LAYER_DEF)
+    local ok = pcall(setBitVectorMapPoint, self.bvm, px, pz, 0, NUM_CHANNELS, raw)
+    return ok == true
+end
+
 --- Pack a raw row into a compact run-length form for the wire. Moisture maps are
 --- overwhelmingly runs of one value (a field at a uniform level, and the whole
 --- off-field remainder at the raw-0 sentinel), so this is the difference between
