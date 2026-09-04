@@ -24,6 +24,9 @@ local function stubMap(grain)
     meanToReturn = nil,
   }
   function m:getGrainMetres() return self.grain end
+  -- worldToPixel is part of the sanctioned map interface (the SCS-039 authority
+  -- bar's stub provides it too); the positional water path keys pending by pixel.
+  function m:worldToPixel(x, z) return math.floor(x), math.floor(z) end
   function m:paintPolygon(_vx, _vz, _n, value)
     self.painted[#self.painted + 1] = value
     return true
@@ -101,7 +104,10 @@ do
   T.ok("present.mapWasWritten", #sys.valueMap.writes > 0)
 
   local v, grain = sys:getMoisture(1, 10, 10)
-  T.near("present.readsMapValue", v, 0.70, 1e-6)
+  -- SCS-039 quantisation law: a positional write lands on whole raw steps, so the
+  -- read-back is the semantic amount floored to the nearest raw step (a 0.20 gain
+  -- becomes 50 of the 254 steps), always within one raw step of 0.70.
+  T.near("present.readsMapValue", v, 0.70, 1 / CropStressValueMap.RAW_SPAN)
   T.eq("present.reportsMapGrain", grain, 2)
 end
 
