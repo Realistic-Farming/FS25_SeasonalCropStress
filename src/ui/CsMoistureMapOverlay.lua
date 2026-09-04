@@ -415,8 +415,17 @@ function CsMoistureMapOverlay:_pdaKickBuild()
     -- Path 1: read from the live value map (SF pattern). The top 4 bits of the
     -- 8-bit moisture layer give 16 DMV states at 2 m/px, so irrigation pixels
     -- light up the moment they are written.
+    -- SCS-039 v2.1 (SDS 3.9): Path 1 binds ONLY the current fine map. A native
+    -- provider that has failed closed, a ZONE carrier, or any partial/absent
+    -- fine state answers not-current, so the overlay falls to the aggregate
+    -- fallback instead of drawing non-current bytes as current ground.
     local soilSystem = self.manager and self.manager.soilSystem
-    local valueMap = soilSystem and soilSystem.valueMap
+    local valueMap = nil
+    if soilSystem ~= nil and soilSystem.isMoistureMapCurrent ~= nil
+       and soilSystem.getMoistureDisplayMap ~= nil
+       and soilSystem:isMoistureMapCurrent() then
+        valueMap = soilSystem:getMoistureDisplayMap()
+    end
     if valueMap and valueMap.available and valueMap.bvm then
         local bvm = valueMap.bvm
         setDensityMapVisualizationOverlayStateColor(ov, bvm, 0, 0, 4, 4, 0, 0, 0, 0, 0)
