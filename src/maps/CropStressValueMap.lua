@@ -378,10 +378,25 @@ end
 ---@return number|nil mean   0..1, nil when nothing is written in the polygon
 ---@return number|nil grain  metres per pixel (the concordance)
 function CropStressValueMap:readAverageOfPolygon(vx, vz, n)
-    if not self.available then return nil, nil end
+    -- SCS-039 v2.1 (SDS 3.2/3.3): TYPED outcomes, so a caller can tell a genuine
+    -- native provider refusal (which fails the provider closed for the mission)
+    -- apart from a malformed polygon or a valid-but-empty one; neither of the
+    -- latter is a refusal. Returns: outcome, mean, grain.
+    --   "INVALID_FIELD_GEOMETRY" - malformed polygon; the caller rebuilds context
+    --   "PROVIDER_REFUSAL"       - the native provider did not answer
+    --   "EMPTY"                  - a valid polygon with zero written pixels
+    --   "OK"                     - the mean over the written pixels
+    if vx == nil or vz == nil or n == nil or n < 3 then
+        return "INVALID_FIELD_GEOMETRY", nil, nil
+    end
+    if not self.available then return "PROVIDER_REFUSAL", nil, nil end
     local m = self.modifier
-    if m == nil or m.executeGet == nil then return nil, nil end
-    if not self:_setPolygonRegion(vx, vz, n) then return nil, nil end
+    if m == nil or m.executeGet == nil then return "PROVIDER_REFUSAL", nil, nil end
+    if not self:_setPolygonRegion(vx, vz, n) then
+        -- Geometry is already validated, so a bind failure here is the provider
+        -- (polygon ops unavailable, or a native throw), not bad geometry.
+        return "PROVIDER_REFUSAL", nil, nil
+    end
     -- executeGet returns (accumulator, numPixels, totalArea), confirmed at the
     -- decompile: PrecisionFarming NitrogenMap.lua:1034 reads it as
     -- `local acc, numPixels, _ = modifierFruit:executeGet()`. The mean we want
@@ -389,10 +404,13 @@ function CropStressValueMap:readAverageOfPolygon(vx, vz, n)
     local ok, acc, numPixels = pcall(function()
         return m:executeGet()
     end)
-    if not ok or acc == nil or numPixels == nil or numPixels == 0 then
-        return nil, nil
+    if not ok or acc == nil or numPixels == nil then
+        return "PROVIDER_REFUSAL", nil, nil
     end
-    return decode(acc / numPixels, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
+    if numPixels == 0 then
+        return "EMPTY", nil, self:getGrainMetres()
+    end
+    return "OK", decode(acc / numPixels, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
 end
 
 -- ─────────────────────────────────────────────────────────

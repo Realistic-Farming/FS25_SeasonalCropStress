@@ -60,10 +60,13 @@ local function currentSystem()
 end
 
 -- GROUP A: PROVIDER CONFORMANCE TRIPWIRE (re-pointed as slices land).
--- Slices 1-3 (Fred, PENDING DESIGN REVIEW): A1, A3, A5, A6, A7, A8, A9, A11, A13
--- and A14 are re-pointed from absence to PRESENCE against the built SCS-039
--- surfaces. A12 alone remains an absence assertion for the still-unbuilt native
--- refusal fail-closed slice, so the tripwire keeps tracking what has not landed yet.
+-- Slices 1-4 (Fred, PENDING DESIGN REVIEW): every Group A assertion A1-A14 is now
+-- re-pointed from absence to PRESENCE against the built SCS-039 surfaces. Slice 4
+-- lands the native-refusal fail-closed path (A12), so no Group A tripwire remains
+-- on absence. (The member is not complete: SDS 3.5-3.9 live wiring -- atomic save
+-- generations, daily plan + Time Guard subscribeTick, snapshot/delta events,
+-- NetworkSync compat, overlay gate -- are still later slices, modelled by the
+-- pure-contract Groups B-P.)
 -- Source coordinates: SoilMoistureSystem.lua:69, 178-190, 680-712, 748-768,
 -- 893-943, 1038-1064, 1364-1366. Design corrections: SDS 3.2-3.11.
 do
@@ -120,16 +123,23 @@ do
         nativeSaveMap:saveToSavegame("synthetic-save-root"), false)
     saveBitVectorMapToFile = originalNativeSave
 
-    -- SoilMoistureSystem.lua:978-982 retains the old scalar for every nil mean,
-    -- while CropStressValueMap.lua:376-391 collapses invalid, empty and refusal.
+    -- SCS-039 slice 4 re-point: after TRUTH is the current authority, a native
+    -- polygon-aggregate refusal on the daily settle fails the provider CLOSED
+    -- (SDS 3.3) instead of silently retaining the prior field scalar as current.
     local meanSys = currentSystem()
     meanSys.valueMap = currentStubMap(2)
+    meanSys.providerMode = "TRUTH"
     meanSys._drainFieldOnMap = function() return false end
-    meanSys.valueMap.readAverageOfPolygon = function() return nil, nil end
+    meanSys.valueMap.readAverageOfPolygon = function() return "PROVIDER_REFUSAL", nil, nil end
     meanSys.fieldData[1].moisture = 0.61
+    local a12revBefore = meanSys.moistureRevision
     meanSys:settleDaily(1)
-    T.near("A12 current polygon refusal silently retains the prior field scalar",
-        meanSys.fieldData[1].moisture, 0.61, 1e-12)
+    T.eq("A12 BUILT: a native polygon-read refusal after TRUTH fails the provider closed",
+        meanSys.providerMode, "UNAVAILABLE_PENDING_RELOAD")
+    T.eq("A12b BUILT: the failed-closed provider is no longer current",
+        meanSys:isMoistureMapCurrent(), false)
+    T.eq("A12c BUILT: failing closed holds the readable revision",
+        meanSys.moistureRevision, a12revBefore)
 
     local acceptedSys = currentSystem()
     acceptedSys.valueMap = currentStubMap(2)

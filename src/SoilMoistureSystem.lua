@@ -248,8 +248,13 @@ function SoilMoistureSystem:initValueMap(savegameDir)
 end
 
 --- THE SINGLE DELEGATE TEST. Read it as "is the map carrying the truth".
+--- SCS-039 v2.1 (SDS 3.3): a provider that has failed closed for the mission
+--- answers false here, so getMoisture, the overlay and every native read path
+--- detach from the fine map without the handle being nil-ed (teardown still
+--- releases the carrier). The one-way choice is only reset by the next load.
 function SoilMoistureSystem:mapActive()
     return self.valueMap ~= nil and self.valueMap.available == true
+        and self.providerMode ~= "UNAVAILABLE_PENDING_RELOAD"
 end
 
 --- Field polygon in world space, cached. The map's region ops need it on every
@@ -757,10 +762,16 @@ function SoilMoistureSystem:_refreshFieldAggregate(fieldId, d)
     if self.valueMap.readAverageOfPolygon == nil then return end
     local vx, vz, n = self:_getFieldVerts(fieldId)
     if vx == nil then return end
-    local mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
-    if mean ~= nil then
+    -- SCS-039 v2.1 (SDS 3.2/3.3): typed outcome. Only OK re-derives the scalar and
+    -- clears the dirty flag; a genuine PROVIDER_REFUSAL fails the provider closed
+    -- for the mission; EMPTY and INVALID_FIELD_GEOMETRY are not refusals and leave
+    -- the last cached scalar (and the dirty flag) exactly as they were.
+    local outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+    if outcome == "OK" then
         d.moisture = mean
         d.aggregateDirty = false
+    elseif outcome == "PROVIDER_REFUSAL" then
+        self:_failNativeClosed("polygon-aggregate refusal on field refresh")
     end
 end
 
@@ -795,6 +806,28 @@ end
 function SoilMoistureSystem:_advanceMoistureRevision()
     self.moistureRevision = (self.moistureRevision or 1) + 1
     return self.moistureRevision
+end
+
+--- SCS-039 v2.1 (SDS 3.3): a native refusal AFTER TRUTH became the current
+--- authority is a ONE-WAY transition for the rest of the mission. A native point
+--- read, valid-polygon aggregate read, region write or native save that refuses
+--- calls this one path. It changes the mode exactly once, makes the fine map
+--- non-current and detaches it from public reads and the overlay (mapActive() now
+--- answers false), HOLDS the readable revision, leaves BOTH accepted-water pending
+--- stores intact, and never promotes the retained zone cells. Only the next
+--- mission load selects a readable TRUTH or ZONE carrier again. Invalid geometry
+--- and an empty polygon are NOT provider refusals and must never call this.
+function SoilMoistureSystem:_failNativeClosed(reason)
+    if self.providerMode ~= "TRUTH" then return end   -- once only, from current TRUTH
+    self.providerMode = "UNAVAILABLE_PENDING_RELOAD"
+    self._nativeFailedReason = reason
+    -- The revision is intentionally NOT advanced and the pending stores are left
+    -- exactly as they are. The native handle is retained (not nil-ed) so teardown
+    -- can still release the carrier; mapActive() is what detaches the reads.
+    if csLog ~= nil then
+        csLog("Moisture: native provider failed closed (" .. tostring(reason) ..
+            "); reads fall to the aggregate then the cell store until the next load")
+    end
 end
 
 -- THE SINGLE WRITE PATH (SCS-018 brief 3.3): read the cell, compute, write the
@@ -1117,8 +1150,17 @@ function SoilMoistureSystem:settleDaily(boundariesCrossed)
             end
             local vx, vz, n = self:_getFieldVerts(fieldId)
             if vx ~= nil then
-                local mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
-                if mean ~= nil then d.moisture = mean end
+                -- SCS-039 v2.1 (SDS 3.2/3.3): only OK re-derives the scalar. A
+                -- genuine native refusal fails the provider closed for the mission
+                -- and stops trusting the fine map this settle; EMPTY and invalid
+                -- geometry are not refusals and leave the scalar in place.
+                local outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+                if outcome == "OK" then
+                    d.moisture = mean
+                elseif outcome == "PROVIDER_REFUSAL" then
+                    self:_failNativeClosed("polygon-aggregate refusal on daily settle")
+                    break
+                end
             end
         end
         self._lastSettleFields = fields

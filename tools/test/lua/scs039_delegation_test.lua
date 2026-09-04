@@ -44,7 +44,10 @@ local function stubMap(grain)
     return delta            -- pretend the engine applied it in full
   end
   function m:readAverageOfPolygon(_vx, _vz, _n)
-    return self.meanToReturn, self.grain
+    -- SCS-039 v2.1 typed contract: a nil meanToReturn models a valid-but-EMPTY
+    -- polygon (not a provider refusal), so the daily settle leaves the scalar.
+    if self.meanToReturn == nil then return "EMPTY", nil, self.grain end
+    return "OK", self.meanToReturn, self.grain
   end
   return m
 end
