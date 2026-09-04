@@ -32,7 +32,7 @@ local function currentStubMap(grain)
         return nil, self.grain, "EMPTY"
     end
     function m:worldToPixel(_x, _z) return 1, 1 end
-    function m:writeValueAtWorld(_x, _z, _value, _radius) return true end
+    function m:writeValueAtWorld(_x, _z, _value, _radius) return true, "OK" end
     function m:delete()
         self.deleted = self.deleted + 1
         self.available = false
@@ -62,14 +62,14 @@ local function currentSystem()
 end
 
 -- GROUP A: PROVIDER CONFORMANCE TRIPWIRE (re-pointed as slices land).
--- Slices 1-6 (Fred): every Group A assertion A1-A15 is now re-pointed from
+-- Slices 1-7 (Fred): every Group A assertion A1-A16 is now re-pointed from
 -- absence to PRESENCE against the built SCS-039 surfaces. Slice 4 lands the
--- polygon-aggregate fail-closed path (A12); slice 6 lands the point-read
--- fail-closed path (A15). No Group A tripwire remains on absence. (The member
--- is not complete: SDS 3.5-3.9 live wiring, atomic save generations, daily
--- plan + Time Guard subscribeTick, snapshot/delta events, NetworkSync compat
--- and the overlay gate, are still later slices, modelled by the pure-contract
--- Groups B-P.)
+-- polygon-aggregate fail-closed path (A12); slice 6 the point-read fail-closed
+-- path (A15); slice 7 the region-write fail-closed path (A16). No Group A
+-- tripwire remains on absence. (The member is not complete: SDS 3.5-3.9 live
+-- wiring, atomic save generations, daily plan + Time Guard subscribeTick,
+-- snapshot/delta events, NetworkSync compat and the overlay gate, are still
+-- later slices, modelled by the pure-contract Groups B-P.)
 -- Source coordinates: SoilMoistureSystem.lua:69, 178-190, 680-712, 748-768,
 -- 893-943, 1038-1064, 1364-1366. Design corrections: SDS 3.2-3.11.
 do
@@ -183,6 +183,28 @@ do
         a14leaf and a14leaf.sourceWidth or nil, 2)
     T.eq("A14e BUILT: unresolved pending-only water mints no readable revision",
         unresolvedSys.moistureRevision, a14revBefore)
+
+    -- SCS-039 slice 7 re-point: a genuine native REGION-WRITE refusal at the
+    -- positional spend (applyWaterAtCell destination write, SDS 3.3/3.4) fails
+    -- the provider closed AND conserves the full pre-spend accepted amount.
+    -- Pending is debited and the readable revision advances only after the
+    -- destination read and write both succeed exactly (Group O O10/O11).
+    local writeSys = currentSystem()
+    writeSys.valueMap = currentStubMap(2)
+    writeSys.providerMode = "TRUTH"
+    writeSys.valueMap.writeValueAtWorld = function() return false, "PROVIDER_REFUSAL" end
+    local a16revBefore = writeSys.moistureRevision
+    local a16accepted = writeSys:applyWaterAtCell(1, 10, 10, 0.02)
+    T.eq("A16 BUILT: a native region-write refusal fails the provider closed",
+        writeSys.providerMode, "UNAVAILABLE_PENDING_RELOAD")
+    T.eq("A16b BUILT: the write failed-closed provider is no longer current",
+        writeSys:isMoistureMapCurrent(), false)
+    T.eq("A16c BUILT: write-refusal fail-closed holds the readable revision",
+        writeSys.moistureRevision, a16revBefore)
+    T.eq("A16d BUILT: water whose destination write refused is still accepted",
+        a16accepted, true)
+    T.near("A16e BUILT: the refused spend conserves the full pre-spend amount",
+        writeSys._mapWaterPending[1][4097], 0.02, 1e-12)
 end
 
 local Ref = {}

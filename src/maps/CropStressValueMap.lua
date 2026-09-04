@@ -292,22 +292,33 @@ end
 --- Write a value over a square region centred on a world position.
 --- `radius` is in metres; it floors to one pixel so a point write is never a
 --- no-op on a coarse map.
+--- SCS-039 v2.1 (SDS 3.3/3.4): the second return is a TYPED outcome, so a caller
+--- can tell a genuine native region-write refusal (the execute threw) from a
+--- benign no-op (map not carrying the data). Only a refusal fails the provider
+--- closed; NOOP leaves the carrier untouched. Returns: wrote, outcome.
+---   "PROVIDER_REFUSAL" - the native region write threw
+---   "NOOP"             - nothing attempted (map absent, no modifier)
+---   "OK"               - the region write executed
+---@return boolean wrote   true only when the native execute ran
+---@return string outcome  one of the typed outcomes above
 function CropStressValueMap:writeValueAtWorld(worldX, worldZ, value, radius)
-    if not self.available then return false end
+    if not self.available then return false, "NOOP" end
     local grain = self:getGrainMetres() or 2
     local r = math.max(radius or 0, grain * 0.5)
     local raw = encode(value, CropStressValueMap.LAYER_DEF)
     return self:_setRegion(worldX - r, worldZ - r, worldX + r, worldZ + r, raw)
 end
 
+---@return boolean wrote, string outcome (see writeValueAtWorld)
 function CropStressValueMap:_setRegion(x0, z0, x1, z1, raw)
     local m = self.modifier
-    if m == nil then return false end
+    if m == nil then return false, "NOOP" end
     local ok = pcall(function()
         m:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)
         m:executeSet(raw)
     end)
-    return ok
+    if not ok then return false, "PROVIDER_REFUSAL" end
+    return true, "OK"
 end
 
 -- ─────────────────────────────────────────────────────────

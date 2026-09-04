@@ -1085,16 +1085,36 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
         local key = px * 4096 + pz
         local pending = (fieldAcc[key] or 0) + gain
         local applied, remainder = CropStressValueMap.quantiseDelta(pending)
-        fieldAcc[key] = remainder
         if applied ~= 0 then
-            local grain = self.valueMap:getGrainMetres() or 2
-            local current = self.valueMap:readValueAtWorld(x, z)
+            -- SCS-039 v2.1 (SDS 3.4): debit pending only after the destination
+            -- READ and WRITE both succeed exactly. A genuine native refusal at
+            -- either point (SDS 3.3: a point-read or region-write refusal while
+            -- TRUTH is current) fails the provider closed for the mission and
+            -- keeps the FULL pre-spend amount in the pending store, so accepted
+            -- water is never lost and no false revision is minted. The water was
+            -- accepted into pending before the spend, so the receipt stays true.
+            local current, _, readOutcome = self.valueMap:readValueAtWorld(x, z)
+            if readOutcome == "PROVIDER_REFUSAL" then
+                fieldAcc[key] = pending
+                self:_failNativeClosed("native destination-read refusal on water spend")
+                return true
+            end
             if current == nil then current = self:getFieldAggregate(d) or 0 end
-            self.valueMap:writeValueAtWorld(x, z, math.max(0.0, math.min(1.0, current + applied)), grain * 0.5)
+            local grain = self.valueMap:getGrainMetres() or 2
+            local _, writeOutcome = self.valueMap:writeValueAtWorld(x, z,
+                math.max(0.0, math.min(1.0, current + applied)), grain * 0.5)
+            if writeOutcome == "PROVIDER_REFUSAL" then
+                fieldAcc[key] = pending
+                self:_failNativeClosed("native region-write refusal on water spend")
+                return true
+            end
+            fieldAcc[key] = remainder
             -- A whole-raw-step spend moved readable ground: the cached field
             -- aggregate is now stale, and the revision advances once.
             d.aggregateDirty = true
             self:_advanceMoistureRevision()
+        else
+            fieldAcc[key] = remainder
         end
         -- Accepted. The field aggregate is re-derived from the map on the daily
         -- settle; a single pixel's gain is below the field-mean noise until then.

@@ -32,9 +32,10 @@ local function stubMap(grain)
     return true
   end
   function m:writeValueAtWorld(x, z, value, _r)
+    -- SCS-039 v2.1 typed contract: a non-throwing stub write is OK.
     self.writes[#self.writes + 1] = { x = x, z = z, v = value }
     self.pixels[string.format("%d:%d", math.floor(x), math.floor(z))] = value
-    return true
+    return true, "OK"
   end
   function m:readValueAtWorld(x, z)
     -- SCS-039 v2.1 typed contract: an unwritten pixel is EMPTY (benign), a
