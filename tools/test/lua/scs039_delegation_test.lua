@@ -195,6 +195,33 @@ do
   T.near("set.survivesSettle", sys.fieldData[1].moisture, 0.80, 1e-9)
 end
 
+-- 8b. NATIVE SAVE REFUSAL FAILS THE PROVIDER CLOSED (SDS 3.3). A native save that
+--     never reached disk must not leave the mission still trusting the fine map;
+--     the scalar rows become the honest degrade layer and the next load re-selects.
+do
+  local sys = newSystem()
+  sys.valueMap = stubMap(2)
+  sys.providerMode = "TRUTH"
+  sys.valueMap.saveToSavegame = function() return false end
+  local ok = sys:saveNativeMap("/nowhere")
+  T.eq("save.refusalReportsFalse", ok, false)
+  T.eq("save.refusalFailsClosed", sys.providerMode, "UNAVAILABLE_PENDING_RELOAD")
+  T.eq("save.refusalDetachesReads", sys:mapActive(), false)
+end
+
+-- 8c. A SUCCESSFUL NATIVE SAVE keeps TRUTH the current authority and never trips
+--     the one-way fail-closed transition.
+do
+  local sys = newSystem()
+  sys.valueMap = stubMap(2)
+  sys.providerMode = "TRUTH"
+  sys.valueMap.saveToSavegame = function() return true end
+  local ok = sys:saveNativeMap("/nowhere")
+  T.eq("save.successReportsTrue", ok, true)
+  T.eq("save.successKeepsTruth", sys.providerMode, "TRUTH")
+  T.eq("save.successKeepsMapActive", sys:mapActive(), true)
+end
+
 
 -- 9. MAP DRAINAGE: conserved by construction, and it runs downhill.
 --    Water must MOVE between places without the field total changing, and it

@@ -66,7 +66,12 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
         local sgDir = g_currentMission ~= nil and g_currentMission.missionInfo ~= nil
             and g_currentMission.missionInfo.savegameDirectory or nil
         if sgDir ~= nil then
-            soilSystemForMap.valueMap:saveToSavegame(sgDir)
+            -- SCS-039 v2.1 (SDS 3.3): route the native save through the soil system
+            -- so a refusal fails the provider closed. The scalar rows written below
+            -- then carry the save as the honest degrade layer, and the next load
+            -- re-selects a readable carrier rather than trusting bytes that never
+            -- reached disk.
+            soilSystemForMap:saveNativeMap(sgDir)
         end
     end
 

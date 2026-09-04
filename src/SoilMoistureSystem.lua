@@ -830,6 +830,21 @@ function SoilMoistureSystem:_failNativeClosed(reason)
     end
 end
 
+--- SCS-039 v2.1 (SDS 3.3): the native-save call site. saveToSavegame already
+--- requires the engine's inner true (slice 1); this routes its refusal through
+--- the one fail-closed path so a save that never reached disk cannot leave the
+--- mission still trusting the fine map. The per-field scalar rows the save
+--- handler writes next are the honest degrade layer, and the next load re-selects
+--- a readable TRUTH or ZONE carrier. Returns the literal save receipt.
+function SoilMoistureSystem:saveNativeMap(savegameDir)
+    if self.valueMap == nil or not self.valueMap.available then return false end
+    local savedOk = self.valueMap:saveToSavegame(savegameDir) == true
+    if not savedOk then
+        self:_failNativeClosed("native save refusal")
+    end
+    return savedOk
+end
+
 -- THE SINGLE WRITE PATH (SCS-018 brief 3.3): read the cell, compute, write the
 -- cell, adjust the field's running sum by the delta, in that order. All eight
 -- simulation doors fold through here. Returns the new aggregate.
