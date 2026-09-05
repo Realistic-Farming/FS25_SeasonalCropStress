@@ -445,13 +445,18 @@ function IrrigationScheduleDialog:onIrrigateNow()
     local ok = false
     if g_cropStressManager ~= nil and g_cropStressManager.irrigationManager ~= nil then
         if g_server == nil and g_client ~= nil and CropStressIrrigateNowEvent ~= nil then
-            -- SCS-018 3.6: a client routes the request to the server; the server
-            -- applies the water through the single per-cell write path. Never
-            -- write local state and let the next broadcast erase it.
-            CropStressIrrigateNowEvent.sendToServer(self.systemId)
+            -- SCS-018 3.6 / SCS-023 v2.3 (SDS 6): a client routes the request to
+            -- the server through the ONE Irrigate Now chain; the server replies
+            -- with the direct result event. Never write local state and let the
+            -- next broadcast erase it. Unfitted systems expect revision -1.
+            CropStressIrrigateNowEvent.sendToServer(self.systemId, -1)
             ok = true
-        else
-            ok = g_cropStressManager.irrigationManager:applyOneTimeIrrigation(self.systemId)
+        elseif g_cropStressManager.irrigationManager.runIrrigateNowHost ~= nil then
+            -- Host (listen server / single player): run the same transaction
+            -- wrapper and handle the result locally. No public path calls
+            -- applyOneTimeIrrigation directly (F200).
+            local result = g_cropStressManager.irrigationManager:runIrrigateNowHost(self.systemId)
+            ok = result ~= nil and result.accepted == true
         end
     end
 

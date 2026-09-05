@@ -504,6 +504,27 @@ function CropStressManager:applySettings()
     csLog("Settings applied to all subsystems")
 end
 
+--- SCS-023 v2.3 (SDS 4): ONE authoritative settings owner. Validates and applies
+--- the change on the settings object, re-applies settings to the subsystems,
+--- and refreshes the effective finite-water mode (which fires the session-only
+--- fill-once active-to-inactive edge). The panel, the settings sync event and
+--- SettingsHub route through this owner; clients apply display state only via
+--- the settings event. Returns false for an unknown key.
+function CropStressManager:applyAuthoritativeSettingChange(key, value, origin)
+    if self.settings == nil or key == nil then return false end
+    if self.settings[key] == nil then return false end
+    if key == "finiteWater" then value = not not value end
+    self.settings[key] = value
+    if self.settings.validateSettings ~= nil then
+        self.settings:validateSettings()
+    end
+    self:applySettings()
+    if self.irrigationManager ~= nil and self.irrigationManager.handleFiniteWaterModeEdge ~= nil then
+        self.irrigationManager:handleFiniteWaterModeEdge()
+    end
+    return true
+end
+
 -- ============================================================
 -- PER-FRAME UPDATE (called from FSBaseMission.update hook)
 -- ============================================================
@@ -637,38 +658,74 @@ function CropStressManager:onHourlyTick(elapsedHours)
     -- Simulation runs on the server (or single-player host) only.
     -- Clients receive updated values via CropStressMoistureInitEvent broadcast.
     if g_server ~= nil then
+        -- SCS-023 v2.3 (SDS 4): every hourly act first refreshes the effective
+        -- finite-water mode edge so an external mode change (SettingsHub, load)
+        -- still fires the one-time fill once.
+        if self.irrigationManager ~= nil and self.irrigationManager.handleFiniteWaterModeEdge ~= nil then
+            self.irrigationManager:handleFiniteWaterModeEdge()
+        end
         -- SCS-023 FINITE WATER PLANNER. Run BEFORE the schedule check so the
         -- planner's served hours are available to the positional gain apply and
         -- to chargeHourlyCosts. When finite water is inactive, collect incumbent
         -- scheduled hours with no source draw or refill (fraction 1.0).
-        local positionalScheduleApplied = false
+        local fieldSuppression = nil
         local servedHoursBySystem = nil
         local finiteWaterActive = false
+        local finitePlan = nil
         if self.irrigationManager ~= nil
            and self.irrigationManager.planFiniteWater ~= nil then
             finiteWaterActive = self.irrigationManager:isFiniteWaterActive()
             local currentHourKey = (env.currentMonotonicDay or 0) * 24 + (env.currentHour or 0)
             local rainScale, isRaining = self.weatherIntegration:getRainFromWeather()
             if finiteWaterActive then
-                servedHoursBySystem = self.irrigationManager:planFiniteWater(
+                -- SCS-023 v2.3 (SDS 5.1/5.3): the planner is PURE and returns a
+                -- plan; the plan is committed exactly once before the positional
+                -- gain apply so source water is debited once for this span.
+                finitePlan = self.irrigationManager:planFiniteWater(
                     hours, currentHourKey, rainScale, isRaining)
+                servedHoursBySystem = finitePlan.servedHoursBySystem
+                if self.irrigationManager.commitFiniteWaterPlan ~= nil then
+                    self.irrigationManager:commitFiniteWaterPlan(finitePlan)
+                end
             else
                 servedHoursBySystem = self.irrigationManager:collectScheduledHours(
                     hours, currentHourKey)
             end
             -- Apply every positive positional-hours result through coverage.
+            -- SCS-023 v2.3 (SDS 5.2): COVER returns PER-FIELD evidence. Accepted
+            -- and Refused fields suppress ONLY their own incumbent field-wide
+            -- accumulator; a whole-act legacy (soil machinery absent) keeps the
+            -- incumbent answer for every field. Fitted pivots are F200's own act
+            -- and are never double-served here.
+            local mergedCodes = {}
+            local legacyWholeAct = false
             for id, servedHours in pairs(servedHoursBySystem or {}) do
                 if servedHours > 0 then
                     local sys = self.irrigationManager.systems[id]
-                    if sys ~= nil then
+                    if sys ~= nil and not (sys.rainKeyFitted == true)
+                       and self.irrigationManager.applyGainToSystemCoverage ~= nil then
                         local gain = (sys.flowRatePerHour or 0)
                             * (sys.pressureMultiplier or 0) * servedHours
                         if gain > 0 then
-                            self.irrigationManager:applyGainToSystemCoverage(sys, gain)
-                            positionalScheduleApplied = true
+                            local evidence = self.irrigationManager:applyGainToSystemCoverage(sys, gain)
+                            if evidence.wholeActLegacy then
+                                legacyWholeAct = true
+                            else
+                                for fieldId, code in pairs(evidence.fields or {}) do
+                                    local rank = (code == "ACCEPTED" and 3)
+                                        or (code == "REFUSED" and 2) or 1
+                                    if (mergedCodes[fieldId] or 0) < rank then
+                                        mergedCodes[fieldId] = rank
+                                    end
+                                end
+                            end
                         end
                     end
                 end
+            end
+            if not legacyWholeAct then
+                fieldSuppression = {}
+                for fieldId in pairs(mergedCodes) do fieldSuppression[fieldId] = true end
             end
         end
 
@@ -699,7 +756,7 @@ function CropStressManager:onHourlyTick(elapsedHours)
         -- rain switch is reconstructed per skipped day rather than held at the
         -- last-known sky. nil (the case today) means round-1 behaviour exactly.
         self.soilSystem:hourlyUpdate(self.weatherIntegration, hours,
-            self:getSkipRainHours(hours), positionalScheduleApplied)
+            self:getSkipRainHours(hours), false, fieldSuppression)
 
         -- 3. Apply RWE world-event stress multiplier (no-op when RWE not loaded)
         if self.rweManager then
@@ -710,8 +767,10 @@ function CropStressManager:onHourlyTick(elapsedHours)
         -- 4. Accumulate crop stress where moisture is critical
         self.stressModifier:hourlyUpdate(hours)
 
-        self.financeIntegration:chargeHourlyCosts(hours,
-            finiteWaterActive and servedHoursBySystem or nil)
+        -- SCS-023 v2.3 (SDS 5.3/7): when the finite plan is present, finance
+        -- debits its FROZEN financeRows exactly once; a nil plan (non-finite
+        -- mode) preserves the pre-feature isActive * hours fallback.
+        self.financeIntegration:chargeHourlyCosts(hours, finitePlan)
 
         -- Push updated moisture/stress to all connected clients. When the
         -- NetworkSync bridge is active the whole field map batches through its 1Hz
@@ -975,8 +1034,24 @@ end
 function CropStressManager:getIrrigationSystems(farmId)
     local irrMgr = self.irrigationManager
     if irrMgr == nil or irrMgr.systems == nil then return {} end
-    if farmId ~= nil and irrMgr.getIrrigationSystemsRows ~= nil then
-        return irrMgr:getIrrigationSystemsRows(farmId)
+    -- SCS-023 v2.3 (SDS 8): the farm-scoped public surface. A positive valid
+    -- farm is current immediately on the server/listen host; a pure client
+    -- returns nil until that farm's complete private snapshot applied. An
+    -- invalid, spectator or not-yet-current farm returns nil. farmId nil keeps
+    -- the exact legacy all-public field shape for older FarmTablet versions.
+    if farmId ~= nil then
+        if type(farmId) ~= "number" or farmId <= 0 then return nil end
+        if g_server ~= nil then
+            if irrMgr.getIrrigationSystemsRows ~= nil then
+                return irrMgr:getIrrigationSystemsRows(farmId)
+            end
+            return nil
+        end
+        if irrMgr._clientFarmCurrent ~= nil and irrMgr._clientFarmCurrent[farmId] == true
+           and irrMgr.getCachedFarmSystems ~= nil then
+            return irrMgr:getCachedFarmSystems(farmId)
+        end
+        return nil
     end
     local out = {}
     for _, sys in pairs(irrMgr.systems) do
@@ -1033,12 +1108,22 @@ function CropStressManager:getIrrigationSystems(farmId)
     return out
 end
 
--- SCS-023: read-only farm-filtered water-source rows (capacity, remainder or
--- Unlimited, availability, label, sorted connected ids). Copy-only.
+-- SCS-023 v2.3 (SDS 8): read-only farm-filtered water-source rows
+-- (waterCapacity / isUnlimited / connectedSystemIds, with legacy aliases).
+-- Copy-only. Server is current immediately for a positive valid farm; a pure
+-- client returns nil until that farm's complete private snapshot applied.
 function CropStressManager:getIrrigationWaterSources(farmId)
     local irrMgr = self.irrigationManager
     if irrMgr == nil or irrMgr.getIrrigationWaterSources == nil then return {} end
-    return irrMgr:getIrrigationWaterSources(farmId)
+    if farmId ~= nil and (type(farmId) ~= "number" or farmId <= 0) then return nil end
+    if g_server ~= nil or farmId == nil then
+        return irrMgr:getIrrigationWaterSources(farmId)
+    end
+    if irrMgr._clientFarmCurrent ~= nil and irrMgr._clientFarmCurrent[farmId] == true
+       and irrMgr.getCachedFarmSources ~= nil then
+        return irrMgr:getCachedFarmSources(farmId)
+    end
+    return nil
 end
 
 -- Irrigation schedule covering a field: a COPY of
@@ -1453,16 +1538,44 @@ function CropStressManager:consoleWaterStatus(farmIdStr)
     print("=== Finite irrigation water (SCS-023) ===")
     print(string.format("  effective mode: %s",
         irr:isFiniteWaterActive() and "FINITE" or "unlimited/inactive"))
+    print("  inherited cap: 168 hours (unchanged)")
+    local rain = nil
+    if self.weatherIntegration ~= nil and self.weatherIntegration.getCurrentRainKey ~= nil then
+        local readable, rainScale, isRaining = self.weatherIntegration:getCurrentRainKey()
+        rain = { readable = readable, rainScale = rainScale, isRaining = isRaining }
+    end
+    if rain ~= nil then
+        print(string.format("  endpoint sky: readable=%s rain=%.3f isRaining=%s",
+            tostring(rain.readable), rain.rainScale or 0, tostring(rain.isRaining)))
+    else
+        print("  endpoint sky: unavailable")
+    end
     local sources = irr:getIrrigationWaterSources(farmId)
     for _, s in ipairs(sources) do
-        local rem = s.unlimited and "Unlimited"
-            or string.format("%.1f / %.1f", s.waterRemaining or 0, s.capacity or 0)
+        local isUnlimited = s.isUnlimited == true
+        local capacity    = s.waterCapacity
+        local remaining   = s.waterRemaining
+        if s.capacity ~= nil and capacity == nil then capacity = s.capacity end
+        if s.unlimited ~= nil and isUnlimited == false and s.unlimited == true then isUnlimited = true end
+        if s.waterRemaining ~= nil and remaining == nil then remaining = s.waterRemaining end
+        local connected = s.connectedSystemIds or s.connectedSystems or {}
+        local rem = isUnlimited and "Unlimited"
+            or string.format("%.1f / %.1f", remaining or 0, capacity or 0)
         print(string.format("  source %d farm=%s %s (%s) connected=[%s]",
             s.id, tostring(s.ownerFarmId), rem,
             s.hasWater and "wet" or "dry",
-            table.concat(s.connectedSystems or {}, ",")))
+            table.concat(connected, ",")))
     end
     if #sources == 0 then print("  (zero sources: PASS)") end
+    if farmId > 0 and irr.lastIrrigateNowResultByFarm ~= nil then
+        local res = irr.lastIrrigateNowResultByFarm[farmId]
+        if res ~= nil then
+            print(string.format("  last Irrigate Now: %s accepted=%s served=%.3f targets=%d committed=%.3f rev=%d",
+                tostring(res.resultCode), tostring(res.accepted),
+                res.servedFraction or 0, res.acceptedTargetCount or 0,
+                res.committedHours or 0, res.stateRevision or 0))
+        end
+    end
 end
 
 function CropStressManager:consoleSetMoisture(fieldIdStr, valueStr)
