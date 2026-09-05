@@ -1291,13 +1291,27 @@ function IrrigationManager:getRainKeySnapshot(system)
 end
 
 --- Fit or remove a rain key, set the dial, all through the one server command path.
+--- SCS-046 B (F200): FIT and SET require the rain_key_pause release row live; a
+--- stale expected revision is rejected before any mutation; REMOVE settles the
+--- already-run interval first.
 ---@param systemId number
 ---@param action string  FIT | REMOVE | SET_TRIP_MM
 ---@param value number|nil
+---@param expectedRevision number|nil  rain-key state revision the requester saw
 ---@return boolean ok, string|nil error
-function IrrigationManager:applyRainKeyCommand(systemId, action, value)
+function IrrigationManager:applyRainKeyCommand(systemId, action, value, expectedRevision)
     local system = self.systems[systemId]
     if system == nil then return false, "UNKNOWN_SYSTEM" end
+    expectedRevision = expectedRevision or -1
+    if expectedRevision ~= -1 and (system.rainKeyStateRevision or 0) ~= expectedRevision then
+        return false, "STALE_CONFIRMATION"
+    end
+    if action == "FIT" or action == "SET_TRIP_MM" then
+        if ReleaseGate ~= nil and type(ReleaseGate.isSystemLive) == "function"
+           and ReleaseGate.isSystemLive("rain_key_pause") ~= true then
+            return false, "RELEASE_LOCKED"
+        end
+    end
     if action == "FIT" then
         if system.type ~= "pivot" then return false, "NOT_A_PIVOT" end
         system.rainKeyFitted = true
@@ -1310,6 +1324,10 @@ function IrrigationManager:applyRainKeyCommand(systemId, action, value)
         system._lastRainKeyPausePublished = false
         return true, nil
     elseif action == "REMOVE" then
+        -- F200: REMOVE settles the already-run continuous interval first.
+        if system.rainKeyFitted == true then
+            self:settleFittedSystem(system, "REMOVE")
+        end
         system.rainKeyFitted = false
         system.rainKeyTripMm = 2.5
         system.rainKeyAccumulatedMm = 0

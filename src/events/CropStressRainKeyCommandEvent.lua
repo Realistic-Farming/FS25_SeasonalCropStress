@@ -5,6 +5,8 @@
 -- The server validates ownership, applies the command through the one
 -- applyRainKeyCommand path, and returns a stable result. Clients never
 -- mutate a rain key locally; they send the request and await the result.
+-- Request stream: Int32 systemId, String action, Bool hasValue,
+-- Float32 value when hasValue, Int32 expectedRevision.
 -- ============================================================
 
 CropStressRainKeyCommandEvent = CropStressRainKeyCommandEvent or {}
@@ -16,11 +18,13 @@ function CropStressRainKeyCommandEvent.emptyNew()
     return Event.new(CropStressRainKeyCommandEvent_mt)
 end
 
-function CropStressRainKeyCommandEvent.new(systemId, action, value)
+---@param expectedRevision number  rain-key state revision the requester saw
+function CropStressRainKeyCommandEvent.new(systemId, action, value, expectedRevision)
     local self = CropStressRainKeyCommandEvent.emptyNew()
     self.systemId = systemId or 0
     self.action   = action or ""
     self.value    = value
+    self.expectedRevision = expectedRevision or -1
     return self
 end
 
@@ -30,6 +34,7 @@ function CropStressRainKeyCommandEvent:writeStream(streamId, connection)
     local hasValue = self.value ~= nil
     streamWriteBool(streamId, hasValue)
     if hasValue then streamWriteFloat32(streamId, self.value) end
+    streamWriteInt32(streamId, self.expectedRevision or -1)
 end
 
 function CropStressRainKeyCommandEvent:readStream(streamId, connection)
@@ -37,6 +42,7 @@ function CropStressRainKeyCommandEvent:readStream(streamId, connection)
     self.action   = streamReadString(streamId)
     local hasValue = streamReadBool(streamId)
     self.value = hasValue and streamReadFloat32(streamId) or nil
+    self.expectedRevision = streamReadInt32(streamId)
 end
 
 -- Server applies the command (server-only; clients never mutate locally).
@@ -48,44 +54,37 @@ function CropStressRainKeyCommandEvent:run(connection)
     local irr = g_cropStressManager.irrigationManager
     local system = irr.systems[self.systemId]
 
-    -- Ownership: server derives requester farm from the connection and compares it
-    -- with the registered owner farm.
-    local requesterFarmId = nil
-    if connection ~= nil then
-        local user = connection.user
-        if user ~= nil and user.farmId ~= nil then requesterFarmId = user.farmId end
-    end
-    if requesterFarmId == nil and g_currentMission ~= nil and g_localPlayer ~= nil then
-        requesterFarmId = g_localPlayer:getFarmId()
-    end
-    local ownerFarmId = system ~= nil and system.ownerFarmId or nil
+    -- Ownership: the shared engine farm resolver only (F200). Listen-host nil
+    -- connection takes the engine host branch; no connection.user, local-player
+    -- or farm-1 fallback exists.
+    local requesterFarmId = irr.resolveRequesterFarmId ~= nil
+        and irr:resolveRequesterFarmId(connection) or nil
     if system == nil then
-        if g_client ~= nil then
-            g_client:getServerConnection():sendEvent(CropStressRainKeyResultEvent.new(self.systemId, false, "UNKNOWN_SYSTEM"))
+        if connection ~= nil then
+            connection:sendEvent(CropStressRainKeyResultEvent.new(self.systemId, false, "UNKNOWN_SYSTEM"))
         end
         return
     end
-    if ownerFarmId == nil or ownerFarmId <= 0 or requesterFarmId ~= ownerFarmId then
+    if requesterFarmId == nil or requesterFarmId <= 0
+       or system.ownerFarmId == nil or system.ownerFarmId <= 0
+       or requesterFarmId ~= system.ownerFarmId then
         if connection ~= nil then
             connection:sendEvent(CropStressRainKeyResultEvent.new(self.systemId, false, "NOT_AUTHORIZED"))
-        elseif g_client ~= nil and g_client:getServerConnection() ~= nil then
-            g_client:getServerConnection():sendEvent(CropStressRainKeyResultEvent.new(self.systemId, false, "NOT_AUTHORIZED"))
         end
         return
     end
 
-    local ok, reason = irr:applyRainKeyCommand(self.systemId, self.action, self.value)
+    local ok, reason = irr:applyRainKeyCommand(self.systemId, self.action, self.value, self.expectedRevision)
     local code = reason or (ok and "OK" or "FAILED")
     if connection ~= nil then
         connection:sendEvent(CropStressRainKeyResultEvent.new(self.systemId, ok, code))
-    elseif g_client ~= nil and g_client:getServerConnection() ~= nil then
-        g_client:getServerConnection():sendEvent(CropStressRainKeyResultEvent.new(self.systemId, ok, code))
     end
 end
 
 -- Client helper: send the command to the server.
-function CropStressRainKeyCommandEvent.sendToServer(systemId, action, value)
+function CropStressRainKeyCommandEvent.sendToServer(systemId, action, value, expectedRevision)
     if g_client == nil or g_client:getServerConnection() == nil then return false end
-    g_client:getServerConnection():sendEvent(CropStressRainKeyCommandEvent.new(systemId, action, value))
+    g_client:getServerConnection():sendEvent(
+        CropStressRainKeyCommandEvent.new(systemId, action, value, expectedRevision or -1))
     return true
 end
