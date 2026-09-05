@@ -4,7 +4,7 @@
 -- SET require the rain_key_pause release row live; REMOVE settles the
 -- already-run interval first. Ownership in the event resolves only through the
 -- shared engine farm resolver.
---!load: src/IrrigationManager.lua, src/events/CropStressRainKeyCommandEvent.lua
+--!load: src/IrrigationManager.lua, src/events/CropStressRainKeyCommandEvent.lua, src/events/CropStressRainKeyResultEvent.lua
 
 local function fittedManager()
   local mgr = IrrigationManager.new({ settings = { enabled = true } })
@@ -86,6 +86,21 @@ do
   T.near('wire.value', got.value, 5.0, 1e-9)
   T.eq('wire.expectedRevision', got.expectedRevision, 4)
   T.eq('wire.streamClean', s.typeErrors + s.underflows, 0)
+end
+
+-- 5. RESULT EVENT WIRE CARRIES ACTION + STATE REVISION (F200 shape).
+do
+  local s = _sfMockStream()
+  local res = CropStressRainKeyResultEvent.new(1, true, "OK", "FIT", 4)
+  res:writeStream(s)
+  local got = CropStressRainKeyResultEvent.emptyNew()
+  got:readStream(s)
+  T.eq('res.systemId', got.systemId, 1)
+  T.eq('res.action', got.action, "FIT")
+  T.eq('res.accepted', got.accepted, true)
+  T.eq('res.resultCode', got.resultCode, "OK")
+  T.eq('res.stateRevision', got.stateRevision, 4)
+  T.eq('res.streamClean', s.typeErrors + s.underflows, 0)
 end
 
 T.summary()

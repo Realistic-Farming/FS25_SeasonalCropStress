@@ -61,7 +61,7 @@ function CropStressRainKeyCommandEvent:run(connection)
         and irr:resolveRequesterFarmId(connection) or nil
     if system == nil then
         if connection ~= nil then
-            connection:sendEvent(CropStressRainKeyResultEvent.new(self.systemId, false, "UNKNOWN_SYSTEM"))
+            connection:sendEvent(CropStressRainKeyResultEvent.new(self.systemId, false, "UNKNOWN_SYSTEM", self.action, 0))
         end
         return
     end
@@ -69,7 +69,8 @@ function CropStressRainKeyCommandEvent:run(connection)
        or system.ownerFarmId == nil or system.ownerFarmId <= 0
        or requesterFarmId ~= system.ownerFarmId then
         if connection ~= nil then
-            connection:sendEvent(CropStressRainKeyResultEvent.new(self.systemId, false, "NOT_AUTHORIZED"))
+            connection:sendEvent(CropStressRainKeyResultEvent.new(self.systemId, false, "NOT_AUTHORIZED", self.action,
+                system.rainKeyStateRevision or 0))
         end
         return
     end
@@ -77,7 +78,8 @@ function CropStressRainKeyCommandEvent:run(connection)
     local ok, reason = irr:applyRainKeyCommand(self.systemId, self.action, self.value, self.expectedRevision)
     local code = reason or (ok and "OK" or "FAILED")
     if connection ~= nil then
-        connection:sendEvent(CropStressRainKeyResultEvent.new(self.systemId, ok, code))
+        connection:sendEvent(CropStressRainKeyResultEvent.new(self.systemId, ok, code, self.action,
+            (irr.systems[self.systemId] and irr.systems[self.systemId].rainKeyStateRevision) or 0))
     end
 end
 
