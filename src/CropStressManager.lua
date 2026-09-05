@@ -650,8 +650,15 @@ function CropStressManager:onHourlyTick(elapsedHours)
             local currentHourKey = (env.currentMonotonicDay or 0) * 24 + (env.currentHour or 0)
             local rainScale, isRaining = self.weatherIntegration:getRainFromWeather()
             if finiteWaterActive then
-                servedHoursBySystem = self.irrigationManager:planFiniteWater(
+                -- SCS-023 v2.3 (SDS 5.1/5.3): the planner is PURE and returns a
+                -- plan; the plan is committed exactly once before the positional
+                -- gain apply so source water is debited once for this span.
+                local plan = self.irrigationManager:planFiniteWater(
                     hours, currentHourKey, rainScale, isRaining)
+                servedHoursBySystem = plan.servedHoursBySystem
+                if self.irrigationManager.commitFiniteWaterPlan ~= nil then
+                    self.irrigationManager:commitFiniteWaterPlan(plan)
+                end
             else
                 servedHoursBySystem = self.irrigationManager:collectScheduledHours(
                     hours, currentHourKey)

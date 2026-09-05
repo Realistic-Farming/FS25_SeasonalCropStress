@@ -113,6 +113,9 @@ function IrrigationManager:registerWaterSource(placeable)
         finite       = finite,
         capacity     = finite and capacity or nil,
         waterRemaining = remaining,
+        -- SCS-023 v2.3: the source row retains the authored per-rain-hour refill
+        -- rate from the placeable so the planner never hard-codes it.
+        waterUnitsRefillPerRainHour = placeable.waterUnitsRefillPerRainHour,
         farmId       = placeable.ownerFarmId
             or (placeable.getOwnerFarmId and placeable:getOwnerFarmId() or nil),
     }
@@ -1341,18 +1344,46 @@ function IrrigationManager:collectScheduledHours(elapsedHours, currentHourKey)
     return served
 end
 
---- The bounded finite-water planner. Server-only. For each represented hour:
+--- The bounded finite-water PLANNER (PURE, SDS 5.1). Server-only. For each
+--- represented hour:
 ---   1. group scheduled systems by bound same-farm source,
 ---   2. iterate every registered source (dry and inactive included),
----   3. finite source: compose rain refill and requested pressure draw, distribute
----      one shared service fraction to its scheduled systems, update remainder,
----   4. unlimited source: give every scheduled system fraction 1.0, no remainder write,
+---   3. finite source: compose the authored rain refill (clamped to capacity)
+---      and the requested pressure draw scaled ONCE per act by
+---      finiteWaterDrawScale, distribute one shared service fraction to its
+---      scheduled systems, and carry the remainder forward in the plan,
+---   4. unlimited source: give every scheduled system fraction 1.0, no remainder,
 ---   5. add fraction to each system's served-hours total.
----@return table servedHoursBySystem, table sourceRows (updated finite sources)
+--- MUTATES NOTHING. The plan carries each finite source's before/after so
+--- commitFiniteWaterPlan writes the sole mutable truth exactly once.
+---@return table plan  { servedHoursBySystem, sourceRows } where
+---  sourceRows[sourceId] = { sourceId, before, refillAdded, consumed, after }
 function IrrigationManager:planFiniteWater(elapsedHours, currentHourKey, rainScale, isRaining)
     local served = {}
-    local refillPerRainHour = 2.0
-    -- Source rows updated in place for persistence; return them for the caller.
+    local sourceRows = {}
+    local drawScale = self:resolveFiniteWaterDrawScale()
+
+    local function refillPerHour(source)
+        local r = source.waterUnitsRefillPerRainHour
+        if type(r) ~= "number" or r <= 0 then r = 2.0 end
+        return r
+    end
+
+    local function rowFor(sourceId, source)
+        local row = sourceRows[sourceId]
+        if row == nil then
+            row = {
+                sourceId = sourceId,
+                before   = source.waterRemaining or 0,
+                refillAdded = 0,
+                consumed = 0,
+                after    = source.waterRemaining or 0,
+            }
+            sourceRows[sourceId] = row
+        end
+        return row
+    end
+
     for i = 1, elapsedHours do
         local hourKey = currentHourKey - elapsedHours + i
         -- Group scheduled systems by bound same-farm source.
@@ -1367,27 +1398,38 @@ function IrrigationManager:planFiniteWater(elapsedHours, currentHourKey, rainSca
         for sourceId, source in pairs(self.waterSources) do
             local group = bySource[sourceId]
             if group ~= nil and #group > 0 then
-                -- Rain refill applies once per hour for a finite source (endpoint sky).
-                if source.finite and isRaining == true and type(rainScale) == "number" then
-                    local refill = refillPerRainHour * rainScale
-                    self:setSourceWaterRemaining(sourceId, (source.waterRemaining or 0) + refill, false)
-                end
                 if source.finite then
-                    -- requested draw per scheduled system-hour: pressure-scaled.
+                    local row = rowFor(sourceId, source)
+                    -- Rain refill applies once per hour, authored per placeable,
+                    -- and never pushes the store past its capacity.
+                    if isRaining == true and type(rainScale) == "number" and rainScale > 0 then
+                        local refill = refillPerHour(source) * rainScale
+                        row.after = row.after + refill
+                        row.refillAdded = row.refillAdded + refill
+                        local cap = source.capacity
+                        if type(cap) == "number" and cap > 0 and row.after > cap then
+                            local clipped = row.after - cap
+                            row.refillAdded = row.refillAdded - clipped
+                            row.after = cap
+                        end
+                    end
+                    -- requested draw per scheduled system-hour, pressure-scaled
+                    -- then scaled once per act by the finite draw scale.
                     local requested = 0
                     for _, system in ipairs(group) do
                         requested = requested + (system.pressureMultiplier or 0)
                     end
-                    local remaining = source.waterRemaining or 0
+                    requested = requested * drawScale
                     local fraction = 0
-                    if requested > 0 and remaining > 0 then
-                        fraction = math.min(1, remaining / requested)
+                    if requested > 0 and row.after > 0 then
+                        fraction = math.min(1, row.after / requested)
                     end
                     for _, system in ipairs(group) do
                         served[system.id] = (served[system.id] or 0) + fraction
                     end
                     local consumed = requested * fraction
-                    self:setSourceWaterRemaining(sourceId, remaining - consumed, false)
+                    row.consumed = row.consumed + consumed
+                    row.after = row.after - consumed
                 else
                     for _, system in ipairs(group) do
                         served[system.id] = (served[system.id] or 0) + 1
@@ -1396,7 +1438,23 @@ function IrrigationManager:planFiniteWater(elapsedHours, currentHourKey, rainSca
             end
         end
     end
-    return served
+    return { servedHoursBySystem = served, sourceRows = sourceRows }
+end
+
+--- Commit a pure finite-water plan (SDS 5.3): write each finite source's planned
+--- `after` through the authoritative setSourceWaterRemaining exactly once. The
+--- planner never writes; this is the single commit. Returns the number of
+--- finite sources committed.
+function IrrigationManager:commitFiniteWaterPlan(plan)
+    if plan == nil or type(plan.sourceRows) ~= "table" then return 0 end
+    local committed = 0
+    for sourceId, row in pairs(plan.sourceRows) do
+        if type(row) == "table" and row.after ~= nil then
+            self:setSourceWaterRemaining(sourceId, row.after, false)
+            committed = committed + 1
+        end
+    end
+    return committed
 end
 
 --- Apply accumulated served hours through the system's real coverage geometry.
