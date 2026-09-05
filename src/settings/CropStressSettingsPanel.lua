@@ -348,9 +348,18 @@ function CropStressSettingsPanel:requestChange(id, value)
     end
 
     if g_server ~= nil then
-        settings[id] = value
-        settings:validateSettings()
-        if self.manager then self.manager:applySettings() end
+        -- SCS-023 v2.3 (SDS 4): the host panel routes through the ONE
+        -- authoritative settings owner (validates, re-applies, fires the
+        -- finite-water mode edge). Broadcast to clients stays here.
+        if self.manager ~= nil and type(self.manager.applyAuthoritativeSettingChange) == "function" then
+            if not self.manager:applyAuthoritativeSettingChange(id, value, "panel") then
+                return
+            end
+        else
+            settings[id] = value
+            settings:validateSettings()
+            if self.manager then self.manager:applySettings() end
+        end
         if CropStressSettingsSyncEvent ~= nil then
             g_server:broadcastEvent(CropStressSettingsSyncEvent.newSingle(id, value), false)
         end
