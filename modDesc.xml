@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="105">
     <author>TisonK</author>
-    <version>1.2.5.119</version>
+    <version>1.2.5.121</version>
 
     <title>
         <en>Seasonal Crop Stress &amp; Irrigation Manager</en>
@@ -176,12 +176,16 @@ FUNKTIONER:
         <!-- Reel retract, consumed by the vendored RWSM53AutoReel spec. -->
         <action name="RWSM53_REEL_TOGGLE" category="VEHICLE"/>
         <!-- Reinke A22 pivot controls (vendored from FS25_ReinkeA22). KP defaults
-             ship so the pivot works out of the box; players may rebind in Controls. -->
+             ship so the pivot works out of the box; players may rebind in Controls.
+             Master power, auto rotation and the two angle steps ship unbound: their
+             old KP 2/8/4/6 defaults sit on the numpad arrow cluster (the look keys
+             when NumLock is off) and bare KP 2 / KP 6 are the vanilla hazard-light
+             and rear-work-light keys. Assign them in Controls if you want keys. -->
         <action name="REINKE_DOOR_TOGGLE"           axisType="HALF" ignoreRestrictions="true"/>
-        <action name="REINKE_MASTER_POWER"          axisType="HALF" ignoreRestrictions="true"/>
-        <action name="REINKE_PIVOT_INTERACT"        axisType="HALF" ignoreRestrictions="true"/>
-        <action name="REINKE_PIVOT_ANGLE_PLUS"      axisType="HALF" ignoreRestrictions="true"/>
-        <action name="REINKE_PIVOT_ANGLE_MINUS"     axisType="HALF" ignoreRestrictions="true"/>
+        <action name="REINKE_MASTER_POWER"          axisType="HALF" ignoreRestrictions="false"/>
+        <action name="REINKE_PIVOT_INTERACT"        axisType="HALF" ignoreRestrictions="false"/>
+        <action name="REINKE_PIVOT_ANGLE_PLUS"      axisType="HALF" ignoreRestrictions="false"/>
+        <action name="REINKE_PIVOT_ANGLE_MINUS"     axisType="HALF" ignoreRestrictions="false"/>
         <action name="REINKE_PIVOT_AUTO_MIN_UP"     axisType="HALF" ignoreRestrictions="true"/>
         <action name="REINKE_PIVOT_SWEEP_MIN_DN"    axisType="HALF" ignoreRestrictions="true"/>
         <action name="REINKE_PIVOT_AUTO_MAX_UP"     axisType="HALF" ignoreRestrictions="true"/>
@@ -207,21 +211,24 @@ FUNKTIONER:
         <actionBinding action="CS_EDIT_HUD">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_n" />
         </actionBinding>
-        <!-- Reinke A22 pivot KP bindings (vendored from FS25_ReinkeA22). -->
+        <!-- Reinke A22 pivot KP bindings (vendored from FS25_ReinkeA22). The four
+             empty entries below are deliberate: no default on the numpad arrow
+             cluster (KP 2/8/4/6), which doubles as the look keys and carries the
+             vanilla hazard-light (KP 2) and rear-work-light (KP 6) defaults. -->
         <actionBinding action="REINKE_DOOR_TOGGLE">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_decimal" axisComponent="+" />
         </actionBinding>
         <actionBinding action="REINKE_MASTER_POWER">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_2" axisComponent="+" />
+            <!-- unbound by default: KP 2 is on the numpad arrow cluster -->
         </actionBinding>
         <actionBinding action="REINKE_PIVOT_INTERACT">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_8" axisComponent="+" />
+            <!-- unbound by default: KP 8 is on the numpad arrow cluster -->
         </actionBinding>
         <actionBinding action="REINKE_PIVOT_ANGLE_PLUS">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_6" axisComponent="+" />
+            <!-- unbound by default: KP 6 is on the numpad arrow cluster -->
         </actionBinding>
         <actionBinding action="REINKE_PIVOT_ANGLE_MINUS">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_4" axisComponent="+" />
+            <!-- unbound by default: KP 4 is on the numpad arrow cluster -->
         </actionBinding>
         <actionBinding action="REINKE_PIVOT_AUTO_MIN_UP">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_kp_7" axisComponent="+" />

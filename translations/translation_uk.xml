@@ -479,7 +479,7 @@
     <text name="reinke_pivot_toggle"      text="Toggle Pivot Rotation"/>
     <text name="input_REINKE_DOOR_TOGGLE"           text="Open / Close Control Panel"/>
     <text name="input_REINKE_MASTER_POWER"          text="Master Power On / Off"/>
-    <text name="input_REINKE_PIVOT_INTERACT"        text="Toggle Auto Rotation (KP8)"/>
+    <text name="input_REINKE_PIVOT_INTERACT"        text="Toggle Auto Rotation"/>
     <text name="input_REINKE_PIVOT_ANGLE_PLUS"      text="Step Arm +10 deg (Manual)"/>
     <text name="input_REINKE_PIVOT_ANGLE_MINUS"     text="Step Arm -10 deg (Manual)"/>
     <text name="input_REINKE_PIVOT_AUTO_MIN_UP"     text="Raise Min Sweep Bound"/>
