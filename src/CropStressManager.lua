@@ -625,7 +625,7 @@ function CropStressManager:onHourlyTick(elapsedHours)
         -- planner's served hours are available to the positional gain apply and
         -- to chargeHourlyCosts. When finite water is inactive, collect incumbent
         -- scheduled hours with no source draw or refill (fraction 1.0).
-        local positionalScheduleApplied = false
+        local fieldSuppression = nil
         local servedHoursBySystem = nil
         local finiteWaterActive = false
         if self.irrigationManager ~= nil
@@ -648,18 +648,40 @@ function CropStressManager:onHourlyTick(elapsedHours)
                     hours, currentHourKey)
             end
             -- Apply every positive positional-hours result through coverage.
+            -- SCS-023 v2.3 (SDS 5.2): COVER returns PER-FIELD evidence. Accepted
+            -- and Refused fields suppress ONLY their own incumbent field-wide
+            -- accumulator; a whole-act legacy (soil machinery absent) keeps the
+            -- incumbent answer for every field. Fitted pivots are F200's own act
+            -- and are never double-served here.
+            local mergedCodes = {}
+            local legacyWholeAct = false
             for id, servedHours in pairs(servedHoursBySystem or {}) do
                 if servedHours > 0 then
                     local sys = self.irrigationManager.systems[id]
-                    if sys ~= nil then
+                    if sys ~= nil and not (sys.rainKeyFitted == true)
+                       and self.irrigationManager.applyGainToSystemCoverage ~= nil then
                         local gain = (sys.flowRatePerHour or 0)
                             * (sys.pressureMultiplier or 0) * servedHours
                         if gain > 0 then
-                            self.irrigationManager:applyGainToSystemCoverage(sys, gain)
-                            positionalScheduleApplied = true
+                            local evidence = self.irrigationManager:applyGainToSystemCoverage(sys, gain)
+                            if evidence.wholeActLegacy then
+                                legacyWholeAct = true
+                            else
+                                for fieldId, code in pairs(evidence.fields or {}) do
+                                    local rank = (code == "ACCEPTED" and 3)
+                                        or (code == "REFUSED" and 2) or 1
+                                    if (mergedCodes[fieldId] or 0) < rank then
+                                        mergedCodes[fieldId] = rank
+                                    end
+                                end
+                            end
                         end
                     end
                 end
+            end
+            if not legacyWholeAct then
+                fieldSuppression = {}
+                for fieldId in pairs(mergedCodes) do fieldSuppression[fieldId] = true end
             end
         end
 
@@ -690,7 +712,7 @@ function CropStressManager:onHourlyTick(elapsedHours)
         -- rain switch is reconstructed per skipped day rather than held at the
         -- last-known sky. nil (the case today) means round-1 behaviour exactly.
         self.soilSystem:hourlyUpdate(self.weatherIntegration, hours,
-            self:getSkipRainHours(hours), positionalScheduleApplied)
+            self:getSkipRainHours(hours), false, fieldSuppression)
 
         -- 3. Apply RWE world-event stress multiplier (no-op when RWE not loaded)
         if self.rweManager then

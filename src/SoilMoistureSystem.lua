@@ -549,14 +549,18 @@ end
 ---  rain, reconstructed from SoilFertilizer's Water Record. nil (the normal case)
 ---  means the sky is held at its last-known state for the whole span, which is
 ---  round-1 behaviour and identical to what shipped.
-function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, positionalScheduleApplied)
+function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, positionalScheduleApplied, fieldDispositions)
     if not self.isInitialized then return end
     if weather == nil then return end
     local hours = math.max(1, math.floor(elapsedHours or 1))
     -- SCS-023: when the finite planner's positional pass already delivered the
     -- scheduled moisture, the incumbent field-wide accumulator is suppressed.
-    -- Finite mode controls pump scarcity, not spatial truth.
+    -- Finite mode controls pump scarcity, not spatial truth. SDS 5.2: the
+    -- suppression is PER FIELD when a disposition map is supplied (Accepted and
+    -- Refused fields only); the whole-act bool remains for legacy callers that
+    -- pass no map.
     self._positionalScheduleApplied = positionalScheduleApplied == true
+    self._positionalFieldDispositions = fieldDispositions
     -- Clamped to the span: the record can never say it rained for more hours than
     -- the skip actually lasted.
     local wetHours = hours
@@ -634,10 +638,17 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
         -- Rain gain (modulated by soil absorption). Charged over `wetHours`, which
         -- is the whole span unless the Water Record narrowed it (SCS-037 round 2).
         local rainGain  = rainAmount * soilParams.rainAbsorb * wetHours
-        -- SCS-023: when the positional schedule pass ran, the positional writes
-        -- already delivered the scheduled moisture; the field-wide accumulator is
-        -- ignored (never both applied in one act).
-        local irrigGain = self._positionalScheduleApplied
+        -- SCS-023 v2.3 (SDS 5.2): a per-field disposition map suppresses ONLY the
+        -- fields the positional pass accepted or refused this act; every other
+        -- field keeps its incumbent field-wide accumulator. Legacy callers with
+        -- no map keep the whole-act bool suppression.
+        local suppressForField = false
+        if self._positionalFieldDispositions ~= nil then
+            suppressForField = self._positionalFieldDispositions[fieldId] == true
+        else
+            suppressForField = self._positionalScheduleApplied
+        end
+        local irrigGain = suppressForField
             and 0.0
             or ((self.irrigationGains[fieldId] or 0.0) * hours)
 
