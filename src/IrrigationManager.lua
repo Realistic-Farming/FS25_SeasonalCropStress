@@ -1184,6 +1184,15 @@ end
 function IrrigationManager:updateRainKeySensor(dt)
     if self.manager == nil or self.manager.weatherIntegration == nil then return {} end
     if g_server == nil then return {} end
+    -- SCS-046 A (F200): master-disabled or release-locked freezes the sensor
+    -- (no accumulation, no dry time, no trips). The release row is rain_key_pause.
+    if self.manager.settings ~= nil and self.manager.settings.enabled == false then
+        return {}
+    end
+    if ReleaseGate ~= nil and type(ReleaseGate.isSystemLive) == "function"
+       and ReleaseGate.isSystemLive("rain_key_pause") ~= true then
+        return {}
+    end
 
     -- The one current-rain read per tick. UNAVAILABLE when both routes fail.
     local readable, rainScale, isRaining = self.manager.weatherIntegration:getCurrentRainKey()
