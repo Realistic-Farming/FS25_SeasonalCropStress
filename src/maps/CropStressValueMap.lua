@@ -36,6 +36,18 @@ CropStressValueMap.LAYER_DEF = {
     maxVal = 1.0,
 }
 
+--- SCS-039 v2.1 (SDS 3.5): generation-qualified native file name. Generation 0
+--- (or nil) is the LEGACY baseline name and is never overwritten once
+--- generation-qualified storage starts; a qualified generation writes a
+--- distinct file so a save never clobbers either retained complete pair.
+function CropStressValueMap.generationFileName(generation)
+    if generation == nil or generation <= 0 then return CropStressValueMap.LAYER_DEF.file end
+    local base = CropStressValueMap.LAYER_DEF.file
+    local stem = base:match("^(.*)%.grle$")
+    if stem == nil then stem = base end
+    return string.format("%s.g%d.grle", stem, generation)
+end
+
 local NUM_CHANNELS = 8      -- bits per pixel
 local RAW_MIN      = 1      -- raw 0 is reserved as "no data" / off-field
 local RAW_MAX      = 255
@@ -230,10 +242,14 @@ function CropStressValueMap:delete()
     self.available = false
 end
 
-function CropStressValueMap:saveToSavegame(savegameDir)
+function CropStressValueMap:saveToSavegame(savegameDir, generation)
     if not self.available or savegameDir == nil then return false end
     if saveBitVectorMapToFile == nil then return false end
-    local path = savegameDir .. "/" .. CropStressValueMap.LAYER_DEF.file
+    -- SCS-039 v2.1 (SDS 3.5): the native file is generation-qualified when a
+    -- generation is supplied (the candidate COMPLETE generation), so a save
+    -- never overwrites the legacy baseline or either retained complete pair.
+    local name = CropStressValueMap.generationFileName(generation)
+    local path = savegameDir .. "/" .. name
     -- SCS-039 v2.1: a native mutator succeeds only when BOTH the outer pcall
     -- survived AND the engine returned literal true. A non-throwing false return
     -- was previously misread as a saved file, a silent data-loss report.
@@ -479,6 +495,20 @@ function CropStressValueMap:applySyncRow(gy, row)
         pcall(setBitVectorMapPoint, self.bvm, i - 1, gy, 0, NUM_CHANNELS, raw)
     end
     return true
+end
+
+--- SCS-039 v2.1 (SDS 3.7): set ONE pixel from a semantic moisture value by its
+--- composite pixel key (px*4096+pz). Absolute deltas that a snapshot publishes
+--- land here after the raw rows are applied.
+function CropStressValueMap:writePixelValue(pixelKey, value)
+    if not self.available then return false end
+    if setBitVectorMapPoint == nil then return false end
+    local px = math.floor(pixelKey / 4096)
+    local pz = pixelKey - px * 4096
+    if px < 0 or pz < 0 or px >= self.resolution or pz >= self.resolution then return false end
+    local raw = encode(value, CropStressValueMap.LAYER_DEF)
+    local ok = pcall(setBitVectorMapPoint, self.bvm, px, pz, 0, NUM_CHANNELS, raw)
+    return ok == true
 end
 
 --- Pack a raw row into a compact run-length form for the wire. Moisture maps are

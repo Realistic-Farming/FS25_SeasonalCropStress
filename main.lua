@@ -46,6 +46,11 @@ source(modDir .. "src/WeatherIntegration.lua")
 -- cell store when it is not.
 source(modDir .. "src/maps/CropStressValueMap.lua")
 
+-- Client fine-snapshot currentness (SCS-039 / SDS 3.7): engine-free staging
+-- and semantic currentness for the row/delta delivery. SoilMoistureSystem
+-- instantiates it at construction, so it must load before first use.
+source(modDir .. "src/SoilFineSnapshot.lua")
+
 -- Core simulation
 source(modDir .. "src/SoilMoistureSystem.lua")
 source(modDir .. "src/CropStressModifier.lua")
@@ -85,6 +90,8 @@ source(modDir .. "src/events/CropStressSettingsSyncEvent.lua")
 source(modDir .. "src/events/CropStressMoistureInitEvent.lua")
 source(modDir .. "src/events/CropStressIrrigateNowEvent.lua")
 source(modDir .. "src/events/CropStressMoistureRowEvent.lua")
+source(modDir .. "src/events/CropStressMoistureControlEvent.lua")
+source(modDir .. "src/events/CropStressMoistureDeltaEvent.lua")
 source(modDir .. "src/events/CropStressPivotRemoteEvent.lua")
 -- [BUILD 00:33] schedule + Auto/Manual sync (dialog Save -> server -> clients)
 source(modDir .. "src/events/CropStressScheduleSyncEvent.lua")

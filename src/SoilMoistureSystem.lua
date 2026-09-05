@@ -72,6 +72,10 @@ SoilMoistureSystem.CELL_DRAIN_NEIGHBOURS   = 4      -- downhill neighbours sampl
 SoilMoistureSystem.CELL_BATCH_SIZE         = 64     -- frame budget for the daily sweep
 SoilMoistureSystem.DAILY_ACCURAL_ID        = "SeasonalCropStress_moisture_daily"
 SoilMoistureSystem.DAILY_ACCURAL_PRIORITY  = 90     -- below 100: ground settles before any economy read
+-- SCS-039 v2.1 (SDS 3.6): the per-frame redistribution budget for an open daily
+-- plan. 400 is the same technical precedent as MAP_DRAIN_MAX_BLOCKS (Group A10
+-- / Group I16 pin it); it is a frame ceiling, never a total work cap.
+SoilMoistureSystem.DAILY_OPS_PER_FRAME     = 400
 
 -- ============================================================
 -- LOGGING HELPER
@@ -174,6 +178,19 @@ function SoilMoistureSystem.new(manager)
     -- otherwise driven by the fallback day-change hook inside hourlyUpdate.
     self._tgAccrualRegistered = false
     self._lastSettledDay = nil
+
+    -- SCS-039 v2.1 (SDS 3.6): one open daily plan at a time, pinned to its
+    -- target day, due count, base provider revision, carrier identity and field
+    -- fingerprints. It advances under DAILY_OPS_PER_FRAME and commits once;
+    -- an authoritative replacement, provider transition or geometry mismatch
+    -- aborts it without moving the cursor. Save, reload and teardown discard it.
+    self._dailyPlan = nil
+
+    -- SCS-039 v2.1 (SDS 3.7): the client fine-snapshot currentness engine
+    -- (staging + delta barrier). Server instances carry it inert; only a client
+    -- stages rows and publishes once at COMPLETE.
+    self.fineSnapshot = (SoilFineSnapshot ~= nil) and SoilFineSnapshot.new() or nil
+    self._syncSnapshotGeneration = 0
 
     -- SCS-039: the vendored 2 m value map. nil until initValueMap runs, and
     -- still inert afterwards on any install where the engine cannot carry it.
@@ -891,9 +908,9 @@ end
 --- mission still trusting the fine map. The per-field scalar rows the save
 --- handler writes next are the honest degrade layer, and the next load re-selects
 --- a readable TRUTH or ZONE carrier. Returns the literal save receipt.
-function SoilMoistureSystem:saveNativeMap(savegameDir)
+function SoilMoistureSystem:saveNativeMap(savegameDir, generation)
     if self.valueMap == nil or not self.valueMap.available then return false end
-    local savedOk = self.valueMap:saveToSavegame(savegameDir) == true
+    local savedOk = self.valueMap:saveToSavegame(savegameDir, generation) == true
     if not savedOk then
         self:_failNativeClosed("native save refusal")
     end
@@ -1432,17 +1449,27 @@ end
 SoilMoistureSystem.SYNC_ROWS_PER_FRAME = 8
 
 --- Queue the whole map for a connection. Safe to call for each joining client.
+--- SDS 3.7: each join is one immutable snapshot generation of its own.
 function SoilMoistureSystem:queueMapSync(connection)
     if not self:mapActive() or connection == nil then return false end
     if g_server == nil then return false end
     self._syncQueue = self._syncQueue or {}
-    self._syncQueue[#self._syncQueue + 1] = { conn = connection, nextRow = 0 }
+    self._syncSnapshotGeneration = (self._syncSnapshotGeneration or 0) + 1
+    self._syncQueue[#self._syncQueue + 1] = {
+        conn = connection,
+        nextRow = 0,
+        snapshotGeneration = self._syncSnapshotGeneration,
+        baseRevision = self.moistureRevision or 1,
+        controlSent = false,
+    }
     return true
 end
 
 --- Drive the queue. Called from the manager's per-frame update on the server.
 --- Returns the number of rows sent this frame (0 when there is nothing to do),
 --- which is also what makes the cost visible to the instrument below.
+--- SDS 3.7: CONTROL START opens the client snapshot before the first row and
+--- CONTROL COMPLETE is the publish barrier after the final row.
 function SoilMoistureSystem:updateMapSync()
     local q = self._syncQueue
     if q == nil or #q == 0 then return 0 end
@@ -1453,24 +1480,64 @@ function SoilMoistureSystem:updateMapSync()
 
     local job = q[1]
     local total = self.valueMap:getSyncRowCount()
+    if not job.controlSent then
+        if CropStressMoistureControlEvent ~= nil then
+            g_server:sendEvent(CropStressMoistureControlEvent.new(
+                CropStressMoistureControlEvent.KIND_START,
+                job.snapshotGeneration, job.baseRevision, total,
+                self.valueMap.resolution or 0), false, nil, job.conn)
+        end
+        job.controlSent = true
+    end
+
     local sent = 0
     while sent < SoilMoistureSystem.SYNC_ROWS_PER_FRAME and job.nextRow < total do
         local raw = self.valueMap:readSyncRow(job.nextRow)
         if raw ~= nil and CropStressMoistureRowEvent ~= nil then
             local packed = CropStressValueMap.packRow(raw)
-            g_server:sendEvent(CropStressMoistureRowEvent.new(job.nextRow, packed),
-                false, nil, job.conn)
+            g_server:sendEvent(CropStressMoistureRowEvent.new(job.nextRow, packed,
+                job.snapshotGeneration), false, nil, job.conn)
         end
         job.nextRow = job.nextRow + 1
         sent = sent + 1
     end
 
     if job.nextRow >= total then
+        if CropStressMoistureControlEvent ~= nil then
+            g_server:sendEvent(CropStressMoistureControlEvent.new(
+                CropStressMoistureControlEvent.KIND_COMPLETE,
+                job.snapshotGeneration, job.baseRevision, total,
+                self.valueMap.resolution or 0), false, nil, job.conn)
+        end
         table.remove(q, 1)
-        csLog(string.format("Moisture map: delivered %d rows to a client", total))
+        csLog(string.format("Moisture map: delivered %d rows to a client (snapshot gen %d)",
+            total, job.snapshotGeneration))
     end
     self._syncTotalRowsSent = (self._syncTotalRowsSent or 0) + sent
     return sent
+end
+
+--- SCS-039 v2.1 (SDS 3.7): the client publish barrier. Applies the staged raw
+--- rows of a completed snapshot to the live map, then stamps the published
+--- absolute per-pixel delta values, exactly once.
+function SoilMoistureSystem:_publishFineSnapshot(snapshot)
+    local vm = self.valueMap
+    if vm == nil or not vm.available then return end
+    local width = (snapshot.mapWidth and snapshot.mapWidth > 0) and snapshot.mapWidth
+        or (vm.resolution or 0)
+    if width <= 0 then return end
+    for index = 0, snapshot.totalRows - 1 do
+        local packed = snapshot.rows[index]
+        if packed ~= nil then
+            local row = CropStressValueMap.unpackRow(packed, width)
+            vm:applySyncRow(index, row)
+        end
+    end
+    for pixelKey, value in pairs(snapshot.pixelValues or {}) do
+        if type(vm.writePixelValue) == "function" then
+            vm:writePixelValue(pixelKey, value)
+        end
+    end
 end
 
 -- ============================================================
@@ -1546,6 +1613,104 @@ function SoilMoistureSystem:checkDayFallback()
         self:settleDaily(1)
     end
     self._lastSettledDay = day
+end
+
+-- ============================================================
+-- SCS-039 v2.1 (SDS 3.6): THE DAILY PLAN CORE.
+--
+-- One open plan at a time handles positive due day spans. It is pinned to its
+-- target day, due count, base provider revision, carrier identity and the
+-- current field fingerprints, advances at most DAILY_OPS_PER_FRAME operations
+-- per frame, and commits once. Staging never mutates live moisture; the commit
+-- moves the settled-day cursor and advances the readable revision once.
+-- Authoritative replacement, provider transition or geometry mismatch abort
+-- the plan without moving the cursor, so the unchanged cursor reoffers the
+-- work. The runtime mapping of plan operations to per-field redistribution
+-- work, the Time Guard subscribeTick registration and the retirement of the
+-- accrual registration are the follow-on wiring slices; this is the engine-free
+-- state machine (Group J mirrors the same contract).
+-- ============================================================
+
+--- Pure due-span: how many whole days are owed between the settled cursor and
+--- the current monotonic day. A missing, zero, negative, duplicate or
+--- non-finite span owes nothing and moves no cursor.
+function SoilMoistureSystem.computeDueDays(cursor, currentDay)
+    if type(cursor) ~= "number" or type(currentDay) ~= "number" then return 0 end
+    if cursor ~= cursor or currentDay ~= currentDay then return 0 end
+    if math.abs(cursor) == math.huge or math.abs(currentDay) == math.huge then return 0 end
+    local due = currentDay - cursor
+    if due <= 0 then return 0 end
+    return math.floor(due)
+end
+
+--- Stable combined signature of every current field polygon fingerprint, used
+--- as one pin so a geometry change aborts an open plan.
+function SoilMoistureSystem:fieldFingerprintSignature()
+    local parts = {}
+    for fieldId in pairs(self.fieldData) do
+        parts[#parts + 1] = tostring(fieldId) .. ":" .. tostring(self:fieldGeometryFingerprint(fieldId))
+    end
+    table.sort(parts)
+    return table.concat(parts, "|")
+end
+
+--- Wake the daily plan for a current monotonic day. Returns:
+---   "INVALID"  non-finite current day
+---   "SEEDED"   first ever wake: the cursor seeds to the current day, no work
+---   "IDLE"     zero, negative or duplicate span; nothing owed
+---   "PENDING"  positive due work; opens or resumes the pinned daily plan
+function SoilMoistureSystem:wakeDailyPlan(currentDay, totalOps)
+    if type(currentDay) ~= "number" or currentDay ~= currentDay
+       or math.abs(currentDay) == math.huge then
+        return "INVALID"
+    end
+    if self._lastSettledDay == nil then
+        self._lastSettledDay = currentDay
+        return "SEEDED"
+    end
+    local due = SoilMoistureSystem.computeDueDays(self._lastSettledDay, currentDay)
+    if due <= 0 then return "IDLE" end
+    if self._dailyPlan == nil then
+        self._dailyPlan = {
+            due          = due,
+            targetDay    = currentDay,
+            baseRevision = self.moistureRevision or 1,
+            carrier      = self.providerMode,
+            fingerprint  = self:fieldFingerprintSignature(),
+            totalOps     = totalOps or (due * SoilMoistureSystem.DAILY_OPS_PER_FRAME),
+            cursor       = 0,
+        }
+    end
+    return "PENDING"
+end
+
+--- Advance the open plan by at most `budget` operations. Returns step, status:
+---   step    operations performed this frame
+---   "IDLE"      no plan open
+---   "ABORTED"   a pin broke (revision, carrier or geometry moved); plan cleared,
+---               cursor unchanged, the unchanged cursor reoffers the work
+---   "PAUSED"    zero budget; nothing done, nothing claimed
+---   "PENDING"   more work remains next frame
+---   "COMMITTED" the plan finished this frame: cursor moves to the target day
+---               and the readable revision advances once
+function SoilMoistureSystem:advanceDailyPlan(currentDay, budget)
+    local plan = self._dailyPlan
+    if plan == nil then return 0, "IDLE" end
+    if plan.targetDay ~= currentDay
+       or plan.baseRevision ~= (self.moistureRevision or 1)
+       or plan.carrier ~= self.providerMode
+       or plan.fingerprint ~= self:fieldFingerprintSignature() then
+        self._dailyPlan = nil
+        return 0, "ABORTED"
+    end
+    if budget == nil or budget <= 0 then return 0, "PAUSED" end
+    local step = math.min(budget, plan.totalOps - plan.cursor)
+    plan.cursor = plan.cursor + step
+    if plan.cursor < plan.totalOps then return step, "PENDING" end
+    self._lastSettledDay = plan.targetDay
+    self:_advanceMoistureRevision()
+    self._dailyPlan = nil
+    return step, "COMMITTED"
 end
 
 -- ============================================================

@@ -113,11 +113,18 @@ end
 -- Client: apply a received whole moisture/stress map. Mirrors
 -- CropStressMoistureInitEvent:run - update existing moisture, create a minimal
 -- entry for a not-yet-enumerated field, set stress, then rebuild the field map.
+-- SCS-039 v2.1 (SDS 3.8): the NetworkSync aggregate may update legacy scalars
+-- only while the SCS fine map is NOT the current authority. Once the SCS event
+-- barrier has published a current fine map (isMoistureMapCurrent), the mirror
+-- must not fight it; it can never seed fine staging or claim fine currentness.
 function CropStressNetworkSyncBridge._onReadState(arr)
     if g_server ~= nil then return end   -- server never applies its own state
 
     local mgr = getManager()
     if mgr == nil or mgr.soilSystem == nil or mgr.stressModifier == nil then return end
+    if mgr.soilSystem.isMoistureMapCurrent ~= nil and mgr.soilSystem:isMoistureMapCurrent() then
+        return   -- a current SCS fine map owns the ground; the mirror stands down
+    end
 
     local fieldData, fieldStress = CropStressNetworkSyncBridge.deserializeFields(arr)
 
@@ -172,20 +179,25 @@ function CropStressNetworkSyncBridge.register(mgr)
         return
     end
 
+    -- SCS-039 v2.1 (SDS 3.8): the bridge is active only when the outer pcall
+    -- succeeds AND registerModule returns EXACTLY true. A non-throwing nil/false
+    -- return was previously misread as an active registration.
+    local registered = false
     local ok, err = pcall(function()
-        ns:registerModule(CropStressNetworkSyncBridge.MODULE_ID, {
+        registered = ns:registerModule(CropStressNetworkSyncBridge.MODULE_ID, {
             channel      = CropStressNetworkSyncBridge.CHANNEL,
             onWriteState = CropStressNetworkSyncBridge._onWriteState,
             onReadState  = CropStressNetworkSyncBridge._onReadState,
         })
     end)
 
-    if ok then
+    if ok and registered == true then
         CropStressNetworkSyncBridge.active = true
         print(string.format("[CropStress] Registered with NetworkSync as '%s' (hourly moisture broadcast now batches through NetworkSync)",
             CropStressNetworkSyncBridge.MODULE_ID))
     else
         CropStressNetworkSyncBridge.active = false
-        print(string.format("[CropStress] NetworkSync registration failed: %s (falling back to moisture event class)", tostring(err)))
+        print(string.format("[CropStress] NetworkSync registration failed or refused: %s (falling back to moisture event class)",
+            tostring(err)))
     end
 end
