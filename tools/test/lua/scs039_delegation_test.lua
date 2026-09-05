@@ -24,24 +24,35 @@ local function stubMap(grain)
     meanToReturn = nil,
   }
   function m:getGrainMetres() return self.grain end
+  -- worldToPixel is part of the sanctioned map interface (the SCS-039 authority
+  -- bar's stub provides it too); the positional water path keys pending by pixel.
+  function m:worldToPixel(x, z) return math.floor(x), math.floor(z) end
   function m:paintPolygon(_vx, _vz, _n, value)
     self.painted[#self.painted + 1] = value
     return true
   end
   function m:writeValueAtWorld(x, z, value, _r)
+    -- SCS-039 v2.1 typed contract: a non-throwing stub write is OK.
     self.writes[#self.writes + 1] = { x = x, z = z, v = value }
     self.pixels[string.format("%d:%d", math.floor(x), math.floor(z))] = value
-    return true
+    return true, "OK"
   end
   function m:readValueAtWorld(x, z)
-    return self.pixels[string.format("%d:%d", math.floor(x), math.floor(z))], self.grain
+    -- SCS-039 v2.1 typed contract: an unwritten pixel is EMPTY (benign), a
+    -- written one is OK; only a throw would be a PROVIDER_REFUSAL.
+    local v = self.pixels[string.format("%d:%d", math.floor(x), math.floor(z))]
+    if v == nil then return nil, self.grain, "EMPTY" end
+    return v, self.grain, "OK"
   end
   function m:applyDeltaToPolygon(_vx, _vz, _n, delta)
     self.deltas[#self.deltas + 1] = delta
     return delta            -- pretend the engine applied it in full
   end
   function m:readAverageOfPolygon(_vx, _vz, _n)
-    return self.meanToReturn, self.grain
+    -- SCS-039 v2.1 typed contract: a nil meanToReturn models a valid-but-EMPTY
+    -- polygon (not a provider refusal), so the daily settle leaves the scalar.
+    if self.meanToReturn == nil then return "EMPTY", nil, self.grain end
+    return "OK", self.meanToReturn, self.grain
   end
   return m
 end
@@ -64,10 +75,12 @@ do
   T.eq("absent.mapNotActive", sys:mapActive(), false)
   T.eq("absent.migrateRefuses", sys:migrateFieldToMap(1), false)
 
-  -- The positional getter falls back to the cell path and reports CELL grain.
+  -- The positional getter falls back to the cell path and reports CELL grain
+  -- when a cell exists, NIL grain for an absent-zone-cell aggregate fallback
+  -- (SCS-039 v2.1, Iris fix 3: no fabricated zone-cell grain).
   local v, grain = sys:getMoisture(1, 10, 10)
   T.near("absent.readsAggregate", v, 0.50, 1e-9)
-  T.eq("absent.reportsCellGrain", grain, sys:getCellSize())
+  T.eq("absent.aggregateGrainNil", grain, nil)
 
   -- Field-level read is unchanged and reports no grain.
   local fv, fgrain = sys:getMoisture(1)
@@ -101,7 +114,10 @@ do
   T.ok("present.mapWasWritten", #sys.valueMap.writes > 0)
 
   local v, grain = sys:getMoisture(1, 10, 10)
-  T.near("present.readsMapValue", v, 0.70, 1e-6)
+  -- SCS-039 quantisation law: a positional write lands on whole raw steps, so the
+  -- read-back is the semantic amount floored to the nearest raw step (a 0.20 gain
+  -- becomes 50 of the 254 steps), always within one raw step of 0.70.
+  T.near("present.readsMapValue", v, 0.70, 1 / CropStressValueMap.RAW_SPAN)
   T.eq("present.reportsMapGrain", grain, 2)
 end
 
@@ -184,6 +200,33 @@ do
   sys.valueMap.meanToReturn = 0.80
   sys:settleDaily(1)
   T.near("set.survivesSettle", sys.fieldData[1].moisture, 0.80, 1e-9)
+end
+
+-- 8b. NATIVE SAVE REFUSAL FAILS THE PROVIDER CLOSED (SDS 3.3). A native save that
+--     never reached disk must not leave the mission still trusting the fine map;
+--     the scalar rows become the honest degrade layer and the next load re-selects.
+do
+  local sys = newSystem()
+  sys.valueMap = stubMap(2)
+  sys.providerMode = "TRUTH"
+  sys.valueMap.saveToSavegame = function() return false end
+  local ok = sys:saveNativeMap("/nowhere")
+  T.eq("save.refusalReportsFalse", ok, false)
+  T.eq("save.refusalFailsClosed", sys.providerMode, "UNAVAILABLE_PENDING_RELOAD")
+  T.eq("save.refusalDetachesReads", sys:mapActive(), false)
+end
+
+-- 8c. A SUCCESSFUL NATIVE SAVE keeps TRUTH the current authority and never trips
+--     the one-way fail-closed transition.
+do
+  local sys = newSystem()
+  sys.valueMap = stubMap(2)
+  sys.providerMode = "TRUTH"
+  sys.valueMap.saveToSavegame = function() return true end
+  local ok = sys:saveNativeMap("/nowhere")
+  T.eq("save.successReportsTrue", ok, true)
+  T.eq("save.successKeepsTruth", sys.providerMode, "TRUTH")
+  T.eq("save.successKeepsMapActive", sys:mapActive(), true)
 end
 
 

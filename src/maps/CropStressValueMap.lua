@@ -234,11 +234,15 @@ function CropStressValueMap:saveToSavegame(savegameDir)
     if not self.available or savegameDir == nil then return false end
     if saveBitVectorMapToFile == nil then return false end
     local path = savegameDir .. "/" .. CropStressValueMap.LAYER_DEF.file
-    local ok = pcall(saveBitVectorMapToFile, self.bvm, path)
-    if not ok then
+    -- SCS-039 v2.1: a native mutator succeeds only when BOTH the outer pcall
+    -- survived AND the engine returned literal true. A non-throwing false return
+    -- was previously misread as a saved file, a silent data-loss report.
+    local ok, nativeResult = pcall(saveBitVectorMapToFile, self.bvm, path)
+    local success = ok and nativeResult == true
+    if not success then
         csvmLog("Moisture map: native save failed; the StateLedger scalar degrade carries this save")
     end
-    return ok
+    return success
 end
 
 -- ─────────────────────────────────────────────────────────
@@ -246,16 +250,30 @@ end
 -- ─────────────────────────────────────────────────────────
 
 --- Read moisture at a world position.
----@return number|nil value  0..1, or nil where nothing has been written
----@return number|nil grain  metres per pixel of the reading (the concordance)
+--- SCS-039 v2.1 (SDS 3.2/3.3): the third return is a TYPED outcome, so a caller
+--- can tell a genuine native provider refusal (which fails the provider closed
+--- for the mission) apart from a benign unwritten or out-of-range position;
+--- neither of the latter is a refusal. Returns: value, grain, outcome.
+---   "PROVIDER_REFUSAL" - the native provider did not answer
+---   "OUT_OF_RANGE"     - the position maps outside the pixel grid
+---   "EMPTY"            - a resolvable pixel that has never been written
+---   "OK"               - a written pixel's decoded value
+---@return number|nil value  0..1, nil when not answered or nothing written
+---@return number|nil grain  metres per pixel (nil for refusal and out-of-range)
+---@return string outcome     one of the typed outcomes above
 function CropStressValueMap:readValueAtWorld(worldX, worldZ)
-    if not self.available then return nil, nil end
-    if getBitVectorMapPoint == nil then return nil, nil end
+    if not self.available then return nil, nil, "PROVIDER_REFUSAL" end
+    if getBitVectorMapPoint == nil then return nil, nil, "PROVIDER_REFUSAL" end
     local px, pz = self:worldToPixel(worldX, worldZ)
-    if px == nil then return nil, nil end
+    if px == nil then return nil, nil, "OUT_OF_RANGE" end
     local ok, raw = pcall(getBitVectorMapPoint, self.bvm, px, pz, 0, NUM_CHANNELS)
-    if not ok or raw == nil then return nil, nil end
-    return decode(raw, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
+    -- A nil raw answer is the provider not answering, never a written pixel: an
+    -- unwritten pixel reads back the raw-0 no-data sentinel (a number), so nil
+    -- here is treated as a refusal exactly as readAverageOfPolygon treats a nil
+    -- executeGet accumulator.
+    if not ok or raw == nil then return nil, nil, "PROVIDER_REFUSAL" end
+    if raw <= 0 then return nil, self:getGrainMetres(), "EMPTY" end
+    return decode(raw, CropStressValueMap.LAYER_DEF), self:getGrainMetres(), "OK"
 end
 
 --- World position to map pixel. Terrain is centred on the origin, so the
@@ -274,22 +292,33 @@ end
 --- Write a value over a square region centred on a world position.
 --- `radius` is in metres; it floors to one pixel so a point write is never a
 --- no-op on a coarse map.
+--- SCS-039 v2.1 (SDS 3.3/3.4): the second return is a TYPED outcome, so a caller
+--- can tell a genuine native region-write refusal (the execute threw) from a
+--- benign no-op (map not carrying the data). Only a refusal fails the provider
+--- closed; NOOP leaves the carrier untouched. Returns: wrote, outcome.
+---   "PROVIDER_REFUSAL" - the native region write threw
+---   "NOOP"             - nothing attempted (map absent, no modifier)
+---   "OK"               - the region write executed
+---@return boolean wrote   true only when the native execute ran
+---@return string outcome  one of the typed outcomes above
 function CropStressValueMap:writeValueAtWorld(worldX, worldZ, value, radius)
-    if not self.available then return false end
+    if not self.available then return false, "NOOP" end
     local grain = self:getGrainMetres() or 2
     local r = math.max(radius or 0, grain * 0.5)
     local raw = encode(value, CropStressValueMap.LAYER_DEF)
     return self:_setRegion(worldX - r, worldZ - r, worldX + r, worldZ + r, raw)
 end
 
+---@return boolean wrote, string outcome (see writeValueAtWorld)
 function CropStressValueMap:_setRegion(x0, z0, x1, z1, raw)
     local m = self.modifier
-    if m == nil then return false end
+    if m == nil then return false, "NOOP" end
     local ok = pcall(function()
         m:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)
         m:executeSet(raw)
     end)
-    return ok
+    if not ok then return false, "PROVIDER_REFUSAL" end
+    return true, "OK"
 end
 
 -- ─────────────────────────────────────────────────────────
@@ -374,10 +403,25 @@ end
 ---@return number|nil mean   0..1, nil when nothing is written in the polygon
 ---@return number|nil grain  metres per pixel (the concordance)
 function CropStressValueMap:readAverageOfPolygon(vx, vz, n)
-    if not self.available then return nil, nil end
+    -- SCS-039 v2.1 (SDS 3.2/3.3): TYPED outcomes, so a caller can tell a genuine
+    -- native provider refusal (which fails the provider closed for the mission)
+    -- apart from a malformed polygon or a valid-but-empty one; neither of the
+    -- latter is a refusal. Returns: outcome, mean, grain.
+    --   "INVALID_FIELD_GEOMETRY" - malformed polygon; the caller rebuilds context
+    --   "PROVIDER_REFUSAL"       - the native provider did not answer
+    --   "EMPTY"                  - a valid polygon with zero written pixels
+    --   "OK"                     - the mean over the written pixels
+    if vx == nil or vz == nil or n == nil or n < 3 then
+        return "INVALID_FIELD_GEOMETRY", nil, nil
+    end
+    if not self.available then return "PROVIDER_REFUSAL", nil, nil end
     local m = self.modifier
-    if m == nil or m.executeGet == nil then return nil, nil end
-    if not self:_setPolygonRegion(vx, vz, n) then return nil, nil end
+    if m == nil or m.executeGet == nil then return "PROVIDER_REFUSAL", nil, nil end
+    if not self:_setPolygonRegion(vx, vz, n) then
+        -- Geometry is already validated, so a bind failure here is the provider
+        -- (polygon ops unavailable, or a native throw), not bad geometry.
+        return "PROVIDER_REFUSAL", nil, nil
+    end
     -- executeGet returns (accumulator, numPixels, totalArea), confirmed at the
     -- decompile: PrecisionFarming NitrogenMap.lua:1034 reads it as
     -- `local acc, numPixels, _ = modifierFruit:executeGet()`. The mean we want
@@ -385,10 +429,13 @@ function CropStressValueMap:readAverageOfPolygon(vx, vz, n)
     local ok, acc, numPixels = pcall(function()
         return m:executeGet()
     end)
-    if not ok or acc == nil or numPixels == nil or numPixels == 0 then
-        return nil, nil
+    if not ok or acc == nil or numPixels == nil then
+        return "PROVIDER_REFUSAL", nil, nil
     end
-    return decode(acc / numPixels, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
+    if numPixels == 0 then
+        return "EMPTY", nil, self:getGrainMetres()
+    end
+    return "OK", decode(acc / numPixels, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
 end
 
 -- ─────────────────────────────────────────────────────────
