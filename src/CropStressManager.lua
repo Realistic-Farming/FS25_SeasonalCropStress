@@ -1018,8 +1018,24 @@ end
 function CropStressManager:getIrrigationSystems(farmId)
     local irrMgr = self.irrigationManager
     if irrMgr == nil or irrMgr.systems == nil then return {} end
-    if farmId ~= nil and irrMgr.getIrrigationSystemsRows ~= nil then
-        return irrMgr:getIrrigationSystemsRows(farmId)
+    -- SCS-023 v2.3 (SDS 8): the farm-scoped public surface. A positive valid
+    -- farm is current immediately on the server/listen host; a pure client
+    -- returns nil until that farm's complete private snapshot applied. An
+    -- invalid, spectator or not-yet-current farm returns nil. farmId nil keeps
+    -- the exact legacy all-public field shape for older FarmTablet versions.
+    if farmId ~= nil then
+        if type(farmId) ~= "number" or farmId <= 0 then return nil end
+        if g_server ~= nil then
+            if irrMgr.getIrrigationSystemsRows ~= nil then
+                return irrMgr:getIrrigationSystemsRows(farmId)
+            end
+            return nil
+        end
+        if irrMgr._clientFarmCurrent ~= nil and irrMgr._clientFarmCurrent[farmId] == true
+           and irrMgr.getCachedFarmSystems ~= nil then
+            return irrMgr:getCachedFarmSystems(farmId)
+        end
+        return nil
     end
     local out = {}
     for _, sys in pairs(irrMgr.systems) do
@@ -1076,12 +1092,22 @@ function CropStressManager:getIrrigationSystems(farmId)
     return out
 end
 
--- SCS-023: read-only farm-filtered water-source rows (capacity, remainder or
--- Unlimited, availability, label, sorted connected ids). Copy-only.
+-- SCS-023 v2.3 (SDS 8): read-only farm-filtered water-source rows
+-- (waterCapacity / isUnlimited / connectedSystemIds, with legacy aliases).
+-- Copy-only. Server is current immediately for a positive valid farm; a pure
+-- client returns nil until that farm's complete private snapshot applied.
 function CropStressManager:getIrrigationWaterSources(farmId)
     local irrMgr = self.irrigationManager
     if irrMgr == nil or irrMgr.getIrrigationWaterSources == nil then return {} end
-    return irrMgr:getIrrigationWaterSources(farmId)
+    if farmId ~= nil and (type(farmId) ~= "number" or farmId <= 0) then return nil end
+    if g_server ~= nil or farmId == nil then
+        return irrMgr:getIrrigationWaterSources(farmId)
+    end
+    if irrMgr._clientFarmCurrent ~= nil and irrMgr._clientFarmCurrent[farmId] == true
+       and irrMgr.getCachedFarmSources ~= nil then
+        return irrMgr:getCachedFarmSources(farmId)
+    end
+    return nil
 end
 
 -- Active irrigation schedule covering a field: a COPY of
