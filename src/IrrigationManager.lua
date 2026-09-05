@@ -84,6 +84,11 @@ function IrrigationManager.new(manager)
     -- transition and never to repeated false or false->true.
     self.previousFiniteWaterActive = nil
 
+    -- SCS-023 v2.3 (SDS 6/F200): the most recent AUTHORIZED Irrigate Now result
+    -- per farm. Wrong-farm results are returned to the requester only and never
+    -- stored here.
+    self.lastIrrigateNowResultByFarm = {}
+
     self.isInitialized = false
     return self
 end
@@ -864,26 +869,54 @@ end
 -- committedHours.
 -- ============================================================
 
---- Run the finite-aware Irrigate Now transaction for a system.
+--- Run the finite-aware Irrigate Now transaction for a system. One transaction
+--- wrapper owns every finite, Unlimited and mode-off Irrigate Now request
+--- (F200 / SCS-023 SDS 6). Gate order: missing row, live requester farm and
+--- placeable owner, SCS master, fitted expected revision, source and pressure,
+--- then the fixed requestedDraw = 1.0 transaction.
 ---@param systemId number
 ---@param requesterFarmId number|nil  farm id to authorise against
+---@param expectedRainKeyRevision number|nil  -1 (default) for unfitted systems
 ---@return table result
-function IrrigationManager:applyIrrigateNowTransaction(systemId, requesterFarmId)
+function IrrigationManager:applyIrrigateNowTransaction(systemId, requesterFarmId, expectedRainKeyRevision)
     local result = {
         accepted = false, resultCode = "no_source", servedFraction = 0,
-        acceptedTargetCount = 0, committedHours = 0,
+        acceptedTargetCount = 0, committedHours = 0, stateRevision = 0,
     }
     local system = self.systems[systemId]
     if system == nil then
         result.resultCode = "no_source"
         return result
     end
+    result.stateRevision = system.StateRevision or 0
 
-    -- Authorise: numeric farm match against the system's owner.
+    -- Authorise: numeric farm match against the LIVE placeable owner (falling
+    -- back to the retained row owner when no placeable is attached).
+    local liveOwner = system.ownerFarmId
+    if system.placeable ~= nil and type(system.placeable.getOwnerFarmId) == "function" then
+        local owner = system.placeable:getOwnerFarmId()
+        if type(owner) == "number" and owner > 0 then liveOwner = owner end
+    end
     if requesterFarmId == nil or requesterFarmId <= 0
-       or system.ownerFarmId == nil or system.ownerFarmId <= 0
-       or requesterFarmId ~= system.ownerFarmId then
+       or liveOwner == nil or liveOwner <= 0
+       or requesterFarmId ~= liveOwner then
         result.resultCode = "wrong_farm"
+        return result
+    end
+
+    -- SCS master: settings.enabled false disables the whole act.
+    if self.manager ~= nil and self.manager.settings ~= nil
+       and self.manager.settings.enabled == false then
+        result.resultCode = "master_disabled"
+        return result
+    end
+
+    -- A fitted pivot confirms against its current rain-key state revision; a
+    -- stale confirmation mutates nothing.
+    expectedRainKeyRevision = expectedRainKeyRevision or -1
+    if expectedRainKeyRevision ~= -1
+       and (system.StateRevision or 0) ~= expectedRainKeyRevision then
+        result.resultCode = "stale_confirmation"
         return result
     end
 
@@ -893,16 +926,8 @@ function IrrigationManager:applyIrrigateNowTransaction(systemId, requesterFarmId
         return result
     end
 
-    -- When finite mode is inactive, route through the incumbent one-shot.
-    if not self:isFiniteWaterActive() then
-        local applied = self:applyOneTimeIrrigation(systemId)
-        result.accepted = applied
-        result.resultCode = applied and "success" or "no_ground"
-        result.servedFraction = 1
-        return result
-    end
-
-    if source.finite then
+    local finiteActive = self:isFiniteWaterActive()
+    if finiteActive and source.finite then
         local requestedDraw = 1.0
         local remaining = source.waterRemaining or 0
         if remaining <= 0 then
@@ -926,7 +951,8 @@ function IrrigationManager:applyIrrigateNowTransaction(systemId, requesterFarmId
         return result
     end
 
-    -- Unlimited: same active transaction path, fraction 1, never mutates remainder.
+    -- Unlimited AND mode-off: full service with fraction 1 and no remainder
+    -- write. Irrigate Now debits zero operating cost in every mode.
     local gain = (system.flowRatePerHour or 0) * (system.pressureMultiplier or 0)
     local acceptedCount = self:_applyOneShotGain(system, gain)
     result.accepted = acceptedCount > 0
@@ -934,6 +960,48 @@ function IrrigationManager:applyIrrigateNowTransaction(systemId, requesterFarmId
     result.servedFraction = 1
     result.acceptedTargetCount = acceptedCount
     result.committedHours = 0
+    return result
+end
+
+--- The shared engine farm resolver (F200): uses ONLY g_currentMission:getFarmId
+--- on the server. A nil connection (listen host) takes the engine host branch; a
+--- dedicated client must send its real connection. No UserManager, connection.user,
+--- local-player or farm-1 fallback.
+function IrrigationManager:resolveRequesterFarmId(connection)
+    local mission = g_currentMission
+    if mission == nil or type(mission.getFarmId) ~= "function" then return nil end
+    local farmId = mission:getFarmId(connection)
+    if type(farmId) ~= "number" or farmId <= 0 then return nil end
+    return farmId
+end
+
+--- Send the Irrigate Now result to the requester and store it only when it is
+--- authorized for that farm. Wrong-farm results return to the requester only
+--- and are never stored. No result history, retry or terminal sweep survives.
+function IrrigationManager:dispatchIrrigateNowResult(systemId, result, connection, farmId)
+    if result ~= nil and result.resultCode ~= "wrong_farm"
+       and farmId ~= nil and farmId > 0 then
+        self.lastIrrigateNowResultByFarm[farmId] = {
+            systemId = systemId,
+            accepted = result.accepted == true,
+            resultCode = result.resultCode,
+            servedFraction = result.servedFraction or 0,
+            acceptedTargetCount = result.acceptedTargetCount or 0,
+            committedHours = result.committedHours or 0,
+            stateRevision = result.stateRevision or 0,
+        }
+    end
+    if CropStressIrrigateNowResultEvent ~= nil and connection ~= nil then
+        connection:sendEvent(CropStressIrrigateNowResultEvent.new(systemId, result))
+    end
+end
+
+--- Host (listen server / single player): run the full chain with a nil
+--- connection and handle the result locally through the same dispatch.
+function IrrigationManager:runIrrigateNowHost(systemId)
+    local farmId = self:resolveRequesterFarmId(nil)
+    local result = self:applyIrrigateNowTransaction(systemId, farmId)
+    self:dispatchIrrigateNowResult(systemId, result, nil, farmId)
     return result
 end
 
