@@ -1459,45 +1459,75 @@ end
 
 --- Apply accumulated served hours through the system's real coverage geometry.
 --- Positional per-cell write; one shared helper for scheduled + Irrigate Now.
+--- SCS-023 v2.3 (SDS 5.2): COVER writes moisture and returns FIELD EVIDENCE.
+--- Returns:
+---   { wholeActLegacy = true }  when soil machinery is absent (nothing written;
+---     the caller keeps the incumbent field-wide answer for every field), or
+---   { wholeActLegacy = false, fields = { [fieldId] = "ACCEPTED"|"REFUSED" } }
+---   otherwise. Before each field write the current farmland owner must equal
+---   the system farm; a missing mapping, invalid system owner or a field owned
+---   by another farm is POSITIONAL_REFUSED with no write. A literal true receipt
+---   from applyWaterAtCell is Accepted; false, nil or any other non-true is
+---   Refused. A valid unresolved leaf is literal true, never "no target".
 function IrrigationManager:applyGainToSystemCoverage(system, gain)
-    if system == nil or gain <= 0 then return end
+    if system == nil or gain <= 0 then
+        return { wholeActLegacy = false, fields = {} }
+    end
     local soilSystem = self.manager ~= nil and self.manager.soilSystem or nil
-    if soilSystem == nil or soilSystem.fieldData == nil then return end
+    if soilSystem == nil or soilSystem.fieldData == nil
+       or type(soilSystem.applyWaterAtCell) ~= "function"
+       or type(self._cellsInPolygon) ~= "function"
+       or type(self.getFieldPolygonWorld) ~= "function" then
+        return { wholeActLegacy = true }
+    end
+
+    local evidence = { wholeActLegacy = false, fields = {} }
+    local systemFarm = system.ownerFarmId
+    local ownerInvalid = not (type(systemFarm) == "number" and systemFarm > 0)
+    local farmlandMap = g_farmlandManager ~= nil and g_farmlandManager.farmlandMapping or nil
+
     local x0 = system.x or 0
     local z0 = system.z or 0
     for _, fieldId in ipairs(system.coveredFields or {}) do
         local d = soilSystem.fieldData[fieldId]
         if d ~= nil then
-            for _, field in ipairs(self:_fieldsForId(fieldId)) do
-                local vx, vz, n = self:getFieldPolygonWorld(field)
-                if vx ~= nil then
-                    local cs = soilSystem:getCellSize()
-                    for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cs)) do
-                        if system.type == "pivot" then
-                            local radius = system.radius or 200
-                            local dx = entry.wx - x0
-                            local dz = entry.wz - z0
-                            if dx * dx + dz * dz <= radius * radius then
-                                soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, gain)
+            local currentFarm = farmlandMap ~= nil and farmlandMap[fieldId] or nil
+            if ownerInvalid or currentFarm == nil or currentFarm ~= systemFarm then
+                evidence.fields[fieldId] = "REFUSED"
+            else
+                local accepted = 0
+                for _, field in ipairs(self:_fieldsForId(fieldId)) do
+                    local vx, vz, n = self:getFieldPolygonWorld(field)
+                    if vx ~= nil then
+                        local cs = soilSystem:getCellSize()
+                        for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cs)) do
+                            local inside = false
+                            if system.type == "pivot" then
+                                local radius = system.radius or 200
+                                local dx = entry.wx - x0
+                                local dz = entry.wz - z0
+                                inside = dx * dx + dz * dz <= radius * radius
+                            elseif system.type == "drip" then
+                                local startX = x0
+                                local startZ = z0
+                                local endX = system.endX or (x0 + 100)
+                                local endZ = system.endZ or z0
+                                local spacing = system.lineSpacing or 0.8
+                                local half = spacing * 0.5
+                                inside = pointSegDistSq(entry.wx, entry.wz,
+                                    startX, startZ, endX, endZ) <= half * half
                             end
-                        elseif system.type == "drip" then
-                            local startX = x0
-                            local startZ = z0
-                            local endX = system.endX or (x0 + 100)
-                            local endZ = system.endZ or z0
-                            local spacing = system.lineSpacing or 0.8
-                            local half = spacing * 0.5
-                            if pointSegDistSq(entry.wx, entry.wz, startX, startZ, endX, endZ) <= half * half then
-                                soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, gain)
+                            if inside and soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, gain) == true then
+                                accepted = accepted + 1
                             end
-                        else
-                            -- Unknown type: no legal field-wide fallback. Honest skip.
                         end
                     end
                 end
+                evidence.fields[fieldId] = (accepted > 0) and "ACCEPTED" or "REFUSED"
             end
         end
     end
+    return evidence
 end
 
 --- Farm-filtered enriched read rows. When farmId is supplied, rows carry

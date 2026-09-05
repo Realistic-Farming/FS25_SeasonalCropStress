@@ -237,4 +237,68 @@ do
   T.eq('txn.unlimitedRemainderUnchanged', mgr.waterSources[1].waterRemaining, nil)
 end
 
+-- 13. COVER FIELD EVIDENCE (SDS 5.2): ownership gate + literal-true receipts.
+do
+  local function coverMgr(receiptValue)
+    local mgr = IrrigationManager.new(nil)
+    local calls = { water = 0 }
+    mgr.manager = { soilSystem = {
+      fieldData = { [5] = { moisture = 0.5 } },
+      getCellSize = function() return 2 end,
+      applyWaterAtCell = function(_self, _fid, _x, _z, _g)
+        calls.water = calls.water + 1
+        return receiptValue
+      end,
+    } }
+    mgr._fieldsForId = function(_self, _fid) return { { polygonPoints = { 1 } } } end
+    mgr.getFieldPolygonWorld = function(_self, _f) return { -10, 10, 10 }, { -10, -10, 10 }, 3 end
+    mgr._cellsInPolygon = function(_self, _vx, _vz, _n, _cs)
+      return { { wx = 0, wz = 0 }, { wx = 1, wz = 1 } }
+    end
+    mgr._calls = calls
+    return mgr
+  end
+
+  g_farmlandManager = { farmlandMapping = { [5] = 2 } }
+
+  local owned = coverMgr(true)
+  owned.systems = { [10] = { id = 10, ownerFarmId = 2, type = "pivot",
+    coveredFields = { 5 }, x = 0, z = 0, radius = 200, pressureMultiplier = 1.0 } }
+  local ev = owned:applyGainToSystemCoverage(owned.systems[10], 0.018)
+  T.eq('cover.ownedAccepted', ev.fields[5], "ACCEPTED")
+  T.eq('cover.wroteOwnedField', owned._calls.water, 2)
+  T.eq('cover.notLegacy', ev.wholeActLegacy, false)
+
+  local refusedFarm = coverMgr(true)
+  refusedFarm.systems = { [10] = { id = 10, ownerFarmId = 2, type = "pivot",
+    coveredFields = { 5 }, x = 0, z = 0, radius = 200, pressureMultiplier = 1.0 } }
+  g_farmlandManager.farmlandMapping[5] = 7
+  ev = refusedFarm:applyGainToSystemCoverage(refusedFarm.systems[10], 0.018)
+  T.eq('cover.otherFarmRefused', ev.fields[5], "REFUSED")
+  T.eq('cover.refusedWritesNothing', refusedFarm._calls.water, 0)
+
+  local missingMap = coverMgr(true)
+  missingMap.systems = { [10] = { id = 10, ownerFarmId = 2, type = "pivot",
+    coveredFields = { 5 }, x = 0, z = 0, radius = 200, pressureMultiplier = 1.0 } }
+  g_farmlandManager.farmlandMapping[5] = nil
+  ev = missingMap:applyGainToSystemCoverage(missingMap.systems[10], 0.018)
+  T.eq('cover.missingMappingRefused', ev.fields[5], "REFUSED")
+  T.eq('cover.missingMappingWritesNothing', missingMap._calls.water, 0)
+
+  local refusedReceipt = coverMgr(false)
+  refusedReceipt.systems = { [10] = { id = 10, ownerFarmId = 2, type = "pivot",
+    coveredFields = { 5 }, x = 0, z = 0, radius = 200, pressureMultiplier = 1.0 } }
+  g_farmlandManager.farmlandMapping[5] = 2
+  ev = refusedReceipt:applyGainToSystemCoverage(refusedReceipt.systems[10], 0.018)
+  T.eq('cover.falseReceiptRefused', ev.fields[5], "REFUSED")
+
+  local legacy = IrrigationManager.new(nil)
+  legacy.systems = { [10] = { id = 10, ownerFarmId = 2, type = "pivot",
+    coveredFields = { 5 }, x = 0, z = 0, radius = 200 } }
+  ev = legacy:applyGainToSystemCoverage(legacy.systems[10], 0.018)
+  T.eq('cover.legacyWholeAct', ev.wholeActLegacy, true)
+
+  g_farmlandManager = nil
+end
+
 T.summary()
