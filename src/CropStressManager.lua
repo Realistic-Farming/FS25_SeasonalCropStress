@@ -1519,16 +1519,44 @@ function CropStressManager:consoleWaterStatus(farmIdStr)
     print("=== Finite irrigation water (SCS-023) ===")
     print(string.format("  effective mode: %s",
         irr:isFiniteWaterActive() and "FINITE" or "unlimited/inactive"))
+    print("  inherited cap: 168 hours (unchanged)")
+    local rain = nil
+    if self.weatherIntegration ~= nil and self.weatherIntegration.getCurrentRainKey ~= nil then
+        local readable, rainScale, isRaining = self.weatherIntegration:getCurrentRainKey()
+        rain = { readable = readable, rainScale = rainScale, isRaining = isRaining }
+    end
+    if rain ~= nil then
+        print(string.format("  endpoint sky: readable=%s rain=%.3f isRaining=%s",
+            tostring(rain.readable), rain.rainScale or 0, tostring(rain.isRaining)))
+    else
+        print("  endpoint sky: unavailable")
+    end
     local sources = irr:getIrrigationWaterSources(farmId)
     for _, s in ipairs(sources) do
-        local rem = s.unlimited and "Unlimited"
-            or string.format("%.1f / %.1f", s.waterRemaining or 0, s.capacity or 0)
+        local isUnlimited = s.isUnlimited == true
+        local capacity    = s.waterCapacity
+        local remaining   = s.waterRemaining
+        if s.capacity ~= nil and capacity == nil then capacity = s.capacity end
+        if s.unlimited ~= nil and isUnlimited == false and s.unlimited == true then isUnlimited = true end
+        if s.waterRemaining ~= nil and remaining == nil then remaining = s.waterRemaining end
+        local connected = s.connectedSystemIds or s.connectedSystems or {}
+        local rem = isUnlimited and "Unlimited"
+            or string.format("%.1f / %.1f", remaining or 0, capacity or 0)
         print(string.format("  source %d farm=%s %s (%s) connected=[%s]",
             s.id, tostring(s.ownerFarmId), rem,
             s.hasWater and "wet" or "dry",
-            table.concat(s.connectedSystems or {}, ",")))
+            table.concat(connected, ",")))
     end
     if #sources == 0 then print("  (zero sources: PASS)") end
+    if farmId > 0 and irr.lastIrrigateNowResultByFarm ~= nil then
+        local res = irr.lastIrrigateNowResultByFarm[farmId]
+        if res ~= nil then
+            print(string.format("  last Irrigate Now: %s accepted=%s served=%.3f targets=%d committed=%.3f rev=%d",
+                tostring(res.resultCode), tostring(res.accepted),
+                res.servedFraction or 0, res.acceptedTargetCount or 0,
+                res.committedHours or 0, res.stateRevision or 0))
+        end
+    end
 end
 
 function CropStressManager:consoleSetMoisture(fieldIdStr, valueStr)
