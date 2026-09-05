@@ -75,10 +75,12 @@ do
   T.eq("absent.mapNotActive", sys:mapActive(), false)
   T.eq("absent.migrateRefuses", sys:migrateFieldToMap(1), false)
 
-  -- The positional getter falls back to the cell path and reports CELL grain.
+  -- The positional getter falls back to the cell path and reports CELL grain
+  -- when a cell exists, NIL grain for an absent-zone-cell aggregate fallback
+  -- (SCS-039 v2.1, Iris fix 3: no fabricated zone-cell grain).
   local v, grain = sys:getMoisture(1, 10, 10)
   T.near("absent.readsAggregate", v, 0.50, 1e-9)
-  T.eq("absent.reportsCellGrain", grain, sys:getCellSize())
+  T.eq("absent.aggregateGrainNil", grain, nil)
 
   -- Field-level read is unchanged and reports no grain.
   local fv, fgrain = sys:getMoisture(1)

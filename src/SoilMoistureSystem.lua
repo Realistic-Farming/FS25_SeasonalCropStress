@@ -572,6 +572,11 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
     local sfHasEvap   = sfInteg ~= nil and type(sfInteg.getFieldEvapMod)   == "function"
     local sfHasStress = sfInteg ~= nil and type(sfInteg.getFieldStressMod) == "function"
 
+    -- SCS-039 v2.1 (Iris fix): one provider revision advance per hourly act that
+    -- actually changed readable moisture. A pending-only sub-step remainder
+    -- never advances it.
+    local readableChanged = false
+
     for fieldId, data in pairs(self.fieldData) do
         local soilParams = SoilMoistureSystem.SOIL_PARAMS[data.soilType]
             or SoilMoistureSystem.SOIL_PARAMS.loamy
@@ -650,6 +655,7 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
                         -- The daily settle re-derives from the map and corrects
                         -- any drift the positional writes introduce.
                         data.moisture = math.max(0.0, math.min(1.0, data.moisture + moved))
+                        readableChanged = true
                     end
                 end
             end
@@ -664,9 +670,12 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
             end
             data.cellSum = newSum
             data.moisture = newSum / data.cellCount
+            if net ~= 0 then readableChanged = true end
         else
+            local net = -evapLoss + rainGain + irrigGain
             data.moisture = math.max(0.0, math.min(1.0,
                 data.moisture - evapLoss + rainGain + irrigGain))
+            if net ~= 0 then readableChanged = true end
         end
 
         -- Publish moisture update event
@@ -711,6 +720,11 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
             ))
         end
     end
+    -- SCS-039 v2.1 (Iris fix 4): a readable hourly mutation advances the provider
+    -- revision once per transaction; a pending-only remainder never does.
+    if readableChanged then
+        self:_advanceMoistureRevision()
+    end
 end
 
 -- Returns moisture (0.0–1.0) for a field, or nil if unknown.
@@ -731,29 +745,45 @@ function SoilMoistureSystem:getMoisture(fieldId, x, z)
     local d = self.fieldData[fieldId]
     if d == nil then return nil, nil, rev end
 
+    -- SCS-039 v2.1 (Iris fix): a POSITIONAL query needs BOTH coordinates as
+    -- finite numbers. Mixed nil coordinates and non-finite input are rejected,
+    -- never silently downgraded to a field query.
+    if (x ~= nil) ~= (z ~= nil) then return nil, nil, rev end
+    if x ~= nil and (type(x) ~= "number" or x ~= x or math.abs(x) == math.huge
+        or type(z) ~= "number" or z ~= z or math.abs(z) == math.huge) then
+        return nil, nil, rev
+    end
+
+    -- SCS-039 v2.1 (Iris fix): a native provider that has failed closed for the
+    -- mission answers UNAVAILABLE. Its retained zone cells and cached aggregate
+    -- are never promoted as current ground, and no zone mutation may follow.
+    if self.providerMode == "UNAVAILABLE_PENDING_RELOAD" then
+        return nil, nil, rev
+    end
+
     if x ~= nil and z ~= nil then
         if self:mapActive() then
             -- SCS-039 v2.1 (SDS 3.2/3.3): the point read is TYPED. A written
             -- pixel answers with its ACTUAL carrier grain; a benign unwritten or
             -- out-of-range pixel keeps the aggregate fallback at nil grain; a
             -- genuine native refusal (pcall threw) fails the provider closed for
-            -- the mission, exactly like the polygon-aggregate refusal.
+            -- the mission and the read answers unavailable.
             local v, grain, outcome = self.valueMap:readValueAtWorld(x, z)
             if v ~= nil then return v, grain, rev end
             if outcome == "PROVIDER_REFUSAL" then
                 self:_failNativeClosed("native point-read refusal")
-                -- Fall through to the retained cell store below, which answers
-                -- exactly as a ZONE read would for the rest of the mission.
-            else
-                self:_refreshFieldAggregate(fieldId, d)
-                return d.moisture, nil, rev
+                return nil, nil, rev
             end
+            self:_refreshFieldAggregate(fieldId, d)
+            return d.moisture, nil, rev
         end
         local cx, cz = self:worldToCell(x, z)
         local row = d.cells and d.cells[cx]
         local cell = row and row[cz]
         if cell ~= nil then return cell.moisture, self:getCellSize(), rev end
-        return self:getFieldAggregate(d), self:getCellSize(), rev
+        -- SCS-039 v2.1 (Iris fix): an absent zone cell falls back to the field
+        -- aggregate at NIL grain, never a fabricated zone-cell grain.
+        return self:getFieldAggregate(d), nil, rev
     end
 
     -- Field-level read.
@@ -916,8 +946,16 @@ function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
     if self:mapActive() then
         self:migrateFieldToMap(fieldId)
         local vx, vz, n = self:_getFieldVerts(fieldId)
+        local painted = false
         if vx ~= nil then
-            self.valueMap:paintPolygon(vx, vz, n, newValue)
+            painted = self.valueMap:paintPolygon(vx, vz, n, newValue) == true
+        end
+        -- SCS-039 v2.1 (Iris fix 2): a whole-field replacement commits ONLY when
+        -- the native paint was accepted. A failed polygon binding or a thrown
+        -- native write leaves BOTH pending stores, the cached scalar and the
+        -- readable revision exactly as they were; the caller keeps the old ground.
+        if not painted then
+            return nil
         end
         -- The scalar is the derived aggregate, and a uniform paint makes the
         -- mean exactly the painted value. Any carried sub-step delta is now
@@ -953,8 +991,9 @@ end
 -- today's signature; the sprayer per-cell path calls _writeCell directly.
 function SoilMoistureSystem:setMoisture(fieldId, value)
     if self.fieldData[fieldId] ~= nil then
-        self:_writeFieldMoisture(fieldId, value)
-        return true
+        -- SCS-039 v2.1 (Iris fix 2): the receipt is the write result, so a
+        -- whole-field replacement the native paint refused reports false.
+        return self:_writeFieldMoisture(fieldId, value) ~= nil
     end
     return false
 end
@@ -1065,6 +1104,15 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
     -- SCS-023's COVER step consumes only this boolean.
     local d = self.fieldData[fieldId]
     if d == nil or type(gain) ~= "number" or gain <= 0 then return false end
+
+    -- SCS-039 v2.1 (Iris fix): a native provider that has failed closed for the
+    -- mission must never have its retained zone cells MUTATED as if they were
+    -- current ground. Accepted water is still conserved into the field-wide
+    -- pending namespace (pending-only, no revision) until the next mission load.
+    if self.providerMode == "UNAVAILABLE_PENDING_RELOAD" then
+        d.mapPending = (d.mapPending or 0) + gain
+        return true
+    end
 
     -- SCS-039: water lands on a PLACE, and on the map that place is a 2 m pixel
     -- instead of a 10-40 m cell. Read what is there, add the gain, write it back.

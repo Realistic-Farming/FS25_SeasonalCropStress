@@ -325,9 +325,15 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
         -- settled-day cursor on the server. Clients adopt the server value via
         -- the sync path and never mint their own.
         local revision = getInt(root .. "#moistureRevision", nil)
-        if revision ~= nil then soilSystem.moistureRevision = revision end
+        if revision ~= nil then
+            soilSystem.moistureRevision = revision
+            self._completePair.current.revision = revision
+        end
         local settledDay = getInt(root .. "#lastSettledDay", nil)
-        if settledDay ~= nil then soilSystem._lastSettledDay = settledDay end
+        if settledDay ~= nil then
+            soilSystem._lastSettledDay = settledDay
+            self._completePair.current.lastSettledMonotonicDay = settledDay
+        end
         -- SCS-039 v2.1 (SDS 3.5): resume the retained-pair bookkeeping at the
         -- persisted generation so the next COMPLETE commit builds on it.
         local saveGeneration = getInt(root .. "#saveGeneration", nil)
@@ -605,9 +611,24 @@ function SaveLoadHandler:compactDigest(env)
         parts[#parts + 1] = string.format("f%d=%.6f", fpKeys[i], env.fieldPending[fpKeys[i]] or 0)
     end
     local rows = env.positionalRows or {}
-    local posTotal = 0
-    for i = 1, #rows do posTotal = posTotal + (rows[i].amount or 0) end
-    parts[#parts + 1] = string.format("pos=%d:%.6f", #rows, posTotal)
+    -- SCS-039 v2.1 (Iris fix 5): the digest binds the FULL canonical positional
+    -- payload, not just count and total. Each leaf's field, status, coordinates
+    -- (pixel key or canonical world position), source grain and amount appear in
+    -- the pack's deterministic order, so two equal-sized leaves at different
+    -- positions never produce the same digest.
+    for i = 1, #rows do
+        local r = rows[i]
+        local where
+        if r.status == "RESOLVED" then
+            where = "p" .. tostring(r.pixelKey)
+        else
+            where = "w" .. tostring(r.worldX) .. "," .. tostring(r.worldZ)
+        end
+        parts[#parts + 1] = string.format("l%d=%s/%s/%s/%s/%.6f", i,
+            tostring(r.fieldId), tostring(r.status), where,
+            tostring(r.sourceWidth or "nil"), r.amount or 0)
+    end
+    parts[#parts + 1] = "lc=" .. tostring(#rows)
     return table.concat(parts, "|")
 end
 
@@ -638,6 +659,13 @@ function SaveLoadHandler:captureMoistureEnvelope()
         end
     end
     for fieldId, d in pairs(soil.fieldData) do
+        -- SCS-039 v2.1 (Iris fix 6): refresh a dirty native aggregate BEFORE it is
+        -- frozen into the envelope, so the capture never pairs the new revision
+        -- with a stale mean from an earlier positional write.
+        if d.aggregateDirty == true and soil.valueMap ~= nil and soil.valueMap.available
+           and type(soil._refreshFieldAggregate) == "function" then
+            soil:_refreshFieldAggregate(fieldId, d)
+        end
         env.aggregates[fieldId] = d.moisture
         if d.mapPending ~= nil and d.mapPending ~= 0 then
             env.fieldPending[fieldId] = d.mapPending
@@ -671,11 +699,16 @@ function SaveLoadHandler:commitMoistureEnvelope(capture, nativeOk, compactOk)
         return "COMPLETE"
     end
     if compactOk == true then
+        -- SCS-039 v2.1 (Iris fix 7): a PENDING_ONLY recovery row binds to the
+        -- RETAINED complete pair's identity (generation, revision, cursor), never
+        -- the current RAM revision/cursor, so the selector does not reject it as
+        -- BASE_MISMATCH when RAM moved on after the last successful save. The
+        -- pending payload itself stays the captured one.
         self._pendingOnly = {
             payloadKind = "PENDING_ONLY",
             baseGeneration = base.generation or 0,
-            baseRevision   = capture.moistureRevision,
-            baseLastSettledMonotonicDay = capture.lastSettledMonotonicDay,
+            baseRevision   = base.revision or capture.moistureRevision,
+            baseLastSettledMonotonicDay = base.lastSettledMonotonicDay,
             aggregates = capture.aggregates,
             fieldPending = capture.fieldPending,
             positionalRows = capture.positionalRows,
