@@ -741,6 +741,10 @@ function CropStressManager:onHourlyTick(elapsedHours)
             for _, sys in pairs(self.irrigationManager.systems) do
                 if sys.rainKeyFitted == true and sys.isActive then
                     sys.activeGameHoursSinceSettle = (sys.activeGameHoursSinceSettle or 0) + hours
+                    -- SCS-046 F200: each admitted hour settles through the one
+                    -- continuous-interval path (water + cost), then the accumulator
+                    -- is cleared by settleFittedSystem.
+                    self.irrigationManager:settleFittedSystem(sys, "HOURLY")
                 end
             end
         end

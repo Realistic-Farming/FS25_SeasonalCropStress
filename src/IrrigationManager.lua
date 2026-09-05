@@ -744,9 +744,17 @@ function IrrigationManager:activateSystem(id)
     return true, nil
 end
 
-function IrrigationManager:deactivateSystem(id)
+function IrrigationManager:deactivateSystem(id, reason)
     local system = self.systems[id]
     if system == nil or not system.isActive then return end
+
+    -- SCS-046 F200: a fitted pivot settles its already-run continuous interval
+    -- before it stops, so a trip or Stop never strands water and cost. The
+    -- reason travels to the settle for diagnostics; nil keeps legacy callers.
+    if system.rainKeyFitted == true and (system.activeGameHoursSinceSettle or 0) > 0
+       and self.settleFittedSystem ~= nil then
+        self:settleFittedSystem(system, reason or "DEACTIVATE")
+    end
 
     for _, fieldId in ipairs(system.coveredFields) do
         if self.manager ~= nil and self.manager.eventBus ~= nil then
@@ -1210,7 +1218,7 @@ function IrrigationManager:updateRainKeySensor(dt)
                     system.rainKeyTripped = true
                     system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
                     if system.isActive then
-                        self:deactivateSystem(id)
+                        self:deactivateSystem(id, "RAIN_KEY_TRIPPED")
                     end
                     changes[id] = { publish = true, reason = "RAIN_KEY_TRIPPED" }
                 end
@@ -1349,7 +1357,7 @@ function IrrigationManager:applyRainKeyCommand(systemId, action, value, expected
            and (system.rainKeyAccumulatedMm or 0) >= v then
             system.rainKeyTripped = true
             system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
-            if system.isActive then self:deactivateSystem(id) end
+            if system.isActive then self:deactivateSystem(id, "TRIP_DIAL_CROSS") end
             system._lastRainKeyPausePublished = true
         end
         system.rainKeyTripMm = v
