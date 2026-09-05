@@ -850,7 +850,14 @@ function SoilMoistureSystem:_refreshFieldAggregate(fieldId, d)
     -- for the mission; EMPTY and INVALID_FIELD_GEOMETRY are not refusals and leave
     -- the last cached scalar (and the dirty flag) exactly as they were.
     local outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
-    if outcome == "OK" then
+    -- SCS-039 v2.1 (root-cause fix): readAverageOfPolygon can return "OK" with a nil
+    -- mean when the written pixels average to raw "no data" (decode() returns nil for
+    -- raw <= 0). An "OK"-with-nil-mean is not a usable answer, so honour the stated
+    -- invariant above - the scalar holds a real polygon mean or the last cached one,
+    -- never nil - by leaving the cached scalar and the dirty flag untouched so a later
+    -- read re-derives it. Without the `mean ~= nil` guard this wrote nil into
+    -- d.moisture, which crashed the per-frame HUD sort (getFieldsSortedByMoisture).
+    if outcome == "OK" and mean ~= nil then
         d.moisture = mean
         d.aggregateDirty = false
     elseif outcome == "PROVIDER_REFUSAL" then
@@ -2042,9 +2049,14 @@ end
 function SoilMoistureSystem:getFieldsSortedByMoisture()
     local list = {}
     for fieldId, data in pairs(self.fieldData) do
-        table.insert(list, { fieldId = fieldId, moisture = data.moisture, soilType = data.soilType })
+        -- Guard: a field whose moisture is momentarily nil (data-path gap) must not
+        -- crash the per-frame HUD sort. Skip it here and keep the sort nil-safe so a
+        -- single incomplete field can never take down the whole update loop.
+        if data.moisture ~= nil then
+            table.insert(list, { fieldId = fieldId, moisture = data.moisture, soilType = data.soilType })
+        end
     end
-    table.sort(list, function(a, b) return a.moisture < b.moisture end)
+    table.sort(list, function(a, b) return (a.moisture or 0) < (b.moisture or 0) end)
     return list
 end
 
