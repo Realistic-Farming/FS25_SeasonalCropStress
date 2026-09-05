@@ -3917,23 +3917,23 @@
   "2026-09-05": [
     {
       "referrer": "github.com",
-      "count": 266,
-      "uniques": 98
+      "count": 283,
+      "uniques": 96
     },
     {
       "referrer": "Google",
-      "count": 62,
-      "uniques": 30
+      "count": 58,
+      "uniques": 28
     },
     {
       "referrer": "Bing",
-      "count": 25,
+      "count": 24,
       "uniques": 8
     },
     {
       "referrer": "patreon.com",
-      "count": 18,
-      "uniques": 13
+      "count": 19,
+      "uniques": 14
     },
     {
       "referrer": "chatgpt.com",
@@ -3946,14 +3946,14 @@
       "uniques": 2
     },
     {
+      "referrer": "realisticfarming.com",
+      "count": 3,
+      "uniques": 3
+    },
+    {
       "referrer": "yandex.ru",
       "count": 3,
       "uniques": 1
-    },
-    {
-      "referrer": "realisticfarming.com",
-      "count": 2,
-      "uniques": 2
     },
     {
       "referrer": "DuckDuckGo",
