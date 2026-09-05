@@ -211,10 +211,23 @@ function CropStressSettingsSyncEvent:applySingleSetting(key, value, connection)
             return
         end
 
-        -- Apply setting and validate
-        g_cropStressManager.settings[key] = value
-        g_cropStressManager.settings:validateSettings()
-        g_cropStressManager:applySettings()
+        -- Apply setting through the ONE authoritative owner (SCS-023 v2.3,
+        -- SDS 4), which validates, re-applies to subsystems and fires the
+        -- finite-water fill-once edge. An unknown key is rejected.
+        local mgr = g_cropStressManager
+        if mgr.applyAuthoritativeSettingChange ~= nil then
+            if not mgr:applyAuthoritativeSettingChange(key, value, "sync") then
+                csLog("WARNING: rejecting unknown setting " .. tostring(key))
+                if connection ~= nil then
+                    CropStressSettingsSyncEvent.sendAllToConnection(connection)
+                end
+                return
+            end
+        else
+            mgr.settings[key] = value
+            mgr.settings:validateSettings()
+            mgr:applySettings()
+        end
 
         csLog("Setting applied: " .. key .. " = " .. tostring(value))
 

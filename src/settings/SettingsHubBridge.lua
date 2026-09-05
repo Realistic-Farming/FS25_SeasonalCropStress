@@ -19,6 +19,12 @@ SeasonalSettingsHubBridge = SeasonalSettingsHubBridge or {}
 local function applyChange(key, value)
     local mgr = g_cropStressManager
     if mgr == nil or mgr.settings == nil then return end
+    -- SCS-023 v2.3 (SDS 4): SettingsHub routes through the ONE authoritative
+    -- settings owner (validates, re-applies, fires the finite-water edge).
+    if type(mgr.applyAuthoritativeSettingChange) == "function" then
+        mgr:applyAuthoritativeSettingChange(key, value, "hub")
+        return
+    end
     mgr.settings[key] = value
     if type(mgr.settings.validateSettings) == "function" then
         mgr.settings:validateSettings()

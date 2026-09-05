@@ -53,10 +53,12 @@ end
 --- moisture path already multiplied irrigation GAIN by the elapsed count, so
 --- leaving the charge at one hour would hand a player 72 hours of free water.
 ---@param elapsedHours number|nil
----@param servedHoursBySystem table|nil  SCS-023: when the finite planner's served
----   map is present, charge getEffectiveCostPerHour * servedHours per system even
----   if the endpoint schedule left the system inactive. nil keeps isActive * hours.
-function FinanceIntegration:chargeHourlyCosts(elapsedHours, servedHoursBySystem)
+---@param planOrServed table|nil  SCS-023 v2.3 (SDS 5.3/7): when the FINITE-WATER
+---   plan is present (it carries financeRows), debit the FROZEN rows and ignore
+---   endpoint isActive. A nil plan keeps the pre-feature isActive * hours
+---   fallback. A served-hours map (legacy) charges served hours per system even
+---   if the endpoint schedule left the system inactive.
+function FinanceIntegration:chargeHourlyCosts(elapsedHours, planOrServed)
     if not self.isInitialized then return end
     local irrMgr = self.manager.irrigationManager
     if irrMgr == nil then return end
@@ -67,6 +69,19 @@ function FinanceIntegration:chargeHourlyCosts(elapsedHours, servedHoursBySystem)
     -- nil means the flag was never set (default = costs enabled); only skip on explicit false.
     if irrMgr.costsEnabled == false then return end
 
+    -- SCS-023 v2.3 (SDS 5.3/7): plan mode reads frozen finance rows. costsEnabled,
+    -- a missing farm, the spectator farm or an invalid farm debit zero without
+    -- rolling back scheduled source service.
+    if type(planOrServed) == "table" and type(planOrServed.financeRows) == "table" then
+        for _systemId, row in pairs(planOrServed.financeRows) do
+            if row ~= nil and row.farmId ~= nil and row.farmId ~= 0 then
+                self:deductFundsVanilla(row.amount or 0, row.farmId)
+            end
+        end
+        return
+    end
+
+    local servedHoursBySystem = planOrServed
     for _, system in pairs(irrMgr.systems) do
         -- SCS-046: fitted pivots settle water AND cost through the fractional
         -- active-hour path (settleFittedSystem), never this legacy whole-hour
