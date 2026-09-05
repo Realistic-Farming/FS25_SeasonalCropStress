@@ -2042,9 +2042,14 @@ end
 function SoilMoistureSystem:getFieldsSortedByMoisture()
     local list = {}
     for fieldId, data in pairs(self.fieldData) do
-        table.insert(list, { fieldId = fieldId, moisture = data.moisture, soilType = data.soilType })
+        -- Guard: a field whose moisture is momentarily nil (data-path gap) must not
+        -- crash the per-frame HUD sort. Skip it here and keep the sort nil-safe so a
+        -- single incomplete field can never take down the whole update loop.
+        if data.moisture ~= nil then
+            table.insert(list, { fieldId = fieldId, moisture = data.moisture, soilType = data.soilType })
+        end
     end
-    table.sort(list, function(a, b) return a.moisture < b.moisture end)
+    table.sort(list, function(a, b) return (a.moisture or 0) < (b.moisture or 0) end)
     return list
 end
 
