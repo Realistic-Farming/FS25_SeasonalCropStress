@@ -504,6 +504,27 @@ function CropStressManager:applySettings()
     csLog("Settings applied to all subsystems")
 end
 
+--- SCS-023 v2.3 (SDS 4): ONE authoritative settings owner. Validates and applies
+--- the change on the settings object, re-applies settings to the subsystems,
+--- and refreshes the effective finite-water mode (which fires the session-only
+--- fill-once active-to-inactive edge). The panel, the settings sync event and
+--- SettingsHub route through this owner; clients apply display state only via
+--- the settings event. Returns false for an unknown key.
+function CropStressManager:applyAuthoritativeSettingChange(key, value, origin)
+    if self.settings == nil or key == nil then return false end
+    if self.settings[key] == nil then return false end
+    if key == "finiteWater" then value = not not value end
+    self.settings[key] = value
+    if self.settings.validateSettings ~= nil then
+        self.settings:validateSettings()
+    end
+    self:applySettings()
+    if self.irrigationManager ~= nil and self.irrigationManager.handleFiniteWaterModeEdge ~= nil then
+        self.irrigationManager:handleFiniteWaterModeEdge()
+    end
+    return true
+end
+
 -- ============================================================
 -- PER-FRAME UPDATE (called from FSBaseMission.update hook)
 -- ============================================================
@@ -637,6 +658,12 @@ function CropStressManager:onHourlyTick(elapsedHours)
     -- Simulation runs on the server (or single-player host) only.
     -- Clients receive updated values via CropStressMoistureInitEvent broadcast.
     if g_server ~= nil then
+        -- SCS-023 v2.3 (SDS 4): every hourly act first refreshes the effective
+        -- finite-water mode edge so an external mode change (SettingsHub, load)
+        -- still fires the one-time fill once.
+        if self.irrigationManager ~= nil and self.irrigationManager.handleFiniteWaterModeEdge ~= nil then
+            self.irrigationManager:handleFiniteWaterModeEdge()
+        end
         -- SCS-023 FINITE WATER PLANNER. Run BEFORE the schedule check so the
         -- planner's served hours are available to the positional gain apply and
         -- to chargeHourlyCosts. When finite water is inactive, collect incumbent

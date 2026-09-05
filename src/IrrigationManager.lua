@@ -79,6 +79,11 @@ function IrrigationManager.new(manager)
     -- Water sources (pumps) keyed by placeableId
     self.waterSources = {}
 
+    -- SCS-023 v2.3 (SDS 4): session-only effective-mode latch. nil until the
+    -- first act seeds it; the fill-once edge reacts only to a true->false
+    -- transition and never to repeated false or false->true.
+    self.previousFiniteWaterActive = nil
+
     self.isInitialized = false
     return self
 end
@@ -206,6 +211,34 @@ function IrrigationManager:isFiniteWaterActive()
         return ReleaseGate.isSystemLive("finite_irrigation_water") == true
     end
     return true
+end
+
+--- SCS-023 v2.3 (SDS 4): session-only active-to-inactive edge. The first call
+--- seeds the latch with the loaded effective mode and fills nothing. A later
+--- active-to-inactive edge fills every finite source once on the server (sets
+--- it to capacity, derives wet state, raises authoritative dirt through the
+--- setter), clears no reasons (hasWater derives) and updates the stored value.
+--- Repeated false, and false-to-true, never fill.
+---@return string "seeded" | "filled" | "unchanged"
+function IrrigationManager:handleFiniteWaterModeEdge()
+    local active = self:isFiniteWaterActive()
+    if self.previousFiniteWaterActive == nil then
+        self.previousFiniteWaterActive = active
+        return "seeded"
+    end
+    if self.previousFiniteWaterActive == true and active == false then
+        if g_server ~= nil then
+            for id, source in pairs(self.waterSources) do
+                if source.finite then
+                    self:setSourceWaterRemaining(id, source.capacity or 0, false)
+                end
+            end
+        end
+        self.previousFiniteWaterActive = false
+        return "filled"
+    end
+    self.previousFiniteWaterActive = active
+    return "unchanged"
 end
 
 --- Resolve the OptionScaling finiteWaterDrawScale once per hourly act.
