@@ -741,6 +741,10 @@ function CropStressManager:onHourlyTick(elapsedHours)
             for _, sys in pairs(self.irrigationManager.systems) do
                 if sys.rainKeyFitted == true and sys.isActive then
                     sys.activeGameHoursSinceSettle = (sys.activeGameHoursSinceSettle or 0) + hours
+                    -- SCS-046 F200: each admitted hour settles through the one
+                    -- continuous-interval path (water + cost), then the accumulator
+                    -- is cleared by settleFittedSystem.
+                    self.irrigationManager:settleFittedSystem(sys, "HOURLY")
                 end
             end
         end
@@ -917,6 +921,12 @@ function CropStressManager:sendInitialClientState(connection)
     --    client that disconnects mid-walk simply stops receiving rows.
     if self.soilSystem.queueMapSync ~= nil then
         self.soilSystem:queueMapSync(connection)
+    end
+
+    -- SCS-046 A / SDS 8: push this connection's farm's COMPLETE private
+    -- irrigation snapshot so a pure client's _clientFarmCurrent becomes current.
+    if self.irrigationManager ~= nil and self.irrigationManager.sendFarmPrivateState ~= nil then
+        self.irrigationManager:sendFarmPrivateState(connection)
     end
 
     local fieldCount = 0

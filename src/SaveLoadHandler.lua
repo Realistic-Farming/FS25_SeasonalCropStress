@@ -215,6 +215,17 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
                 table.insert(dayStrs, v and "1" or "0")
             end
             setString(key .. "#activeDays", table.concat(dayStrs, ","))
+            -- SCS-046: persist a fitted pivot's rain-key latch and dial so a
+            -- reload restores the fitted state before any activity resumes.
+            if system.rainKeyFitted == true then
+                setBool(  key .. "#rkFitted",  true)
+                setFloat( key .. "#rkTripMm",  system.rainKeyTripMm or 2.5)
+                setFloat( key .. "#rkAccMm",   system.rainKeyAccumulatedMm or 0)
+                setFloat( key .. "#rkDryMin",  system.rainKeyDryElapsedMinutes or 0)
+                setBool(  key .. "#rkTripped", system.rainKeyTripped or false)
+                setInt(   key .. "#rkRev",     system.rainKeyStateRevision or 0)
+                setString(key .. "#rkInput",   system.rainKeyInputState or "UNAVAILABLE")
+            end
             i = i + 1
         end
     end
@@ -393,6 +404,18 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
                 if wasActive and not system.isActive then
                     irrMgr:activateSystem(sysId)
                 end
+                -- SCS-046: restore a fitted pivot's rain-key latch and dial
+                -- before any activity resumes.
+                if getBool(key .. "#rkFitted", false) then
+                    system.rainKeyFitted = true
+                    system.rainKeyTripMm = getFloat(key .. "#rkTripMm", system.rainKeyTripMm or 2.5)
+                    system.rainKeyAccumulatedMm = getFloat(key .. "#rkAccMm", 0)
+                    system.rainKeyDryElapsedMinutes = getFloat(key .. "#rkDryMin", 0)
+                    system.rainKeyTripped = getBool(key .. "#rkTripped", false)
+                    system.rainKeyStateRevision = getInt(key .. "#rkRev", 0)
+                    system.rainKeyInputState = getString(key .. "#rkInput", "UNAVAILABLE")
+                    system._lastRainKeyPausePublished = nil
+                end
                 restored = restored + 1
             end
             i = i + 1
@@ -472,13 +495,24 @@ function SaveLoadHandler:buildStateTable()
         for sysId, system in pairs(irrMgr.systems) do
             local days = {}
             for _, v in ipairs(system.schedule.activeDays) do days[#days + 1] = v and 1 or 0 end
-            out.irrigation[sysId] = {
+            local entry = {
                 startHour  = system.schedule.startHour,
                 endHour    = system.schedule.endHour,
                 isActive   = system.isActive or false,
                 manualMode = system.manualMode == true,
                 activeDays = days,
             }
+            -- SCS-046: carry a fitted pivot's rain-key latch and dial.
+            if system.rainKeyFitted == true then
+                entry.rkFitted  = true
+                entry.rkTripMm  = system.rainKeyTripMm or 2.5
+                entry.rkAccMm   = system.rainKeyAccumulatedMm or 0
+                entry.rkDryMin  = system.rainKeyDryElapsedMinutes or 0
+                entry.rkTripped = system.rainKeyTripped or false
+                entry.rkRev     = system.rainKeyStateRevision or 0
+                entry.rkInput   = system.rainKeyInputState or "UNAVAILABLE"
+            end
+            out.irrigation[sysId] = entry
         end
     end
 
@@ -565,6 +599,17 @@ function SaveLoadHandler:applyStateTable(data)
                 system.manualMode = s.manualMode == true
                 if s.isActive and not system.isActive then
                     irrMgr:activateSystem(sysId)
+                end
+                -- SCS-046: restore a fitted pivot's rain-key latch and dial.
+                if s.rkFitted == true then
+                    system.rainKeyFitted = true
+                    system.rainKeyTripMm = s.rkTripMm or system.rainKeyTripMm or 2.5
+                    system.rainKeyAccumulatedMm = s.rkAccMm or 0
+                    system.rainKeyDryElapsedMinutes = s.rkDryMin or 0
+                    system.rainKeyTripped = s.rkTripped or false
+                    system.rainKeyStateRevision = s.rkRev or 0
+                    system.rainKeyInputState = s.rkInput or "UNAVAILABLE"
+                    system._lastRainKeyPausePublished = nil
                 end
             end
         end

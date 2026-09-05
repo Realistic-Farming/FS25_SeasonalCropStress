@@ -744,9 +744,17 @@ function IrrigationManager:activateSystem(id)
     return true, nil
 end
 
-function IrrigationManager:deactivateSystem(id)
+function IrrigationManager:deactivateSystem(id, reason)
     local system = self.systems[id]
     if system == nil or not system.isActive then return end
+
+    -- SCS-046 F200: a fitted pivot settles its already-run continuous interval
+    -- before it stops, so a trip or Stop never strands water and cost. The
+    -- reason travels to the settle for diagnostics; nil keeps legacy callers.
+    if system.rainKeyFitted == true and (system.activeGameHoursSinceSettle or 0) > 0
+       and self.settleFittedSystem ~= nil then
+        self:settleFittedSystem(system, reason or "DEACTIVATE")
+    end
 
     for _, fieldId in ipairs(system.coveredFields) do
         if self.manager ~= nil and self.manager.eventBus ~= nil then
@@ -1176,6 +1184,15 @@ end
 function IrrigationManager:updateRainKeySensor(dt)
     if self.manager == nil or self.manager.weatherIntegration == nil then return {} end
     if g_server == nil then return {} end
+    -- SCS-046 A (F200): master-disabled or release-locked freezes the sensor
+    -- (no accumulation, no dry time, no trips). The release row is rain_key_pause.
+    if self.manager.settings ~= nil and self.manager.settings.enabled == false then
+        return {}
+    end
+    if ReleaseGate ~= nil and type(ReleaseGate.isSystemLive) == "function"
+       and ReleaseGate.isSystemLive("rain_key_pause") ~= true then
+        return {}
+    end
 
     -- The one current-rain read per tick. UNAVAILABLE when both routes fail.
     local readable, rainScale, isRaining = self.manager.weatherIntegration:getCurrentRainKey()
@@ -1210,7 +1227,7 @@ function IrrigationManager:updateRainKeySensor(dt)
                     system.rainKeyTripped = true
                     system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
                     if system.isActive then
-                        self:deactivateSystem(id)
+                        self:deactivateSystem(id, "RAIN_KEY_TRIPPED")
                     end
                     changes[id] = { publish = true, reason = "RAIN_KEY_TRIPPED" }
                 end
@@ -1291,13 +1308,27 @@ function IrrigationManager:getRainKeySnapshot(system)
 end
 
 --- Fit or remove a rain key, set the dial, all through the one server command path.
+--- SCS-046 B (F200): FIT and SET require the rain_key_pause release row live; a
+--- stale expected revision is rejected before any mutation; REMOVE settles the
+--- already-run interval first.
 ---@param systemId number
 ---@param action string  FIT | REMOVE | SET_TRIP_MM
 ---@param value number|nil
+---@param expectedRevision number|nil  rain-key state revision the requester saw
 ---@return boolean ok, string|nil error
-function IrrigationManager:applyRainKeyCommand(systemId, action, value)
+function IrrigationManager:applyRainKeyCommand(systemId, action, value, expectedRevision)
     local system = self.systems[systemId]
     if system == nil then return false, "UNKNOWN_SYSTEM" end
+    expectedRevision = expectedRevision or -1
+    if expectedRevision ~= -1 and (system.rainKeyStateRevision or 0) ~= expectedRevision then
+        return false, "STALE_CONFIRMATION"
+    end
+    if action == "FIT" or action == "SET_TRIP_MM" then
+        if ReleaseGate ~= nil and type(ReleaseGate.isSystemLive) == "function"
+           and ReleaseGate.isSystemLive("rain_key_pause") ~= true then
+            return false, "RELEASE_LOCKED"
+        end
+    end
     if action == "FIT" then
         if system.type ~= "pivot" then return false, "NOT_A_PIVOT" end
         system.rainKeyFitted = true
@@ -1310,6 +1341,10 @@ function IrrigationManager:applyRainKeyCommand(systemId, action, value)
         system._lastRainKeyPausePublished = false
         return true, nil
     elseif action == "REMOVE" then
+        -- F200: REMOVE settles the already-run continuous interval first.
+        if system.rainKeyFitted == true then
+            self:settleFittedSystem(system, "REMOVE")
+        end
         system.rainKeyFitted = false
         system.rainKeyTripMm = 2.5
         system.rainKeyAccumulatedMm = 0
@@ -1331,7 +1366,7 @@ function IrrigationManager:applyRainKeyCommand(systemId, action, value)
            and (system.rainKeyAccumulatedMm or 0) >= v then
             system.rainKeyTripped = true
             system.rainKeyStateRevision = (system.rainKeyStateRevision or 0) + 1
-            if system.isActive then self:deactivateSystem(id) end
+            if system.isActive then self:deactivateSystem(id, "TRIP_DIAL_CROSS") end
             system._lastRainKeyPausePublished = true
         end
         system.rainKeyTripMm = v
@@ -1790,4 +1825,20 @@ function IrrigationManager:buildFarmPrivateSnapshot(farmId)
         systemRows = self:getIrrigationSystemsRows(farmId),
         sourceRows = self:getIrrigationWaterSources(farmId),
     }
+end
+
+--- SDS 8 / SCS-046 A: on a pure client join, push that connection's farm's
+--- COMPLETE private snapshot (systems + sources) so the client's
+--- _clientFarmCurrent flag becomes current together. The engine resolves the
+--- farm for the joining connection; a dedicated client only ever gets its own
+--- farm's private state.
+function IrrigationManager:sendFarmPrivateState(connection)
+    if g_server == nil then return false end
+    if CropStressIrrigationStateEvent == nil then return false end
+    local farmId = self:resolveRequesterFarmId(connection)
+    if farmId == nil or farmId <= 0 then return false end
+    local snapshot = self:buildFarmPrivateSnapshot(farmId)
+    connection:sendEvent(CropStressIrrigationStateEvent.new(
+        farmId, snapshot.systemRows, snapshot.sourceRows))
+    return true
 end
