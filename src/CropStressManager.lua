@@ -628,6 +628,7 @@ function CropStressManager:onHourlyTick(elapsedHours)
         local fieldSuppression = nil
         local servedHoursBySystem = nil
         local finiteWaterActive = false
+        local finitePlan = nil
         if self.irrigationManager ~= nil
            and self.irrigationManager.planFiniteWater ~= nil then
             finiteWaterActive = self.irrigationManager:isFiniteWaterActive()
@@ -637,11 +638,11 @@ function CropStressManager:onHourlyTick(elapsedHours)
                 -- SCS-023 v2.3 (SDS 5.1/5.3): the planner is PURE and returns a
                 -- plan; the plan is committed exactly once before the positional
                 -- gain apply so source water is debited once for this span.
-                local plan = self.irrigationManager:planFiniteWater(
+                finitePlan = self.irrigationManager:planFiniteWater(
                     hours, currentHourKey, rainScale, isRaining)
-                servedHoursBySystem = plan.servedHoursBySystem
+                servedHoursBySystem = finitePlan.servedHoursBySystem
                 if self.irrigationManager.commitFiniteWaterPlan ~= nil then
-                    self.irrigationManager:commitFiniteWaterPlan(plan)
+                    self.irrigationManager:commitFiniteWaterPlan(finitePlan)
                 end
             else
                 servedHoursBySystem = self.irrigationManager:collectScheduledHours(
@@ -723,8 +724,10 @@ function CropStressManager:onHourlyTick(elapsedHours)
         -- 4. Accumulate crop stress where moisture is critical
         self.stressModifier:hourlyUpdate(hours)
 
-        self.financeIntegration:chargeHourlyCosts(hours,
-            finiteWaterActive and servedHoursBySystem or nil)
+        -- SCS-023 v2.3 (SDS 5.3/7): when the finite plan is present, finance
+        -- debits its FROZEN financeRows exactly once; a nil plan (non-finite
+        -- mode) preserves the pre-feature isActive * hours fallback.
+        self.financeIntegration:chargeHourlyCosts(hours, finitePlan)
 
         -- Push updated moisture/stress to all connected clients. When the
         -- NetworkSync bridge is active the whole field map batches through its 1Hz

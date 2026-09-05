@@ -1254,7 +1254,8 @@ function IrrigationManager:collectScheduledHours(elapsedHours, currentHourKey)
     for i = 1, elapsedHours do
         local hourKey = currentHourKey - elapsedHours + i
         for id, system in pairs(self.systems) do
-            if self:isScheduledAtHour(system, hourKey) then
+            if self:isScheduledAtHour(system, hourKey)
+               and not (system.rainKeyFitted == true) then
                 local usable = self:systemHasUsableWater(system)
                 if usable then
                     served[id] = (served[id] or 0) + 1
@@ -1310,7 +1311,8 @@ function IrrigationManager:planFiniteWater(elapsedHours, currentHourKey, rainSca
         -- Group scheduled systems by bound same-farm source.
         local bySource = {}
         for id, system in pairs(self.systems) do
-            if self:isScheduledAtHour(system, hourKey) and system.waterSourceId ~= nil then
+            if self:isScheduledAtHour(system, hourKey) and system.waterSourceId ~= nil
+               and not (system.rainKeyFitted == true) then
                 local sid = system.waterSourceId
                 bySource[sid] = bySource[sid] or {}
                 bySource[sid][#bySource[sid] + 1] = system
@@ -1359,7 +1361,33 @@ function IrrigationManager:planFiniteWater(elapsedHours, currentHourKey, rainSca
             end
         end
     end
-    return { servedHoursBySystem = served, sourceRows = sourceRows }
+    -- F200 owns every rainKeyFitted pivot: it is excluded from SCS-023 source
+    -- service, coverage and finance, and only ever settles through its own
+    -- continuous-interval path. financeRows freeze the current owner farm and
+    -- the current effective cost getter per served non-fitted system.
+    local financeRows = {}
+    for systemId, servedHours in pairs(served) do
+        local system = self.systems[systemId]
+        if system ~= nil and not (system.rainKeyFitted == true) then
+            local effCost = nil
+            if type(self.getEffectiveCostPerHour) == "function" then
+                effCost = self:getEffectiveCostPerHour(system)
+            end
+            effCost = effCost or (system.operationalCostPerHour or 0)
+            local farmId = nil
+            if system.placeable ~= nil and type(system.placeable.getOwnerFarmId) == "function" then
+                farmId = system.placeable:getOwnerFarmId()
+            end
+            servedHours = servedHours or 0
+            financeRows[systemId] = {
+                farmId = farmId,
+                effectiveCostPerHour = effCost,
+                servedHours = servedHours,
+                amount = effCost * servedHours,
+            }
+        end
+    end
+    return { servedHoursBySystem = served, sourceRows = sourceRows, financeRows = financeRows }
 end
 
 --- Commit a pure finite-water plan (SDS 5.3): write each finite source's planned
