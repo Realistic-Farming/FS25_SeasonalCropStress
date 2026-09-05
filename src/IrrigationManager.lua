@@ -89,6 +89,13 @@ function IrrigationManager.new(manager)
     -- stored here.
     self.lastIrrigateNowResultByFarm = {}
 
+    -- SCS-023 v2.3 (SDS 8): transient pure-client private snapshot mirror. A
+    -- farm's private rows become current only after its complete
+    -- CropStressIrrigationStateEvent applied; never persisted.
+    self._clientFarmCurrent = {}   -- farmId -> true once the complete snapshot applied
+    self._clientFarmSystems = {}   -- farmId -> copied private system rows
+    self._clientFarmSources = {}   -- farmId -> copied source rows
+
     self.isInitialized = false
     return self
 end
@@ -1661,30 +1668,51 @@ end
 
 --- Farm-filtered enriched read rows. When farmId is supplied, rows carry
 --- ownerFarmId, waterSourceId and derived stopReason.
+--- SCS-023 v2.3 (SDS 8): ONE mutation-safe copy of a system row. The public form
+--- omits farm-private fields; includePrivate adds ownerFarmId, waterSourceId and
+--- the derived stopReason. Used by the farm getters and the private state event,
+--- never a second snapshot protocol.
+function IrrigationManager:copyIrrigationSystemRow(system, includePrivate)
+    local covered = {}
+    if system.coveredFields ~= nil then
+        for i = 1, #system.coveredFields do covered[i] = system.coveredFields[i] end
+    end
+    local row = {
+        id                     = system.id,
+        type                   = system.type,
+        isActive               = system.isActive == true,
+        coveredFields          = covered,
+        schedule               = system.schedule,
+        flowRatePerHour        = system.flowRatePerHour,
+        operationalCostPerHour = system.operationalCostPerHour,
+    }
+    if includePrivate then
+        row.ownerFarmId  = system.ownerFarmId
+        row.waterSourceId = system.waterSourceId
+        row.stopReason   = self:getSystemStopReason(system)
+    end
+    return row
+end
+
+--- Farm-scoped enriched read rows. farmId supplied: only that farm's systems,
+--- each a copied row WITH private fields. farmId nil: every system's PUBLIC row
+--- (no private fields).
 function IrrigationManager:getIrrigationSystemsRows(farmId)
     local out = {}
     for id, sys in pairs(self.systems) do
-        local row = {
-            id = id,
-            type = sys.type,
-            isActive = sys.isActive == true,
-            coveredFields = sys.coveredFields,
-            schedule = sys.schedule,
-            flowRatePerHour = sys.flowRatePerHour,
-            operationalCostPerHour = sys.operationalCostPerHour,
-        }
-        if farmId ~= nil then
-            row.ownerFarmId = sys.ownerFarmId
-            row.waterSourceId = sys.waterSourceId
-            row.stopReason = self:getSystemStopReason(sys)
+        local includePrivate = farmId ~= nil
+        if includePrivate and sys.ownerFarmId ~= farmId then
+            -- a different farm's system never appears in this farm's copy
+        else
+            out[#out + 1] = self:copyIrrigationSystemRow(sys, includePrivate)
         end
-        out[#out + 1] = row
     end
     return out
 end
 
---- Farm-filtered water-source read rows (capacity, remainder/Unlimited, label,
---- availability, sorted connected ids).
+--- Farm-filtered water-source read rows with the travelled keys
+--- waterCapacity / isUnlimited / connectedSystemIds (legacy capacity /
+--- unlimited / connectedSystems aliases retained for older readers).
 function IrrigationManager:getIrrigationWaterSources(farmId)
     local out = {}
     for id, source in pairs(self.waterSources) do
@@ -1694,22 +1722,72 @@ function IrrigationManager:getIrrigationWaterSources(farmId)
                 if sys.waterSourceId == id then connected[#connected + 1] = sysId end
             end
             table.sort(connected)
+            local connectedCopy = {}
+            for i = 1, #connected do connectedCopy[i] = connected[i] end
             out[#out + 1] = {
                 id = id,
                 ownerFarmId = source.farmId,
-                capacity = source.capacity,
+                waterCapacity = source.capacity,
                 waterRemaining = source.finite and source.waterRemaining or nil,
-                unlimited = not source.finite,
+                isUnlimited = not source.finite,
                 hasWater = source.hasWater == true,
                 -- BUILD 07:10: getText on a key absent from l10n returns the truthy
                 -- "Missing '...'" string, so an `or` fallback after it never fires.
                 -- Ask hasText first, for the key the 26 translation files carry.
                 label = (g_i18n ~= nil and g_i18n:hasText("cs_irr_water_source")
                     and g_i18n:getText("cs_irr_water_source")) or "Water source",
-                connectedSystems = connected,
+                connectedSystemIds = connectedCopy,
+                -- legacy aliases for older readers
+                capacity = source.capacity,
+                unlimited = not source.finite,
+                connectedSystems = connectedCopy,
             }
         end
     end
     table.sort(out, function(a, b) return (a.id or 0) < (b.id or 0) end)
     return out
+end
+
+--- SDS 8: apply one farm's complete private snapshot on a pure client. The
+--- shared completion flag makes both positive-farm getters current together.
+function IrrigationManager:applyFarmPrivateSnapshot(farmId, systemRows, sourceRows)
+    self._clientFarmSystems[farmId] = systemRows or {}
+    self._clientFarmSources[farmId] = sourceRows or {}
+    self._clientFarmCurrent[farmId] = true
+    return true
+end
+
+--- SDS 8: cached mutation-safe system rows for a current farm (client mirror).
+function IrrigationManager:getCachedFarmSystems(farmId)
+    local rows = self._clientFarmSystems[farmId]
+    if rows == nil then return nil end
+    local out = {}
+    for i = 1, #rows do out[i] = rows[i] end
+    return out
+end
+
+--- SDS 8: cached mutation-safe source rows for a current farm (client mirror).
+function IrrigationManager:getCachedFarmSources(farmId)
+    local rows = self._clientFarmSources[farmId]
+    if rows == nil then return nil end
+    local out = {}
+    for i = 1, #rows do out[i] = rows[i] end
+    return out
+end
+
+--- SDS 8: teardown / new session clears the transient client mirror.
+function IrrigationManager:clearClientPrivateSnapshot()
+    self._clientFarmCurrent = {}
+    self._clientFarmSystems = {}
+    self._clientFarmSources = {}
+end
+
+--- SDS 8: build one farm's complete private snapshot for the state event from
+--- the live manager (server side). systemRows are copied private rows; sourceRows
+--- are the copied farm-filtered canonical rows.
+function IrrigationManager:buildFarmPrivateSnapshot(farmId)
+    return {
+        systemRows = self:getIrrigationSystemsRows(farmId),
+        sourceRows = self:getIrrigationWaterSources(farmId),
+    }
 end
