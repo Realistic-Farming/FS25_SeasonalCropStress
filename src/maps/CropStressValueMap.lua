@@ -425,8 +425,9 @@ function CropStressValueMap:readAverageOfPolygon(vx, vz, n)
     -- latter is a refusal. Returns: outcome, mean, grain.
     --   "INVALID_FIELD_GEOMETRY" - malformed polygon; the caller rebuilds context
     --   "PROVIDER_REFUSAL"       - the native provider did not answer
-    --   "EMPTY"                  - a valid polygon with zero written pixels
-    --   "OK"                     - the mean over the written pixels
+    --   "EMPTY"                  - a valid polygon with no written moisture (zero
+    --                              written pixels, or an all-no-data raw-zero read)
+    --   "OK"                     - the finite mean over the written pixels
     if vx == nil or vz == nil or n == nil or n < 3 then
         return "INVALID_FIELD_GEOMETRY", nil, nil
     end
@@ -438,20 +439,48 @@ function CropStressValueMap:readAverageOfPolygon(vx, vz, n)
         -- (polygon ops unavailable, or a native throw), not bad geometry.
         return "PROVIDER_REFUSAL", nil, nil
     end
-    -- executeGet returns (accumulator, numPixels, totalArea), confirmed at the
-    -- decompile: PrecisionFarming NitrogenMap.lua:1034 reads it as
-    -- `local acc, numPixels, _ = modifierFruit:executeGet()`. The mean we want
-    -- is over WRITTEN pixels, so numPixels is the divisor, never totalArea.
+    -- SCS-039 (Iris PR178 contract): count and average WRITTEN pixels only.
+    -- executeGet returns (accumulator, numPixels, totalPixels). WITHOUT the
+    -- written-range filter, numPixels is polygon COVERAGE, which counts raw-0
+    -- no-data holes as if they were measured ground: it dilutes a mixed mean and
+    -- turns an all-no-data region into a raw-0 average that decode() reads as nil,
+    -- which used to leak out as an "OK" carrying a nil mean. Filtering to
+    -- RAW_MIN..RAW_MAX makes numPixels the written-sample count and acc their sum
+    -- (the same filter the executeAdd path uses); a genuinely written zero-moisture
+    -- value encodes to a positive raw and is still counted. Decompile confirms the
+    -- filtered signature modifier:executeGet(filter) (FieldManager.lua,
+    -- DensityMapHeightUtil.lua); the unfiltered NitrogenMap read counts coverage.
+    local f = self.filter
+    local useFilter = f ~= nil and DensityValueCompareType ~= nil
+        and DensityValueCompareType.BETWEEN ~= nil
     local ok, acc, numPixels = pcall(function()
+        if useFilter then
+            f:setValueCompareParams(DensityValueCompareType.BETWEEN, RAW_MIN, RAW_MAX)
+            return m:executeGet(f)
+        end
         return m:executeGet()
     end)
-    if not ok or acc == nil or numPixels == nil then
+    -- Missing, thrown, or non-finite native results stay a provider refusal, never
+    -- an empty polygon (the SCS-039 typed-result intent Iris reaffirmed on PR178).
+    if not ok or type(acc) ~= "number" or type(numPixels) ~= "number"
+        or acc ~= acc or numPixels ~= numPixels
+        or acc == math.huge or acc == -math.huge
+        or numPixels == math.huge or numPixels == -math.huge
+        or numPixels < 0 then
         return "PROVIDER_REFUSAL", nil, nil
     end
+    -- A valid native read with no written pixels is EMPTY (no current aggregate),
+    -- not a measured-dry OK. Raw 0 is the missing-data sentinel, not dry soil.
     if numPixels == 0 then
         return "EMPTY", nil, self:getGrainMetres()
     end
-    return "OK", decode(acc / numPixels, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
+    local mean = decode(acc / numPixels, CropStressValueMap.LAYER_DEF)
+    if mean == nil then
+        -- Written-range filtering should make this unreachable, but the contract is
+        -- explicit: an OK never carries a nil mean. An all-no-data average is EMPTY.
+        return "EMPTY", nil, self:getGrainMetres()
+    end
+    return "OK", mean, self:getGrainMetres()
 end
 
 -- ─────────────────────────────────────────────────────────
