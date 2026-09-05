@@ -19,10 +19,12 @@ do
   mgr:registerWaterSource({
     id = 1, x = 0, y = 0, z = 0, waterFlowCapacity = 1000,
     waterUnitsCapacity = 48.0, waterRemaining = 48.0, ownerFarmId = 1,
+    waterUnitsRefillPerRainHour = 2.0,
   })
   T.ok('source.finiteRegistered', mgr.waterSources[1].finite == true)
   T.eq('source.finiteCapacity', mgr.waterSources[1].capacity, 48.0)
   T.ok('source.finiteHasWater', mgr.waterSources[1].hasWater == true)
+  T.eq('source.retainsAuthoredRefill', mgr.waterSources[1].waterUnitsRefillPerRainHour, 2.0)
 end
 
 -- 2. UNLIMITED: capacity <= 0 means no remainder ever.
@@ -73,7 +75,8 @@ do
   T.eq('collect.noRemainderMutation', mgr.waterSources[1].waterRemaining, 48)
 end
 
--- 6. FINITE PLANNER: six ordinary hours consume exactly the draw, dry source serves zero.
+-- 6. FINITE PLANNER (PURE) + COMMIT: six ordinary hours serve the draw, the
+--    plan writes nothing, and commitFiniteWaterPlan debits exactly once.
 do
   local mgr = IrrigationManager.new(nil)
   mgr.waterSources = { [1] = { id = 1, finite = true, capacity = 48, waterRemaining = 6.0, hasWater = true } }
@@ -87,13 +90,37 @@ do
     src.hasWater = v > 0
   end
   -- 6 scheduled hours at draw scale 1.0 x pressure 1.0 = 6 irrigation-hours.
-  local served = mgr:planFiniteWater(6, 1 * 24 + 6, 0.0, false)
-  T.eq('planner.served', served[10], 6)
-  T.eq('planner.remainder', mgr.waterSources[1].waterRemaining, 0)
+  local plan = mgr:planFiniteWater(6, 1 * 24 + 6, 0.0, false)
+  T.eq('planner.served', plan.servedHoursBySystem[10], 6)
+  T.eq('planner.pureNoWrite', mgr.waterSources[1].waterRemaining, 6)
+  T.ok('planner.pureStillWet', mgr.waterSources[1].hasWater == true)
+  T.eq('planner.planCarriesAfter', plan.sourceRows[1].after, 0)
+  mgr:commitFiniteWaterPlan(plan)
+  T.eq('planner.remainderAfterCommit', mgr.waterSources[1].waterRemaining, 0)
   T.ok('planner.nowDry', mgr.waterSources[1].hasWater == false)
 end
 
--- 7. FINITE PLANNER: rain refill is added when isRaining.
+-- 6b. CAPACITY CLAMP: rain refill never pushes a finite store past capacity.
+do
+  local mgr = IrrigationManager.new(nil)
+  mgr.waterSources = { [1] = { id = 1, finite = true, capacity = 5, waterRemaining = 4.5, hasWater = true } }
+  mgr.systems = {
+    [10] = { id = 10, waterSourceId = 1, pressureMultiplier = 1.0,
+             schedule = { startHour = 0, endHour = 24, activeDays = {true,true,true,true,true,true,true} } },
+  }
+  mgr.setSourceWaterRemaining = function(_self, sid, v)
+    local src = mgr.waterSources[sid]
+    src.waterRemaining = v
+    src.hasWater = v > 0
+  end
+  -- refill 2.0 on 4.5 would reach 6.5; capacity 5 clamps it, then the one
+  -- scheduled hour draws 1.0, so the plan carries 4.0 (not 5.5 uncapped).
+  local plan = mgr:planFiniteWater(1, 1 * 24 + 6, 1.0, true)
+  T.near('clamp.afterCapped', plan.sourceRows[1].after, 4.0, 1e-9)
+end
+
+-- 7. FINITE PLANNER (PURE) + COMMIT: rain refill is added when isRaining, and
+--    the authored refill rate rides the plan.
 do
   local mgr = IrrigationManager.new(nil)
   mgr.waterSources = { [1] = { id = 1, finite = true, capacity = 48, waterRemaining = 1.0, hasWater = true } }
@@ -107,9 +134,12 @@ do
     src.hasWater = v > 0
   end
   -- rainScale 1.0 for 1 hour: refill 2.0, then 1.0 consumed by the scheduled hour.
-  local served = mgr:planFiniteWater(1, 1 * 24 + 6, 1.0, true)
-  T.eq('planner.refillServed', served[10], 1)
-  T.near('planner.remainderAfterRefill', mgr.waterSources[1].waterRemaining, 2.0, 1e-9)
+  local plan = mgr:planFiniteWater(1, 1 * 24 + 6, 1.0, true)
+  T.eq('planner.refillServed', plan.servedHoursBySystem[10], 1)
+  T.near('planner.planAfterRefill', plan.sourceRows[1].after, 2.0, 1e-9)
+  T.near('planner.remainderUnchangedWhilePure', mgr.waterSources[1].waterRemaining, 1.0, 1e-9)
+  mgr:commitFiniteWaterPlan(plan)
+  T.near('planner.remainderAfterCommitRefill', mgr.waterSources[1].waterRemaining, 2.0, 1e-9)
 end
 
 -- 8. STOP REASON derives from the bound source.
