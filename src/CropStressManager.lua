@@ -1050,7 +1050,8 @@ function CropStressManager:getIrrigationSchedule(fieldId)
     local irrMgr = self.irrigationManager
     if irrMgr == nil or irrMgr.systems == nil then return nil end
     for _, sys in pairs(irrMgr.systems) do
-        if sys.coveredFields ~= nil and sys.schedule ~= nil then
+        -- An INACTIVE system never reports an active schedule (facade contract).
+        if sys.isActive and sys.coveredFields ~= nil and sys.schedule ~= nil then
             for _, fid in ipairs(sys.coveredFields) do
                 if fid == fieldId then
                     local days = {}
