@@ -923,6 +923,12 @@ function CropStressManager:sendInitialClientState(connection)
         self.soilSystem:queueMapSync(connection)
     end
 
+    -- SCS-046 A / SDS 8: push this connection's farm's COMPLETE private
+    -- irrigation snapshot so a pure client's _clientFarmCurrent becomes current.
+    if self.irrigationManager ~= nil and self.irrigationManager.sendFarmPrivateState ~= nil then
+        self.irrigationManager:sendFarmPrivateState(connection)
+    end
+
     local fieldCount = 0
     for _ in pairs(self.soilSystem.fieldData) do fieldCount = fieldCount + 1 end
     csLog(string.format("MP: sent settings + moisture snapshot (%d fields) to new client", fieldCount))

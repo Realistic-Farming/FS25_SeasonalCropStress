@@ -1826,3 +1826,19 @@ function IrrigationManager:buildFarmPrivateSnapshot(farmId)
         sourceRows = self:getIrrigationWaterSources(farmId),
     }
 end
+
+--- SDS 8 / SCS-046 A: on a pure client join, push that connection's farm's
+--- COMPLETE private snapshot (systems + sources) so the client's
+--- _clientFarmCurrent flag becomes current together. The engine resolves the
+--- farm for the joining connection; a dedicated client only ever gets its own
+--- farm's private state.
+function IrrigationManager:sendFarmPrivateState(connection)
+    if g_server == nil then return false end
+    if CropStressIrrigationStateEvent == nil then return false end
+    local farmId = self:resolveRequesterFarmId(connection)
+    if farmId == nil or farmId <= 0 then return false end
+    local snapshot = self:buildFarmPrivateSnapshot(farmId)
+    connection:sendEvent(CropStressIrrigationStateEvent.new(
+        farmId, snapshot.systemRows, snapshot.sourceRows))
+    return true
+end
