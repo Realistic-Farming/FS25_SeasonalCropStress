@@ -3964,23 +3964,23 @@
   "2026-09-06": [
     {
       "referrer": "github.com",
-      "count": 283,
-      "uniques": 96
+      "count": 291,
+      "uniques": 97
     },
     {
       "referrer": "Google",
-      "count": 58,
-      "uniques": 28
+      "count": 57,
+      "uniques": 26
     },
     {
       "referrer": "Bing",
-      "count": 24,
+      "count": 23,
       "uniques": 8
     },
     {
       "referrer": "patreon.com",
       "count": 19,
-      "uniques": 14
+      "uniques": 15
     },
     {
       "referrer": "chatgpt.com",
