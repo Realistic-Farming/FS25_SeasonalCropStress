@@ -134,6 +134,21 @@ end
 -- Populates fieldListContainer with up to 5 fields sorted by risk.
 -- ============================================================
 
+--- BUILD 19:23 (George CLOSED DESIGN 19:12): the Soil list-row merge module on the mission bridge
+--- (Soil attaches it next to soilFertilityManager; getfenv(0) does not cross mods). nil when Soil is
+--- absent, and then every caller keeps today's per-farmland rows. Only Soil drives the outline walks;
+--- this side only calls buildGroups (may queue a walk on Soil's driver) or readGroups (cached only).
+local function getSoilMerge()
+    if g_currentMission == nil or g_currentMission.soilFertilityManager == nil then
+        return nil
+    end
+    local merge = g_currentMission.RfPdaSoilMerge
+    if type(merge) ~= "table" then
+        return nil
+    end
+    return merge
+end
+
 function CropConsultantDialog:buildFieldList()
     if self.fieldListContainer == nil then return end
 
@@ -163,6 +178,42 @@ function CropConsultantDialog:buildFieldList()
             local moisture = data.moisture or 0.5
             local risk     = stress * 0.6 + (1 - moisture) * 0.4
             table.insert(riskList, { fieldId = fieldId, moisture = moisture, stress = stress, risk = risk })
+        end
+    end
+    -- BUILD 19:23 (George CLOSED DESIGN 19:12): owned ids group into GPS-outline blocks through the
+    -- Soil merge bridge; a block carries the max member risk (worst wins), min moisture, max
+    -- stress and its shortLabel. Soil absent = the per-farmland list above.
+    local merge = getSoilMerge()
+    if merge ~= nil and type(merge.buildGroups) == "function" and #riskList > 1 then
+        local byId, ids = {}, {}
+        for _, e in ipairs(riskList) do
+            byId[e.fieldId] = e
+            ids[#ids + 1] = e.fieldId
+        end
+        local ok, groups = pcall(merge.buildGroups, ids)
+        if ok and type(groups) == "table" then
+            local grouped = {}
+            for _, g in ipairs(groups) do
+                local lead = byId[g.fieldId]
+                local members = g.memberIds or { g.fieldId }
+                if lead ~= nil then
+                    local e = { fieldId = g.fieldId, memberIds = members, moisture = lead.moisture, stress = lead.stress, risk = lead.risk }
+                    for _, mid in ipairs(members) do
+                        local m = byId[mid]
+                        if m ~= nil then
+                            if m.moisture < e.moisture then e.moisture = m.moisture end
+                            if m.stress > e.stress then e.stress = m.stress end
+                            if m.risk > e.risk then e.risk = m.risk end
+                        end
+                    end
+                    if #members > 1 and type(merge.shortLabel) == "function" then
+                        local okL, text = pcall(merge.shortLabel, members)
+                        if okL and type(text) == "string" then e.label = "Field " .. text end
+                    end
+                    grouped[#grouped + 1] = e
+                end
+            end
+            riskList = grouped
         end
     end
     table.sort(riskList, function(a, b) return a.risk > b.risk end)
@@ -210,8 +261,8 @@ function CropConsultantDialog:buildFieldList()
             severityStr = "[OK]"
         end
         local labelStr = string.format(
-            "Field %d · %s  %d%% moisture  Yield %s  %s",
-            entry.fieldId, cropName, math.floor(entry.moisture * 100), yieldImpact, severityStr
+            "%s · %s  %d%% moisture  Yield %s  %s",
+            entry.label or ("Field " .. tostring(entry.fieldId)), cropName, math.floor(entry.moisture * 100), yieldImpact, severityStr
         )
         addRow(labelStr, y)
         y = y - 22

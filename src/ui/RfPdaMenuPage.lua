@@ -1247,11 +1247,11 @@ function RfPdaMenuPage:_refreshDotLegend(panels, activeIndex)
         end
         table.insert(shorts, title)
     end
-    local joined = table.concat(shorts, " - ")
+    local joined = table.concat(shorts, " Â· ")
     if joined == "" then
         joined = tr("rf_pda_module_soil_short", "Soil")
     end
-    self.rfDotLegend:setText(string.format("%d/%d - %s", activeIndex or 1, n, joined))
+    self.rfDotLegend:setText(string.format("%d/%d Â· %s", activeIndex or 1, n, joined))
 end
 
 --- Match SoilMapHooks / Map: grow/shrink from first seed RoundCorner in the BoxLayout.
@@ -2898,9 +2898,11 @@ local function _csPivotRemote(self, action)
     end
 end
 
--- [SCS-046] Rain-key clicks take the same host-then-resolved-guest route as the
--- pivot remotes above, but a DIFFERENT handler: these become
--- CropStressRainKeyCommandEvent, never a pivot remote action.
+-- [SCS-046] Rain-key clicks. Same host-then-resolved-guest route as the pivot
+-- remotes below, but a DIFFERENT handler: these become
+-- CropStressRainKeyCommandEvent, never a pivot remote action. Vendored into
+-- every host copy of this page, because the Esc page that actually loads is the
+-- HOST mod's copy and a button whose onClick name is missing there never paints.
 local function _csRainKey(self, token)
     -- [BUILD 15:58] The pcall stays, because a UI click must never take the
     -- menu down, but the error is PRINTED now. A bare pcall here is what made

@@ -393,9 +393,25 @@ function CsRfPdaGuest.buildNextStepLine(fieldId)
     return tip, color
 end
 
+--- BUILD 19:23 (George CLOSED DESIGN 19:12): the Soil list-row merge module on the mission bridge
+--- (Soil attaches it next to soilFertilityManager; getfenv(0) does not cross mods). nil when Soil is
+--- absent, and then every caller keeps today's per-farmland rows. Only Soil drives the outline walks;
+--- this side only calls buildGroups (may queue a walk on Soil's driver) or readGroups (cached only).
+local function getSoilMerge()
+    if g_currentMission == nil or g_currentMission.soilFertilityManager == nil then
+        return nil
+    end
+    local merge = g_currentMission.RfPdaSoilMerge
+    if type(merge) ~= "table" then
+        return nil
+    end
+    return merge
+end
+
 --- Owned-field rows for Esc content table (Wizard ruling: owned-only).
 --- Keys are farmland ids (CropStressManager.fieldById / coveredFields contract).
---- Rows are session farm patches (polygon edge-proximity), not raw field ids.
+--- BUILD 19:23: rows are GPS-outline blocks from the Soil merge bridge (one row per helper
+--- outline, Montana 86-87 is one row); Soil absent = one row per farmland id.
 --- Spectator (farmId nil/0) returns empty rows — never default to farm 1.
 ---@return table
 function CsRfPdaGuest.buildFieldRows()
@@ -455,17 +471,27 @@ function CsRfPdaGuest.buildFieldRows()
         end
     end
 
+    -- BUILD 19:23 (George CLOSED DESIGN 19:12): blocks from the Soil merge bridge, the same rows
+    -- the Soil panel shows. buildOneRow below keeps the block math (min moisture, max stress,
+    -- irrigated if any member is covered, Mixed when the crops differ); memberFieldIds keeps
+    -- feeding pivot coverage. Labels via the merge (Field 86-87), else the Field N fallback.
     local patchList = nil
-    if FarmPatchUtil ~= nil and type(FarmPatchUtil.buildPatches) == "function" then
-        local ok, result = pcall(function()
-            return FarmPatchUtil.buildPatches(ownedIds, {
-                fieldLookup = function(id) return fieldById[id] end,
-                useDensmapConfirm = true,
-                tr = tr,
-            })
-        end)
-        if ok then
-            patchList = result
+    local merge = getSoilMerge()
+    if merge ~= nil and type(merge.buildGroups) == "function" then
+        local ok, groups = pcall(merge.buildGroups, ownedIds)
+        if ok and type(groups) == "table" then
+            patchList = {}
+            for _, g in ipairs(groups) do
+                local members = g.memberIds or { g.fieldId }
+                local label = nil
+                if #members > 1 and type(merge.label) == "function" then
+                    local okL, text = pcall(merge.label, members, tr)
+                    if okL and type(text) == "string" and text ~= "" then
+                        label = text
+                    end
+                end
+                patchList[#patchList + 1] = { patchId = g.fieldId, memberFieldIds = members, label = label }
+            end
         end
     end
 

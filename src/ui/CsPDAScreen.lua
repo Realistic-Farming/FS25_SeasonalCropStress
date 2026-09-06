@@ -72,6 +72,21 @@ end
 
 -- ── Data helpers ──────────────────────────────────────────
 
+--- BUILD 19:23 (George CLOSED DESIGN 19:12): the Soil list-row merge module on the mission bridge
+--- (Soil attaches it next to soilFertilityManager; getfenv(0) does not cross mods). nil when Soil is
+--- absent, and then every caller keeps today's per-farmland rows. Only Soil drives the outline walks;
+--- this side only calls buildGroups (may queue a walk on Soil's driver) or readGroups (cached only).
+local function getSoilMerge()
+    if g_currentMission == nil or g_currentMission.soilFertilityManager == nil then
+        return nil
+    end
+    local merge = g_currentMission.RfPdaSoilMerge
+    if type(merge) ~= "table" then
+        return nil
+    end
+    return merge
+end
+
 local function getMgr()
     return g_cropStressManager
 end
@@ -446,6 +461,50 @@ function CsPDAScreen:_rebuildData()
                 irrigated = irrigated,
                 systemId  = systemId,
             })
+        end
+    end
+
+    -- BUILD 19:23 (George CLOSED DESIGN 19:12): one row per GPS-outline block. Owned rows group
+    -- through the Soil merge bridge (foreign rows come back as singles); a block row keeps the
+    -- lead farmland id, min moisture, max stress, irrigated if any member is, the first system,
+    -- Mixed when the crops differ. Soil absent = the rows above, untouched. Irrigation tab is
+    -- systems, not fields: untouched.
+    local merge = getSoilMerge()
+    if merge ~= nil and type(merge.buildGroups) == "function" and #rows > 1 then
+        local byId, ids = {}, {}
+        for _, r in ipairs(rows) do
+            byId[r.fieldId] = r
+            ids[#ids + 1] = r.fieldId
+        end
+        local ok, groups = pcall(merge.buildGroups, ids)
+        if ok and type(groups) == "table" then
+            local grouped = {}
+            for _, g in ipairs(groups) do
+                local lead = byId[g.fieldId]
+                local members = g.memberIds or { g.fieldId }
+                if lead ~= nil and #members > 1 then
+                    local row = {
+                        fieldId = g.fieldId, memberFieldIds = members,
+                        cropName = lead.cropName, moisture = lead.moisture, stress = lead.stress,
+                        irrigated = lead.irrigated, systemId = lead.systemId,
+                    }
+                    for _, mid in ipairs(members) do
+                        local m = byId[mid]
+                        if m ~= nil then
+                            if m.moisture < row.moisture then row.moisture = m.moisture end
+                            if m.stress > row.stress then row.stress = m.stress end
+                            if m.irrigated then row.irrigated = true end
+                            if row.systemId == nil then row.systemId = m.systemId end
+                            if m.cropName ~= row.cropName then row.cropName = tr("cs_rf_pda_crop_mixed", "Mixed") end
+                        end
+                    end
+                    grouped[#grouped + 1] = row
+                elseif lead ~= nil then
+                    lead.memberFieldIds = members
+                    grouped[#grouped + 1] = lead
+                end
+            end
+            rows = grouped
         end
     end
 
