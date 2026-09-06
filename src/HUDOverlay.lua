@@ -1327,6 +1327,21 @@ function HUDOverlay:resolveCropName(field)
     return "Fallow"
 end
 
+--- BUILD 19:23 (George CLOSED DESIGN 19:12): the Soil list-row merge module on the mission bridge
+--- (Soil attaches it next to soilFertilityManager; getfenv(0) does not cross mods). nil when Soil is
+--- absent, and then every caller keeps today's per-farmland rows. Only Soil drives the outline walks;
+--- this side only calls buildGroups (may queue a walk on Soil's driver) or readGroups (cached only).
+local function getSoilMerge()
+    if g_currentMission == nil or g_currentMission.soilFertilityManager == nil then
+        return nil
+    end
+    local merge = g_currentMission.RfPdaSoilMerge
+    if type(merge) ~= "table" then
+        return nil
+    end
+    return merge
+end
+
 function HUDOverlay:rebuildDisplayRows()
     self.displayRows = {}
     if self.manager == nil or self.manager.soilSystem == nil then return end
@@ -1360,6 +1375,41 @@ function HUDOverlay:rebuildDisplayRows()
     local fieldsToDisplay = #ownedFields > 0 and ownedFields or sortedFields
     if #ownedFields == 0 and #sortedFields > 0 then
         csLog("HUDOverlay: No owned fields found, showing all tracked fields as a fallback.")
+    end
+
+    -- BUILD 19:23 (George CLOSED DESIGN 19:12): owned entries group into GPS-outline blocks
+    -- through the Soil merge bridge, readGroups ONLY: this runs on the HUD refresh, and
+    -- readGroups reads the cached outlines without ever queueing a walk. A block entry keeps
+    -- the lead farmland id, the min moisture and every member id; the per-member math (max
+    -- stress, Mixed crop, any stress window) runs in the loop below. Soil absent = per-farmland.
+    local merge = getSoilMerge()
+    if merge ~= nil and type(merge.readGroups) == "function" and #ownedFields > 1 and fieldsToDisplay == ownedFields then
+        local byId, ids = {}, {}
+        for _, e in ipairs(fieldsToDisplay) do
+            byId[e.fieldId] = e
+            ids[#ids + 1] = e.fieldId
+        end
+        local ok, groups = pcall(merge.readGroups, ids)
+        if ok and type(groups) == "table" then
+            local grouped = {}
+            for _, g in ipairs(groups) do
+                local lead = byId[g.fieldId]
+                local members = g.memberIds or { g.fieldId }
+                if lead ~= nil then
+                    local e = { fieldId = g.fieldId, moisture = lead.moisture, memberIds = members }
+                    for _, mid in ipairs(members) do
+                        local m = byId[mid]
+                        if m ~= nil and m.moisture ~= nil and (e.moisture == nil or m.moisture < e.moisture) then
+                            e.moisture = m.moisture
+                        end
+                    end
+                    grouped[#grouped + 1] = e
+                end
+            end
+            -- driest first, the order getFieldsSortedByMoisture gave the singles
+            table.sort(grouped, function(a, b) return (a.moisture or 0) < (b.moisture or 0) end)
+            fieldsToDisplay = grouped
+        end
     end
 
     -- BUG FIX: allValidFields was never declared — table.insert into nil silently
@@ -1397,6 +1447,33 @@ function HUDOverlay:rebuildDisplayRows()
             if win ~= nil and growthStage ~= nil then
                 for _, s in ipairs(win.stages) do
                     if growthStage == s then inStressWindow = true; break end
+                end
+            end
+        end
+
+        -- BUILD 19:23: the other members of a block fold in here: max stress, Mixed when a
+        -- member grows something else, any member in its stress window. HUD-local math only.
+        if entry.memberIds ~= nil and #entry.memberIds > 1 then
+            for _, mid in ipairs(entry.memberIds) do
+                if mid ~= entry.fieldId then
+                    if self.manager.stressModifier ~= nil then
+                        local ms = self.manager:getStress(mid)
+                        if type(ms) == "number" and ms > stress then stress = ms end
+                    end
+                    local mf = fieldById[mid]
+                    if mf ~= nil then
+                        local mc = self:resolveCropName(mf)
+                        if mc ~= nil and cropName ~= nil and mc ~= cropName then
+                            cropName = "Mixed"
+                        end
+                        local mg = mf.fieldState and mf.fieldState.growthState
+                        local mwin = mc ~= nil and CropStressModifier.CROP_WINDOWS[mc:lower()] or nil
+                        if mwin ~= nil and mg ~= nil then
+                            for _, s in ipairs(mwin.stages) do
+                                if mg == s then inStressWindow = true; break end
+                            end
+                        end
+                    end
                 end
             end
         end
