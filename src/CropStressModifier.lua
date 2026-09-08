@@ -7,7 +7,7 @@
 --   • The field has a crop in a "critical growth window" AND
 --   • Soil moisture is below the crop's criticalMoisture threshold
 --
--- At harvest, yield is reduced by: stress * MAX_YIELD_LOSS (default 60%)
+-- At harvest, yield is reduced by: stress * MAX_YIELD_LOSS (factory 30%, settings clamp 30-75%)
 --
 -- HARVEST HOOK IMPLEMENTATION NOTES:
 --   Uses Utils.overwrittenFunction on HarvestingMachine.doGroundWorkArea.

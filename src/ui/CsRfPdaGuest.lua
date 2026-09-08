@@ -2725,6 +2725,12 @@ function CsRfPdaGuest.tryRegister()
                 profilesXml = MOD_DIR .. "xml/gui/rfEscProfiles.xml",
                 iconPath = "textures/ui/menuIcon.dds",
             })
+            -- BUILD 19:15: load the Field Guide here too, while the mod's own files still resolve.
+            -- The dialog loader registers it lazily on first show, and a GUI loaded from a mod
+            -- directory after the mod's file system context has closed fails to open.
+            if CsHelpDialog ~= nil and type(CsHelpDialog.register) == "function" then
+                pcall(CsHelpDialog.register, MOD_DIR)
+            end
             if not doorOk then
                 print("[CropStress] CsRfPdaGuest: WARNING ensureDoor failed (will retry)")
             end

@@ -156,90 +156,90 @@
     <!-- Overview: Page 1 -->
     <text name="helpLine_cs_p1_title"          text="Overview"/>
     <text name="helpLine_cs_p1_intro_title"    text="What This Mod Adds"/>
-    <text name="helpLine_cs_p1_intro_text"     text="Seasonal Crop Stress adds soil moisture simulation to every field. Crops need water during key growth stages. If they don't get it, your harvest will be smaller. Irrigation systems let you take control of your field's water supply."/>
+    <text name="helpLine_cs_p1_intro_text"     text="[EN] Seasonal Crop Stress gives every field its own soil moisture, from 0% (bone dry) to 100% (saturated). Rain fills it, heat and time dry it, and irrigation lets you put water back. While a crop is in its thirsty growth window and the field is drier than that crop needs, drought stress builds, and at harvest that stress takes a share of the yield. The Esc page lists the fields you own."/>
     <text name="helpLine_cs_p1_start_title"    text="Getting Started"/>
-    <text name="helpLine_cs_p1_start_text"     text="Press Alt+M to open the moisture HUD and see all your fields at a glance. Fields shown in red need water urgently. Green fields are in good shape. Press 'Open Crop Consultant' to open the Crop Consultant for detailed advice and field risk scores."/>
+    <text name="helpLine_cs_p1_start_text"     text="[EN] Open the moisture HUD with the Controls action Toggle Moisture HUD (factory Right Shift+M; if nothing happens, look under Options &gt; Controls &gt; Seasonal Crop Stress, it may be bound to another key). Green fields are fine, yellow need water soon, red are losing yield. The Esc menu page Realistic Farming &gt; Crop Stress lists your fields with moisture, stress and irrigation; click a row for the detail card. Build a Water Pump first, then a Center Pivot within 500 m of it."/>
 
     <!-- Overview: Page 2 -->
     <text name="helpLine_cs_p2_title"          text="Soil Moisture"/>
     <text name="helpLine_cs_p2_how_title"      text="How Moisture Works"/>
-    <text name="helpLine_cs_p2_how_text"       text="Rain fills your soil and heat drains it. Every field tracks its own moisture level from 0% (bone dry) to 100% (saturated). The rate of drying depends on the weather, the season, and your soil type."/>
+    <text name="helpLine_cs_p2_how_text"       text="[EN] Every in-game hour each field loses about 0.4% moisture before modifiers. Hot weather and summer speed that up, cool weather and winter slow it down. Rain and a sprayer filled with water add moisture. The Difficulty setting scales drying (Easy 0.7x, Normal 1.0x, Hard 1.4x) and the Evapotranspiration setting scales it again. The ground also holds water unevenly: low spots stay wetter longer and the high, dry patches show first."/>
     <text name="helpLine_cs_p2_soil_title"     text="Soil Types"/>
-    <text name="helpLine_cs_p2_soil_text"      text="Sandy soil drains fast and needs frequent irrigation. Clay soil holds water longer but can become waterlogged. Loamy soil is in between and the easiest to manage. Your field's soil type is shown in the HUD and Crop Consultant."/>
+    <text name="helpLine_cs_p2_soil_text"      text="[EN] Sandy soil dries 1.4 times faster than loamy and soaks up rain 1.25 times faster, so it swings quickly both ways. Clay dries at 0.7 times and takes rain at 0.72 times, so it holds water longest. Loamy is the 1.0 reference and the easiest to manage. The soil type shows on the HUD row and on the Esc detail card."/>
 
     <!-- Overview: Page 3 -->
     <text name="helpLine_cs_p3_title"          text="Crop Stress &amp; Yield"/>
     <text name="helpLine_cs_p3_window_title"   text="Critical Growth Windows"/>
-    <text name="helpLine_cs_p3_window_text"    text="Every crop has a period during its growth cycle when it needs water the most. Wheat is most vulnerable in spring, corn suffers during summer heat waves, canola is sensitive in autumn. Low moisture during this window builds up stress on that field."/>
+    <text name="helpLine_cs_p3_window_text"    text="[EN] Each crop has a thirsty growth window and its own moisture need. Stress builds every hour the crop is in that window and the field sits below that need, and it does not heal when rain returns. Needs at a glance: wheat 35%, barley 30%, corn 40%, canola 45%, sunflower 30%, soybeans 40%, sugar beet 50%, potato 55%, rice 70%. Other crops have their own window and need in the same table."/>
     <text name="helpLine_cs_p3_yield_title"    text="Yield Reduction at Harvest"/>
-    <text name="helpLine_cs_p3_yield_text"     text="Accumulated stress reduces your harvest. A small amount of stress means a small yield loss. Severe drought can cut your harvest by up to 60%. The Crop Consultant shows your current yield risk per field so you can prioritise irrigation where it matters most."/>
+    <text name="helpLine_cs_p3_yield_text"     text="[EN] At harvest the yield is cut by the field's stress times your Max Yield Loss setting. The factory cap is 30%, so a fully stressed field still yields 70%; the setting can be raised as far as 75%. A new crop after harvest starts clean. The Esc page and the Crop Consultant show the yield risk per field, so water where it matters most."/>
 
     <!-- Overview: Page 4 (Irrigation) -->
     <text name="helpLine_cs_p5_title"          text="Irrigation"/>
     <text name="helpLine_cs_p5_types_title"    text="Irrigation Types"/>
-    <text name="helpLine_cs_p5_types_text"     text="Three irrigation types are available in the build menu. Center Pivot covers a large circular area. Drip Line provides precise coverage along a field row. Water Pump powers your irrigation systems and must be placed near a water source first."/>
+    <text name="helpLine_cs_p5_types_text"     text="[EN] Two placeables live in the build menu. The Water Pump feeds the pivots and must sit within 500 m of a system; pressure drops about 30% at that full range, so keep pumps close. A Center Pivot waters a circle and comes in three spans. A pivot with no pump in range shows Disconnected. The shop also sells the irrigator vehicles, and a sprayer filled with WATER raises moisture wherever you spray it, handy for a small field or a corner a pivot cannot reach."/>
     <text name="helpLine_cs_p5_schedule_title" text="Scheduling &amp; Running"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Select an irrigation system and press 'Open Irrigation Manager' to open its schedule. Pick which days of the week to irrigate and set a daily start and end time. You can also press Irrigate Now in the dialog to water the covered fields immediately without waiting for the schedule."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="[EN] Open a system's Irrigation Manager with the Controls action Open Irrigation Manager, or with the Schedule chip on the pivot card of the Esc Crop Stress page when that system covers the selected field. Pick the days of the week, set a start and end hour, and Save. Irrigate Now waters the covered fields for one hour straight away. With Irrigation Costs on, a running system is charged per hour. Finite Water is off by default and is an experimental system: it takes effect only when both it and Experimental Systems are on. Then each pump carries a store in irrigation hours that runs consume and rain refills."/>
 
     <!-- Overview: Page 5 (Crop Consultant) -->
     <text name="helpLine_cs_p6_title"          text="Crop Consultant"/>
     <text name="helpLine_cs_p6_what_title"     text="What the Consultant Shows"/>
-    <text name="helpLine_cs_p6_what_text"      text="Press 'Open Crop Consultant' to open the Crop Consultant. It shows your top 5 highest-risk fields ranked by moisture and stress level, along with a plain-language recommendation for the next 24 hours and a 3-day moisture forecast."/>
+    <text name="helpLine_cs_p6_what_text"      text="[EN] The Crop Consultant (Controls action Open Crop Consultant, no factory key) ranks your riskiest fields by moisture and stress, gives a plain recommendation for the next 24 hours and shows the moisture forecast. Healthy is 40% and up, Warning is 25% to 40%, Critical is below 25%."/>
     <text name="helpLine_cs_p6_act_title"      text="Acting on Advice"/>
-    <text name="helpLine_cs_p6_act_text"       text="Fields marked CRITICAL need irrigation today to prevent harvest loss. Fields marked WARNING should be irrigated within a day or two. Use the Open Irrigation Manager button inside the Consultant to quickly schedule water for the worst field."/>
+    <text name="helpLine_cs_p6_act_text"       text="[EN] Critical fields need water today, before yield loss grows. Warning fields should be watered within a day or two, or left to forecast rain if it is close. A field already building stress shows an exclamation mark on the HUD. Use the consultant's Open Irrigation Manager control to schedule the worst field first."/>
     <text name="helpLine_cs_p6_npc_title"      text="Optional Integrations"/>
-    <text name="helpLine_cs_p6_npc_text"       text="Several optional mods extend the system. FS25_NPCFavor: Alex Chen appears as an Agronomist NPC â€” complete favors to unlock early drought warnings and specialist irrigation advice. FS25_SoilFertilizer: Soil pH and organic matter modify evapotranspiration per field. FS25_UsedPlus: Irrigation running costs and equipment wear are tracked. CoursePlay: Active vehicle counts appear in stress alerts. AutoDrive: Water destination hints appear in critical alerts. Precision Farming DLC: Soil moisture is shown in the PF map overlay."/>
+    <text name="helpLine_cs_p6_npc_text"       text="[EN] Other mods plug in when present. NPC Favor: the agronomist's favors unlock early drought warnings and irrigation advice. Soil and Fertilizer: high organic matter holds water, acid soil (pH under 6.0) stresses crops earlier; Crop Stress reads the soil manager through the mission handle. UsedPlus: irrigation running costs and wear. CoursePlay and AutoDrive: vehicle counts and water destinations in the alerts."/>
 
     <!-- Settings: Page 1 â€” General Settings -->
     <text name="helpLine_cs_s1_title"          text="General Settings"/>
     <text name="helpLine_cs_s1_gen_title"      text="Enabling the Mod"/>
-    <text name="helpLine_cs_s1_gen_text"       text="Open the in-game settings (ESC â†’ Settings â†’ Seasonal Crop Stress). Use Enable Mod to switch the entire system on or off without removing your irrigation infrastructure. The Difficulty setting controls how quickly crops accumulate drought stress â€” Easy is forgiving, Hard pushes you to irrigate proactively."/>
+    <text name="helpLine_cs_s1_gen_text"       text="[EN] ESC &gt; Settings &gt; Seasonal Crop Stress. Enable Mod switches the whole system on or off without touching your irrigation placeables. Difficulty scales how fast stress builds and how fast fields dry: Easy 0.5x stress and 0.7x drying, Normal 1.0x, Hard 1.5x stress and 1.4x drying."/>
     <text name="helpLine_cs_s1_evap_title"     text="Evapotranspiration Rate"/>
-    <text name="helpLine_cs_s1_evap_text"      text="Evapotranspiration controls how quickly soil dries out between rain events. Slow means fields hold moisture well and rain goes a long way. Fast means fields can dry out within a game-day during hot weather â€” active irrigation management becomes essential."/>
+    <text name="helpLine_cs_s1_evap_text"      text="[EN] Evapotranspiration Rate scales drying on top of difficulty. Slow keeps moisture in the ground and makes rain go further. Fast can dry a field within a game day in hot weather, so scheduled irrigation becomes essential."/>
 
     <!-- Settings: Page 2 â€” Advanced Settings -->
     <text name="helpLine_cs_s2_title"          text="Advanced Settings"/>
     <text name="helpLine_cs_s2_yield_title"    text="Yield Loss &amp; Stress Threshold"/>
-    <text name="helpLine_cs_s2_yield_text"     text="Max Yield Loss caps the percentage of harvest that drought stress can reduce. At the default 60%, a fully stressed field still yields 40% of normal. Critical Threshold is the moisture level below which stress begins to accumulate â€” raise it to make crops more drought-sensitive, lower it for more tolerance."/>
+    <text name="helpLine_cs_s2_yield_text"     text="[EN] Max Yield Loss caps the share of the harvest that stress can take. The factory value is 30%, so a fully stressed field still yields 70%; it can be raised as far as 75%. Critical Threshold (factory 25%, 15% to 35%) is the moisture level where the red Critical band and its alerts begin; each crop's own need still decides when stress builds."/>
     <text name="helpLine_cs_s2_alerts_title"   text="Irrigation Costs &amp; Alerts"/>
-    <text name="helpLine_cs_s2_alerts_text"    text="Irrigation Costs charges an hourly fee for running irrigation systems, adding a financial management layer. Disable this for a simpler experience. Alerts Enabled shows warning notifications when fields need water. Alert Cooldown sets the minimum in-game hours before the same field triggers another alert, preventing notification spam."/>
+    <text name="helpLine_cs_s2_alerts_text"    text="[EN] Irrigation Costs charges an hourly fee while a system runs; turn it off for a simpler game. Alerts Enabled shows a warning when a field needs water, and Alert Cooldown (factory 12 hours) is the minimum time before the same field alerts again. Finite Water is off by default and is an experimental system: it takes effect only when both it and Experimental Systems are on. Then each pump carries a store in irrigation hours that scheduled runs and Irrigate Now consume and rain refills."/>
 
     <!-- Tips & Tricks: Page 1 (HUD & Controls) -->
     <text name="helpLine_cs_p4_title"          text="HUD &amp; Controls"/>
     <text name="helpLine_cs_p4_hud_title"      text="Moisture HUD Overlay"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Press Alt+M to toggle the moisture HUD. It lists every field with its moisture level, crop type, and stress status. A 5-day forecast shows whether moisture is rising or falling so you can plan ahead. You can also drag the panel to any position on screen by clicking and releasing."/>
+    <text name="helpLine_cs_p4_hud_text"       text="[EN] The moisture HUD (Controls action Toggle Moisture HUD, factory Right Shift+M) lists every tracked field with crop, growth stage, a colour bar and the moisture percentage, with the forecast strip above it. Edit mode (Controls action Edit/Move Moisture HUD, factory Right Shift+N) lets you drag and resize the panes; the layout is saved per player."/>
     <text name="helpLine_cs_p4_reading_title"  text="Reading a Field Row"/>
-    <text name="helpLine_cs_p4_reading_text"   text="Each row shows: field number (F1), crop name (Wheat), current growth stage (Stage 3), a colour-coded moisture bar, and the moisture percentage. If the row ends with an exclamation mark (!), that field is already building drought stress and yield loss has begun â€” irrigate it now. Only crops that can suffer drought stress appear in the list."/>
+    <text name="helpLine_cs_p4_reading_text"   text="[EN] Each row shows the field number, the crop, its growth stage, the moisture bar and the percentage. An exclamation mark at the end means that field is already building drought stress. Only crops that can suffer drought stress are listed."/>
     <text name="helpLine_cs_p4_status_title"   text="Status Colours"/>
-    <text name="helpLine_cs_p4_status_text"    text="Green means your field is healthy and no action is needed. Yellow is a warning: moisture is dropping and irrigation is advisable soon. Red is critical: the crop is under drought stress and yield loss is already building â€” irrigate immediately."/>
+    <text name="helpLine_cs_p4_status_text"    text="[EN] Green is Healthy: 40% moisture and up, nothing to do. Yellow is Warning: 25% to 40%, plan water. Red is Critical: below 25%, yield loss can start, water now. The same bands colour the Esc Crop Stress page."/>
     <text name="helpLine_cs_p4_keys_title"     text="Keyboard Shortcuts"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Alt+M toggles the moisture HUD on or off. 'Open Irrigation Manager' opens the Irrigation Manager for a selected system. 'Open Crop Consultant' opens the Crop Consultant with a field risk summary and personalised recommendations."/>
+    <text name="helpLine_cs_p4_keys_text"      text="[EN] Toggle Moisture HUD: factory Right Shift+M. Edit/Move Moisture HUD: factory Right Shift+N. Open Irrigation Manager, Open Crop Consultant and Open Crop Stress Settings have no factory key: bind them under Options &gt; Controls &gt; Seasonal Crop Stress. The Esc page Realistic Farming &gt; Crop Stress has a Help footer that opens the two-column guide."/>
 
     <!-- Tips & Tricks: Page 2 â€” Farming Strategies -->
     <text name="helpLine_cs_t2_title"          text="Farming Strategies"/>
     <text name="helpLine_cs_t2_sandy_title"    text="Prioritise Sandy Fields"/>
-    <text name="helpLine_cs_t2_sandy_text"     text="Sandy soil dries out twice as fast as loamy soil. If you farm a mix of soil types, place irrigation on sandy fields first. A centre pivot covering a large sandy area is often a better investment than a drip line on a small clay field that holds moisture naturally."/>
+    <text name="helpLine_cs_t2_sandy_text"     text="[EN] Sandy soil dries 1.4 times faster than loamy and twice as fast as clay. If you farm mixed soils, put the first pivot on the sandy fields. A pivot over a large sandy area is often a better buy than one on a small clay field that holds water on its own."/>
     <text name="helpLine_cs_t2_forecast_title" text="Use the Forecast"/>
-    <text name="helpLine_cs_t2_forecast_text"  text="The 5-day forecast in the HUD shows whether moisture is trending up or down. If rain is forecast within a day or two and your fields are only in the warning range, wait for the rain â€” you will save money and wear on your equipment. Act early when the forecast shows several dry days ahead during a critical growth window."/>
+    <text name="helpLine_cs_t2_forecast_text"  text="[EN] The forecast strip shows whether moisture is heading up or down. If rain is a day or two away and the field is only in the yellow band, wait and save the running cost. Act early when several dry days line up with a thirsty growth window, especially on sandy fields."/>
 
     <!-- Mod Information: Page 1 â€” About -->
     <text name="helpLine_cs_i1_title"           text="About This Mod"/>
-    <text name="helpLine_cs_i1_about_title"     text="Seasonal Crop Stress v1.0.5.0"/>
-    <text name="helpLine_cs_i1_about_text"      text="Created by TisonK. Adds realistic soil moisture simulation, seasonal crop stress accumulation, and irrigation infrastructure management to Farming Simulator 25. Designed to make crop management more strategic â€” every field, every season, every decision counts."/>
+    <text name="helpLine_cs_i1_about_title"     text="[EN] Seasonal Crop Stress"/>
+    <text name="helpLine_cs_i1_about_text"      text="[EN] Created by TisonK. Adds soil moisture per field, crop stress in thirsty growth windows, a harvest cut capped at 30% by default, and irrigation placeables with schedules, all inside Farming Simulator 25. Every field, every season, every decision counts."/>
     <text name="helpLine_cs_i1_community_title" text="Community &amp; Support"/>
     <text name="helpLine_cs_i1_community_text"  text="Find this mod on Github and KingMods. For questions, bug reports, and updates please visit the github repository."/>
 
     <!-- Mod Information: Page 2 â€” Optional Integrations detail -->
     <text name="helpLine_cs_i2_title"          text="Optional Integrations"/>
     <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor &amp; FS25_SoilFertilizer"/>
-    <text name="helpLine_cs_i2_npc_text"       text="With FS25_NPCFavor installed, Alex Chen appears as an Agronomist NPC on your farm. Completing favors for Alex builds your relationship and unlocks early drought warnings and specialist irrigation advice. With FS25_SoilFertilizer, each field's soil pH and organic matter content adjusts evapotranspiration â€” fields with poor soil health dry out faster, making good soil management worthwhile alongside irrigation."/>
-    <text name="helpLine_cs_i2_vehicle_title"  text="CoursePlay, AutoDrive &amp; Precision Farming"/>
-    <text name="helpLine_cs_i2_vehicle_text"   text="When CoursePlay is active, the number of autonomous vehicles working a stressed field is shown in that field's alert. When AutoDrive is detected, critical drought alerts include available water destination counts and a suggestion to set up a hauling route. With FS25_UsedPlus, hourly irrigation running costs are charged and equipment wear accumulates realistically. If the Precision Farming DLC is active, soil moisture data is shown directly in the PF soil map overlay."/>
+    <text name="helpLine_cs_i2_npc_text"       text="[EN] With NPC Favor installed, the agronomist's favors unlock early drought warnings and specialist irrigation advice. With Soil and Fertilizer installed, each field's organic matter and pH change how fast it dries: high organic matter holds water, acid soil below pH 6.0 stresses crops earlier. Crop Stress reads the soil manager through the mission handle, so the two mods load in any order."/>
+    <text name="helpLine_cs_i2_vehicle_title"  text="[EN] Vehicles and Multiplayer"/>
+    <text name="helpLine_cs_i2_vehicle_text"   text="[EN] With CoursePlay active, the number of vehicles working a stressed field appears in that field's alert. With AutoDrive, critical alerts include water destination counts. With UsedPlus, hourly irrigation running costs and equipment wear are tracked. Multiplayer: the server runs moisture, stress and irrigation and sends the results to every client; the HUD layout is saved per player."/>
 
     <!-- Tips & Tricks: Page 3 â€” Sprayers & Watering -->
     <text name="helpLine_cs_t3_title"          text="Sprayers &amp; Watering"/>
     <text name="helpLine_cs_t3_sprayer_title"  text="Using Sprayers as Irrigation"/>
-    <text name="helpLine_cs_t3_sprayer_text"   text="Standard vehicle-based sprayers can be used as a manual alternative to permanent irrigation systems. If you fill a sprayer with WATER, any area you spray will receive an immediate moisture boost. This is useful for small fields or as a temporary measure until you can afford a centre pivot or drip line."/>
+    <text name="helpLine_cs_t3_sprayer_text"   text="[EN] A vehicle sprayer filled with WATER is a manual irrigation tool: every area you spray gets an immediate moisture boost. Use it on small fields, on a corner a pivot does not reach, or as a stopgap until a pump and a pivot are affordable."/>
 
     <!-- ========== PDA SCREEN ========== -->
     <text name="cs_pda_screen_title"           text="Crop Moisture Monitor"/>
@@ -279,25 +279,6 @@
     <text name="cs_pda_filter_owned"           text="MY FIELDS"/>
 
     <!-- Help dialog content -->
-    <text name="cs_help_title"       text="Crop Moisture Monitor -- Help"/>
-    <text name="cs_help_ov_hdr"      text="How It Works"/>
-    <text name="cs_help_ov_1"        text="Tracks soil moisture for every field in the game."/>
-    <text name="cs_help_ov_2"        text="Rainfall raises moisture; heat and time reduce it."/>
-    <text name="cs_help_ov_3"        text="Use the filter button to focus on your own fields."/>
-    <text name="cs_help_status_hdr"  text="Moisture Levels"/>
-    <text name="cs_help_status_1"    text="Healthy  &gt;=40%   No action needed."/>
-    <text name="cs_help_status_2"    text="Warning  25-40%  Irrigate soon."/>
-    <text name="cs_help_status_3"    text="Critical &lt;25%   Irrigate now!"/>
-    <text name="cs_help_stress_hdr"  text="Crop Stress"/>
-    <text name="cs_help_stress_1"    text="Builds each hour moisture stays below 40% during growth."/>
-    <text name="cs_help_stress_2"    text="Up to 60% yield loss at max stress. Cannot be reversed."/>
-    <text name="cs_help_irr_hdr"     text="Irrigation"/>
-    <text name="cs_help_irr_1"       text="Place Center Pivots or Drip Lines from the build menu."/>
-    <text name="cs_help_irr_2"       text="Use Irrigation Schedule to set automatic run windows."/>
-    <text name="cs_help_keys_hdr"    text="Monitor Information"/>
-    <text name="cs_help_keys_1"      text="ESC (Pause Menu) â†’ Crop Moisture Monitor"/>
-    <text name="cs_help_keys_2"      text="Tab 1 (Overview) â†’  Overall field status"/>
-    <text name="cs_help_keys_3"      text="Tab 2 (Irrigation) â†’  Irrigation management"/>
     <text name="cs_pda_irrigated_no"           text="No"/>
     <text name="cs_pda_no_fields"             text="No field data yet. Fields appear once the simulation has run for one in-game hour."/>
 
