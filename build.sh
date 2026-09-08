@@ -42,7 +42,9 @@ if command -v zip &>/dev/null; then
         --exclude "./__MACOSX/*" \
         --exclude "./*.DS_Store" \
         --exclude "./*.zip" \
-        --exclude "./tools/*"
+        --exclude "./tools/*" \
+        --exclude "./.github/*" \
+        --exclude "./build.py"
     echo "  Built via zip"
 else
     # Python fallback — try python3 first, then Windows launcher (py)
@@ -57,9 +59,9 @@ import zipfile, os, sys
 MOD_DIR = os.getcwd()
 ZIP_PATH = os.path.join(os.path.dirname(MOD_DIR), os.path.basename(MOD_DIR) + ".zip")
 
-EXCLUDE_DIRS  = {".git", ".claude", "__MACOSX", "node_modules", "tools"}
+EXCLUDE_DIRS  = {".git", ".claude", ".github", "__MACOSX", "node_modules", "tools"}
 EXCLUDE_EXTS  = {".sh", ".md", ".DS_Store", ".zip"}
-EXCLUDE_FILES = {".gitignore"}
+EXCLUDE_FILES = {".gitignore", "build.py"}
 
 def rel(path):
     return os.path.relpath(path, MOD_DIR).replace("\\", "/")
