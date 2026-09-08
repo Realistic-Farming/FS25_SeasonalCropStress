@@ -589,7 +589,13 @@ function CsPDAScreen:_rebuildStats()
 
     local avgMoisture = totalTracked > 0 and (sumMoisture / totalTracked) or 0
     local avgStress   = totalTracked > 0 and (sumStress   / totalTracked) or 0
-    local yieldLoss   = avgStress * 0.60  -- matches CropStressModifier.MAX_YIELD_LOSS
+    -- BUILD 15:00: the live cap (settings clamp 30-75%, factory 30%), never a hardcode.
+    local maxLoss = (CropStressModifier ~= nil and CropStressModifier.MAX_YIELD_LOSS) or 0.30
+    if stressMod ~= nil and type(stressMod.getMaxYieldLoss) == "function" then
+        local okLoss, live = pcall(stressMod.getMaxYieldLoss, stressMod)
+        if okLoss and type(live) == "number" then maxLoss = live end
+    end
+    local yieldLoss   = avgStress * maxLoss
 
     local irrSystems = 0
     if irrMgr and irrMgr.systems then

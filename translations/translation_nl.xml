@@ -156,90 +156,90 @@
     <!-- Overzicht: Pagina 1 -->
     <text name="helpLine_cs_p1_title"          text="Overzicht"/>
     <text name="helpLine_cs_p1_intro_title"    text="Wat deze mod toevoegt"/>
-    <text name="helpLine_cs_p1_intro_text"     text="Seizoensgebonden gewassstress voegt een bodemvochtsimulatie toe aan elk veld. Gewassen hebben water nodig tijdens belangrijke groeifasen. Zonder water wordt de oogst kleiner. Irrigatiesystemen laten je de watertoevoer van je velden zelf regelen."/>
+    <text name="helpLine_cs_p1_intro_text"     text="[EN] Seasonal Crop Stress gives every field its own soil moisture, from 0% (bone dry) to 100% (saturated). Rain fills it, heat and time dry it, and irrigation lets you put water back. While a crop is in its thirsty growth window and the field is drier than that crop needs, drought stress builds, and at harvest that stress takes a share of the yield. The Esc page lists the fields you own."/>
     <text name="helpLine_cs_p1_start_title"    text="Aan de slag"/>
-    <text name="helpLine_cs_p1_start_text"     text="Druk op Alt+M om de vochtigheids-HUD te openen en alle velden in Ã©Ã©n oogopslag te zien. Rode velden hebben dringend water nodig, groene zijn in orde. Druk op 'Gewasadviseur openen' om de Gewasadviseur te openen voor gedetailleerd advies en risicowaarden."/>
+    <text name="helpLine_cs_p1_start_text"     text="[EN] Open the moisture HUD with the Controls action Toggle Moisture HUD (factory Right Shift+M; if nothing happens, look under Options &gt; Controls &gt; Seasonal Crop Stress, it may be bound to another key). Green fields are fine, yellow need water soon, red are losing yield. The Esc menu page Realistic Farming &gt; Crop Stress lists your fields with moisture, stress and irrigation; click a row for the detail card. Build a Water Pump first, then a Center Pivot within 500 m of it."/>
 
     <!-- Overzicht: Pagina 2 -->
     <text name="helpLine_cs_p2_title"          text="Bodemvochtigheid"/>
     <text name="helpLine_cs_p2_how_title"      text="Hoe vochtigheid werkt"/>
-    <text name="helpLine_cs_p2_how_text"       text="Regen vult de bodem, hitte droogt hem uit. Elk veld houdt zijn eigen vochtigheidsniveau bij van 0% (kurkdroog) tot 100% (verzadigd). De uitdrogingssnelheid hangt af van het weer, het seizoen en het bodemtype."/>
+    <text name="helpLine_cs_p2_how_text"       text="[EN] Every in-game hour each field loses about 0.4% moisture before modifiers. Hot weather and summer speed that up, cool weather and winter slow it down. Rain and a sprayer filled with water add moisture. The Difficulty setting scales drying (Easy 0.7x, Normal 1.0x, Hard 1.4x) and the Evapotranspiration setting scales it again. The ground also holds water unevenly: low spots stay wetter longer and the high, dry patches show first."/>
     <text name="helpLine_cs_p2_soil_title"     text="Bodemtypen"/>
-    <text name="helpLine_cs_p2_soil_text"      text="Zandige bodem droogt snel uit en heeft vaak irrigatie nodig. Kleibodem houdt water langer vast maar kan waterlogged raken. Leembodem zit er tussenin en is het makkelijkst te beheren. Het bodemtype wordt weergegeven in de HUD en de Gewasadviseur."/>
+    <text name="helpLine_cs_p2_soil_text"      text="[EN] Sandy soil dries 1.4 times faster than loamy and soaks up rain 1.25 times faster, so it swings quickly both ways. Clay dries at 0.7 times and takes rain at 0.72 times, so it holds water longest. Loamy is the 1.0 reference and the easiest to manage. The soil type shows on the HUD row and on the Esc detail card."/>
 
     <!-- Overzicht: Pagina 3 -->
     <text name="helpLine_cs_p3_title"          text="Gewassstress &amp; opbrengst"/>
     <text name="helpLine_cs_p3_window_title"   text="Kritieke groeiperioden"/>
-    <text name="helpLine_cs_p3_window_text"    text="Elk gewas heeft een periode in de groeicyclus waarbij het het meeste water nodig heeft. Tarwe is het kwetsbaarst in het voorjaar, mais lijdt onder zomerse hittegolven, koolzaad is gevoelig in de herfst. Te weinig vochtigheid in deze periode bouwt stress op in het veld."/>
+    <text name="helpLine_cs_p3_window_text"    text="[EN] Each crop has a thirsty growth window and its own moisture need. Stress builds every hour the crop is in that window and the field sits below that need, and it does not heal when rain returns. Needs at a glance: wheat 35%, barley 30%, corn 40%, canola 45%, sunflower 30%, soybeans 40%, sugar beet 50%, potato 55%, rice 70%. Other crops have their own window and need in the same table."/>
     <text name="helpLine_cs_p3_yield_title"    text="Opbrengstvermindering bij de oogst"/>
-    <text name="helpLine_cs_p3_yield_text"     text="Opgebouwde stress vermindert je oogst. Een beetje stress betekent een klein verlies. Ernstige droogte kan de oogst met wel 60% verminderen. De Gewasadviseur toont het huidige opbrengstrisico per veld zodat je de irrigatie kunt prioriteren."/>
+    <text name="helpLine_cs_p3_yield_text"     text="[EN] At harvest the yield is cut by the field's stress times your Max Yield Loss setting. The factory cap is 30%, so a fully stressed field still yields 70%; the setting can be raised as far as 75%. A new crop after harvest starts clean. The Esc page and the Crop Consultant show the yield risk per field, so water where it matters most."/>
 
     <!-- Overzicht: Pagina 4 (Irrigatie) -->
     <text name="helpLine_cs_p5_title"          text="Irrigatie"/>
     <text name="helpLine_cs_p5_types_title"    text="Irrigatietypen"/>
-    <text name="helpLine_cs_p5_types_text"     text="In het bouwmenu zijn drie irrigatietypen beschikbaar. De cirkelberegening dekt een groot cirkelvormig gebied. De druppelirrigatielijn biedt nauwkeurige dekking langs een veldrij. De waterpomp drijft de systemen aan en moet eerst in de buurt van een waterbron geplaatst worden."/>
+    <text name="helpLine_cs_p5_types_text"     text="[EN] Two placeables live in the build menu. The Water Pump feeds the pivots and must sit within 500 m of a system; pressure drops about 30% at that full range, so keep pumps close. A Center Pivot waters a circle and comes in three spans. A pivot with no pump in range shows Disconnected. The shop also sells the irrigator vehicles, and a sprayer filled with WATER raises moisture wherever you spray it, handy for a small field or a corner a pivot cannot reach."/>
     <text name="helpLine_cs_p5_schedule_title" text="Planning &amp; gebruik"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Selecteer een irrigatiesysteem en druk op 'Irrigatiebeheer openen' om het schema te openen. Kies de dagen van de week en stel dagelijkse start- en eindtijden in. Met de knop Nu irrigeren kun je de gedekte velden direct bewateren zonder op het schema te wachten."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="[EN] Open a system's Irrigation Manager with the Controls action Open Irrigation Manager, or with the Schedule chip on the pivot card of the Esc Crop Stress page when that system covers the selected field. Pick the days of the week, set a start and end hour, and Save. Irrigate Now waters the covered fields for one hour straight away. With Irrigation Costs on, a running system is charged per hour. Finite Water is off by default and is an experimental system: it takes effect only when both it and Experimental Systems are on. Then each pump carries a store in irrigation hours that runs consume and rain refills."/>
 
     <!-- Overzicht: Pagina 5 (Gewasadviseur) -->
     <text name="helpLine_cs_p6_title"          text="Gewasadviseur"/>
     <text name="helpLine_cs_p6_what_title"     text="Wat de adviseur toont"/>
-    <text name="helpLine_cs_p6_what_text"      text="Druk op 'Gewasadviseur openen' om de Gewasadviseur te openen. Hij toont je 5 meest risicovolle velden gerangschikt op vochtigheid en stressniveau, met een begrijpelijke aanbeveling voor de komende 24 uur en een 3-dagenprognose voor de vochtigheid."/>
+    <text name="helpLine_cs_p6_what_text"      text="[EN] The Crop Consultant (Controls action Open Crop Consultant, no factory key) ranks your riskiest fields by moisture and stress, gives a plain recommendation for the next 24 hours and shows the moisture forecast. Healthy is 40% and up, Warning is 25% to 40%, Critical is below 25%."/>
     <text name="helpLine_cs_p6_act_title"      text="Handelen op advies"/>
-    <text name="helpLine_cs_p6_act_text"       text="Velden gemarkeerd KRITIEK moeten vandaag worden geÃ¯rrigeerd om oogstverlies te voorkomen. Velden gemarkeerd WAARSCHUWING moeten binnen een Ã  twee dagen worden geÃ¯rrigeerd. Gebruik de knop Irrigatiebeheer openen in de adviseur om snel een schema in te stellen voor het slechtste veld."/>
+    <text name="helpLine_cs_p6_act_text"       text="[EN] Critical fields need water today, before yield loss grows. Warning fields should be watered within a day or two, or left to forecast rain if it is close. A field already building stress shows an exclamation mark on the HUD. Use the consultant's Open Irrigation Manager control to schedule the worst field first."/>
     <text name="helpLine_cs_p6_npc_title"      text="Optionele integraties"/>
-    <text name="helpLine_cs_p6_npc_text"       text="Meerdere optionele mods breiden het systeem uit. FS25_NPCFavor: Alex Chen verschijnt als Agronoom-NPC â€” voltooi gunsten voor vroege droogtewaarschuwingen en gespecialiseerd advies. FS25_SoilFertilizer: Bodem-pH en organische stof beÃ¯nvloeden de evapotranspiratie per veld. FS25_UsedPlus: Bedrijfskosten en slijtage worden bijgehouden. CoursePlay: Actieve voertuigaantallen verschijnen in veldwaarschuwingen. AutoDrive: Waterbestemmingen worden getoond in kritieke waarschuwingen. Precision Farming DLC: Bodemvochtigheidsgegevens zijn beschikbaar in de PF-kaartweergave."/>
+    <text name="helpLine_cs_p6_npc_text"       text="[EN] Other mods plug in when present. NPC Favor: the agronomist's favors unlock early drought warnings and irrigation advice. Soil and Fertilizer: high organic matter holds water, acid soil (pH under 6.0) stresses crops earlier; Crop Stress reads the soil manager through the mission handle. UsedPlus: irrigation running costs and wear. CoursePlay and AutoDrive: vehicle counts and water destinations in the alerts."/>
 
     <!-- Instellingen: Pagina 1 â€” Algemene instellingen -->
     <text name="helpLine_cs_s1_title"          text="Algemene instellingen"/>
     <text name="helpLine_cs_s1_gen_title"      text="Mod inschakelen"/>
-    <text name="helpLine_cs_s1_gen_text"       text="Open de spelinstellingen (ESC â†’ Instellingen â†’ Seizoensgebonden Gewasstress). Gebruik Mod inschakelen om het hele systeem aan of uit te zetten zonder je irrigatie-infrastructuur te verwijderen. Moeilijkheidsgraad bepaalt hoe snel gewassen droogtestress opbouwen â€” Gemakkelijk is vergevingsgezind, Moeilijk vereist proactief irrigatiebeheer."/>
+    <text name="helpLine_cs_s1_gen_text"       text="[EN] ESC &gt; Settings &gt; Seasonal Crop Stress. Enable Mod switches the whole system on or off without touching your irrigation placeables. Difficulty scales how fast stress builds and how fast fields dry: Easy 0.5x stress and 0.7x drying, Normal 1.0x, Hard 1.5x stress and 1.4x drying."/>
     <text name="helpLine_cs_s1_evap_title"     text="Evapotranspiratiesnelheid"/>
-    <text name="helpLine_cs_s1_evap_text"      text="Evapotranspiratie bepaalt hoe snel de bodem uitdroogt tussen regenperioden. Traag betekent dat velden vochtigheid goed vasthouden en regen veel effect heeft. Snel betekent dat velden bij warm weer binnen een speeldag kunnen uitdrogen â€” actief irrigatiebeheer wordt dan essentieel."/>
+    <text name="helpLine_cs_s1_evap_text"      text="[EN] Evapotranspiration Rate scales drying on top of difficulty. Slow keeps moisture in the ground and makes rain go further. Fast can dry a field within a game day in hot weather, so scheduled irrigation becomes essential."/>
 
     <!-- Instellingen: Pagina 2 â€” Geavanceerde instellingen -->
     <text name="helpLine_cs_s2_title"          text="Geavanceerde instellingen"/>
     <text name="helpLine_cs_s2_yield_title"    text="Opbrengstverlies &amp; Stressdrempel"/>
-    <text name="helpLine_cs_s2_yield_text"     text="Max. Opbrengstverlies beperkt het percentage van de oogst dat droogtestress kan verminderen. Bij de standaard 60% levert een volledig gestresst veld nog steeds 40% van de normale opbrengst. De Kritieke Drempel is het vochtigheidsniveau waaronder stress begint op te bouwen â€” verhoog het voor gevoeliger gewassen, verlaag het voor meer tolerantie."/>
+    <text name="helpLine_cs_s2_yield_text"     text="[EN] Max Yield Loss caps the share of the harvest that stress can take. The factory value is 30%, so a fully stressed field still yields 70%; it can be raised as far as 75%. Critical Threshold (factory 25%, 15% to 35%) is the moisture level where the red Critical band and its alerts begin; each crop's own need still decides when stress builds."/>
     <text name="helpLine_cs_s2_alerts_title"   text="Irrigatiekosten &amp; Waarschuwingen"/>
-    <text name="helpLine_cs_s2_alerts_text"    text="Irrigatiekosten brengt een uurlijks bedrag in rekening voor actieve irrigatiesystemen. Schakel dit uit voor een eenvoudigere ervaring. Waarschuwingen ingeschakeld toont meldingen wanneer velden water nodig hebben. Waarschuwings-cooldown stelt de minimale speeluren in voor een nieuwe waarschuwing voor hetzelfde veld, zodat je niet overspoeld wordt met meldingen."/>
+    <text name="helpLine_cs_s2_alerts_text"    text="[EN] Irrigation Costs charges an hourly fee while a system runs; turn it off for a simpler game. Alerts Enabled shows a warning when a field needs water, and Alert Cooldown (factory 12 hours) is the minimum time before the same field alerts again. Finite Water is off by default and is an experimental system: it takes effect only when both it and Experimental Systems are on. Then each pump carries a store in irrigation hours that scheduled runs and Irrigate Now consume and rain refills."/>
 
     <!-- Tips &amp; Trucs: Pagina 1 (HUD &amp; bediening) -->
     <text name="helpLine_cs_p4_title"          text="HUD &amp; bediening"/>
     <text name="helpLine_cs_p4_hud_title"      text="Vochtigheids-HUD-overlay"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Druk op Alt+M om de vochtigheids-HUD aan of uit te zetten. Hij toont elk veld met zijn vochtigheidsniveau, gewastype en stressstatus. Een 5-dagenprognose laat zien of de vochtigheid stijgt of daalt zodat je vooruit kunt plannen. Je kunt het paneel ook naar een andere positie op het scherm slepen door te klikken en los te laten."/>
+    <text name="helpLine_cs_p4_hud_text"       text="[EN] The moisture HUD (Controls action Toggle Moisture HUD, factory Right Shift+M) lists every tracked field with crop, growth stage, a colour bar and the moisture percentage, with the forecast strip above it. Edit mode (Controls action Edit/Move Moisture HUD, factory Right Shift+N) lets you drag and resize the panes; the layout is saved per player."/>
     <text name="helpLine_cs_p4_reading_title"  text="Een veldrij lezen"/>
-    <text name="helpLine_cs_p4_reading_text"   text="Elke rij toont: veldnummer (F1), gewasnaam (Tarwe), huidige groeifase (Fase 3), een kleurgecodeerde vochtigheidsbalk en het vochtigheidpercentage. Als de rij eindigt met een uitroepteken (!), bouwt dat veld al droogtestress op en is oogstverlies begonnen â€” bewater het nu. Alleen gewassen die droogtestress kunnen lijden, verschijnen in de lijst."/>
+    <text name="helpLine_cs_p4_reading_text"   text="[EN] Each row shows the field number, the crop, its growth stage, the moisture bar and the percentage. An exclamation mark at the end means that field is already building drought stress. Only crops that can suffer drought stress are listed."/>
     <text name="helpLine_cs_p4_status_title"   text="Statuskleuren"/>
-    <text name="helpLine_cs_p4_status_text"    text="Groen betekent dat het veld gezond is en geen actie nodig heeft. Geel is een waarschuwing: de vochtigheid daalt en irrigatie is binnenkort aan te raden. Rood is kritiek: het gewas lijdt aan droogtestress en oogstverlies neemt toe â€” direct irrigeren."/>
+    <text name="helpLine_cs_p4_status_text"    text="[EN] Green is Healthy: 40% moisture and up, nothing to do. Yellow is Warning: 25% to 40%, plan water. Red is Critical: below 25%, yield loss can start, water now. The same bands colour the Esc Crop Stress page."/>
     <text name="helpLine_cs_p4_keys_title"     text="Sneltoetsen"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Alt+M schakelt de vochtigheids-HUD in of uit. 'Irrigatiebeheer openen' opent het irrigatiebeheer voor een geselecteerd systeem. 'Gewasadviseur openen' opent de Gewasadviseur met een risicooverzicht en persoonlijke aanbevelingen."/>
+    <text name="helpLine_cs_p4_keys_text"      text="[EN] Toggle Moisture HUD: factory Right Shift+M. Edit/Move Moisture HUD: factory Right Shift+N. Open Irrigation Manager, Open Crop Consultant and Open Crop Stress Settings have no factory key: bind them under Options &gt; Controls &gt; Seasonal Crop Stress. The Esc page Realistic Farming &gt; Crop Stress has a Help footer that opens the two-column guide."/>
 
     <!-- Tips &amp; Trucs: Pagina 2 â€” LandbouwstrategieÃ«n -->
     <text name="helpLine_cs_t2_title"          text="LandbouwstrategieÃ«n"/>
     <text name="helpLine_cs_t2_sandy_title"    text="Prioriteit aan zandige velden"/>
-    <text name="helpLine_cs_t2_sandy_text"     text="Zandige bodem droogt twee keer zo snel uit als leembodem. Als je verschillende bodemtypen bewerkt, geef dan eerst prioriteit aan irrigatie op zandige velden. Een cirkelberegening op een groot zandgebied is vaak een betere investering dan een druppellijn op een klein kleiveldje dat zelf vochtigheid vasthoudt."/>
+    <text name="helpLine_cs_t2_sandy_text"     text="[EN] Sandy soil dries 1.4 times faster than loamy and twice as fast as clay. If you farm mixed soils, put the first pivot on the sandy fields. A pivot over a large sandy area is often a better buy than one on a small clay field that holds water on its own."/>
     <text name="helpLine_cs_t2_forecast_title" text="Gebruik de prognose"/>
-    <text name="helpLine_cs_t2_forecast_text"  text="De 5-dagenprognose in de HUD toont of vochtigheid stijgt of daalt. Als er binnen een dag of twee regen verwacht wordt en je velden zitten alleen in het waarschuwingsgebied, wacht dan op de regen â€” je bespaart geld en slijtage van je apparatuur. Handel vroeg als de prognose meerdere droge dagen toont tijdens een kritieke groeiperiode."/>
+    <text name="helpLine_cs_t2_forecast_text"  text="[EN] The forecast strip shows whether moisture is heading up or down. If rain is a day or two away and the field is only in the yellow band, wait and save the running cost. Act early when several dry days line up with a thirsty growth window, especially on sandy fields."/>
 
     <!-- Mod-informatie: Pagina 1 â€” Over deze mod -->
     <text name="helpLine_cs_i1_title"           text="Over deze mod"/>
-    <text name="helpLine_cs_i1_about_title"     text="Seasonal Crop Stress v1.0.5.0"/>
-    <text name="helpLine_cs_i1_about_text"      text="Gemaakt door TisonK. Voegt realistische bodemvochtsimulatie, seizoensgebonden gewasstress en beheer van irrigatie-infrastructuur toe aan Farming Simulator 25. Ontworpen om gewasbeheer strategischer te maken â€” elk veld, elk seizoen, elke beslissing telt."/>
+    <text name="helpLine_cs_i1_about_title"     text="[EN] Seasonal Crop Stress"/>
+    <text name="helpLine_cs_i1_about_text"      text="[EN] Created by TisonK. Adds soil moisture per field, crop stress in thirsty growth windows, a harvest cut capped at 30% by default, and irrigation placeables with schedules, all inside Farming Simulator 25. Every field, every season, every decision counts."/>
     <text name="helpLine_cs_i1_community_title" text="Community &amp; Support"/>
     <text name="helpLine_cs_i1_community_text"  text="Vind deze mod op de Farming Simulator ModHub. Voor vragen, bugrapporten en updates, bezoek de modpagina op ModHub of de GitHub-repository. Sluit je aan bij de communityforums om tips te delen met andere spelers."/>
 
     <!-- Mod-informatie: Pagina 2 â€” Optionele integraties -->
     <text name="helpLine_cs_i2_title"          text="Optionele integraties"/>
     <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor &amp; FS25_SoilFertilizer"/>
-    <text name="helpLine_cs_i2_npc_text"       text="With FS25_NPCFavor installed, Alex Chen appears as an Agronomist NPC on your farm. Completing favors for Alex builds your relationship and unlocks early drought warnings and specialist irrigation advice. With FS25_SoilFertilizer, each field's soil pH and organic matter content adjusts evapotranspiration â€” fields with poor soil health dry out faster, making good soil management worthwhile alongside irrigation."/>
-    <text name="helpLine_cs_i2_vehicle_title"  text="CoursePlay, AutoDrive &amp; Precision Farming"/>
-    <text name="helpLine_cs_i2_vehicle_text"   text="When CoursePlay is active, the number of autonomous vehicles working a stressed field is shown in that field's alert. When AutoDrive is detected, critical drought alerts include available water destination counts and a suggestion to set up a hauling route. With FS25_UsedPlus, hourly irrigation running costs are charged and equipment wear accumulates realistically. If the Precision Farming DLC is active, soil moisture data is shown directly in the PF soil map overlay."/>
+    <text name="helpLine_cs_i2_npc_text"       text="[EN] With NPC Favor installed, the agronomist's favors unlock early drought warnings and specialist irrigation advice. With Soil and Fertilizer installed, each field's organic matter and pH change how fast it dries: high organic matter holds water, acid soil below pH 6.0 stresses crops earlier. Crop Stress reads the soil manager through the mission handle, so the two mods load in any order."/>
+    <text name="helpLine_cs_i2_vehicle_title"  text="[EN] Vehicles and Multiplayer"/>
+    <text name="helpLine_cs_i2_vehicle_text"   text="[EN] With CoursePlay active, the number of vehicles working a stressed field appears in that field's alert. With AutoDrive, critical alerts include water destination counts. With UsedPlus, hourly irrigation running costs and equipment wear are tracked. Multiplayer: the server runs moisture, stress and irrigation and sends the results to every client; the HUD layout is saved per player."/>
 
     <!-- Tips &amp; Trucs: Pagina 3 â€” Spuiten & Bewateren -->
     <text name="helpLine_cs_t3_title"          text="Spuiten &amp; Bewateren"/>
     <text name="helpLine_cs_t3_sprayer_title"  text="Sproeiers gebruiken als irrigatie"/>
-    <text name="helpLine_cs_t3_sprayer_text"   text="Standaard veldspuiten kunnen worden gebruikt als een handmatig alternatief voor permanente irrigatiesystemen. Als u een sproeier vult met WATER, krijgt elk gebied dat u besproeit een onmiddellijke vochtigheidsboost. Dit is handig voor kleine velden of als tijdelijke maatregel totdat u een cirkelberegening of druppellijn kunt betalen."/>
+    <text name="helpLine_cs_t3_sprayer_text"   text="[EN] A vehicle sprayer filled with WATER is a manual irrigation tool: every area you spray gets an immediate moisture boost. Use it on small fields, on a corner a pivot does not reach, or as a stopgap until a pump and a pivot are affordable."/>
 
     <!-- ========== OPTIONELE MOD-INTEGRATIES ========== -->
     <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d voertuig actief op dit perceel"/>
@@ -304,25 +304,6 @@
     <text name="cs_map_info_line"            text="[EN] Spot readings, not field averages. Detail sets the sample step."/>
     
     <!-- ========== HELP DIALOG ========== -->
-    <text name="cs_help_title"       text="Crop Moisture Monitor -- Help"/>
-    <text name="cs_help_ov_hdr"      text="How It Works"/>
-    <text name="cs_help_ov_1"        text="Tracks soil moisture for every field in the game."/>
-    <text name="cs_help_ov_2"        text="Rainfall raises moisture; heat and time reduce it."/>
-    <text name="cs_help_ov_3"        text="Use the filter button to focus on your own fields."/>
-    <text name="cs_help_status_hdr"  text="Moisture Levels"/>
-    <text name="cs_help_status_1"    text="Healthy  &gt;=40%   No action needed."/>
-    <text name="cs_help_status_2"    text="Warning  25-40%  Irrigate soon."/>
-    <text name="cs_help_status_3"    text="Critical &lt;25%   Irrigate now!"/>
-    <text name="cs_help_stress_hdr"  text="Crop Stress"/>
-    <text name="cs_help_stress_1"    text="Builds each hour moisture stays below 40% during growth."/>
-    <text name="cs_help_stress_2"    text="Up to 60% yield loss at max stress. Cannot be reversed."/>
-    <text name="cs_help_irr_hdr"     text="Irrigation"/>
-    <text name="cs_help_irr_1"       text="Place Center Pivots or Drip Lines from the build menu."/>
-    <text name="cs_help_irr_2"       text="Use Irrigation Schedule to set automatic run windows."/>
-    <text name="cs_help_keys_hdr"    text="Monitor Information"/>
-    <text name="cs_help_keys_1"      text="ESC (Pause Menu) -&gt; Crop Moisture Monitor"/>
-    <text name="cs_help_keys_2"      text="Tab 1 (Overview) -&gt;  Overall field status"/>
-    <text name="cs_help_keys_3"      text="Tab 2 (Irrigation) -&gt;  Irrigation management"/>
     <!-- ========== PDA SCREEN ========== -->
     <text name="cs_pda_btn_irrigation"         text="Irrigation Schedule"/>
     <text name="cs_pda_btn_consultant"         text="Crop Consultant"/>

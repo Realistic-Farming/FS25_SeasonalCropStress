@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="105">
     <author>TisonK</author>
-    <version>1.2.5.139</version>
+    <version>1.2.5.143</version>
 
     <title>
         <en>Seasonal Crop Stress &amp; Irrigation Manager</en>
@@ -347,7 +347,7 @@ FUNKTIONER:
     -->
     <helpLines>
 
-        <!-- Ã¢â€â‚¬Ã¢â€â‚¬ Category 1: Overview Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+        <!-- Category 1: Overview -->
         <category title="$l10n_helpLine_cs_cat_overview">
 
             <page title="$l10n_helpLine_cs_p1_title" iconSliceId="icon_crops">
@@ -411,7 +411,7 @@ FUNKTIONER:
 
         </category>
 
-        <!-- Ã¢â€â‚¬Ã¢â€â‚¬ Category 2: Settings Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+        <!-- Category 2: Settings -->
         <category title="$l10n_helpLine_cs_cat_settings">
 
             <page title="$l10n_helpLine_cs_s1_title" iconSliceId="icon_crops">
@@ -438,7 +438,7 @@ FUNKTIONER:
 
         </category>
 
-        <!-- Ã¢â€â‚¬Ã¢â€â‚¬ Category 3: Tips & Tricks Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+        <!-- Category 3: Tips & Tricks -->
         <category title="$l10n_helpLine_cs_cat_tips">
 
             <page title="$l10n_helpLine_cs_p4_title" iconSliceId="icon_crops">
@@ -476,7 +476,7 @@ FUNKTIONER:
 
         </category>
 
-        <!-- Ã¢â€â‚¬Ã¢â€â‚¬ Category 4: Mod Information Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ -->
+        <!-- Category 4: Mod Information -->
         <category title="$l10n_helpLine_cs_cat_info">
 
             <page title="$l10n_helpLine_cs_i1_title" iconSliceId="icon_info">
