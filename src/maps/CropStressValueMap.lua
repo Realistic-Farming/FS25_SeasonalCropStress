@@ -305,6 +305,18 @@ function CropStressValueMap:worldToPixel(worldX, worldZ)
     return px, pz
 end
 
+--- [SCS-041] World-space centre of a pixel, the inverse of worldToPixel at the
+--- pixel's midpoint. A positional absorption consumer samples soil at the
+--- provider-cell centre rather than the request point, so competing callers in
+--- one cell share one sample. Returns nil when the map is not carrying data.
+function CropStressValueMap:pixelCentreWorld(px, pz)
+    if not self.available or self.terrainSize <= 0 or self.resolution <= 0 then return nil, nil end
+    local half = self.terrainSize * 0.5
+    local wx = (px + 0.5) / self.resolution * self.terrainSize - half
+    local wz = (pz + 0.5) / self.resolution * self.terrainSize - half
+    return wx, wz
+end
+
 --- Write a value over a square region centred on a world position.
 --- `radius` is in metres; it floors to one pixel so a point write is never a
 --- no-op on a coarse map.

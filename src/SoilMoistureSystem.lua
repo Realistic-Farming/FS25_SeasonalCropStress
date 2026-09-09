@@ -1434,6 +1434,57 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gainOrSpans)
     return false
 end
 
+-- SCS-041 §5: resolve the actual carrier cell for a world position before
+-- budgeting absorption. TRUTH on the native value map (physical pixel grain,
+-- pixel coords, pixel-centre world position); ZONE on the fallback store (the
+-- 10/20/40 m cell grain, cell coords, cell-centre world position). Returns a
+-- descriptor table, or nil when the native pixel cannot resolve (the caller then
+-- takes the neutral route and offers no runoff). Execution spacing is diagnostic
+-- only and never substitutes for the storage grain.
+function SoilMoistureSystem:_resolveProviderCell(worldX, worldZ)
+    if not finiteNumber(worldX) or not finiteNumber(worldZ) then return nil end
+    if self:mapActive() then
+        local vm = self.valueMap
+        local px, pz = vm:worldToPixel(worldX, worldZ)
+        if px == nil then return nil end
+        local grain = vm:getGrainMetres()
+        if not finiteNumber(grain) or grain <= 0 then return nil end
+        local cx, cz = vm:pixelCentreWorld(px, pz)
+        if cx == nil then return nil end
+        return {
+            mode = "TRUTH", grain = grain,
+            cellX = px, cellZ = pz, centerX = cx, centerZ = cz,
+            cellKey = string.format("TRUTH:%g:%d:%d", grain, px, pz),
+        }
+    end
+    local cs = self:getCellSize()
+    if not finiteNumber(cs) or cs <= 0 then return nil end
+    local cx, cz = self:worldToCell(worldX, worldZ)
+    return {
+        mode = "ZONE", grain = cs,
+        cellX = cx, cellZ = cz,
+        centerX = (cx + 0.5) * cs, centerZ = (cz + 0.5) * cs,
+        cellKey = string.format("ZONE:%g:%d:%d", cs, cx, cz),
+    }
+end
+
+-- SCS-041 §5: read local soil compaction (0..100) at a provider-cell centre
+-- through SoilFertilizer, guarded and pcall-wrapped. Returns compaction, grain
+-- only when the manager, the getter, a valid 0..100 value and a positive grain
+-- are all present; otherwise nil, so the caller treats it as neutral compaction.
+-- Never a field average and never an unlabelled fallback.
+function SoilMoistureSystem:_readCompactionAtWorld(centerX, centerZ)
+    local mission = g_currentMission
+    if mission == nil then return nil end
+    local mgr = mission.soilFertilityManager
+    if mgr == nil or type(mgr.getSoilValueAtWorld) ~= "function" then return nil end
+    local ok, value, grain = pcall(mgr.getSoilValueAtWorld, mgr, "compaction", centerX, centerZ)
+    if not ok then return nil end
+    if not finiteNumber(value) or value < 0 or value > 100 then return nil end
+    if not finiteNumber(grain) or grain <= 0 then return nil end
+    return value, grain
+end
+
 -- ============================================================
 -- SCS-018 DAILY SETTLE (brief 3.4): decay + drainage on the day cadence.
 -- Settled once per elapsed in-game day via Time Guard (server) or the fallback
