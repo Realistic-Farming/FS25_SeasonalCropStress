@@ -55,6 +55,46 @@ do
            { getContext = function() error("tg down") end }), 2 * 24 + 1)
 end
 
+-- GROUP AR: SHIPPED MISSION-CONFIG RESOLVER (SCS-041 §2).
+-- Exercises the real SoilMoistureSystem.resolveMissionConfiguration and
+-- absorptionDeclaration against the real OptionScalingResolver. Mirrors the
+-- pure-model checks in Group B, but against the shipped source functions.
+do
+    T.eq("AR0 shipped resolveMissionConfiguration is a function",
+        type(SoilMoistureSystem.resolveMissionConfiguration), "function")
+    local decl = SoilMoistureSystem.absorptionDeclaration()
+    T.eq("AR1 declaration id", decl.id, "irrigation_absorption_restriction")
+    T.eq("AR2 declaration dial", decl.dial, "agronomy")
+    T.near("AR3 declaration base", decl.base, 1.0, 1e-12)
+    T.near("AR4 declaration neutral", decl.neutral, 1.0, 1e-12)
+
+    local RM = SoilMoistureSystem.resolveMissionConfiguration
+    local on        = { dials = { agronomy = 1.0 }, switches = { agronomy = true } }
+    local off       = { dials = { agronomy = 1.0 }, switches = { agronomy = false } }
+    local relaxed   = { dials = { agronomy = 0.0 }, switches = { agronomy = true } }
+    local punishing = { dials = { agronomy = 2.0 }, switches = { agronomy = true } }
+
+    local m = RM(true, false, decl, on)
+    T.eq("AR5 closed gate selects UNCAPPED", m, "UNCAPPED")
+    m = RM(false, true, decl, on)
+    T.eq("AR6 unregistered row fails closed to UNCAPPED", m, "UNCAPPED")
+    m = RM(true, true, nil, on)
+    T.eq("AR7 missing declaration refuses CAPPED", m, "UNCAPPED")
+    local r
+    m, r = RM(true, true, decl, nil)
+    T.eq("AR8 absent SettingsHub keeps a released feature CAPPED", m, "CAPPED")
+    T.near("AR9 absent SettingsHub resolves the Standard restriction", r, 1.0, 1e-12)
+    m, r = RM(true, true, decl, off)
+    T.eq("AR10 Agronomy off keeps a released feature CAPPED", m, "CAPPED")
+    T.near("AR11 Agronomy off resolves the Standard restriction", r, 1.0, 1e-12)
+    local _, relaxedR   = RM(true, true, decl, relaxed)
+    local _, standardR  = RM(true, true, decl, on)
+    local _, punishingR = RM(true, true, decl, punishing)
+    T.near("AR12 Relaxed restriction", relaxedR, 0.7, 1e-12)
+    T.near("AR13 Standard restriction", standardR, 1.0, 1e-12)
+    T.near("AR14 Punishing restriction", punishingR, 1.4, 1e-12)
+end
+
 local function finiteNumber(value)
     return type(value) == "number" and value == value
         and value ~= math.huge and value ~= -math.huge

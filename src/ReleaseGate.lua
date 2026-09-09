@@ -60,6 +60,14 @@ ReleaseGate.EXPERIMENTAL = {
         name = "Finite irrigation water",
         status = "new; awaiting real-save build, surfaces, dedi equality, defects and balance",
     },
+    -- SCS-041 THIRSTY GROUND absorption. LOCKED at merge. Until released and
+    -- opted in the mission freezes absorptionMode = UNCAPPED, so every positional
+    -- water route keeps its post-SCS-039 behaviour. Unlock gates on live
+    -- observation, a truthful moisture surface, HIGH-defect closure and balance.
+    irrigation_absorption = {
+        name = "Thirsty ground (irrigation absorption)",
+        status = "new; awaiting live observation, truthful surface, defect closure and balance",
+    },
 }
 
 -- Console command -> systemId, so command refusals route through the same registry.

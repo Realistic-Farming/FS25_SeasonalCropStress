@@ -157,6 +157,43 @@ function SoilMoistureSystem.resolveCurrentHourKey(environment, optionalTimeGuard
     return day * 24 + hour
 end
 
+-- SCS-041 §2: the agronomy-restriction declaration for the absorption budget.
+-- Base and neutral 1.0 on the Agronomy dial. Static, so config resolution and
+-- tests share one source of truth.
+function SoilMoistureSystem.absorptionDeclaration()
+    return {
+        id = "irrigation_absorption_restriction",
+        dial = "agronomy",
+        base = 1.0,
+        neutral = 1.0,
+    }
+end
+
+-- SCS-041 §2: resolve the mission-frozen absorption mode and agronomy
+-- restriction. Stays UNCAPPED (neutral 1.0) unless the irrigation_absorption
+-- release row is registered AND open, the declaration is well formed, and the
+-- resolved restriction is finite and positive. A missing SettingsHub, a missing
+-- profile or Agronomy off all resolve to the neutral 1.0 while staying CAPPED (a
+-- released feature does not fall back to UNCAPPED just because a dial is off). A
+-- malformed declaration refuses CAPPED. Resolved once at mission freeze; there is
+-- no live toggle. Returns mode ("UNCAPPED"|"CAPPED"), restriction.
+function SoilMoistureSystem.resolveMissionConfiguration(gateRegistered, gateOpen, declaration, profile)
+    if gateRegistered ~= true or gateOpen ~= true then return "UNCAPPED", 1.0 end
+    if type(declaration) ~= "table"
+            or declaration.id ~= "irrigation_absorption_restriction"
+            or declaration.dial ~= "agronomy"
+            or declaration.base ~= 1.0
+            or declaration.neutral ~= 1.0 then
+        return "UNCAPPED", 1.0
+    end
+    local restriction = OptionScalingResolver.resolve(declaration, profile)
+    if type(restriction) ~= "number" or restriction ~= restriction
+            or restriction == math.huge or restriction == -math.huge or restriction <= 0 then
+        return "UNCAPPED", 1.0
+    end
+    return "CAPPED", restriction
+end
+
 -- Field polygon in world space (mirror of IrrigationManager:getFieldPolygonWorld,
 -- kept local so SoilMoistureSystem needs no cross-mod dependency). Returns
 -- vx, vz, n or nil when the field has no usable polygon.
