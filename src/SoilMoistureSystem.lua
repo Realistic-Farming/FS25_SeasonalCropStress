@@ -1486,6 +1486,263 @@ function SoilMoistureSystem:_readCompactionAtWorld(centerX, centerZ)
 end
 
 -- ============================================================
+-- SCS-041 §6: THE HOURLY CAPACITY LEDGER
+-- Ported faithfully from the SCS-041 contract model (the spec bar's Groups C-G).
+-- The pure math is exposed as static functions so it is directly testable; the
+-- per-cell/per-hour ledger lives on the instance and the raw door, compaction
+-- read and SCS-042 runoff offer are injected so the same body serves production
+-- and the bench.
+-- ============================================================
+
+-- One provider cell's absorption budget for one in-game hour (brief §5.6):
+--   BASE * soilFactor * (1 - compaction/100) / agronomyRestriction
+-- A nil/invalid restriction refuses (INVALID_RESTRICTION). A nil compaction or
+-- nil grain is neutral (factor 1.0), never a field-average fallback.
+function SoilMoistureSystem.capacityPerHour(soilFactor, compaction, compactionGrain, agronomyRestriction)
+    if not finiteNumber(agronomyRestriction) or agronomyRestriction <= 0 then
+        return nil, "INVALID_RESTRICTION"
+    end
+    local sf = finiteNumber(soilFactor) and soilFactor or 1.0
+    local compactionFactor = 1.0
+    if finiteNumber(compaction) and finiteNumber(compactionGrain) and compactionGrain > 0 then
+        compactionFactor = 1.0 - math.max(0, math.min(100, compaction)) / 100
+    end
+    return SoilMoistureSystem.BASE_INFILTRATION_PER_HOUR * sf * compactionFactor / agronomyRestriction, nil
+end
+
+local function absorptionAppendSpan(spans, firstWindowId, windowCount, candidatePerWindow)
+    if windowCount <= 0 or candidatePerWindow <= 0 then return end
+    spans[#spans + 1] = {
+        firstWindowId = firstWindowId,
+        windowCount = windowCount,
+        candidatePerWindow = candidatePerWindow,
+    }
+end
+
+-- Plan one uniform request over [windowEnd-windowCount+1 .. windowEnd] against a
+-- per-window capacity, isolating the single carried current-hour window (which
+-- may already have spent part of its capacity) as its own exception span. At
+-- most three compact candidate spans result. Pure. (Contract Group E.)
+function SoilMoistureSystem.absorptionPlanSpan(requestPerWindow, capacity, windowEnd, windowCount,
+                                               carriedWindowId, carriedUsed, carriedCapacity)
+    local first = windowEnd - windowCount + 1
+    local uniformAbsorbed = math.min(requestPerWindow, capacity)
+    local uniformCandidate = requestPerWindow - uniformAbsorbed
+    local totalAbsorbed = uniformAbsorbed * windowCount
+    local totalCandidate = uniformCandidate * windowCount
+    local spans = {}
+
+    if carriedWindowId ~= nil and carriedWindowId >= first and carriedWindowId <= windowEnd then
+        local exceptionCap = carriedCapacity or capacity
+        local exceptionalRemaining = math.max(0, exceptionCap - carriedUsed)
+        local exceptionalAbsorbed = math.min(requestPerWindow, exceptionalRemaining)
+        local exceptionalCandidate = requestPerWindow - exceptionalAbsorbed
+        totalAbsorbed = totalAbsorbed - uniformAbsorbed + exceptionalAbsorbed
+        totalCandidate = totalCandidate - uniformCandidate + exceptionalCandidate
+
+        absorptionAppendSpan(spans, first, carriedWindowId - first, uniformCandidate)
+        absorptionAppendSpan(spans, carriedWindowId, 1, exceptionalCandidate)
+        absorptionAppendSpan(spans, carriedWindowId + 1, windowEnd - carriedWindowId, uniformCandidate)
+    else
+        absorptionAppendSpan(spans, first, windowCount, uniformCandidate)
+    end
+
+    local currentAbsorbed = uniformAbsorbed
+    if carriedWindowId == windowEnd then
+        local exceptionCap = carriedCapacity or capacity
+        currentAbsorbed = math.min(requestPerWindow, math.max(0, exceptionCap - carriedUsed))
+    end
+
+    return {
+        firstWindowId = first,
+        totalRequested = requestPerWindow * windowCount,
+        totalAbsorbed = totalAbsorbed,
+        totalCandidate = totalCandidate,
+        currentAbsorbed = currentAbsorbed,
+        spans = spans,
+    }
+end
+
+-- Sum what the SCS-042 runoff sibling accepts across the candidate spans, each
+-- clamped to its own candidate total; a thrown, negative, non-finite or
+-- over-accepting answer contributes zero. (Contract Group F.)
+local function absorptionAcceptedForSpans(spans, acceptFn)
+    local accepted = 0
+    for _, span in ipairs(spans) do
+        local candidateTotal = span.candidatePerWindow * span.windowCount
+        local result = 0
+        if type(acceptFn) == "function" then
+            local ok, value = pcall(acceptFn, span, candidateTotal)
+            if ok then result = value end
+        end
+        if not finiteNumber(result) or result < 0 or result > candidateTotal then result = 0 end
+        accepted = accepted + result
+    end
+    return accepted
+end
+
+local function absorptionValidWindow(windowEnd, windowCount)
+    return finiteNumber(windowEnd) and math.floor(windowEnd) == windowEnd
+        and finiteNumber(windowCount) and math.floor(windowCount) == windowCount
+        and windowCount >= 1 and windowCount <= 168
+end
+
+local function absorptionCellRow(cells, cellKey)
+    local row = cells[cellKey]
+    if row == nil then
+        row = { windowId = nil, used = 0, capacity = nil, providerMode = nil,
+                providerGrain = nil, compactionGrain = nil }
+        cells[cellKey] = row
+    end
+    return row
+end
+
+-- Lazily-initialised per-mission absorption ledger. Only the one carried current
+-- window is retained as sparse state; historical windows expire after settlement.
+function SoilMoistureSystem:_absorptionState()
+    if self._absorption == nil then
+        self._absorption = {
+            cells = {},
+            carriedWindowId = nil,
+            lastObservedHour = nil,
+            standDownThroughHourKey = nil,
+            standDownAwaitingFirstValidHour = false,
+            standDownReason = nil,
+        }
+    end
+    return self._absorption
+end
+
+-- Apply one uniform request span at one resolved provider cell through the
+-- capacity ledger. Faithful port of the contract model. Reads self.absorptionMode
+-- and self.agronomyRestriction (frozen at mission config). args carries the
+-- request, the resolved provider identity, soilFactor, and the injected hooks:
+--   rawWrite(localWrite) -> accepted           (production: the real raw door)
+--   compactionReader(cx, cz) -> compaction, grain
+--   acceptFn(span, candidateTotal) -> acceptedRunoff   (SCS-042 seam, nil = none)
+-- Returns a result table { requestedGain, localWriteRequest, candidateSurplus,
+-- acceptedSurplus, neutralReason }.
+function SoilMoistureSystem:_applyAbsorptionSpan(args)
+    local st = self:_absorptionState()
+    local totalRequested = (args.requestPerWindow or 0) * (args.windowCount or 1)
+
+    local function result(requested, localWrite, candidate, accepted, neutral)
+        return {
+            requestedGain = requested, localWriteRequest = localWrite,
+            candidateSurplus = candidate, acceptedSurplus = accepted,
+            providerGrainMetres = args.providerGrain, neutralReason = neutral,
+        }
+    end
+    local function doRaw(localWrite)
+        if type(args.rawWrite) == "function" then
+            return args.rawWrite(localWrite) ~= false
+        end
+        return true
+    end
+    local function neutralWrite(reason)
+        doRaw(totalRequested)
+        return result(totalRequested, totalRequested, 0, 0, reason)
+    end
+
+    -- SDS 5.2: mission-frozen UNCAPPED performs one existing raw write only.
+    if self.absorptionMode == "UNCAPPED" then
+        doRaw(totalRequested)
+        return result(totalRequested, totalRequested, 0, 0, "UNCAPPED")
+    end
+
+    if not absorptionValidWindow(args.windowEnd, args.windowCount) then
+        return neutralWrite("INVALID_WINDOW")
+    end
+    if st.lastObservedHour ~= nil and args.windowEnd < st.lastObservedHour then
+        return neutralWrite("CLOCK_REWIND")
+    end
+    if st.standDownAwaitingFirstValidHour then
+        st.standDownAwaitingFirstValidHour = false
+        st.standDownThroughHourKey = args.windowEnd
+        st.standDownReason = st.standDownReason or "CORRUPT_STATE"
+        return neutralWrite("RESTORE_STAND_DOWN")
+    end
+    if st.standDownThroughHourKey ~= nil then
+        local marker = st.standDownThroughHourKey
+        local windowStart = args.windowEnd - args.windowCount + 1
+        if args.windowEnd <= marker then
+            return neutralWrite("RESTORE_STAND_DOWN")
+        end
+        st.standDownThroughHourKey = nil
+        st.standDownReason = nil
+        local neutralCount = math.max(0, marker - windowStart + 1)
+        if neutralCount > 0 then
+            local prefixRequested = args.requestPerWindow * neutralCount
+            doRaw(prefixRequested)
+            local suffixArgs = {}
+            for k, v in pairs(args) do suffixArgs[k] = v end
+            suffixArgs.windowCount = args.windowCount - neutralCount
+            local suffix = self:_applyAbsorptionSpan(suffixArgs)
+            return result(totalRequested,
+                prefixRequested + suffix.localWriteRequest,
+                suffix.candidateSurplus, suffix.acceptedSurplus, "RESTORE_SPLIT")
+        end
+    end
+    st.lastObservedHour = args.windowEnd
+
+    if args.providerMode == nil or not finiteNumber(args.providerGrain) or args.providerGrain <= 0
+            or args.cellKey == nil
+            or not finiteNumber(args.providerCenterX) or not finiteNumber(args.providerCenterZ) then
+        return neutralWrite("PROVIDER_UNAVAILABLE")
+    end
+
+    local row = absorptionCellRow(st.cells, args.cellKey)
+    local firstWindowId = args.windowEnd - args.windowCount + 1
+    if row.windowId ~= nil and row.windowId >= firstWindowId and row.windowId <= args.windowEnd
+            and row.providerMode ~= nil
+            and (row.providerMode ~= args.providerMode or row.providerGrain ~= args.providerGrain) then
+        st.standDownThroughHourKey = args.windowEnd
+        st.standDownReason = "PROVIDER_CHANGED"
+        return neutralWrite("PROVIDER_CHANGED")
+    end
+
+    local carriedWindowId = row.windowId
+    local carriedUsed = row.used
+    local carriedCapacity = row.capacity
+    local currentCapacity = row.capacity
+    local compaction, compactionGrain = args.compaction, args.compactionGrain
+    if row.capacity == nil or row.windowId ~= args.windowEnd then
+        if type(args.compactionReader) == "function" then
+            local ok, value, grain = pcall(args.compactionReader, args.providerCenterX, args.providerCenterZ)
+            if ok then compaction, compactionGrain = value, grain
+            else compaction, compactionGrain = nil, nil end
+        end
+        local cap = SoilMoistureSystem.capacityPerHour(args.soilFactor, compaction, compactionGrain,
+            self.agronomyRestriction)
+        if cap == nil then return neutralWrite("CAPACITY_UNAVAILABLE") end
+        currentCapacity = cap
+    end
+
+    local plan = SoilMoistureSystem.absorptionPlanSpan(args.requestPerWindow, currentCapacity,
+        args.windowEnd, args.windowCount, carriedWindowId, carriedUsed, carriedCapacity)
+    local accepted = absorptionAcceptedForSpans(plan.spans, args.acceptFn)
+    local localWrite = plan.totalAbsorbed + plan.totalCandidate - accepted
+
+    st.carriedWindowId = args.windowEnd
+    row.windowId = args.windowEnd
+    row.capacity = currentCapacity
+    row.providerMode = args.providerMode
+    row.providerGrain = args.providerGrain
+    row.compactionGrain = compactionGrain
+    row.fieldId = args.fieldId
+    row.cellX = args.cellX
+    row.cellZ = args.cellZ
+    local priorUsed = ((carriedWindowId == args.windowEnd) and carriedUsed or 0)
+    local rawAccepted = false
+    if localWrite > 0 then
+        rawAccepted = doRaw(localWrite)
+    end
+    row.used = priorUsed + (rawAccepted and plan.currentAbsorbed or 0)
+
+    return result(plan.totalRequested, localWrite, plan.totalCandidate, accepted, nil)
+end
+
+-- ============================================================
 -- SCS-018 DAILY SETTLE (brief 3.4): decay + drainage on the day cadence.
 -- Settled once per elapsed in-game day via Time Guard (server) or the fallback
 -- day-change hook. Decay conserves the field total exactly (measured).
