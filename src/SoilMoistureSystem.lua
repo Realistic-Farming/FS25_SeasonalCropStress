@@ -1178,7 +1178,7 @@ end
 -- Water lands on places, not fields. These apply a gain at a specific cell,
 -- materialising it if needed (the materialisation door for water application).
 -- ============================================================
-function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
+function SoilMoistureSystem:_rawWaterStore(fieldId, x, z, gain)
     -- SCS-039 v2.1: return a literal boolean receipt. true = the accepted water
     -- joined its store (even a sub-step amount that floored to no write yet);
     -- false = an invalid field, non-positive gain or an unresolved position.
@@ -1309,6 +1309,92 @@ function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gain)
     -- return the accept receipt.
     self:_advanceMoistureRevision()
     return true
+end
+
+-- ============================================================
+-- SCS-041 §3: ONE PUBLIC WATER DOOR, ONE RAW OWNER
+-- applyWaterAtCell stays the only public controlled-water entry. The storage
+-- body above is now the private raw owner (_rawWaterStore). _applyRawWaterAtCell
+-- wraps it to also report whether the readable answer moved, and
+-- applyWaterAtCell accepts either one numeric gain (source-compatible with every
+-- existing caller) or an SCS-023 coverage-span list routed through the
+-- controlled boundary. The first return is always a literal boolean.
+-- ============================================================
+
+-- Private raw door: apply one numeric gain to storage and report acceptance
+-- plus whether the readable answer changed. readableChanged is derived from the
+-- moisture revision, which _rawWaterStore advances exactly when real ground
+-- moved and never on a pending-only accept. (SCS-041 §3.)
+function SoilMoistureSystem:_applyRawWaterAtCell(fieldId, x, z, gain)
+    local revBefore = self.moistureRevision or 1
+    local accepted = self:_rawWaterStore(fieldId, x, z, gain)
+    if accepted ~= true then return false, false end
+    local readableChanged = (self.moistureRevision or 1) ~= revBefore
+    return true, readableChanged
+end
+
+local function finiteNumber(v)
+    return type(v) == "number" and v == v and v ~= math.huge and v ~= -math.huge
+end
+
+local function finiteInteger(v)
+    return finiteNumber(v) and math.floor(v) == v
+end
+
+-- Validate an SCS-023 coverage-span list: a non-empty array of
+-- { firstWindowId, windowCount, requestedGainPerWindow }, each positive and
+-- finite, in strictly ascending, non-overlapping window order. Returns the
+-- summed total gain, or nil when anything is invalid (the caller then mutates
+-- nothing). (SCS-041 §3.)
+local function validateSpanList(spans)
+    if type(spans) ~= "table" then return nil end
+    local n = #spans
+    if n <= 0 then return nil end
+    local total, prevEnd = 0, nil
+    for i = 1, n do
+        local s = spans[i]
+        if type(s) ~= "table"
+                or not finiteInteger(s.firstWindowId)
+                or not finiteInteger(s.windowCount) or s.windowCount < 1 or s.windowCount > 168
+                or not finiteNumber(s.requestedGainPerWindow) or s.requestedGainPerWindow <= 0 then
+            return nil
+        end
+        if prevEnd ~= nil and s.firstWindowId <= prevEnd then
+            return nil   -- non-ascending or overlapping
+        end
+        prevEnd = s.firstWindowId + s.windowCount - 1
+        total = total + s.requestedGainPerWindow * s.windowCount
+    end
+    if not finiteNumber(total) or total <= 0 then return nil end
+    return total
+end
+
+-- The span-aware controlled boundary. Until the mission opens the
+-- irrigation_absorption release row the mission is frozen UNCAPPED, so a valid
+-- span list becomes exactly one raw write of its total gain (bar Group B:
+-- "UNCAPPED performs one existing raw write"). The CAPPED capacity ledger is a
+-- later slice; invalid span input mutates nothing. (SCS-041 §3/§6.)
+function SoilMoistureSystem:_applyControlledWaterSpans(fieldId, x, z, spans)
+    if self.fieldData[fieldId] == nil or not finiteNumber(x) or not finiteNumber(z) then
+        return false
+    end
+    local total = validateSpanList(spans)
+    if total == nil then return false end
+    local accepted = self:_applyRawWaterAtCell(fieldId, x, z, total)
+    return accepted == true
+end
+
+-- Public controlled-water entry (SCS-041 §3). One numeric gain keeps every
+-- existing caller source-compatible; a coverage-span table routes through the
+-- controlled boundary. The first return is a literal boolean.
+function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gainOrSpans)
+    if type(gainOrSpans) == "number" then
+        local accepted = self:_applyRawWaterAtCell(fieldId, x, z, gainOrSpans)
+        return accepted == true
+    elseif type(gainOrSpans) == "table" then
+        return self:_applyControlledWaterSpans(fieldId, x, z, gainOrSpans)
+    end
+    return false
 end
 
 -- ============================================================

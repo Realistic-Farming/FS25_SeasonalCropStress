@@ -21,15 +21,15 @@
 -- Current source: SoilMoistureSystem.lua:44-49, 163, 497-623, 893-950.
 -- Required surface: SDS 5.2-5.15.
 do
-    -- SCS-041 slice 1 shipped: the active-cap constant and the provider-aware
-    -- hour resolver now exist on the real source, so A1/A4 test the shipped
-    -- surfaces. A2/A3 stay absence tripwires until their slices land.
+    -- SCS-041 shipped: all four named source surfaces now exist and Group A
+    -- tests them (the constant, the raw door, the span-aware boundary and the
+    -- provider-aware hour resolver). The pure contract lives in Groups B onward.
     T.near("A1 shipped base-infiltration constant is 0.018",
         SoilMoistureSystem.BASE_INFILTRATION_PER_HOUR, 0.018, 1e-12)
-    T.eq("A2 current source has no private raw-water door",
-        SoilMoistureSystem._applyRawWaterAtCell, nil)
-    T.eq("A3 current source has no private span-aware boundary",
-        SoilMoistureSystem._applyControlledWaterSpans, nil)
+    T.eq("A2 shipped private raw-water door is a function",
+        type(SoilMoistureSystem._applyRawWaterAtCell), "function")
+    T.eq("A3 shipped span-aware controlled boundary is a function",
+        type(SoilMoistureSystem._applyControlledWaterSpans), "function")
     T.eq("A4 shipped provider-aware hour resolver is a function",
         type(SoilMoistureSystem.resolveCurrentHourKey), "function")
 
