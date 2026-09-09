@@ -186,6 +186,9 @@ function SoilMoistureSystem.resolveMissionConfiguration(gateRegistered, gateOpen
             or declaration.neutral ~= 1.0 then
         return "UNCAPPED", 1.0
     end
+    if OptionScalingResolver == nil or type(OptionScalingResolver.resolve) ~= "function" then
+        return "CAPPED", 1.0   -- released with the scaling spine absent: neutral, still CAPPED
+    end
     local restriction = OptionScalingResolver.resolve(declaration, profile)
     if type(restriction) ~= "number" or restriction ~= restriction
             or restriction == math.huge or restriction == -math.huge or restriction <= 0 then
@@ -539,6 +542,10 @@ function SoilMoistureSystem:initialize()
         g_messageCenter:subscribe(MessageType.FARMLAND_OWNER_CHANGED, self.onFarmlandOwnerChanged, self)
         self._farmlandSubscribed = true
     end
+
+    -- SCS-041 §2: freeze the absorption mode once, now that the release gate and
+    -- settings are readable. Frozen for the mission; there is no live toggle.
+    self:_freezeAbsorptionConfig()
 
     self.isInitialized = true
 end
@@ -1367,6 +1374,11 @@ function SoilMoistureSystem:_applyRawWaterAtCell(fieldId, x, z, gain)
     local accepted = self:_rawWaterStore(fieldId, x, z, gain)
     if accepted ~= true then return false, false end
     local readableChanged = (self.moistureRevision or 1) ~= revBefore
+    -- SCS-041 §3: readable water landing before the config freezes pins the
+    -- mission UNCAPPED, so a cap can never appear after uncapped water landed.
+    if readableChanged and self._absorptionConfigFrozen ~= true then
+        self._preFreezeWaterObserved = true
+    end
     return true, readableChanged
 end
 
@@ -1417,8 +1429,17 @@ function SoilMoistureSystem:_applyControlledWaterSpans(fieldId, x, z, spans)
     end
     local total = validateSpanList(spans)
     if total == nil then return false end
-    local accepted = self:_applyRawWaterAtCell(fieldId, x, z, total)
-    return accepted == true
+    if self.absorptionMode ~= "CAPPED" then
+        local accepted = self:_applyRawWaterAtCell(fieldId, x, z, total)
+        return accepted == true
+    end
+    -- CAPPED: run each span through the capacity ledger at this position.
+    for i = 1, #spans do
+        local s = spans[i]
+        self:_absorptionApplyOne(fieldId, x, z, s.firstWindowId + s.windowCount - 1,
+            s.windowCount, s.requestedGainPerWindow)
+    end
+    return true
 end
 
 -- Public controlled-water entry (SCS-041 §3). One numeric gain keeps every
@@ -1426,6 +1447,9 @@ end
 -- controlled boundary. The first return is a literal boolean.
 function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gainOrSpans)
     if type(gainOrSpans) == "number" then
+        if self.absorptionMode == "CAPPED" then
+            return self:_applyControlledNumeric(fieldId, x, z, gainOrSpans)
+        end
         local accepted = self:_applyRawWaterAtCell(fieldId, x, z, gainOrSpans)
         return accepted == true
     elseif type(gainOrSpans) == "table" then
@@ -1740,6 +1764,81 @@ function SoilMoistureSystem:_applyAbsorptionSpan(args)
     row.used = priorUsed + (rawAccepted and plan.currentAbsorbed or 0)
 
     return result(plan.totalRequested, localWrite, plan.totalCandidate, accepted, nil)
+end
+
+-- SCS-041: resolve the provider cell for a position, build the ledger args (soil
+-- factor from the field's soil type, the injected raw door, compaction reader
+-- and the SCS-042 runoff seam) and apply one span through the capacity ledger.
+function SoilMoistureSystem:_absorptionApplyOne(fieldId, x, z, windowEnd, windowCount, requestPerWindow)
+    local d = self.fieldData[fieldId]
+    local sp = (d ~= nil and SoilMoistureSystem.SOIL_PARAMS[d.soilType])
+        or SoilMoistureSystem.SOIL_PARAMS.loamy
+    local cell = self:_resolveProviderCell(x, z)
+    local args = {
+        requestPerWindow = requestPerWindow, windowEnd = windowEnd, windowCount = windowCount,
+        soilFactor = sp.rainAbsorb, fieldId = fieldId,
+        rawWrite = function(lw) return (self:_applyRawWaterAtCell(fieldId, x, z, lw)) end,
+        compactionReader = function(cx, cz) return self:_readCompactionAtWorld(cx, cz) end,
+        acceptFn = nil,   -- SCS-042 runoff seam is wired in the runoff slice (§7)
+    }
+    if cell ~= nil then
+        args.providerMode = cell.mode
+        args.providerGrain = cell.grain
+        args.cellKey = cell.cellKey
+        args.providerCenterX = cell.centerX
+        args.providerCenterZ = cell.centerZ
+        args.executionGrain = cell.grain
+        args.cellX = cell.cellX
+        args.cellZ = cell.cellZ
+    end
+    return self:_applyAbsorptionSpan(args)
+end
+
+-- SCS-041 §3/§4: the CAPPED numeric path. Resolve the current hour; a nil or
+-- backward key takes the neutral raw route (no capacity row, no runoff). A valid
+-- hour applies one current-hour window through the capacity ledger.
+function SoilMoistureSystem:_applyControlledNumeric(fieldId, x, z, gain)
+    local d = self.fieldData[fieldId]
+    if d == nil or type(gain) ~= "number" or gain <= 0
+            or not finiteNumber(x) or not finiteNumber(z) then
+        return false
+    end
+    local env = g_currentMission ~= nil and g_currentMission.environment or nil
+    local tg = (g_currentMission ~= nil and g_currentMission.timeGuard) or g_timeGuard
+    local hourKey = SoilMoistureSystem.resolveCurrentHourKey(env, tg)
+    if hourKey == nil then
+        return (self:_applyRawWaterAtCell(fieldId, x, z, gain))
+    end
+    self:_absorptionApplyOne(fieldId, x, z, hourKey, 1, gain)
+    return true
+end
+
+-- SCS-041 §2: freeze the mission absorption mode and agronomy restriction once,
+-- at initialize. UNCAPPED unless the irrigation_absorption release row is
+-- registered and live; if uncapped water already landed before the freeze the
+-- mission stays UNCAPPED so a cap can never appear after the fact.
+function SoilMoistureSystem:_freezeAbsorptionConfig()
+    local registered = (ReleaseGate ~= nil and ReleaseGate.EXPERIMENTAL ~= nil
+        and ReleaseGate.EXPERIMENTAL.irrigation_absorption ~= nil) == true
+    local open = false
+    if registered and ReleaseGate.isSystemLive ~= nil then
+        open = ReleaseGate.isSystemLive("irrigation_absorption") == true
+    end
+    local profile = nil
+    if OptionScalingResolver ~= nil and OptionScalingResolver.readProfile ~= nil then
+        local sh = (g_currentMission ~= nil and g_currentMission.settingsHub) or nil
+        profile = OptionScalingResolver.readProfile(sh)
+    end
+    local mode, restriction = SoilMoistureSystem.resolveMissionConfiguration(
+        registered, open, SoilMoistureSystem.absorptionDeclaration(), profile)
+    if self._preFreezeWaterObserved == true then
+        mode, restriction = "UNCAPPED", 1.0
+    end
+    self.absorptionMode = mode
+    self.agronomyRestriction = restriction
+    self._absorptionConfigFrozen = true
+    csLog(string.format("Absorption mode frozen: %s (agronomy restriction %.3f)",
+        tostring(mode), restriction or 1.0))
 end
 
 -- ============================================================
