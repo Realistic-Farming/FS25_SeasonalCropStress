@@ -78,6 +78,15 @@ SoilMoistureSystem.DAILY_ACCURAL_PRIORITY  = 90     -- below 100: ground settles
 SoilMoistureSystem.DAILY_OPS_PER_FRAME     = 400
 
 -- ============================================================
+-- SCS-041 THIRSTY GROUND (controlled-irrigation absorption)
+-- ============================================================
+-- Normalised moisture gain a provider cell can absorb per in-game SCS hour at
+-- the neutral Standard restriction on open, uncompacted ground. This is not
+-- litres and not a per-flush constant. Ecosystem precedent: IrrigationManager
+-- and SoilFertilizer both define 0.018. (SCS-041 SDS 5.6.)
+SoilMoistureSystem.BASE_INFILTRATION_PER_HOUR = 0.018
+
+-- ============================================================
 -- LOGGING HELPER
 -- ============================================================
 local function csLog(msg)
@@ -109,6 +118,43 @@ end
 function SoilMoistureSystem:worldToCell(worldX, worldZ)
     local cs = self:getCellSize()
     return math.floor(worldX / cs), math.floor(worldZ / cs)
+end
+
+-- SCS-041 §4: the single provider-aware hour coordinate. Pure - reads only the
+-- passed environment and optional Time Guard, never a global. Requires a finite
+-- integer environment.currentHour in 0..23 (hour zero is valid). Prefers Time
+-- Guard's synced monotonic day when getContext() reports synced == true with a
+-- positive integer monotonicDay; otherwise a positive integer
+-- environment.currentMonotonicDay. Never reads environment.currentDay, never
+-- uses `or 0`, and never uses Time Guard's hour callback as the water
+-- coordinate. Returns a positive integer hour key (day * 24 + hour) or nil.
+function SoilMoistureSystem.resolveCurrentHourKey(environment, optionalTimeGuard)
+    if type(environment) ~= "table" then return nil end
+    local hour = environment.currentHour
+    if type(hour) ~= "number" or hour ~= hour
+            or hour == math.huge or hour == -math.huge
+            or math.floor(hour) ~= hour or hour < 0 or hour > 23 then
+        return nil
+    end
+
+    local day = nil
+    if type(optionalTimeGuard) == "table" and type(optionalTimeGuard.getContext) == "function" then
+        local ok, ctx = pcall(optionalTimeGuard.getContext, optionalTimeGuard)
+        if ok and type(ctx) == "table" and ctx.synced == true then
+            local md = ctx.monotonicDay
+            if type(md) == "number" and md == md and math.floor(md) == md and md > 0 then
+                day = md
+            end
+        end
+    end
+    if day == nil then
+        local emd = environment.currentMonotonicDay
+        if type(emd) == "number" and emd == emd and math.floor(emd) == emd and emd > 0 then
+            day = emd
+        end
+    end
+    if day == nil then return nil end
+    return day * 24 + hour
 end
 
 -- Field polygon in world space (mirror of IrrigationManager:getFieldPolygonWorld,
