@@ -683,6 +683,23 @@ function SaveLoadHandler:compactDigest(env)
             tostring(r.sourceWidth or "nil"), r.amount or 0)
     end
     parts[#parts + 1] = "lc=" .. tostring(#rows)
+    -- SCS-041 §8: bind the nested absorption leaf into the digest when the
+    -- COMPLETE envelope carries one. Only the fields that survive save and
+    -- reload appear, so identical leaves dedupe across mirrors and any drift
+    -- (window, provider token, stand-down marker, row bytes) changes the digest
+    -- exactly like the positional payload does. An absent leaf contributes
+    -- nothing, so a pre-absorption envelope digests byte-identically.
+    local absorption = env.absorption
+    if type(absorption) == "table" then
+        local marker = tostring(absorption.standDownThroughHourKey or "")
+        local awaiting = absorption.standDownAwaitingFirstValidHour == true and "1" or "0"
+        local reason = tostring(absorption.standDownReason or "")
+        local window = tostring(absorption.windowId or "")
+        parts[#parts + 1] = string.format("ab=w%s/m%s/g%s/mk%s/a%s/r%s/c%d/h%s",
+            window, tostring(absorption.providerMode or ""),
+            tostring(absorption.providerGrainMetres or ""), marker, awaiting, reason,
+            absorption.rowCount or 0, tostring(absorption.rowsAdler32 or ""))
+    end
     return table.concat(parts, "|")
 end
 
@@ -728,6 +745,22 @@ function SaveLoadHandler:captureMoistureEnvelope()
     if type(soil.packMapWaterPending) == "function" then
         env.positionalRows = soil:packMapWaterPending()
     end
+    -- SCS-041 §8: nest the absorption leaf in the COMPLETE envelope when the
+    -- mission is CAPPED and the ledger actually carries state worth persisting
+    -- (a window, capacity rows, or a stand-down marker). SCS-039 owns the
+    -- envelope; this adds only the optional leaf. An absent or state-less leaf
+    -- stays nil so a pre-absorption save digests byte-identically, and the leaf
+    -- itself carries its provider token and grain for the load-time validation.
+    env.absorption = nil
+    if soil.absorptionMode == "CAPPED" and type(soil.packAbsorptionWindow) == "function" then
+        local leaf = soil:packAbsorptionWindow()
+        if type(leaf) == "table"
+           and (leaf.windowId ~= nil or (leaf.rowCount or 0) > 0
+                or leaf.standDownThroughHourKey ~= nil
+                or leaf.standDownAwaitingFirstValidHour == true) then
+            env.absorption = leaf
+        end
+    end
     env.digest = self:compactDigest(env)
     return env
 end
@@ -766,12 +799,35 @@ function SaveLoadHandler:commitMoistureEnvelope(capture, nativeOk, compactOk)
             aggregates = capture.aggregates,
             fieldPending = capture.fieldPending,
             positionalRows = capture.positionalRows,
+            absorption = capture.absorption,
             zoneOk = true,
             digest = "P:" .. tostring(self:compactDigest(capture)),
         }
         return "PENDING_ONLY"
     end
     return "FAILED"
+end
+
+--- Decide which absorption leaf a load restores, mirroring the bar's Group M
+--- replace-not-add rule (M14-M20): a PENDING_ONLY recovery row may REPLACE the
+--- COMPLETE envelope's leaf only when it is bound to the same retained identity
+--- (baseGeneration, baseRevision, base cursor match the capture's generation,
+--- moistureRevision and lastSettledMonotonicDay). Any other pending row, or no
+--- pending row, leaves the COMPLETE leaf in charge. An envelope that carried no
+--- leaf means no prior absorption state, and nil comes back. The leaf's own
+--- provider token and grain are validated separately by the absorption loader
+--- (SCS-041 loadAbsorptionWindow), so they are not re-checked here.
+---@return table|nil leaf
+function SaveLoadHandler:selectedAbsorptionLeaf(complete, pending)
+    if type(complete) == "table" and type(pending) == "table"
+       and pending.payloadKind == "PENDING_ONLY"
+       and type(pending.absorption) == "table"
+       and pending.baseGeneration == complete.generation
+       and pending.baseRevision == complete.moistureRevision
+       and pending.baseLastSettledMonotonicDay == complete.lastSettledMonotonicDay then
+        return pending.absorption
+    end
+    return type(complete) == "table" and complete.absorption or nil
 end
 
 --- Select the carrier from a candidate list gathered at load (own XML and the
