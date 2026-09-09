@@ -465,5 +465,7 @@
         <text name="cs_rf_pda_cap_sweep_start" text="Iv kezdete" />
         <text name="cs_rf_pda_cap_sweep_end" text="Iv vege" />
         <text name="cs_rf_pda_cap_rain_key" text="Esoerzekelo" />
+    <text name="cs_release_irrigation_absorption_name" text="Thirsty ground (irrigation absorption)" />
+    <text name="cs_release_irrigation_absorption_status" text="new; awaiting live observation, truthful surface, defect closure and balance" />
 </texts>
 </l10n>
