@@ -30,9 +30,11 @@ local function fixedCell()
            centerX = 999, centerZ = 999, cellKey = "TRUTH:2:10:20" }
 end
 
--- A square cultivated polygon covering (0,0)-(100,100).
+-- A square cultivated polygon covering (0,0)-(100,100). The destination helper
+-- reads geometry through _getFieldPolygons (the parcel collection seam), so the
+-- stub replaces that seam with a one-polygon parcel.
 local function squareField(s)
-  s._getFieldVerts = function() return {0, 100, 100, 0}, {0, 0, 100, 100}, 4 end
+  s._getFieldPolygons = function() return { { vx = {0, 100, 100, 0}, vz = {0, 0, 100, 100}, n = 4 } } end
 end
 
 -- ============================================================
@@ -160,7 +162,7 @@ end
 -- 9. Unavailable geometry returns zero.
 do
   local s = sys()
-  s._getFieldVerts = function() return nil end
+  s._getFieldPolygons = function() return nil end
   s._resolveProviderCell = function() return fixedCell() end
   local rawCalls = 0
   s._applyRawWaterAtCell = function() rawCalls = rawCalls + 1; return true, true end

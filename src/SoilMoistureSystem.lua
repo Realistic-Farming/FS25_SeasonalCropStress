@@ -283,7 +283,15 @@ function SoilMoistureSystem.new(manager)
     -- Every branch below tests mapActive(); when it is false NOTHING changes and
     -- the sparse-cell store above is the whole system, bit for bit.
     self.valueMap = nil
-    self._fieldVerts = {}      -- fieldId -> {vx, vz, n}, cached polygon
+    -- SCS-041 §9 field-boundary correction: the geometry cache retains the
+    -- COMPLETE parcel polygon collection, never a first match. An entry is one
+    -- of three shapes:
+    --   { vx=.., vz=.., n=.. }          legacy single-polygon seed (tests/ZONE)
+    --   { polys = { {vx,vz,n}, ... } }  the full cultivated collection per parcel
+    --   { n = 0 }                       cached refusal (no usable geometry)
+    -- _getFieldVerts returns the first usable polygon (single-field callers);
+    -- _getFieldPolygons returns the whole collection (parcel-domain callers).
+    self._fieldVerts = {}      -- fieldId -> parcel polygon collection cache
     self._mapSeeded  = {}      -- fieldId -> true once migrated onto the map
     -- SCS-039 quantisation remainders for positional water writes, keyed
     -- fieldId -> [pixelKey] -> pending sub-step moisture. The cell store holds
@@ -365,34 +373,77 @@ function SoilMoistureSystem:mapActive()
         and self.providerMode ~= "UNAVAILABLE_PENDING_RELOAD"
 end
 
---- Field polygon in world space, cached. The map's region ops need it on every
---- hourly write, and rebuilding it per tick from scene nodes would be wasteful.
-function SoilMoistureSystem:_getFieldVerts(fieldId)
-    local cached = self._fieldVerts[fieldId]
-    if cached ~= nil then
-        if cached.n == 0 then return nil end
-        return cached.vx, cached.vz, cached.n
-    end
-    local field = nil
+--- Collect every usable cultivated polygon whose engine field carries this
+--- farmland (parcel) id, without taking a first match. Returns a list of
+--- { vx=.., vz=.., n=.. } or nil when no usable polygon exists. Pure geometry:
+--- existing polygon extraction stays the primitive; this is its parcel-domain
+--- fan-out. (SCS-041 owner-ratified field-boundary correction.)
+function SoilMoistureSystem:_collectParcelPolygons(fieldId)
+    local polys = {}
     if g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
         for _, f in pairs(g_fieldManager.fields) do
             if f.farmland ~= nil and f.farmland.id == fieldId then
-                field = f
-                break
+                local vx, vz, n = self:getFieldPolygonWorld(f)
+                if vx ~= nil and n ~= nil and n >= 3 then
+                    polys[#polys + 1] = { vx = vx, vz = vz, n = n }
+                end
             end
         end
     end
-    local vx, vz, n = nil, nil, nil
-    if field ~= nil then
-        vx, vz, n = self:getFieldPolygonWorld(field)
+    if #polys == 0 then return nil end
+    return polys
+end
+
+--- The COMPLETE cultivated polygon collection for one parcel, cached. Prefers a
+--- full collection entry; accepts a legacy single-polygon seed (tests / ZONE);
+--- caches a refusal as { n = 0 } so a later call does not re-walk the field
+--- list. Returns nil when the parcel has no usable geometry.
+---@return table|nil list of { vx=.., vz=.., n=.. }
+function SoilMoistureSystem:_getFieldPolygons(fieldId)
+    local cached = self._fieldVerts[fieldId]
+    if cached ~= nil then
+        if cached.polys ~= nil then
+            if #cached.polys == 0 then return nil end
+            return cached.polys
+        end
+        if cached.n == 0 then return nil end
+        if cached.vx ~= nil then return { cached } end
     end
-    if vx == nil or n == nil or n < 3 then
-        -- Cache the refusal too, or every tick re-walks the field list.
+    local polys = self:_collectParcelPolygons(fieldId)
+    if polys == nil then
         self._fieldVerts[fieldId] = { n = 0 }
         return nil
     end
-    self._fieldVerts[fieldId] = { vx = vx, vz = vz, n = n }
-    return vx, vz, n
+    if #polys == 1 then
+        local p = polys[1]
+        self._fieldVerts[fieldId] = { vx = p.vx, vz = p.vz, n = p.n }
+    else
+        self._fieldVerts[fieldId] = { polys = polys }
+    end
+    return polys
+end
+
+--- A world point is inside the parcel when it lies inside ANY of the parcel's
+--- cultivated polygons. Gaps between the parcel's fields are never filled.
+function SoilMoistureSystem:_pointInParcel(fieldId, x, z)
+    local polys = self:_getFieldPolygons(fieldId)
+    if polys == nil then return false end
+    for i = 1, #polys do
+        local p = polys[i]
+        if csPointInPolygon(x, z, p.vx, p.vz, p.n) then return true end
+    end
+    return false
+end
+
+--- Field polygon in world space, cached. Returns the first usable polygon of the
+--- parcel collection, so single-polygon callers keep exactly today's shape. The
+--- map region ops that take ONE polygon (paint / delta / read-average) stay on
+--- this first-polygon seam; their parcel-union raster is the flagged SDS core.
+function SoilMoistureSystem:_getFieldVerts(fieldId)
+    local polys = self:_getFieldPolygons(fieldId)
+    if polys == nil or #polys == 0 then return nil end
+    local p = polys[1]
+    return p.vx, p.vz, p.n
 end
 
 --- ONE-TIME MIGRATION (brief step 4): seed the map from whatever the cell store
@@ -1145,32 +1196,33 @@ function SoilMoistureSystem:materialiseRelief(fieldId)
     if d.cellSum == nil then d.cellSum = 0 end
     self._reliefScanned[fieldId] = true
 
-    local field = nil
-    if g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
-        for _, f in pairs(g_fieldManager.fields) do
-            if f.farmland ~= nil and f.farmland.id == fieldId then
-                field = f
-                break
-            end
-        end
-    end
-    if field == nil then return end
-
-    local vx, vz, n = self:getFieldPolygonWorld(field)
-    if vx == nil or n < 3 then return end
+    local polys = self:_getFieldPolygons(fieldId)
+    if polys == nil then return end
 
     local cs = self:getCellSize()
-    -- Field bounding box in world space.
+    -- Parcel bounding box over the complete collection, never a first match.
     local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
-    for i = 1, n do
-        if vx[i] < minX then minX = vx[i] end
-        if vx[i] > maxX then maxX = vx[i] end
-        if vz[i] < minZ then minZ = vz[i] end
-        if vz[i] > maxZ then maxZ = vz[i] end
+    for pi = 1, #polys do
+        local p = polys[pi]
+        for i = 1, p.n do
+            if p.vx[i] < minX then minX = p.vx[i] end
+            if p.vx[i] > maxX then maxX = p.vx[i] end
+            if p.vz[i] < minZ then minZ = p.vz[i] end
+            if p.vz[i] > maxZ then maxZ = p.vz[i] end
+        end
+    end
+    local function inAny(cx, cz)
+        for pi = 1, #polys do
+            local p = polys[pi]
+            if csPointInPolygon(cx, cz, p.vx, p.vz, p.n) then return true end
+        end
+        return false
     end
 
-    -- Sample terrain height at every cell centre inside the polygon, collect
-    -- them, then materialise cells whose relief offset exceeds the threshold.
+    -- Sample terrain height at every cell centre inside the parcel union,
+    -- collect them, then materialise cells whose relief offset exceeds the
+    -- threshold. Each cell centre is sampled once even when parcel polygons
+    -- touch or overlap (the union is membership, not repeated per-polygon).
     local heights = {}
     local count = 0
     local cellMinX = math.floor(minX / cs)
@@ -1181,7 +1233,7 @@ function SoilMoistureSystem:materialiseRelief(fieldId)
         for cz = cellMinZ, cellMaxZ do
             local wx = (cx + 0.5) * cs
             local wz = (cz + 0.5) * cs
-            if csPointInPolygon(wx, wz, vx, vz, n) then
+            if inAny(wx, wz) then
                 local ok, h = pcall(getTerrainHeightAtWorldPos, g_terrainNode, wx, 0, wz)
                 if ok and h ~= nil then
                     count = count + 1
@@ -1847,13 +1899,23 @@ function SoilMoistureSystem:_acceptRunoffDestinationSpan(fieldId, destX, destZ, 
     local candidateTotal = candidateGainPerWindow * windowCount
     if not finiteNumber(candidateTotal) or candidateTotal <= 0 then return 0 end
 
-    -- Field membership. Current source keeps one cultivated polygon per parcel;
-    -- the source must fall inside it and the destination inside that same
-    -- polygon. A farmland-id match alone is not eligibility.
-    local vx, vz, n = self:_getFieldVerts(fieldId)
-    if vx == nil then return 0 end
-    if not csPointInPolygon(sourceX, sourceZ, vx, vz, n) then return 0 end
-    if not csPointInPolygon(destX, destZ, vx, vz, n) then return 0 end
+    -- Field membership (runoff domain). The source falls in exactly ONE of the
+    -- parcel's cultivated polygons; the destination must lie inside that same
+    -- polygon. A farmland-id match alone is not eligibility, a point inside two
+    -- polygons is ambiguous, and neither a missing parcel nor an outside
+    -- destination can accept. (Owner-ratified field-boundary correction.)
+    local polys = self:_getFieldPolygons(fieldId)
+    if polys == nil then return 0 end
+    local sourcePoly = nil
+    for pi = 1, #polys do
+        local p = polys[pi]
+        if csPointInPolygon(sourceX, sourceZ, p.vx, p.vz, p.n) then
+            if sourcePoly ~= nil then return 0 end   -- ambiguous source field
+            sourcePoly = p
+        end
+    end
+    if sourcePoly == nil then return 0 end
+    if not csPointInPolygon(destX, destZ, sourcePoly.vx, sourcePoly.vz, sourcePoly.n) then return 0 end
 
     -- The destination's own carrier cell supplies its capacity budget.
     local cell = self:_resolveProviderCell(destX, destZ)
@@ -2851,24 +2913,33 @@ end
 --- change changes the string (the SDS 3.6 daily-plan pinning compares these).
 --- nil when the field has no resolvable polygon.
 function SoilMoistureSystem:fieldGeometryFingerprint(fieldId)
-    local vx, vz, n = self:_getFieldVerts(fieldId)
-    if vx == nil then return nil end
-    local parts = {}
-    for i = 1, n do
-        parts[i] = string.format("%.2f,%.2f", vx[i], vz[i])
+    local polys = self:_getFieldPolygons(fieldId)
+    if polys == nil then return nil end
+    -- Deterministic fold over the COMPLETE parcel collection. Polygons are
+    -- sorted by their canonical vertex text so the fingerprint never depends on
+    -- engine iteration order; each polygon's ring keeps its own vertex order.
+    local blocks = {}
+    for pi = 1, #polys do
+        local p = polys[pi]
+        local parts = {}
+        for i = 1, p.n do
+            parts[i] = string.format("%.2f,%.2f", p.vx[i], p.vz[i])
+        end
+        blocks[#blocks + 1] = table.concat(parts, ";")
     end
-    return table.concat(parts, ";")
+    table.sort(blocks)
+    return table.concat(blocks, "|")
 end
 
---- Exactly one current field contains the world position, else nil. A field
---- whose polygon cannot be resolved (deleted farmland still in fieldData) can
---- never own a point, and a point inside two fields is ambiguous, so neither
---- answers.
+--- Exactly one current parcel contains the world position, else nil. Membership
+--- is point-in-ANY of the parcel's cultivated polygons (the complete collection,
+--- never a first match). A parcel whose geometry cannot be resolved (deleted
+--- farmland still in fieldData) can never own a point, and a point inside two
+--- parcels is ambiguous, so neither answers.
 function SoilMoistureSystem:_uniqueFieldOwnerAt(worldX, worldZ)
     local owner, count = nil, 0
     for fieldId in pairs(self.fieldData) do
-        local vx, vz, n = self:_getFieldVerts(fieldId)
-        if vx ~= nil and csPointInPolygon(worldX, worldZ, vx, vz, n) then
+        if self:_pointInParcel(fieldId, worldX, worldZ) then
             count = count + 1
             owner = fieldId
         end
