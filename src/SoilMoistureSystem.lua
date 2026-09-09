@@ -1779,7 +1779,7 @@ function SoilMoistureSystem:_absorptionApplyOne(fieldId, x, z, windowEnd, window
         soilFactor = sp.rainAbsorb, fieldId = fieldId,
         rawWrite = function(lw) return (self:_applyRawWaterAtCell(fieldId, x, z, lw)) end,
         compactionReader = function(cx, cz) return self:_readCompactionAtWorld(cx, cz) end,
-        acceptFn = nil,   -- SCS-042 runoff seam is wired in the runoff slice (§7)
+        acceptFn = nil,
     }
     if cell ~= nil then
         args.providerMode = cell.mode
@@ -1790,8 +1790,124 @@ function SoilMoistureSystem:_absorptionApplyOne(fieldId, x, z, windowEnd, window
         args.executionGrain = cell.grain
         args.cellX = cell.cellX
         args.cellZ = cell.cellZ
+        -- SCS-041 §7: the SCS-042 runoff seam. When the manager carries a live
+        -- runoff sibling, offer each compact candidate span the surplus over the
+        -- source cell's hourly budget; the sibling picks one downhill destination
+        -- inside the same cultivated field and returns what it accepted. The
+        -- ORIGINAL source position (x, z), not the provider-cell centre, is the
+        -- field-eligibility anchor the sibling forwards to the destination helper
+        -- (owner-ratified correction 2026-09-05). An absent sibling leaves
+        -- acceptFn nil, so every candidate folds back into the local write.
+        -- absorptionAcceptedForSpans pcall-wraps the call and clamps the answer
+        -- to each span's candidate total, so an over-accepting, negative or
+        -- throwing sibling contributes zero.
+        local mgr = self.manager
+        local runoff = (mgr ~= nil) and mgr.runoffSystem or nil
+        if runoff ~= nil and type(runoff.acceptSurplusSpan) == "function" then
+            local providerGrain = cell.grain
+            args.acceptFn = function(span)
+                return runoff:acceptSurplusSpan(fieldId, x, z, providerGrain,
+                    span.firstWindowId, span.windowCount, span.candidatePerWindow)
+            end
+        end
     end
     return self:_applyAbsorptionSpan(args)
+end
+
+-- SCS-041 §7 / SCS-042 §5: the private terminal destination helper, the ONLY
+-- entry the SCS-042 runoff sibling calls back into. It re-applies the SCS-041
+-- soil, optional compaction, Agronomy restriction and hourly-capacity rules at
+-- one already-chosen downhill destination, commits only after literal raw
+-- acceptance, and returns exactly the aggregate the destination absorbed.
+--
+-- Field eligibility (owner-ratified correction 2026-09-05): the SOURCE position
+-- is the anchor. Resolve the one current cultivated polygon that contains the
+-- source, then require the destination inside that same polygon. A shared
+-- farmland id (a deed margin) is not membership. Missing or non-finite source
+-- context, unavailable geometry, a source outside the field, or a destination
+-- outside the source's field returns zero before any capacity or raw write. A
+-- caller that omits the trailing source context gets zero, not a first-field
+-- fallback.
+--
+-- The destination shares SCS-041's live capacity rows (keyed by the destination
+-- provider cell), so competing sources in one window cannot overbook the last
+-- headroom, and it never offers runoff again: a destination remainder stays
+-- local at the source and never hops twice.
+function SoilMoistureSystem:_acceptRunoffDestinationSpan(fieldId, destX, destZ, providerGrain,
+                                                         firstWindowId, windowCount, candidateGainPerWindow,
+                                                         sourceX, sourceZ)
+    if not finiteNumber(destX) or not finiteNumber(destZ)
+            or not finiteNumber(sourceX) or not finiteNumber(sourceZ)
+            or not finiteNumber(providerGrain) or providerGrain <= 0
+            or not finiteInteger(firstWindowId)
+            or not finiteInteger(windowCount) or windowCount < 1 or windowCount > 168
+            or not finiteNumber(candidateGainPerWindow) or candidateGainPerWindow <= 0 then
+        return 0
+    end
+    local candidateTotal = candidateGainPerWindow * windowCount
+    if not finiteNumber(candidateTotal) or candidateTotal <= 0 then return 0 end
+
+    -- Field membership. Current source keeps one cultivated polygon per parcel;
+    -- the source must fall inside it and the destination inside that same
+    -- polygon. A farmland-id match alone is not eligibility.
+    local vx, vz, n = self:_getFieldVerts(fieldId)
+    if vx == nil then return 0 end
+    if not csPointInPolygon(sourceX, sourceZ, vx, vz, n) then return 0 end
+    if not csPointInPolygon(destX, destZ, vx, vz, n) then return 0 end
+
+    -- The destination's own carrier cell supplies its capacity budget.
+    local cell = self:_resolveProviderCell(destX, destZ)
+    if cell == nil then return 0 end
+
+    local windowEnd = firstWindowId + windowCount - 1
+    local st = self:_absorptionState()
+    local row = absorptionCellRow(st.cells, cell.cellKey)
+
+    -- Freeze the destination soil/compaction sample on the first touch of this
+    -- cell/window; a later source in the same window reuses the frozen capacity.
+    local currentCapacity = row.capacity
+    local compactionGrain = row.compactionGrain
+    if row.capacity == nil or row.windowId ~= windowEnd then
+        local compaction, grain = self:_readCompactionAtWorld(cell.centerX, cell.centerZ)
+        local d = self.fieldData[fieldId]
+        local sp = (d ~= nil and SoilMoistureSystem.SOIL_PARAMS[d.soilType])
+            or SoilMoistureSystem.SOIL_PARAMS.loamy
+        local cap = SoilMoistureSystem.capacityPerHour(sp.rainAbsorb, compaction, grain,
+            self.agronomyRestriction)
+        if cap == nil then return 0 end
+        currentCapacity = cap
+        compactionGrain = grain
+    end
+
+    local carriedWindowId = row.windowId
+    local carriedUsed = row.used
+    local carriedCapacity = row.capacity
+    local plan = SoilMoistureSystem.absorptionPlanSpan(candidateGainPerWindow, currentCapacity,
+        windowEnd, windowCount, carriedWindowId, carriedUsed, carriedCapacity)
+
+    -- The destination writes only its capacity-absorbed portion; the surplus it
+    -- cannot take folds back at the source. Nothing offered here can exceed the
+    -- candidate total (belt and suspenders on the clamp).
+    local localWrite = math.min(plan.totalAbsorbed, candidateTotal)
+    if localWrite <= 0 then return 0 end
+
+    local rawAccepted = (self:_applyRawWaterAtCell(fieldId, destX, destZ, localWrite)) == true
+    if not rawAccepted then return 0 end
+
+    -- Commit only after literal raw acceptance. Retain the one carried current
+    -- window; historical windows in a catch-up span aggregate arithmetically.
+    local priorUsed = ((carriedWindowId == windowEnd) and carriedUsed or 0)
+    row.windowId = windowEnd
+    row.capacity = currentCapacity
+    row.providerMode = cell.mode
+    row.providerGrain = cell.grain
+    row.compactionGrain = compactionGrain
+    row.fieldId = fieldId
+    row.cellX = cell.cellX
+    row.cellZ = cell.cellZ
+    row.used = priorUsed + plan.currentAbsorbed
+
+    return localWrite
 end
 
 -- SCS-041 §3/§4: the CAPPED numeric path. Resolve the current hour; a nil or
