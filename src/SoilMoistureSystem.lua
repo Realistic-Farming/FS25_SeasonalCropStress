@@ -1958,6 +1958,235 @@ function SoilMoistureSystem:_freezeAbsorptionConfig()
 end
 
 -- ============================================================
+-- SCS-041 §8: SCHEMA-3 SPARSE ABSORPTION PERSISTENCE
+-- Faithful port of the contract model (spec bar Group I). Only the one carried
+-- current-hour window is persisted, as a canonical, Adler-32-checked leaf that
+-- SCS-039 nests inside its provider envelope (SCS-039 owns the envelope; this
+-- adds only the leaf, no new save callback, timer, nonce or file). Old windows
+-- expire on load; a corrupt, future or provider-mismatched leaf stands the
+-- mission down conservatively rather than inventing capacity, and a stand-down
+-- marker persists across the save so a suspicious hour is not re-consumed.
+-- ============================================================
+
+local function absorptionCanonicalNumber(value)
+    return string.format("%.17g", value)
+end
+
+local function absorptionRowLess(a, b)
+    if a.fieldId ~= b.fieldId then return a.fieldId < b.fieldId end
+    if a.cellX ~= b.cellX then return a.cellX < b.cellX end
+    return a.cellZ < b.cellZ
+end
+
+-- Canonical, numerically-sorted row encoding. One row is
+--   fieldId,cellX,cellZ,capacity,used,compactionGrain   ("-" when no grain)
+-- rows joined by ";". Returns the packed string and the sorted row array.
+local function absorptionCanonicalRows(rows)
+    local ordered = {}
+    for i, row in ipairs(rows) do ordered[i] = row end
+    table.sort(ordered, absorptionRowLess)
+    local encoded = {}
+    for i, row in ipairs(ordered) do
+        encoded[i] = table.concat({
+            tostring(row.fieldId), tostring(row.cellX), tostring(row.cellZ),
+            absorptionCanonicalNumber(row.capacity), absorptionCanonicalNumber(row.used),
+            row.compactionGrain == nil and "-" or absorptionCanonicalNumber(row.compactionGrain),
+        }, ",")
+    end
+    return table.concat(encoded, ";"), ordered
+end
+
+local function absorptionAdler32(bytes)
+    local a, b = 1, 0
+    for i = 1, #bytes do
+        a = (a + string.byte(bytes, i)) % 65521
+        b = (b + a) % 65521
+    end
+    return string.format("%08X", b * 65536 + a)
+end
+
+-- Parse and revalidate a packed row string; returns the ordered rows, or nil if
+-- any column is missing, out of range, non-canonical (re-encoding differs) or a
+-- duplicate cell. used may never exceed capacity.
+local function absorptionParseRows(packed)
+    local rows = {}
+    if packed == "" then return rows end
+    for encoded in string.gmatch(packed or "", "([^;]+)") do
+        local cols = {}
+        for value in string.gmatch(encoded, "([^,]+)") do cols[#cols + 1] = value end
+        if #cols ~= 6 then return nil end
+        local fieldId, cellX, cellZ = tonumber(cols[1]), tonumber(cols[2]), tonumber(cols[3])
+        local capacity, used = tonumber(cols[4]), tonumber(cols[5])
+        local compactionGrain = cols[6] == "-" and nil or tonumber(cols[6])
+        if not finiteNumber(fieldId) or math.floor(fieldId) ~= fieldId or fieldId <= 0
+                or not finiteNumber(cellX) or math.floor(cellX) ~= cellX
+                or not finiteNumber(cellZ) or math.floor(cellZ) ~= cellZ
+                or not finiteNumber(capacity) or capacity < 0
+                or not finiteNumber(used) or used < 0 or used > capacity
+                or (compactionGrain ~= nil and (not finiteNumber(compactionGrain) or compactionGrain <= 0)) then
+            return nil
+        end
+        rows[#rows + 1] = {
+            fieldId = fieldId, cellX = cellX, cellZ = cellZ,
+            capacity = capacity, used = used, compactionGrain = compactionGrain,
+        }
+    end
+    local canonical, ordered = absorptionCanonicalRows(rows)
+    if canonical ~= packed then return nil end
+    for i = 2, #ordered do
+        local a, b = ordered[i - 1], ordered[i]
+        if a.fieldId == b.fieldId and a.cellX == b.cellX and a.cellZ == b.cellZ then return nil end
+    end
+    return ordered
+end
+
+-- Pack the one carried current window's capacity rows plus any live stand-down
+-- marker into an outer-schema-3 / absorption-schema-2 leaf. Only rows on the
+-- carried window are packed (historical windows have already expired). Returns
+-- the leaf table SCS-039 attaches to its envelope. (Spec Group I.)
+function SoilMoistureSystem:packAbsorptionWindow()
+    local st = self:_absorptionState()
+    local windowId, cells = st.carriedWindowId, st.cells
+    local rows, providerMode, providerGrain = {}, nil, nil
+    for _, row in pairs(cells) do
+        if windowId ~= nil and row.windowId == windowId then
+            providerMode = providerMode or row.providerMode
+            providerGrain = providerGrain or row.providerGrain
+            rows[#rows + 1] = {
+                fieldId = row.fieldId, cellX = row.cellX, cellZ = row.cellZ,
+                capacity = row.capacity, used = row.used, compactionGrain = row.compactionGrain,
+            }
+        end
+    end
+    local packed, ordered = absorptionCanonicalRows(rows)
+    return {
+        outerSchema = 3,
+        schema = 2,
+        windowId = windowId,
+        providerMode = providerMode,
+        providerGrainMetres = providerGrain,
+        standDownThroughHourKey = st.standDownThroughHourKey,
+        standDownAwaitingFirstValidHour = st.standDownAwaitingFirstValidHour == true,
+        standDownReason = st.standDownReason,
+        rowCount = #ordered,
+        rowsPacked = packed,
+        rowsAdler32 = absorptionAdler32(packed),
+    }
+end
+
+-- Restore an absorption leaf into the current-hour ledger, replacing (never
+-- adding to) any prior rows. UNCAPPED missions ignore it; an absent leaf means
+-- no prior state; a schema-2 outer save predates absorption entirely. A live
+-- stand-down marker restores before capacity rows and normalizes a future or
+-- unreadable-hour marker to the conservative bound. An ordinary window in the
+-- future/past, a provider mismatch, an Adler or row-count mismatch or a
+-- malformed block never restores partial rows. Returns ok, dispositionReason.
+-- (Spec Group I.)
+function SoilMoistureSystem:loadAbsorptionWindow(block, liveMode, liveGrain, currentHour)
+    local st = self:_absorptionState()
+    st.cells = {}
+    st.carriedWindowId = nil
+    st.standDownThroughHourKey = nil
+    st.standDownAwaitingFirstValidHour = false
+    st.standDownReason = nil
+
+    if self.absorptionMode == "UNCAPPED" then return true, "UNCAPPED_IGNORED" end
+    if block == nil then return true, "EMPTY_ABSORPTION" end
+    if block.outerSchema == 2 then return true, "MIGRATED_SCHEMA_2" end
+
+    local function reject(reason)
+        if finiteInteger(currentHour) then
+            st.standDownThroughHourKey = currentHour
+        else
+            st.standDownAwaitingFirstValidHour = true
+        end
+        st.standDownReason = (reason == "PROVIDER_MISMATCH") and "PROVIDER_MISMATCH" or "CORRUPT_STATE"
+        return false, reason
+    end
+
+    if block.outerSchema ~= 3 or (block.schema ~= 1 and block.schema ~= 2) then
+        return reject("MALFORMED_BLOCK")
+    end
+
+    if block.schema == 2 then
+        local marker = block.standDownThroughHourKey
+        local awaiting = block.standDownAwaitingFirstValidHour == true
+        local reasonOk = block.standDownReason == nil
+            or block.standDownReason == "CORRUPT_STATE"
+            or block.standDownReason == "PROVIDER_MISMATCH"
+            or block.standDownReason == "PROVIDER_CHANGED"
+        if (marker ~= nil and (not finiteNumber(marker) or math.floor(marker) ~= marker))
+                or (marker ~= nil and awaiting) or not reasonOk then
+            return reject("MALFORMED_MARKER")
+        end
+        if marker ~= nil or awaiting then
+            if awaiting then
+                st.standDownAwaitingFirstValidHour = true
+                st.standDownReason = block.standDownReason or "CORRUPT_STATE"
+            elseif not finiteInteger(currentHour) then
+                st.standDownAwaitingFirstValidHour = true
+                st.standDownReason = "CORRUPT_STATE"
+            elseif marker > currentHour then
+                st.standDownThroughHourKey = currentHour
+                st.standDownReason = "CORRUPT_STATE"
+            else
+                st.standDownThroughHourKey = marker
+                st.standDownReason = block.standDownReason or "CORRUPT_STATE"
+            end
+            return true, "RESTORED_STAND_DOWN"
+        end
+    end
+
+    if block.windowId == nil and block.rowCount == 0 and block.rowsPacked == ""
+            and block.rowsAdler32 == absorptionAdler32("") then
+        return true, "EMPTY_ABSORPTION"
+    end
+
+    if not finiteNumber(block.windowId) or math.floor(block.windowId) ~= block.windowId
+            or (block.providerMode ~= "TRUTH" and block.providerMode ~= "ZONE")
+            or not finiteNumber(block.providerGrainMetres) or block.providerGrainMetres <= 0
+            or not finiteNumber(block.rowCount) or math.floor(block.rowCount) ~= block.rowCount
+            or type(block.rowsPacked) ~= "string" or type(block.rowsAdler32) ~= "string" then
+        return reject("MALFORMED_BLOCK")
+    end
+    if not finiteInteger(currentHour) then return reject("UNREADABLE_CURRENT_HOUR") end
+    if block.windowId > currentHour then return reject("FUTURE_WINDOW") end
+    if block.windowId < currentHour then return true, "EXPIRED_WINDOW" end
+    if block.providerMode ~= liveMode or block.providerGrainMetres ~= liveGrain then
+        return reject("PROVIDER_MISMATCH")
+    end
+    if absorptionAdler32(block.rowsPacked) ~= block.rowsAdler32 then return reject("ADLER_MISMATCH") end
+    local rows = absorptionParseRows(block.rowsPacked)
+    if rows == nil or #rows ~= block.rowCount then return reject("ROW_MISMATCH") end
+
+    for _, row in ipairs(rows) do
+        local key = string.format("%s:%g:%d:%d", liveMode, liveGrain, row.cellX, row.cellZ)
+        st.cells[key] = {
+            fieldId = row.fieldId, cellX = row.cellX, cellZ = row.cellZ,
+            capacity = row.capacity, used = row.used, compactionGrain = row.compactionGrain,
+            providerMode = liveMode, providerGrain = liveGrain, windowId = block.windowId,
+        }
+    end
+    st.carriedWindowId = block.windowId
+    return true, "RESTORED"
+end
+
+-- Drop capacity rows whose field is no longer live (field sold or removed), so
+-- a stale field id cannot carry capacity forward. Returns the count removed.
+-- (Spec I84; the parcel-domain owner supplies the live-field set.)
+function SoilMoistureSystem:pruneAbsorptionMissingFields(liveFields)
+    local st = self:_absorptionState()
+    local removed = 0
+    for key, row in pairs(st.cells or {}) do
+        if liveFields[row.fieldId] ~= true then
+            st.cells[key] = nil
+            removed = removed + 1
+        end
+    end
+    return removed
+end
+
+-- ============================================================
 -- SCS-018 DAILY SETTLE (brief 3.4): decay + drainage on the day cadence.
 -- Settled once per elapsed in-game day via Time Guard (server) or the fallback
 -- day-change hook. Decay conserves the field total exactly (measured).
