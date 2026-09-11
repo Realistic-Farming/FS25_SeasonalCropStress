@@ -1063,57 +1063,13 @@ function CropStressManager:getIrrigationSystems(farmId)
         end
         return nil
     end
+    -- Legacy no-arg public copy: route through the single row builder so the
+    -- public list and the farm-scoped private snapshot can never drift again.
+    -- includePrivate = false keeps the all-public field shape older FarmTablet
+    -- versions expect (no ownerFarmId / waterSourceId / stopReason).
     local out = {}
     for _, sys in pairs(irrMgr.systems) do
-        local covered = {}
-        if sys.coveredFields ~= nil then
-            for i = 1, #sys.coveredFields do covered[i] = sys.coveredFields[i] end
-        end
-        local schedule = nil
-        if sys.schedule ~= nil then
-            local days = {}
-            if sys.schedule.activeDays ~= nil then
-                for i = 1, #sys.schedule.activeDays do days[i] = sys.schedule.activeDays[i] end
-            end
-            schedule = {
-                startHour  = sys.schedule.startHour,
-                endHour    = sys.schedule.endHour,
-                activeDays = days,
-            }
-        end
-        out[#out + 1] = {
-            id                     = sys.id,
-            type                   = sys.type,
-            isActive               = sys.isActive == true,
-            coveredFields          = covered,
-            schedule               = schedule,
-            flowRatePerHour        = sys.flowRatePerHour,
-            operationalCostPerHour = sys.operationalCostPerHour,
-            -- SCS-046: the rain-key build expands the same copy-only surface. Only
-            -- filled for fitted pivots; unfitted rows carry the neutral defaults so
-            -- the old field shape is preserved for older FarmTablet versions.
-            rainKeyFitted          = sys.rainKeyFitted == true,
-            rainKeyTripMm          = sys.rainKeyTripMm,
-            rainKeyAccumulatedMm   = sys.rainKeyAccumulatedMm or 0,
-            rainKeyDryElapsedMinutes = sys.rainKeyDryElapsedMinutes or 0,
-            weatherReadable        = sys.rainKeyInputState == "OK",
-            rainKeyState           = (self.irrigationManager.getRainKeyState
-                and self.irrigationManager:getRainKeyState(sys)) or
-                (sys.rainKeyFitted == true and "ARMED" or "UNFITTED"),
-            rainKeyTripped         = sys.rainKeyTripped == true,
-            activityState          = sys.rainKeyFitted == true
-                and (sys.rainKeyTripped == true and "RAIN_PAUSED"
-                     or (sys.isActive == true and "RUNNING" or "OFF"))
-                or (sys.isActive == true and "RUNNING" or "OFF"),
-            pauseReason            = sys.rainKeyFitted == true and sys.rainKeyTripped == true
-                and "RAIN_KEY_TRIPPED"
-                or (sys.rainKeyFitted == true and sys.rainKeyInputState ~= "OK"
-                     and "INPUT_UNAVAILABLE" or "NONE"),
-            nextWakeKind           = sys.rainKeyFitted == true and sys.rainKeyTripped == true
-                and "DRY_RESET" or "NONE",
-            nextWakeGameMinutes    = nil,
-            stateRevision          = sys.rainKeyStateRevision or 0,
-        }
+        out[#out + 1] = irrMgr:copyIrrigationSystemRow(sys, false)
     end
     return out
 end

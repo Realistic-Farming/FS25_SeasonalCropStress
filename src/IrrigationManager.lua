@@ -1707,24 +1707,67 @@ end
 --- omits farm-private fields; includePrivate adds ownerFarmId, waterSourceId and
 --- the derived stopReason. Used by the farm getters and the private state event,
 --- never a second snapshot protocol.
+-- SCS-046 / F200 follow-up: the SINGLE builder for one irrigation system row.
+-- Both the farm-scoped surface (getIrrigationSystemsRows -> the tablet's private
+-- snapshot) and the legacy no-arg public copy route through here, so the two can
+-- never drift again - the drift (the farm-only copy dropping rain-key + the
+-- composed running/paused state, forcing the tablet to peek the public list) is
+-- exactly the bug this closes. Rain-key + activityState are emitted UNCONDITIONALLY;
+-- only ownerFarmId / waterSourceId / stopReason are private.
 function IrrigationManager:copyIrrigationSystemRow(system, includePrivate)
     local covered = {}
     if system.coveredFields ~= nil then
         for i = 1, #system.coveredFields do covered[i] = system.coveredFields[i] end
+    end
+    -- Deep-copy the schedule so a reader can never mutate live state.
+    local schedule = nil
+    if system.schedule ~= nil then
+        local days = {}
+        if system.schedule.activeDays ~= nil then
+            for i = 1, #system.schedule.activeDays do days[i] = system.schedule.activeDays[i] end
+        end
+        schedule = {
+            startHour  = system.schedule.startHour,
+            endHour    = system.schedule.endHour,
+            activeDays = days,
+        }
     end
     local row = {
         id                     = system.id,
         type                   = system.type,
         isActive               = system.isActive == true,
         coveredFields          = covered,
-        schedule               = system.schedule,
+        schedule               = schedule,
         flowRatePerHour        = system.flowRatePerHour,
         operationalCostPerHour = system.operationalCostPerHour,
+        -- Rain-key readout + composed activity (RUNNING / RAIN_PAUSED / OFF).
+        -- Only fitted pivots carry meaningful rain-key values; unfitted rows keep
+        -- neutral defaults so the legacy field shape is preserved.
+        rainKeyFitted            = system.rainKeyFitted == true,
+        rainKeyTripMm            = system.rainKeyTripMm,
+        rainKeyAccumulatedMm     = system.rainKeyAccumulatedMm or 0,
+        rainKeyDryElapsedMinutes = system.rainKeyDryElapsedMinutes or 0,
+        weatherReadable          = system.rainKeyInputState == "OK",
+        rainKeyState             = (self.getRainKeyState and self:getRainKeyState(system))
+            or (system.rainKeyFitted == true and "ARMED" or "UNFITTED"),
+        rainKeyTripped           = system.rainKeyTripped == true,
+        activityState            = system.rainKeyFitted == true
+            and (system.rainKeyTripped == true and "RAIN_PAUSED"
+                 or (system.isActive == true and "RUNNING" or "OFF"))
+            or (system.isActive == true and "RUNNING" or "OFF"),
+        pauseReason              = system.rainKeyFitted == true and system.rainKeyTripped == true
+            and "RAIN_KEY_TRIPPED"
+            or (system.rainKeyFitted == true and system.rainKeyInputState ~= "OK"
+                 and "INPUT_UNAVAILABLE" or "NONE"),
+        nextWakeKind             = system.rainKeyFitted == true and system.rainKeyTripped == true
+            and "DRY_RESET" or "NONE",
+        nextWakeGameMinutes      = nil,
+        stateRevision            = system.rainKeyStateRevision or 0,
     }
     if includePrivate then
-        row.ownerFarmId  = system.ownerFarmId
+        row.ownerFarmId   = system.ownerFarmId
         row.waterSourceId = system.waterSourceId
-        row.stopReason   = self:getSystemStopReason(system)
+        row.stopReason    = self:getSystemStopReason(system)
     end
     return row
 end
