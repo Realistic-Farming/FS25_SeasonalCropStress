@@ -17,7 +17,12 @@
 --   systemCount        : Int32
 --   per system: id, type String, isActive Bool, ownerFarmId, waterSourceId,
 --               stopReason String, flowRatePerHour Float32,
---               operationalCostPerHour Float32, coveredCount Int32, field ids Int32
+--               operationalCostPerHour Float32,
+--               rainKeyFitted Bool, rainKeyTripMm Float32, rainKeyAccumulatedMm Float32,
+--               rainKeyDryElapsedMinutes Int32, weatherReadable Bool,
+--               rainKeyState String, rainKeyTripped Bool, activityState String,
+--               pauseReason String, nextWakeKind String, stateRevision Int32,
+--               coveredCount Int32, field ids Int32
 -- ============================================================
 
 CropStressIrrigationStateEvent = CropStressIrrigationStateEvent or {}
@@ -72,6 +77,19 @@ function CropStressIrrigationStateEvent:writeStream(streamId, connection)
         streamWriteString(streamId, tostring(r.stopReason or ""))
         streamWriteFloat32(streamId, r.flowRatePerHour or 0)
         streamWriteFloat32(streamId, r.operationalCostPerHour or 0)
+        -- rain-key + composed activity (so the private snapshot carries running/
+        -- paused and the tablet need not peek the public list). Order MUST match readStream.
+        streamWriteBool(streamId, r.rainKeyFitted == true)
+        streamWriteFloat32(streamId, r.rainKeyTripMm or 0)
+        streamWriteFloat32(streamId, r.rainKeyAccumulatedMm or 0)
+        streamWriteInt32(streamId, r.rainKeyDryElapsedMinutes or 0)
+        streamWriteBool(streamId, r.weatherReadable == true)
+        streamWriteString(streamId, tostring(r.rainKeyState or "UNFITTED"))
+        streamWriteBool(streamId, r.rainKeyTripped == true)
+        streamWriteString(streamId, tostring(r.activityState or "OFF"))
+        streamWriteString(streamId, tostring(r.pauseReason or "NONE"))
+        streamWriteString(streamId, tostring(r.nextWakeKind or "NONE"))
+        streamWriteInt32(streamId, r.stateRevision or 0)
         local covered = r.coveredFields or {}
         streamWriteInt32(streamId, #covered)
         for j = 1, #covered do
@@ -118,6 +136,18 @@ function CropStressIrrigationStateEvent:readStream(streamId, connection)
             stopReason = streamReadString(streamId),
             flowRatePerHour = streamReadFloat32(streamId),
             operationalCostPerHour = streamReadFloat32(streamId),
+            -- rain-key + composed activity. Order MUST match writeStream.
+            rainKeyFitted = streamReadBool(streamId),
+            rainKeyTripMm = streamReadFloat32(streamId),
+            rainKeyAccumulatedMm = streamReadFloat32(streamId),
+            rainKeyDryElapsedMinutes = streamReadInt32(streamId),
+            weatherReadable = streamReadBool(streamId),
+            rainKeyState = streamReadString(streamId),
+            rainKeyTripped = streamReadBool(streamId),
+            activityState = streamReadString(streamId),
+            pauseReason = streamReadString(streamId),
+            nextWakeKind = streamReadString(streamId),
+            stateRevision = streamReadInt32(streamId),
         }
         local covered = {}
         local n = streamReadInt32(streamId)
