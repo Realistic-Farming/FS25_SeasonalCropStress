@@ -4184,37 +4184,37 @@
   "2026-09-11": [
     {
       "referrer": "github.com",
-      "count": 267,
-      "uniques": 81
+      "count": 244,
+      "uniques": 79
     },
     {
       "referrer": "Google",
-      "count": 50,
-      "uniques": 23
+      "count": 44,
+      "uniques": 20
     },
     {
       "referrer": "Bing",
-      "count": 13,
-      "uniques": 7
-    },
-    {
-      "referrer": "realisticfarming.com",
       "count": 11,
       "uniques": 6
     },
     {
+      "referrer": "realisticfarming.com",
+      "count": 10,
+      "uniques": 5
+    },
+    {
       "referrer": "patreon.com",
-      "count": 7,
-      "uniques": 6
+      "count": 6,
+      "uniques": 5
+    },
+    {
+      "referrer": "yandex.ru",
+      "count": 5,
+      "uniques": 3
     },
     {
       "referrer": "kingmods.net",
       "count": 5,
-      "uniques": 2
-    },
-    {
-      "referrer": "yandex.ru",
-      "count": 4,
       "uniques": 2
     },
     {
