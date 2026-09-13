@@ -48,12 +48,18 @@ do
   T.eq('chain.masterDisabled', r.resultCode, "master_disabled")
   mgr.manager.settings.enabled = true
 
-  mgr.systems[10].StateRevision = 7
+  -- The revision the transaction checks is the SAME field the rain-key command path
+  -- bumps and the snapshot publishes (rainKeyStateRevision). A bench that set a
+  -- phantom field here masked a read of the wrong name.
+  mgr.systems[10].rainKeyStateRevision = 7
   r = mgr:applyIrrigateNowTransaction(10, 2, 3)
   T.eq('chain.staleConfirmation', r.resultCode, "stale_confirmation")
+  T.eq('chain.staleReportsLiveRevision', r.stateRevision, 7)
   T.eq('chain.staleNoMutation', mgr.waterSources[1].waterRemaining, 5)
   r = mgr:applyIrrigateNowTransaction(10, 2, 7)
   T.ok('chain.matchingRevisionProceeds', r.accepted == true or r.resultCode == "no_ground")
+  T.eq('chain.resultCarriesLiveRevision', r.stateRevision, 7)
+  T.eq('chain.snapshotAgreesWithResult', mgr:copyIrrigationSystemRow(mgr.systems[10]).stateRevision, 7)
 end
 
 -- 2. MODE OFF / UNLIMITED full service, no remainder write.

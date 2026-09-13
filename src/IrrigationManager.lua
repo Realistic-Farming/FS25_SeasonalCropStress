@@ -903,7 +903,10 @@ function IrrigationManager:applyIrrigateNowTransaction(systemId, requesterFarmId
         result.resultCode = "no_source"
         return result
     end
-    result.stateRevision = system.StateRevision or 0
+    -- The rain-key state revision every writer bumps (fit/remove/trip/reset) and the
+    -- snapshot publishes. A stale-confirmation check against any other field would
+    -- never match a real revision, and every result would report revision 0.
+    result.stateRevision = system.rainKeyStateRevision or 0
 
     -- Authorise: numeric farm match against the LIVE placeable owner (falling
     -- back to the retained row owner when no placeable is attached).
@@ -930,7 +933,7 @@ function IrrigationManager:applyIrrigateNowTransaction(systemId, requesterFarmId
     -- stale confirmation mutates nothing.
     expectedRainKeyRevision = expectedRainKeyRevision or -1
     if expectedRainKeyRevision ~= -1
-       and (system.StateRevision or 0) ~= expectedRainKeyRevision then
+       and (system.rainKeyStateRevision or 0) ~= expectedRainKeyRevision then
         result.resultCode = "stale_confirmation"
         return result
     end
