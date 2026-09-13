@@ -242,6 +242,46 @@ function CropStressValueMap:delete()
     self.available = false
 end
 
+--- SCS-039 SDS 3.7/3.8: open the generation-qualified native image the restore
+--- barrier selected and prove its shape. File existence alone is not validity:
+--- the engine load must return literal true AND the persisted width must match
+--- the envelope's mapWidth (when the envelope carries one). Returns true only
+--- then; on any refusal the caller declines the map rather than pairing the
+--- compact half of one generation with another generation's pixels.
+---@param savegameDir string
+---@param generation number
+---@param expectedWidth number|nil
+---@return boolean
+function CropStressValueMap:loadGenerationFile(savegameDir, generation, expectedWidth)
+    if not self.available or savegameDir == nil then return false end
+    if self.bvm == nil or self.bvm == 0 then return false end
+    if fileExists == nil or loadBitVectorMapFromFile == nil then return false end
+    local path = savegameDir .. "/" .. CropStressValueMap.generationFileName(generation)
+    if fileExists(path) ~= true then
+        csvmLog(string.format("Moisture map: native image %s is absent", path))
+        return false
+    end
+    local ok, loaded = pcall(loadBitVectorMapFromFile, self.bvm, path, NUM_CHANNELS)
+    if not ok or loaded ~= true then
+        csvmLog(string.format("Moisture map: native image %s refused to load", path))
+        return false
+    end
+    local width = nil
+    if getBitVectorMapSize ~= nil then
+        local okSize, w = pcall(getBitVectorMapSize, self.bvm)
+        if okSize then width = w end
+    end
+    if expectedWidth ~= nil and (width == nil or width ~= expectedWidth) then
+        csvmLog(string.format("Moisture map: native image %s has width %s, envelope expects %s",
+            path, tostring(width), tostring(expectedWidth)))
+        return false
+    end
+    if width ~= nil and width > 0 then self.resolution = width end
+    self.loadedFromSave = true
+    csvmLog(string.format("Moisture map: native image %s adopted (%dx%d)", path, self.resolution, self.resolution))
+    return true
+end
+
 function CropStressValueMap:saveToSavegame(savegameDir, generation)
     if not self.available or savegameDir == nil then return false end
     if saveBitVectorMapToFile == nil then return false end

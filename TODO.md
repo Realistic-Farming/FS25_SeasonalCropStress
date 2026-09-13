@@ -117,7 +117,7 @@
 ## SCS-041 §8 schema-3 absorption persistence (2026-09-09, slices 9a/9b)
 - [x] Slice 9a (83cd1e6): pure pack/load port. `packAbsorptionWindow` (canonical sorted rows, Adler-32) + `loadAbsorptionWindow` (replace-not-add, provider/grain/age/adler/row-count validation, schema-2 migration, stand-down marker persistence and normalization) + `pruneAbsorptionMissingFields`. Mirror test `scs041_persistence_test.lua` 87/0; suite 1918/0.
 - [x] Slice 9b (be44970): absorption leaf nested in the SCS-039 provider envelope core (capture carries it CAPPED-only, digest binds it, PENDING_ONLY recovery keeps it, `selectedAbsorptionLeaf` = Group M replace-not-add). Mirror test `scs041_envelope_leaf_test.lua` 26/0; suite 1944/0 across 52 files.
-- [ ] SDS §8 on-disk carrier for the leaf (reads back into `loadAbsorptionWindow`); flagged for the Iris check against the E: design tree.
+- [x] SDS §8 on-disk carrier for the leaf: built as the SCS-039 save view / restore barrier (feat/SCS-039-save-view-restore-barrier). `ensureMissionWaterSaveCut`, full-view own XML and ledger mirrors, candidate validation, one readiness barrier feeding `loadAbsorptionWindow`. Bench `scs039_save_view_restore_test.lua` 187/0. Still owed in game: career save/reload, save interruption, disk growth (no generation-file cleanup yet), dedicated server.
 
 ## SCS-041 field-boundary parcel-union (2026-09-09, decidable core of NEXT ACTION #3)
 - [x] Geometry cache retains the complete parcel polygon collection (`_getFieldPolygons`), membership point-in-ANY (`_pointInParcel`); `materialiseRelief`, `fieldGeometryFingerprint`, `_uniqueFieldOwnerAt`/re-key and the runoff source-polygon fence now use the collection. Commit 780738c; `scs041_parcel_union_test.lua` 23/0; suite 1967/0.

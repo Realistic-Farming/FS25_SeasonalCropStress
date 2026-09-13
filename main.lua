@@ -447,6 +447,12 @@ Mission00.onStartMission = Utils.appendedFunction(Mission00.onStartMission, func
         g_csManager.settings:load(self.missionInfo)
         g_csManager:applySettings()
     end
+    -- SCS-041 SDS 5.1: persisted settings are now loaded (defaults when no file);
+    -- the restore barrier waits on this fact alongside compact data, fields and
+    -- the provider decision.
+    if g_csManager.markSettingsLoaded ~= nil then
+        g_csManager:markSettingsLoaded()
+    end
 
     -- Install the self-removing frame updater that waits for g_fieldManager.fields
     -- to be populated, then enumerates fields and builds the fieldId map exactly once.

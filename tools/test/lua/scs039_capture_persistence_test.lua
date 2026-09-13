@@ -45,6 +45,7 @@ do
   local targetSoil = emptySoilWithFields()
   local sh2 = newSaveLoad(targetSoil)
   sh2:loadFromXMLFile(handle)
+  sh2:restoreMissionWater()
 
   T.eq("xml.revisionSurvives", targetSoil.moistureRevision, 34)
   T.eq("xml.cursorSurvives", targetSoil._lastSettledDay, 12)
@@ -68,6 +69,7 @@ do
   local targetSoil = emptySoilWithFields()
   local sh2 = newSaveLoad(targetSoil)
   sh2:applyStateTable(state)
+  sh2:restoreMissionWater()
 
   T.eq("ledger.revisionApplied", targetSoil.moistureRevision, 34)
   T.eq("ledger.cursorApplied", targetSoil._lastSettledDay, 12)
@@ -87,6 +89,7 @@ do
   local targetSoil = emptySoilWithFields()
   local sh2 = newSaveLoad(targetSoil)
   sh2:loadFromXMLFile(handle)
+  sh2:restoreMissionWater()
   T.eq("fresh.keepsDefaultRevision", targetSoil.moistureRevision, 1)
   T.eq("fresh.keepsNilCursor", targetSoil._lastSettledDay, nil)
   T.eq("fresh.noPositional", type(targetSoil._mapWaterPending[1]), "nil")

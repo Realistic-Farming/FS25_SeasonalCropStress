@@ -90,6 +90,13 @@ function WaterPump.loadFromXMLFile(self, xmlFile, key)
 end
 
 function WaterPump.saveToXMLFile(self, xmlFile, key)
+    -- SCS-041 SDS 5.13: the pump save asks for the one immutable mission-water
+    -- save view before reading its own water state, so the store it writes
+    -- belongs to the same cut the StateLedger and career XML mirrors carry.
+    local mgr = g_cropStressManager
+    if mgr ~= nil and type(mgr.ensureMissionWaterSaveCut) == "function" then
+        mgr:ensureMissionWaterSaveCut("PUMP")
+    end
     -- SCS-023: persist the finite remainder; unlimited writes nothing.
     if self.waterFinite and xmlFile ~= nil and self.waterRemaining ~= nil then
         xmlFile:setFloat(key .. ".finiteWaterRemaining", self.waterRemaining)

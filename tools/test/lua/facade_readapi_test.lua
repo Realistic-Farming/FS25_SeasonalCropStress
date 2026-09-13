@@ -56,6 +56,29 @@ do
         flowRatePerHour = 0.01, operationalCostPerHour = 8,
       },
     },
+    -- The manager routes the public list through the one row builder; this fake
+    -- stands in for IrrigationManager:copyIrrigationSystemRow with a deep copy.
+    copyIrrigationSystemRow = function(_self, sys, _includePrivate)
+      local row = {}
+      for k, v in pairs(sys) do
+        if type(v) == "table" then
+          local c = {}
+          for k2, v2 in pairs(v) do
+            if type(v2) == "table" then
+              local c2 = {}
+              for k3, v3 in pairs(v2) do c2[k3] = v3 end
+              c[k2] = c2
+            else
+              c[k2] = v2
+            end
+          end
+          row[k] = c
+        else
+          row[k] = v
+        end
+      end
+      return row
+    end,
   }
   local fakeAD = { getCriticalAlertHint = function() return "haul water" end }
   local fakeWeather = {
