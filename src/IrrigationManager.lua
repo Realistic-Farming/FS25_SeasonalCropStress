@@ -1014,6 +1014,12 @@ end
 --- Host (listen server / single player): run the full chain with a nil
 --- connection and handle the result locally through the same dispatch.
 function IrrigationManager:runIrrigateNowHost(systemId)
+    -- SCS-041 SDS 5.1: the host path refuses simulation work until the restore
+    -- barrier has applied the saved water state and enabled the routes.
+    local mgr = self.manager
+    if mgr ~= nil and type(mgr.isMissionWaterReady) == "function" and not mgr:isMissionWaterReady() then
+        return { systemId = systemId, accepted = false, resultCode = "not_ready" }
+    end
     local farmId = self:resolveRequesterFarmId(nil)
     local result = self:applyIrrigateNowTransaction(systemId, farmId)
     self:dispatchIrrigateNowResult(systemId, result, nil, farmId)

@@ -41,6 +41,12 @@ function CropStressIrrigateNowEvent:run(connection)
     if g_server == nil then return end
     local mgr = g_cropStressManager
     if mgr == nil or mgr.irrigationManager == nil then return end
+    -- SCS-041 SDS 5.1: Irrigate Now refuses simulation work until the one
+    -- restore barrier has applied the saved water state and enabled the routes.
+    if type(mgr.isMissionWaterReady) == "function" and not mgr:isMissionWaterReady() then
+        print("[CropStress] Irrigate Now refused: mission water not restored yet")
+        return
+    end
     local irrigationManager = mgr.irrigationManager
     local farmId = irrigationManager:resolveRequesterFarmId(connection)
     local result = irrigationManager:applyIrrigateNowTransaction(

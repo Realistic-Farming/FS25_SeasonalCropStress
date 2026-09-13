@@ -288,8 +288,13 @@ function CropStressManager:initialize()
     self.soilFertilizerIntegration:initialize()
     self.coursePlayIntegration:initialize()
     self.autoDriveIntegration:initialize()
-    self.sprayerIntegration:initialize()
-    self.irrigatorSectorIntegration:initialize()
+    -- SCS-041 SDS 5.1: SprayerIntegration and IrrigatorSectorIntegration are
+    -- NOT initialized here. The one mission-water restore barrier
+    -- (tryRestoreMissionWater) enables them once, after the saved water state
+    -- has been selected and applied, so no route can spend water against a
+    -- state that has not been restored yet.
+    local restore = self:_restoreState()
+    restore.absorptionFrozen = self.soilSystem._absorptionConfigFrozen == true
 
     -- Persistence handler
     self.saveLoad:initialize()
@@ -390,18 +395,16 @@ function CropStressManager:installFieldReadyUpdater()
                 csLog("CropStressManager fieldReady: WARNING — enumerateFields returned 0. Check g_fieldManager.fields.")
             end
 
-            -- Signal that fieldData is now populated.
-            -- Two possible orderings depending on map/machine load time:
-            --   A) updater fires BEFORE onStartMission  → xmlFile not available yet,
-            --      so we set the flag and let onStartMission call loadFromXMLFile().
-            --   B) updater fires AFTER onStartMission   → onStartMission already ran
-            --      but skipped the load (fields weren't ready), so we call it now.
+            -- SCS-039 SDS 3.8: fields are enumerated and keyed, and the native
+            -- provider probe has run (mapLive decided TRUTH-capable or ZONE).
+            -- Both are prerequisites of the one restore barrier; whichever of
+            -- compact data, fields/map or settings arrives last runs it.
             manager._fieldsEnumerated = true
-            if manager._onStartMissionRan then
-                manager:loadFromXMLFile()
-                csLog("CropStressManager fieldReady: save data restored (post-onStartMission)")
-            else
-                csLog("CropStressManager fieldReady: fields ready, awaiting onStartMission for xmlFile")
+            local restore = manager:_restoreState()
+            restore.fieldsReady = true
+            restore.mapReady = true
+            if not manager:tryRestoreMissionWater() then
+                csLog("CropStressManager fieldReady: fields and provider ready, restore barrier awaiting the other prerequisites")
             end
 
             return true  -- remove updater
@@ -532,6 +535,13 @@ function CropStressManager:update(dt)
     if not self.isInitialized then return end
     if g_currentMission == nil then return end
 
+    -- SCS-041 SDS 5.13: a simulation frame may mutate the envelope (positional
+    -- water, pending remainders, aggregates, the absorption ledger), so the
+    -- cached save view is dirtied here, once per frame, ahead of any of them.
+    -- A save act is synchronous inside one frame, so its pump / ledger / career
+    -- XML callbacks still share the one view captured by the first of them.
+    self:markMissionWaterDirty()
+
     -- NPCFavor deferred registration: poll each frame until npcSystem.isInitialized
     if self.npcIntegration ~= nil then
         self.npcIntegration:tryDeferredRegistration()
@@ -584,7 +594,10 @@ function CropStressManager:update(dt)
             -- a world nobody was looking at yet, on the same machine that was trying to finish
             -- loading. The key is still advanced above, so no hours are lost or double counted
             -- when the gate opens; only the work is held.
-            if g_currentMission ~= nil and g_currentMission.isMissionStarted == true then
+            -- SCS-041 SDS 5.1: scheduled irrigation and every other hourly water
+            -- consequence also wait for the shared restore-ready fact.
+            if g_currentMission ~= nil and g_currentMission.isMissionStarted == true
+               and self:isMissionWaterReady() then
                 self:onHourlyTick(elapsedHours)
             end
         end
@@ -592,12 +605,14 @@ function CropStressManager:update(dt)
 
     -- Apply-on-load. The schedule window only ran on the hour edge, so a save
     -- loaded at 07:30 with a 06-10 window sat dry until 08:00. This fires once,
-    -- on the first frame after the player has actually entered, with the restored
-    -- schedules and Auto/Manual flags already in place. Server only, like
-    -- onHourlyTick; a disabled mod applies nothing; lastHourKey is untouched and no
-    -- skipped compile hour is charged here.
+    -- on the first frame after the player has actually entered AND the restore
+    -- barrier has applied the saved water state, with the restored schedules and
+    -- Auto/Manual flags already in place. Server only, like onHourlyTick; a
+    -- disabled mod applies nothing; lastHourKey is untouched and no skipped
+    -- compile hour is charged here.
     if not self._scheduleAppliedAtStart
-        and g_currentMission ~= nil and g_currentMission.isMissionStarted == true then
+        and g_currentMission ~= nil and g_currentMission.isMissionStarted == true
+        and self:isMissionWaterReady() then
         self._scheduleAppliedAtStart = true
         if g_server ~= nil and self.settings ~= nil and self.settings.enabled
             and self.irrigationManager ~= nil
@@ -879,22 +894,164 @@ end
 
 function CropStressManager:loadFromXMLFile()
     if not self.isInitialized then return end
-    -- StateLedger is the load source of truth when present and it delivered a
-    -- block; careerSavegame.xml is the fallback (new save, or ledger absent).
-    -- Composed here so both load sites (onStartMission and the field-ready
-    -- updater) get the ledger choice.
-    if CropStressStateLedgerBridge ~= nil and CropStressStateLedgerBridge.hasLedgerState() then
-        CropStressStateLedgerBridge.applyState(self)
-    else
+    -- SCS-039 SDS 3.7/3.8: own XML and the StateLedger mirror are BOTH candidate
+    -- suppliers of the same logical envelope; neither wins merely because its
+    -- service exists. Each surface stages its snapshot once (non-water state
+    -- applies on arrival as before; the ledger stages last so it keeps its
+    -- precedence for that state), then the barrier runs if everything else is
+    -- ready. Calling this again is idempotent: the stage is read once.
+    local restore = self:_restoreState()
+    if not restore.compactReady then
         self.saveLoad:loadFromXMLFile()
+        if CropStressStateLedgerBridge ~= nil and CropStressStateLedgerBridge.hasLedgerState() then
+            CropStressStateLedgerBridge.applyState(self)
+        end
+        restore.compactReady = true
+    end
+    self:tryRestoreMissionWater()
+end
+
+-- ============================================================
+-- SCS-039 SDS 3.7/3.8 + SCS-041 SDS 5.1/5.13: MISSION WATER SAVE CUT AND THE
+-- ONE RESTORE BARRIER.
+-- ============================================================
+
+function CropStressManager:_restoreState()
+    if self._restore == nil then
+        self._restore = {
+            compactReady = false, fieldsReady = false, mapReady = false,
+            settingsLoaded = false, absorptionFrozen = false,
+            applied = false, ready = false, result = nil,
+        }
+    end
+    return self._restore
+end
+
+--- Settings are loaded and applied by the Mission00.onStartMission hook; that
+--- hook declares the fact here (defaults count as loaded when no file exists).
+function CropStressManager:markSettingsLoaded()
+    local restore = self:_restoreState()
+    restore.settingsLoaded = true
+    self:tryRestoreMissionWater()
+end
+
+--- The shared restore-applied / controlled-water readiness fact. Sector update,
+--- scheduled irrigation and Irrigate Now refuse simulation work until true.
+function CropStressManager:isMissionWaterReady()
+    return self._restore ~= nil and self._restore.ready == true
+end
+
+--- THE ONE RESTORE BARRIER. Runs once, only after compact candidates have been
+--- read or declared absent, fields are enumerated and keyed, the native provider
+--- decision is made, persisted settings are loaded and the absorption
+--- configuration is frozen. Every arrival order converges here. It selects one
+--- coherent SCS-039 view, applies the chosen envelope with its permitted
+--- PENDING_ONLY overlay and absorption leaf, seeds a fresh map once, then
+--- enables SprayerIntegration, IrrigatorSectorIntegration and the water routes.
+--- An apply that found no enumerated field is not counted as complete.
+---@return boolean applied this call
+function CropStressManager:tryRestoreMissionWater()
+    local restore = self:_restoreState()
+    if restore.applied then return false end
+    if not (restore.compactReady and restore.fieldsReady and restore.mapReady
+            and restore.settingsLoaded and restore.absorptionFrozen) then
+        return false
+    end
+    local soil = self.soilSystem
+    if soil == nil or type(soil.getFieldCount) == "function" and soil:getFieldCount() == 0 then
+        csLog("CropStressManager: restore barrier found no enumerated field; not counted as applied")
+        return false
     end
 
-    -- SCS-039: now that the store scalars are restored, paint a fresh map from
-    -- them so the moisture overlay is not blank until the first write. A map
-    -- restored from its own .grle is skipped: it is already the per-pixel truth.
-    if self.soilSystem ~= nil and self.soilSystem.seedMapFromStore ~= nil then
-        self.soilSystem:seedMapFromStore()
+    local sgDir = g_currentMission ~= nil and g_currentMission.missionInfo ~= nil
+        and g_currentMission.missionInfo.savegameDirectory or nil
+    local ctx = {
+        nativeProbe = function(envelope)
+            if type(soil.adoptNativeGeneration) ~= "function" then return false end
+            return soil:adoptNativeGeneration(sgDir, envelope) == true
+        end,
+    }
+    local result = nil
+    if self.saveLoad ~= nil and type(self.saveLoad.restoreMissionWater) == "function" then
+        result = self.saveLoad:restoreMissionWater(ctx)
     end
+    restore.result = result
+    restore.applied = true
+
+    -- SCS-039: a FRESH native map seeds once from the fallback store so the
+    -- overlay is not blank until the first write. A map restored from its own
+    -- generation image is skipped: it is already the per-pixel truth.
+    if type(soil.seedMapFromStore) == "function" then
+        soil:seedMapFromStore()
+    end
+
+    -- Enable the routes exactly once, after the restore.
+    if self.sprayerIntegration ~= nil and type(self.sprayerIntegration.initialize) == "function" then
+        self.sprayerIntegration:initialize()
+    end
+    if self.irrigatorSectorIntegration ~= nil
+       and type(self.irrigatorSectorIntegration.initialize) == "function" then
+        self.irrigatorSectorIntegration:initialize()
+    end
+    restore.ready = true
+    self:markMissionWaterDirty()
+    csLog(string.format("CropStressManager: restore barrier applied (%s); water routes enabled",
+        result ~= nil and tostring(result.mode) or "no handler"))
+    return true
+end
+
+--- SCS-041 SDS 5.13: every envelope-affecting mutation marks the cut dirty.
+function CropStressManager:markMissionWaterDirty()
+    local cut = self._waterSaveCut
+    if cut == nil then
+        cut = { view = nil, dirty = true }
+        self._waterSaveCut = cut
+    end
+    cut.dirty = true
+end
+
+--- THE SOLE CREATOR of a provider-envelope generation. Pump saveToXMLFile,
+--- StateLedger serialization and career XML call it before reading their SCS
+--- water state. A valid clean cached view is returned as the same object with no
+--- settlement, packing, native write or generation advance. While dirty: settle
+--- every fitted group once for the save act, then the handler refreshes
+--- aggregates, packs both pending stores and the absorption leaf, writes and
+--- validates the native generation, commits one COMPLETE envelope and caches it.
+--- A failed dirty capture retains the prior valid pair, advances no generation
+--- and remains dirty (the retained view, with any PENDING_ONLY row, is still
+--- what the mirrors write). No save-cycle token, timer or nonce exists.
+---@param reason string  "PUMP" | "STATELEDGER" | "CAREER_XML" | bench label
+---@return table view
+function CropStressManager:ensureMissionWaterSaveCut(reason)
+    local cut = self._waterSaveCut
+    if cut == nil then
+        cut = { view = nil, dirty = true }
+        self._waterSaveCut = cut
+    end
+    if cut.view ~= nil and cut.dirty ~= true then
+        return cut.view
+    end
+
+    -- Settle fitted groups for the save act: those footprint writes pass
+    -- through the SCS-041 boundary via applyWaterAtCell inside settleFittedSystem.
+    local irr = self.irrigationManager
+    if irr ~= nil and type(irr.settleFittedSystem) == "function" and type(irr.systems) == "table" then
+        for _, sys in pairs(irr.systems) do
+            if sys.rainKeyFitted == true and (sys.activeGameHoursSinceSettle or 0) > 0 then
+                irr:settleFittedSystem(sys, "SAVE")
+            end
+        end
+    end
+
+    local view, outcome = nil, "FAILED"
+    if self.saveLoad ~= nil and type(self.saveLoad.performMissionWaterSaveCut) == "function" then
+        view, outcome = self.saveLoad:performMissionWaterSaveCut(reason)
+    end
+    cut.view = view
+    cut.dirty = (outcome ~= "COMPLETE")
+    cut.lastOutcome = outcome
+    cut.lastReason = reason
+    return view
 end
 
 -- ============================================================

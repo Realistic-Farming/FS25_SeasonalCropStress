@@ -43,6 +43,8 @@ function setXMLFloat(handle, key, value) if handle then handle[key] = value end 
 function getXMLFloat(handle, key) if handle then return handle[key] end end
 function setXMLString(handle, key, value) if handle then handle[key] = value end end
 function getXMLString(handle, key) if handle then return handle[key] end end
+function setXMLBool(handle, key, value) if handle then handle[key] = value end end
+function getXMLBool(handle, key) if handle then return handle[key] end end
 
 -- Class tables some modules reference at load; harmless empty stubs.
 HookManager = HookManager or { new = function() return {} end }

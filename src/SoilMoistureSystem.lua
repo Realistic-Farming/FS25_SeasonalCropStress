@@ -363,6 +363,39 @@ function SoilMoistureSystem:initValueMap(savegameDir)
     return ok
 end
 
+--- SCS-039 SDS 3.8: adopt the native generation the restore barrier selected.
+--- The probe stood the map up (and may have imported the legacy file as
+--- generation 0); this opens the selected envelope's generation-qualified image
+--- over it and proves the shape. Returns true only when that file is usable.
+---@param savegameDir string|nil
+---@param envelope table  the selected COMPLETE envelope (filename, generation, mapWidth)
+---@return boolean
+function SoilMoistureSystem:adoptNativeGeneration(savegameDir, envelope)
+    if not self:mapActive() or savegameDir == nil or type(envelope) ~= "table" then return false end
+    if envelope.filename == nil or type(envelope.generation) ~= "number" then return false end
+    if type(self.valueMap.loadGenerationFile) ~= "function" then return false end
+    local ok = self.valueMap:loadGenerationFile(savegameDir, envelope.generation, envelope.mapWidth) == true
+    if ok then
+        self.providerMode = "TRUTH"
+    end
+    return ok
+end
+
+--- SCS-039 SDS 3.7/3.8: the barrier could not pair the selected compact
+--- envelope with a usable native image (or found no complete native pair). The
+--- zone store stays authoritative for this mission: release the carrier and
+--- freeze ZONE. This is a load-time decline, not the in-mission fail-closed path.
+function SoilMoistureSystem:declineNativeCarrier(reason)
+    if self.valueMap ~= nil then
+        if type(self.valueMap.delete) == "function" then self.valueMap:delete() end
+        self.valueMap = nil
+    end
+    self.providerMode = "ZONE"
+    self._valueMapTried = true
+    csLog("Moisture: native carrier declined at restore (" .. tostring(reason) ..
+        "); the cell store and its scalars carry this mission")
+end
+
 --- THE SINGLE DELEGATE TEST. Read it as "is the map carrying the truth".
 --- SCS-039 v2.1 (SDS 3.3): a provider that has failed closed for the mission
 --- answers false here, so getMoisture, the overlay and every native read path

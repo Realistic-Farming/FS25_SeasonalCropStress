@@ -47,12 +47,124 @@ function SaveLoadHandler.new(manager)
     -- compact write both succeed. A native failure with a usable compact write
     -- records one PENDING_ONLY payload bound to the base generation instead.
     self._completePair = {
-        current  = { generation = 0, digest = nil, revision = 1, lastSettledMonotonicDay = nil },
+        current  = { generation = 0, digest = nil, revision = 1, lastSettledMonotonicDay = nil, envelope = nil },
         previous = nil,
     }
     self._pendingOnly = nil
-    self._saveEnvelopeSchema = 2
+    -- SCS-039 SDS 3.7 / SCS-041 SDS 5.13: the provider envelope is OUTER schema 3.
+    -- The optional absorption leaf nested inside keeps its own schema 2. A legacy
+    -- scalar save (no .moisture block) is the pre-envelope schema-2 carrier and
+    -- migrates through the barrier with no absorption allowance.
+    self._saveEnvelopeSchema = 3
+    -- SCS-039 SDS 3.8: the two load surfaces STAGE their snapshot here instead of
+    -- publishing water state on arrival. The one restore barrier reads both
+    -- stages, selects one coherent view and applies it once fields exist.
+    self._staged = {}
     return self
+end
+
+local ENVELOPE_SCHEMA = 3
+local STAGE_ORDER = { "LEDGER", "XML" }
+
+-- ============================================================
+-- SCS-039 SDS 3.5/3.7: envelope encoders shared by own XML and the ledger table.
+-- Every recognized envelope field round-trips through these, so the two mirrors
+-- carry byte-equal logical payloads and the load-time digest check can rebuild
+-- the canonical digest from either surface.
+-- ============================================================
+
+local function encodeFieldMap(map)
+    local keys = {}
+    for fieldId, value in pairs(map or {}) do
+        if type(fieldId) == "number" and type(value) == "number" then keys[#keys + 1] = fieldId end
+    end
+    table.sort(keys)
+    local parts = {}
+    for i = 1, #keys do
+        parts[#parts + 1] = string.format("%d=%.17g", keys[i], map[keys[i]])
+    end
+    return table.concat(parts, ";")
+end
+
+local function decodeFieldMap(packed)
+    local out = {}
+    if type(packed) ~= "string" or packed == "" then return out end
+    for part in string.gmatch(packed, "[^;]+") do
+        local k, v = part:match("^(%-?%d+)=(.+)$")
+        local fieldId, value = tonumber(k), tonumber(v)
+        if fieldId ~= nil and value ~= nil then out[fieldId] = value end
+    end
+    return out
+end
+
+--- Positional rows use the exact grammar of SoilMoistureSystem:packMapWaterPendingString
+--- (R|field|pixelKey|amount ; U|field|x|z|width|amount) so the envelope mirror
+--- and the legacy #mapWaterPending key decode identically.
+function SaveLoadHandler.packPositionalRows(rows)
+    local parts = {}
+    for i = 1, #(rows or {}) do
+        local r = rows[i]
+        if r.status == "RESOLVED" then
+            parts[#parts + 1] = table.concat(
+                { "R", tostring(r.fieldId), tostring(r.pixelKey), tostring(r.amount) }, "|")
+        else
+            parts[#parts + 1] = table.concat(
+                { "U", tostring(r.fieldId), tostring(r.worldX), tostring(r.worldZ),
+                  tostring(r.sourceWidth), tostring(r.amount) }, "|")
+        end
+    end
+    return table.concat(parts, ";")
+end
+
+function SaveLoadHandler.unpackPositionalRows(packed)
+    local rows = {}
+    if type(packed) ~= "string" or packed == "" then return rows end
+    for part in string.gmatch(packed, "[^;]+") do
+        local fields = {}
+        for token in string.gmatch(part, "[^|]+") do fields[#fields + 1] = token end
+        if fields[1] == "R" and #fields == 4 then
+            rows[#rows + 1] = {
+                status = "RESOLVED", fieldId = tonumber(fields[2]),
+                pixelKey = tonumber(fields[3]), amount = tonumber(fields[4]),
+            }
+        elseif fields[1] == "U" and #fields == 6 then
+            rows[#rows + 1] = {
+                status = "UNRESOLVED", fieldId = tonumber(fields[2]),
+                worldX = tonumber(fields[3]), worldZ = tonumber(fields[4]),
+                sourceWidth = tonumber(fields[5]), amount = tonumber(fields[6]),
+            }
+        end
+    end
+    return rows
+end
+
+local ABSORPTION_KEYS = {
+    "schema", "windowId", "providerMode", "providerGrainMetres",
+    "standDownThroughHourKey", "standDownAwaitingFirstValidHour", "standDownReason",
+    "rowCount", "rowsPacked", "rowsAdler32",
+}
+
+local function copyAbsorptionLeaf(leaf)
+    if type(leaf) ~= "table" then return nil end
+    local out = {}
+    for _, k in ipairs(ABSORPTION_KEYS) do out[k] = leaf[k] end
+    return out
+end
+
+local function copyRows(rows)
+    local out = {}
+    for i = 1, #(rows or {}) do
+        local r, c = rows[i], {}
+        for k, v in pairs(r) do c[k] = v end
+        out[i] = c
+    end
+    return out
+end
+
+local function copyMap(map)
+    local out = {}
+    for k, v in pairs(map or {}) do out[k] = v end
+    return out
 end
 
 function SaveLoadHandler:initialize()
@@ -68,27 +180,13 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
     if not self.isInitialized then return end
     if xmlFile == nil then return end
 
-    -- SCS-039: the value map SAVES NATIVELY, per the ratified persistence
-    -- posture. The per-field scalar rows written below stay exactly as they are
-    -- and become the DEGRADE layer: if the .grle is missing or refuses to load,
-    -- the field scalars still restore and the cell store carries the save.
-    local nativeSaveOk = false
-    local soilSystemForMap = self.manager ~= nil and self.manager.soilSystem or nil
-    if soilSystemForMap ~= nil and soilSystemForMap.valueMap ~= nil
-       and soilSystemForMap.valueMap.available then
-        local sgDir = g_currentMission ~= nil and g_currentMission.missionInfo ~= nil
-            and g_currentMission.missionInfo.savegameDirectory or nil
-        if sgDir ~= nil then
-            -- SCS-039 v2.1 (SDS 3.3/3.5): route the native save through the soil
-            -- system so a refusal fails the provider closed. The file is written
-            -- for the CANDIDATE generation (current + 1): the COMPLETE commit
-            -- advances to it only after this native write AND the compact write
-            -- both succeed, and the generation-qualified name never clobbers the
-            -- legacy baseline or either retained complete pair.
-            nativeSaveOk = soilSystemForMap:saveNativeMap(sgDir,
-                (self._completePair.current.generation or 0) + 1) == true
-        end
-    end
+    -- SCS-039 SDS 3.7 / SCS-041 SDS 5.13: career XML asks the manager for the ONE
+    -- immutable save view BEFORE reading any water state. The cut settles fitted
+    -- groups, refreshes aggregates, packs both pending stores and the absorption
+    -- leaf, writes the generation-qualified native image and commits; the pump
+    -- save and StateLedger reuse the same cached view in this save act. The
+    -- per-field scalar rows written below stay as the DEGRADE layer.
+    local view = self:_missionWaterSaveView("CAREER_XML")
 
     local root = "careerSavegame.cropStress"
 
@@ -171,24 +269,12 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
             end
         end
 
-        -- SCS-039 v2.1 (SDS 3.5): when the native carrier is current, capture one
-        -- immutable envelope at this save's revision and commit it against the
-        -- native and compact write receipts. The compact write (this own-XML
-        -- block) is what just succeeded; the generation advances only when the
-        -- native write did too, and a native failure records a PENDING_ONLY
-        -- bound to the base generation. The current generation is persisted so
-        -- the next load knows which pair to reconcile against. ZONE missions
-        -- (no native map) keep the scalar carrier and no generation bookkeeping.
-        if soilSystem.valueMap ~= nil and soilSystem.valueMap.available
-           and self.captureMoistureEnvelope ~= nil and self.commitMoistureEnvelope ~= nil then
-            local capture = self:captureMoistureEnvelope()
-            if capture ~= nil then
-                local outcome = self:commitMoistureEnvelope(capture, nativeSaveOk, true)
-                if outcome == "COMPLETE" or outcome == "PENDING_ONLY" then
-                    setInt(root .. "#saveGeneration", self._completePair.current.generation)
-                end
-            end
-        end
+        -- SCS-039 SDS 3.7: the retained generation and the FULL logical view
+        -- (current and previous COMPLETE envelopes, any PENDING_ONLY row, the
+        -- absorption leaf with its digest) are the standalone safety copy. The
+        -- legacy scalar keys above stay so an older reader still degrades.
+        setInt(root .. "#saveGeneration", self._completePair.current.generation or 0)
+        self:writeMoistureViewXML(setInt, setFloat, setBool, setString, root .. ".moisture", view)
     end
 
     -- HUD state
@@ -302,136 +388,76 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
         end
     end
 
-    -- Field moisture & stress
-    local soilSystem     = self.manager.soilSystem
-    local stressModifier = self.manager.stressModifier
-    if soilSystem ~= nil then
-        local i = 0
-        while true do
-            local key     = string.format("%s.fields.field(%d)", root, i)
-            local fieldId = getInt(key .. "#id", nil)
-            if fieldId == nil then break end
-            local moisture = getFloat(key .. "#moisture", 0.50)
-            local stress   = getFloat(key .. "#stress",   0.0)
-            local soilType = getString(key .. "#soilType", nil)
-            if soilSystem.fieldData[fieldId] ~= nil then
-                soilSystem.fieldData[fieldId].moisture = math.max(0.0, math.min(1.0, moisture))
-                if stressModifier ~= nil then
-                    stressModifier.fieldStress[fieldId] = math.max(0.0, math.min(1.0, stress))
-                end
-                if soilType ~= nil and SoilMoistureSystem.SOIL_PARAMS[soilType] ~= nil then
-                    soilSystem.fieldData[fieldId].soilType = soilType
-                end
-                -- SCS-018 3.8: install cells from the packed leaf (both load doors).
-                local cellsStr = getString(key .. "#cells", nil)
-                if cellsStr ~= nil and soilSystem.unpackCells ~= nil then
-                    soilSystem:unpackCells(fieldId, cellsStr)
-                end
-                -- SCS-039 v2.1 (SDS 3.5): restore the field-wide pending carry.
-                local mapPending = getFloat(key .. "#mapPending", nil)
-                if mapPending ~= nil then
-                    soilSystem.fieldData[fieldId].mapPending = mapPending
-                end
-            end
-            i = i + 1
-        end
+    -- SCS-039 SDS 3.8: own XML is parsed into the SAME table shape the ledger
+    -- delivers (buildStateTable's), then STAGED. Field water, revision, cursor,
+    -- pending stores and the envelope candidates are applied only by the one
+    -- restore barrier; HUD, schedules and the NPC row apply on arrival as before.
+    local snap = { fields = {}, irrigation = {}, source = "XML" }
 
-        -- SCS-039 v2.1 (SDS 3.2/3.5): adopt the persisted provider revision and
-        -- settled-day cursor on the server. Clients adopt the server value via
-        -- the sync path and never mint their own.
-        local revision = getInt(root .. "#moistureRevision", nil)
-        if revision ~= nil then
-            soilSystem.moistureRevision = revision
-            self._completePair.current.revision = revision
-        end
-        local settledDay = getInt(root .. "#lastSettledDay", nil)
-        if settledDay ~= nil then
-            soilSystem._lastSettledDay = settledDay
-            self._completePair.current.lastSettledMonotonicDay = settledDay
-        end
-        -- SCS-039 v2.1 (SDS 3.5): resume the retained-pair bookkeeping at the
-        -- persisted generation so the next COMPLETE commit builds on it.
-        local saveGeneration = getInt(root .. "#saveGeneration", nil)
-        if saveGeneration ~= nil then
-            self._completePair.current.generation = saveGeneration
-        end
+    local i = 0
+    while true do
+        local key     = string.format("%s.fields.field(%d)", root, i)
+        local fieldId = getInt(key .. "#id", nil)
+        if fieldId == nil then break end
+        snap.fields[fieldId] = {
+            moisture   = getFloat(key .. "#moisture", 0.50),
+            stress     = getFloat(key .. "#stress",   0.0),
+            soilType   = getString(key .. "#soilType", nil),
+            cells      = getString(key .. "#cells", nil),
+            mapPending = getFloat(key .. "#mapPending", nil),
+        }
+        i = i + 1
+    end
+    snap.fieldCount = i
 
-        -- SCS-039 v2.1 (SDS 3.4): restore the positional accepted-water store.
-        -- The leaves are pending-only (nothing spends them until the provider
-        -- accepts water again), so restoring before the map is seeded is safe
-        -- and nothing is lost even if the reload selects a ZONE carrier.
-        local pendingPacked = getString(root .. "#mapWaterPending", nil)
-        if pendingPacked ~= nil and soilSystem.unpackMapWaterPendingString ~= nil then
-            local restored = soilSystem:unpackMapWaterPendingString(pendingPacked)
-            if restored > 0 then
-                csLog(string.format("SaveLoadHandler: restored %d positional water leaves", restored))
-            end
+    snap.moistureRevision = getInt(root .. "#moistureRevision", nil)
+    snap.lastSettledDay   = getInt(root .. "#lastSettledDay", nil)
+    snap.saveGeneration   = getInt(root .. "#saveGeneration", nil)
+    local pendingPacked = getString(root .. "#mapWaterPending", nil)
+    if pendingPacked ~= nil then
+        snap.mapWaterPending = SaveLoadHandler.unpackPositionalRows(pendingPacked)
+    end
+    snap.moistureEnvelope = self:readMoistureViewXML(getInt, getFloat, getBool, getString, root .. ".moisture")
+
+    snap.hud = {
+        visible       = getBool(root .. ".hud#visible",       false),
+        firstRunShown = getBool(root .. ".hud#firstRunShown", false),
+    }
+
+    i = 0
+    while true do
+        local key   = string.format("%s.irrigation.system(%d)", root, i)
+        local sysId = getInt(key .. "#id", nil)
+        if sysId == nil then break end
+        local entry = {
+            startHour  = getInt(key .. "#startHour", nil),
+            endHour    = getInt(key .. "#endHour",   nil),
+            isActive   = getBool(key .. "#isActive", false),
+            manualMode = getBool(key .. "#manualMode", false) == true,
+        }
+        local daysStr = getString(key .. "#activeDays", nil)
+        if daysStr ~= nil then
+            local days = {}
+            for v in string.gmatch(daysStr, "[^,]+") do days[#days + 1] = tonumber(v) end
+            entry.activeDays = days
         end
-        csLog(string.format("SaveLoadHandler: loaded moisture/stress for %d fields", i))
+        if getBool(key .. "#rkFitted", false) then
+            entry.rkFitted  = true
+            entry.rkTripMm  = getFloat(key .. "#rkTripMm", nil)
+            entry.rkAccMm   = getFloat(key .. "#rkAccMm", 0)
+            entry.rkDryMin  = getFloat(key .. "#rkDryMin", 0)
+            entry.rkTripped = getBool(key .. "#rkTripped", false)
+            entry.rkRev     = getInt(key .. "#rkRev", 0)
+            entry.rkInput   = getString(key .. "#rkInput", "UNAVAILABLE")
+        end
+        snap.irrigation[sysId] = entry
+        i = i + 1
     end
 
-    -- HUD state
-    local hud = self.manager.hudOverlay
-    if hud ~= nil then
-        hud.isVisible     = getBool(root .. ".hud#visible",       false)
-        hud.firstRunShown = getBool(root .. ".hud#firstRunShown", false)
-    end
+    local rel = getInt(root .. ".npc#relationship", 0)
+    if rel > 0 then snap.npcRelationship = rel end
 
-    -- Irrigation schedules
-    local irrMgr = self.manager.irrigationManager
-    if irrMgr ~= nil then
-        local i = 0
-        local restored = 0
-        while true do
-            local key   = string.format("%s.irrigation.system(%d)", root, i)
-            local sysId = getInt(key .. "#id", nil)
-            if sysId == nil then break end
-            local system = irrMgr.systems[sysId]
-            if system ~= nil then
-                system.schedule.startHour = getInt(key .. "#startHour", system.schedule.startHour)
-                system.schedule.endHour   = getInt(key .. "#endHour",   system.schedule.endHour)
-                local daysStr = getString(key .. "#activeDays", nil)
-                if daysStr ~= nil then
-                    local days = {}
-                    for v in string.gmatch(daysStr, "[^,]+") do
-                        table.insert(days, tonumber(v) ~= 0)
-                    end
-                    if #days == 7 then system.schedule.activeDays = days end
-                end
-                -- [BUILD 00:33] Absent flag = AUTO (false).
-                system.manualMode = getBool(key .. "#manualMode", false) == true
-                local wasActive = getBool(key .. "#isActive", false)
-                if wasActive and not system.isActive then
-                    irrMgr:activateSystem(sysId)
-                end
-                -- SCS-046: restore a fitted pivot's rain-key latch and dial
-                -- before any activity resumes.
-                if getBool(key .. "#rkFitted", false) then
-                    system.rainKeyFitted = true
-                    system.rainKeyTripMm = getFloat(key .. "#rkTripMm", system.rainKeyTripMm or 2.5)
-                    system.rainKeyAccumulatedMm = getFloat(key .. "#rkAccMm", 0)
-                    system.rainKeyDryElapsedMinutes = getFloat(key .. "#rkDryMin", 0)
-                    system.rainKeyTripped = getBool(key .. "#rkTripped", false)
-                    system.rainKeyStateRevision = getInt(key .. "#rkRev", 0)
-                    system.rainKeyInputState = getString(key .. "#rkInput", "UNAVAILABLE")
-                    system._lastRainKeyPausePublished = nil
-                end
-                restored = restored + 1
-            end
-            i = i + 1
-        end
-        csLog(string.format("SaveLoadHandler: restored schedules for %d/%d irrigation systems", restored, i))
-    end
-
-    -- NPC relationship (Alex Chen / Agronomist)
-    -- Applied via applyLoadedState() which stores it until NPCFavor finishes init.
-    local npcInt = self.manager.npcIntegration
-    if npcInt ~= nil then
-        local rel = getInt(root .. ".npc#relationship", 0)
-        if rel > 0 then
-            npcInt:applyLoadedState(rel)
-        end
-    end
+    self:stageSnapshot(snap, "XML")
 end
 
 -- ============================================================
@@ -444,6 +470,10 @@ end
 -- ============================================================
 function SaveLoadHandler:buildStateTable()
     local out = { fields = {}, irrigation = {} }
+
+    -- SCS-041 SDS 5.13: StateLedger calls the cut before buildStateTable, so the
+    -- ledger mirror carries the identical logical view the career XML writes.
+    local view = self:_missionWaterSaveView("STATELEDGER")
 
     -- Field moisture & stress
     local soilSystem     = self.manager.soilSystem
@@ -481,6 +511,12 @@ function SaveLoadHandler:buildStateTable()
             local pendingRows = soilSystem:packMapWaterPending()
             if #pendingRows > 0 then out.mapWaterPending = pendingRows end
         end
+
+        -- SCS-039 SDS 3.7: the full logical view (both COMPLETE envelopes, the
+        -- PENDING_ONLY row, the absorption leaf) rides the ledger as the
+        -- optional mirror of the own-XML safety copy.
+        out.saveGeneration = self._completePair.current.generation or 0
+        out.moistureEnvelope = self:viewToTable(view)
     end
 
     -- HUD state
@@ -532,48 +568,20 @@ end
 function SaveLoadHandler:applyStateTable(data)
     if type(data) ~= "table" then return false end
     self._saveDataLoaded = true
+    self:stageSnapshot(data, "LEDGER")
+    return true
+end
 
-    -- Field moisture & stress
-    local soilSystem     = self.manager.soilSystem
-    local stressModifier = self.manager.stressModifier
-    if soilSystem ~= nil and type(data.fields) == "table" then
-        local n = 0
-        for fieldId, f in pairs(data.fields) do
-            if soilSystem.fieldData[fieldId] ~= nil then
-                soilSystem.fieldData[fieldId].moisture = math.max(0.0, math.min(1.0, f.moisture or 0.50))
-                if stressModifier ~= nil then
-                    stressModifier.fieldStress[fieldId] = math.max(0.0, math.min(1.0, f.stress or 0.0))
-                end
-                if f.soilType ~= nil and SoilMoistureSystem.SOIL_PARAMS[f.soilType] ~= nil then
-                    soilSystem.fieldData[fieldId].soilType = f.soilType
-                end
-                -- SCS-039 v2.1 (SDS 3.5): restore the field-wide pending carry.
-                if f.mapPending ~= nil then
-                    soilSystem.fieldData[fieldId].mapPending = f.mapPending
-                end
-                -- SCS-018 3.8: install cells from the ledger-packed leaf.
-                if f.cells ~= nil and soilSystem.unpackCells ~= nil then
-                    soilSystem:unpackCells(fieldId, f.cells)
-                end
-                n = n + 1
-            end
-        end
-
-        -- SCS-039 v2.1 (SDS 3.2/3.5): adopt the ledger revision and cursor.
-        if data.moistureRevision ~= nil then soilSystem.moistureRevision = data.moistureRevision end
-        if data.lastSettledDay ~= nil then soilSystem._lastSettledDay = data.lastSettledDay end
-
-        -- SCS-039 v2.1 (SDS 3.4): restore the positional pending store from the
-        -- ledger-packed row array (mirror of the own-XML string path above).
-        if soilSystem.unpackMapWaterPending ~= nil
-           and type(data.mapWaterPending) == "table" then
-            local restored = soilSystem:unpackMapWaterPending(data.mapWaterPending)
-            if restored > 0 then
-                csLog(string.format("SaveLoadHandler: restored %d ledger positional water leaves", restored))
-            end
-        end
-        csLog(string.format("SaveLoadHandler: applied ledger moisture/stress for %d fields", n))
-    end
+--- SCS-039 SDS 3.8: one staging step for both load surfaces. Non-water state
+--- (HUD, schedules, the NPC row) applies on arrival exactly as before. Field
+--- water, revision, cursor, both pending stores and the envelope candidates are
+--- retained on the stage until the one restore barrier selects and applies
+--- them, so neither surface publishes a live water state early or twice.
+function SaveLoadHandler:stageSnapshot(data, source)
+    if type(data) ~= "table" then return false end
+    source = source or "XML"
+    self._staged = self._staged or {}
+    self._staged[source] = data
 
     -- HUD state
     local hud = self.manager.hudOverlay
@@ -585,7 +593,9 @@ function SaveLoadHandler:applyStateTable(data)
     -- Irrigation schedules
     local irrMgr = self.manager.irrigationManager
     if irrMgr ~= nil and type(data.irrigation) == "table" then
+        local restored, seen = 0, 0
         for sysId, s in pairs(data.irrigation) do
+            seen = seen + 1
             local system = irrMgr.systems[sysId]
             if system ~= nil then
                 system.schedule.startHour = s.startHour or system.schedule.startHour
@@ -600,7 +610,8 @@ function SaveLoadHandler:applyStateTable(data)
                 if s.isActive and not system.isActive then
                     irrMgr:activateSystem(sysId)
                 end
-                -- SCS-046: restore a fitted pivot's rain-key latch and dial.
+                -- SCS-046: restore a fitted pivot's rain-key latch and dial
+                -- before any activity resumes.
                 if s.rkFitted == true then
                     system.rainKeyFitted = true
                     system.rainKeyTripMm = s.rkTripMm or system.rainKeyTripMm or 2.5
@@ -611,17 +622,33 @@ function SaveLoadHandler:applyStateTable(data)
                     system.rainKeyInputState = s.rkInput or "UNAVAILABLE"
                     system._lastRainKeyPausePublished = nil
                 end
+                restored = restored + 1
             end
         end
+        csLog(string.format("SaveLoadHandler: restored schedules for %d/%d irrigation systems (%s)",
+            restored, seen, source))
     end
 
-    -- NPC relationship
+    -- NPC relationship (applied via applyLoadedState, which holds it until
+    -- NPCFavor finishes its own init).
     local npcInt = self.manager.npcIntegration
     if npcInt ~= nil and data.npcRelationship ~= nil and data.npcRelationship > 0 then
         npcInt:applyLoadedState(data.npcRelationship)
     end
 
+    local fieldCount = 0
+    for _ in pairs(data.fields or {}) do fieldCount = fieldCount + 1 end
+    csLog(string.format("SaveLoadHandler: staged %s snapshot (%d field rows, %s envelope)",
+        source, fieldCount, type(data.moistureEnvelope) == "table" and "with" or "no"))
     return true
+end
+
+--- True once at least one load surface has staged a snapshot.
+function SaveLoadHandler:hasStagedSnapshot()
+    for _, source in ipairs(STAGE_ORDER) do
+        if self._staged ~= nil and self._staged[source] ~= nil then return true end
+    end
+    return false
 end
 
 -- ============================================================
@@ -775,12 +802,29 @@ function SaveLoadHandler:commitMoistureEnvelope(capture, nativeOk, compactOk)
     if capture == nil then return "FAILED" end
     local base = self._completePair.current
     if nativeOk == true and compactOk == true then
+        local generation = (base.generation or 0) + 1
+        -- SCS-039 SDS 3.7: the committed COMPLETE record retains its FULL
+        -- envelope at the committed generation (the capture digests at the base
+        -- generation; the stored copy re-digests at its own generation and names
+        -- its generation-qualified native image) so the save surfaces can write
+        -- the current and previous envelopes and a reload can validate them.
+        local stored = {
+            schema = capture.schema, payloadKind = "COMPLETE",
+            generation = generation,
+            filename = capture.filename, mapWidth = capture.mapWidth, grain = capture.grain,
+            moistureRevision = capture.moistureRevision,
+            lastSettledMonotonicDay = capture.lastSettledMonotonicDay,
+            aggregates = capture.aggregates, fieldPending = capture.fieldPending,
+            positionalRows = capture.positionalRows, absorption = capture.absorption,
+        }
+        stored.digest = self:compactDigest(stored)
         self._completePair.previous = self._completePair.current
         self._completePair.current = {
-            generation = (base.generation or 0) + 1,
+            generation = generation,
             digest     = capture.digest,
             revision   = capture.moistureRevision,
             lastSettledMonotonicDay = capture.lastSettledMonotonicDay,
+            envelope   = stored,
         }
         self._pendingOnly = nil
         return "COMPLETE"
@@ -791,7 +835,7 @@ function SaveLoadHandler:commitMoistureEnvelope(capture, nativeOk, compactOk)
         -- the current RAM revision/cursor, so the selector does not reject it as
         -- BASE_MISMATCH when RAM moved on after the last successful save. The
         -- pending payload itself stays the captured one.
-        self._pendingOnly = {
+        local pending = {
             payloadKind = "PENDING_ONLY",
             baseGeneration = base.generation or 0,
             baseRevision   = base.revision or capture.moistureRevision,
@@ -801,11 +845,29 @@ function SaveLoadHandler:commitMoistureEnvelope(capture, nativeOk, compactOk)
             positionalRows = capture.positionalRows,
             absorption = capture.absorption,
             zoneOk = true,
-            digest = "P:" .. tostring(self:compactDigest(capture)),
         }
+        pending.digest = self:pendingDigest(pending)
+        self._pendingOnly = pending
         return "PENDING_ONLY"
     end
     return "FAILED"
+end
+
+--- Canonical digest of a PENDING_ONLY row over its OWN fields (base identity,
+--- payload, leaf), so a reload can rebuild and check it from either mirror.
+function SaveLoadHandler:pendingDigest(pending)
+    if type(pending) ~= "table" then return nil end
+    return "P:" .. tostring(self:compactDigest({
+        schema = self._saveEnvelopeSchema or ENVELOPE_SCHEMA,
+        payloadKind = "PENDING_ONLY",
+        generation = pending.baseGeneration,
+        moistureRevision = pending.baseRevision,
+        lastSettledMonotonicDay = pending.baseLastSettledMonotonicDay,
+        aggregates = pending.aggregates,
+        fieldPending = pending.fieldPending,
+        positionalRows = pending.positionalRows,
+        absorption = pending.absorption,
+    }))
 end
 
 --- Decide which absorption leaf a load restores, mirroring the bar's Group M
@@ -925,6 +987,594 @@ function SaveLoadHandler:selectMoistureCarrier(candidates)
         end
     end
     return "NONE", nil, nil, nil, "NONE", nil, nil
+end
+
+-- ============================================================
+-- SCS-039 SDS 3.7 / SCS-041 SDS 5.13: THE FILE LAYER.
+--
+-- performMissionWaterSaveCut is the mechanical cut the manager's
+-- ensureMissionWaterSaveCut drives: capture at the current revision, write the
+-- generation-qualified native image through the REAL saveNativeMap receipt,
+-- commit, and hand back the logical view (current + previous COMPLETE, any
+-- PENDING_ONLY row). The view encoders below carry that view to own XML and to
+-- the StateLedger table; the candidate collector rebuilds and validates it from
+-- either mirror; restoreMissionWater is what the one barrier calls to select and
+-- apply a coherent generation, its pending overlay and its absorption leaf.
+-- ============================================================
+
+--- Resolve the save view for a save-surface caller. The manager owns the cached
+--- immutable view; a bench that drives this handler over a bare manager table
+--- performs the cut directly (no cache, same mechanics).
+function SaveLoadHandler:_missionWaterSaveView(reason)
+    local mgr = self.manager
+    if mgr ~= nil and type(mgr.ensureMissionWaterSaveCut) == "function" then
+        local view = mgr:ensureMissionWaterSaveCut(reason)
+        if view ~= nil then return view end
+    end
+    local view = self:performMissionWaterSaveCut(reason)
+    return view
+end
+
+--- The mechanical cut. Returns the logical view and the commit outcome
+--- ("COMPLETE" | "PENDING_ONLY" | "FAILED"). Only COMPLETE advances the
+--- generation; anything else retains the prior pairs byte-current.
+function SaveLoadHandler:performMissionWaterSaveCut(reason)
+    local soil = self.manager ~= nil and self.manager.soilSystem or nil
+    local capture = self:captureMoistureEnvelope()
+    if capture == nil or soil == nil then
+        csLog("SaveLoadHandler: save cut found no soil system to capture (" .. tostring(reason) .. ")")
+        return self:buildMoistureView(), "FAILED"
+    end
+
+    local nativeOk, filename = false, nil
+    if soil.providerMode == "UNAVAILABLE_PENDING_RELOAD" then
+        -- SDS 3.3/3.7: a provider that failed closed writes no native image this
+        -- mission; the compact write records PENDING_ONLY against the retained pair.
+        nativeOk = false
+    elseif type(soil.mapActive) == "function" and soil:mapActive() then
+        local candidate = (capture.generation or 0) + 1
+        if CropStressValueMap ~= nil and CropStressValueMap.generationFileName ~= nil then
+            filename = CropStressValueMap.generationFileName(candidate)
+        end
+        local sgDir = g_currentMission ~= nil and g_currentMission.missionInfo ~= nil
+            and g_currentMission.missionInfo.savegameDirectory or nil
+        if sgDir ~= nil and type(soil.saveNativeMap) == "function" then
+            -- The engine receipt must be literal true: a non-throwing false is a
+            -- failure even when the outer pcall survived (saveToSavegame enforces
+            -- that; saveNativeMap routes a refusal through the fail-closed path).
+            nativeOk = soil:saveNativeMap(sgDir, candidate) == true
+            if nativeOk and fileExists ~= nil and filename ~= nil
+               and fileExists(sgDir .. "/" .. filename) ~= true then
+                csLog("SaveLoadHandler: native image reported saved but is not on disk; treating the write as failed")
+                nativeOk = false
+            end
+        end
+    else
+        -- ZONE mission: there is no native leg. The compact envelope IS the whole
+        -- generation (filename nil) and a reload degrades it to its own zone and
+        -- pending state; the selector never pairs it with any native file.
+        nativeOk = true
+    end
+    capture.filename = nativeOk and filename or nil
+
+    local outcome = self:commitMoistureEnvelope(capture, nativeOk, true)
+    if outcome == "COMPLETE" then
+        csLog(string.format("SaveLoadHandler: save cut (%s) committed generation %d%s",
+            tostring(reason), self._completePair.current.generation or 0,
+            filename ~= nil and (" [" .. filename .. "]") or " [compact only]"))
+    else
+        csLog(string.format("SaveLoadHandler: save cut (%s) did not complete: %s; generation stays %d",
+            tostring(reason), tostring(outcome), self._completePair.current.generation or 0))
+    end
+    return self:buildMoistureView(), outcome
+end
+
+--- The logical view the save surfaces persist: the current and previous
+--- COMPLETE envelopes (when committed this session or restored on load) and
+--- the one PENDING_ONLY recovery row. Immutable by construction: every table
+--- referenced here was frozen at its capture.
+function SaveLoadHandler:buildMoistureView()
+    local view = { schema = self._saveEnvelopeSchema or ENVELOPE_SCHEMA, complete = {} }
+    local cur, prev = self._completePair.current, self._completePair.previous
+    if cur ~= nil and type(cur.envelope) == "table" then view.complete[#view.complete + 1] = cur.envelope end
+    if prev ~= nil and type(prev.envelope) == "table" then view.complete[#view.complete + 1] = prev.envelope end
+    view.pendingOnly = self._pendingOnly
+    view.generation = cur ~= nil and (cur.generation or 0) or 0
+    return view
+end
+
+local function envelopeToTable(env)
+    return {
+        schema = env.schema, payloadKind = "COMPLETE", generation = env.generation,
+        filename = env.filename, mapWidth = env.mapWidth, grain = env.grain,
+        moistureRevision = env.moistureRevision,
+        lastSettledMonotonicDay = env.lastSettledMonotonicDay,
+        digest = env.digest,
+        aggregates = copyMap(env.aggregates), fieldPending = copyMap(env.fieldPending),
+        positionalRows = copyRows(env.positionalRows),
+        absorption = copyAbsorptionLeaf(env.absorption),
+    }
+end
+
+local function pendingToTable(p)
+    return {
+        payloadKind = "PENDING_ONLY",
+        baseGeneration = p.baseGeneration, baseRevision = p.baseRevision,
+        baseLastSettledMonotonicDay = p.baseLastSettledMonotonicDay,
+        zoneOk = p.zoneOk == true, digest = p.digest,
+        aggregates = copyMap(p.aggregates), fieldPending = copyMap(p.fieldPending),
+        positionalRows = copyRows(p.positionalRows),
+        absorption = copyAbsorptionLeaf(p.absorption),
+    }
+end
+
+--- Plain-table form of the view for the StateLedger mirror (deep copy, so the
+--- ledger's serializer can never reach into the frozen envelopes).
+function SaveLoadHandler:viewToTable(view)
+    if type(view) ~= "table" then return nil end
+    local out = { schema = view.schema or ENVELOPE_SCHEMA, complete = {} }
+    for i, env in ipairs(view.complete or {}) do out.complete[i] = envelopeToTable(env) end
+    if type(view.pendingOnly) == "table" then out.pendingOnly = pendingToTable(view.pendingOnly) end
+    return out
+end
+
+local function writeAbsorptionXML(setInt, setFloat, setBool, setString, key, leaf)
+    if type(leaf) ~= "table" then return end
+    setInt(key .. "#schema", leaf.schema or 2)
+    if leaf.windowId ~= nil then setInt(key .. "#windowId", leaf.windowId) end
+    if leaf.providerMode ~= nil then setString(key .. "#providerMode", leaf.providerMode) end
+    if leaf.providerGrainMetres ~= nil then
+        setString(key .. "#providerGrainMetres", string.format("%.17g", leaf.providerGrainMetres))
+    end
+    if leaf.standDownThroughHourKey ~= nil then
+        setInt(key .. "#standDownThroughHourKey", leaf.standDownThroughHourKey)
+    end
+    setBool(key .. "#standDownAwaitingFirstValidHour", leaf.standDownAwaitingFirstValidHour == true)
+    if leaf.standDownReason ~= nil then setString(key .. "#standDownReason", leaf.standDownReason) end
+    setInt(key .. "#rowCount", leaf.rowCount or 0)
+    setString(key .. "#rowsPacked", leaf.rowsPacked or "")
+    setString(key .. "#rowsAdler32", leaf.rowsAdler32 or "")
+end
+
+local function readAbsorptionXML(getInt, getFloat, getBool, getString, key)
+    local schema = getInt(key .. "#schema", nil)
+    if schema == nil then return nil end
+    local leaf = {
+        schema = schema,
+        windowId = getInt(key .. "#windowId", nil),
+        providerMode = getString(key .. "#providerMode", nil),
+        providerGrainMetres = tonumber(getString(key .. "#providerGrainMetres", nil)),
+        standDownThroughHourKey = getInt(key .. "#standDownThroughHourKey", nil),
+        standDownAwaitingFirstValidHour = getBool(key .. "#standDownAwaitingFirstValidHour", false) == true,
+        standDownReason = getString(key .. "#standDownReason", nil),
+        rowCount = getInt(key .. "#rowCount", 0),
+        rowsPacked = getString(key .. "#rowsPacked", nil) or "",
+        rowsAdler32 = getString(key .. "#rowsAdler32", nil) or "",
+    }
+    return leaf
+end
+
+local function writeEnvelopeXML(setInt, setFloat, setBool, setString, key, env)
+    setInt(key .. "#schema", env.schema or ENVELOPE_SCHEMA)
+    setString(key .. "#payloadKind", "COMPLETE")
+    setInt(key .. "#generation", env.generation or 0)
+    if env.filename ~= nil then setString(key .. "#filename", env.filename) end
+    if env.mapWidth ~= nil then setInt(key .. "#mapWidth", env.mapWidth) end
+    if env.grain ~= nil then setString(key .. "#grain", string.format("%.17g", env.grain)) end
+    setInt(key .. "#moistureRevision", env.moistureRevision or 1)
+    if env.lastSettledMonotonicDay ~= nil then
+        setInt(key .. "#lastSettledMonotonicDay", env.lastSettledMonotonicDay)
+    end
+    setString(key .. "#digest", env.digest or "")
+    setString(key .. "#aggregates", encodeFieldMap(env.aggregates))
+    setString(key .. "#fieldPending", encodeFieldMap(env.fieldPending))
+    setString(key .. "#positionalRows", SaveLoadHandler.packPositionalRows(env.positionalRows))
+    writeAbsorptionXML(setInt, setFloat, setBool, setString, key .. ".absorption", env.absorption)
+end
+
+local function readEnvelopeXML(getInt, getFloat, getBool, getString, key)
+    local schema = getInt(key .. "#schema", nil)
+    if schema == nil then return nil end
+    return {
+        schema = schema,
+        payloadKind = getString(key .. "#payloadKind", nil),
+        generation = getInt(key .. "#generation", nil),
+        filename = getString(key .. "#filename", nil),
+        mapWidth = getInt(key .. "#mapWidth", nil),
+        grain = tonumber(getString(key .. "#grain", nil)),
+        moistureRevision = getInt(key .. "#moistureRevision", nil),
+        lastSettledMonotonicDay = getInt(key .. "#lastSettledMonotonicDay", nil),
+        digest = getString(key .. "#digest", nil),
+        aggregates = decodeFieldMap(getString(key .. "#aggregates", nil)),
+        fieldPending = decodeFieldMap(getString(key .. "#fieldPending", nil)),
+        positionalRows = SaveLoadHandler.unpackPositionalRows(getString(key .. "#positionalRows", nil)),
+        absorption = readAbsorptionXML(getInt, getFloat, getBool, getString, key .. ".absorption"),
+    }
+end
+
+--- Write the full logical view under <cropStress><moisture>. Unrelated career
+--- fields are untouched; a view with nothing committed writes only its schema.
+function SaveLoadHandler:writeMoistureViewXML(setInt, setFloat, setBool, setString, key, view)
+    if type(view) ~= "table" then return end
+    setInt(key .. "#schema", view.schema or ENVELOPE_SCHEMA)
+    for i, env in ipairs(view.complete or {}) do
+        writeEnvelopeXML(setInt, setFloat, setBool, setString,
+            string.format("%s.complete(%d)", key, i - 1), env)
+    end
+    local p = view.pendingOnly
+    if type(p) == "table" then
+        local pk = key .. ".pendingOnly"
+        setString(pk .. "#payloadKind", "PENDING_ONLY")
+        setInt(pk .. "#baseGeneration", p.baseGeneration or 0)
+        setInt(pk .. "#baseRevision", p.baseRevision or 1)
+        if p.baseLastSettledMonotonicDay ~= nil then
+            setInt(pk .. "#baseLastSettledMonotonicDay", p.baseLastSettledMonotonicDay)
+        end
+        setBool(pk .. "#zoneOk", p.zoneOk == true)
+        setString(pk .. "#digest", p.digest or "")
+        setString(pk .. "#aggregates", encodeFieldMap(p.aggregates))
+        setString(pk .. "#fieldPending", encodeFieldMap(p.fieldPending))
+        setString(pk .. "#positionalRows", SaveLoadHandler.packPositionalRows(p.positionalRows))
+        writeAbsorptionXML(setInt, setFloat, setBool, setString, pk .. ".absorption", p.absorption)
+    end
+end
+
+--- Read the view back into the same table shape the ledger delivers. nil when
+--- the save predates the envelope (legacy scalar schema 2).
+function SaveLoadHandler:readMoistureViewXML(getInt, getFloat, getBool, getString, key)
+    local schema = getInt(key .. "#schema", nil)
+    if schema == nil then return nil end
+    local out = { schema = schema, complete = {} }
+    local i = 0
+    while true do
+        local env = readEnvelopeXML(getInt, getFloat, getBool, getString,
+            string.format("%s.complete(%d)", key, i))
+        if env == nil then break end
+        out.complete[#out.complete + 1] = env
+        i = i + 1
+    end
+    local pk = key .. ".pendingOnly"
+    if getString(pk .. "#payloadKind", nil) == "PENDING_ONLY" then
+        out.pendingOnly = {
+            payloadKind = "PENDING_ONLY",
+            baseGeneration = getInt(pk .. "#baseGeneration", nil),
+            baseRevision = getInt(pk .. "#baseRevision", nil),
+            baseLastSettledMonotonicDay = getInt(pk .. "#baseLastSettledMonotonicDay", nil),
+            zoneOk = getBool(pk .. "#zoneOk", false) == true,
+            digest = getString(pk .. "#digest", nil),
+            aggregates = decodeFieldMap(getString(pk .. "#aggregates", nil)),
+            fieldPending = decodeFieldMap(getString(pk .. "#fieldPending", nil)),
+            positionalRows = SaveLoadHandler.unpackPositionalRows(getString(pk .. "#positionalRows", nil)),
+            absorption = readAbsorptionXML(getInt, getFloat, getBool, getString, pk .. ".absorption"),
+        }
+    end
+    return out
+end
+
+--- A COMPLETE candidate is valid only when its payload parses whole and its
+--- canonical digest rebuilds byte-for-byte. Returns ok, reason.
+function SaveLoadHandler:validateCompleteEnvelope(env)
+    if type(env) ~= "table" then return false, "NOT_TABLE" end
+    if env.schema ~= ENVELOPE_SCHEMA then return false, "SCHEMA" end
+    if env.payloadKind ~= "COMPLETE" then return false, "KIND" end
+    if type(env.generation) ~= "number" or type(env.moistureRevision) ~= "number" then
+        return false, "IDENTITY"
+    end
+    if type(env.aggregates) ~= "table" or type(env.fieldPending) ~= "table"
+       or type(env.positionalRows) ~= "table" then
+        return false, "PAYLOAD"
+    end
+    if type(env.digest) ~= "string" or self:compactDigest(env) ~= env.digest then
+        return false, "DIGEST"
+    end
+    return true
+end
+
+function SaveLoadHandler:validatePendingRow(p)
+    if type(p) ~= "table" then return false, "NOT_TABLE" end
+    if p.payloadKind ~= "PENDING_ONLY" then return false, "KIND" end
+    if type(p.baseGeneration) ~= "number" or type(p.baseRevision) ~= "number" then
+        return false, "IDENTITY"
+    end
+    if type(p.aggregates) ~= "table" or type(p.fieldPending) ~= "table"
+       or type(p.positionalRows) ~= "table" then
+        return false, "PAYLOAD"
+    end
+    if type(p.digest) ~= "string" or self:pendingDigest(p) ~= p.digest then
+        return false, "DIGEST"
+    end
+    return true
+end
+
+--- Collect candidate rows from every staged surface with their FULL payloads
+--- attached (the selector's returned identifiers alone are never restored
+--- material). Native availability is left false here: the barrier probes the
+--- one file the selection would use.
+function SaveLoadHandler:collectMoistureCandidates()
+    local candidates = {}
+    for _, source in ipairs(STAGE_ORDER) do
+        local snap = self._staged ~= nil and self._staged[source] or nil
+        local me = type(snap) == "table" and snap.moistureEnvelope or nil
+        if type(me) == "table" then
+            for _, env in ipairs(me.complete or {}) do
+                local ok, why = self:validateCompleteEnvelope(env)
+                candidates[#candidates + 1] = {
+                    payloadKind = "COMPLETE", generation = env.generation, digest = env.digest,
+                    compactOk = ok == true, nativeOk = false,
+                    revision = env.moistureRevision,
+                    lastSettledMonotonicDay = env.lastSettledMonotonicDay,
+                    payload = env, source = source, reason = why,
+                }
+                if ok ~= true then
+                    csLog(string.format("SaveLoadHandler: %s COMPLETE candidate at generation %s rejected (%s)",
+                        source, tostring(env.generation), tostring(why)))
+                end
+            end
+            local p = me.pendingOnly
+            if type(p) == "table" then
+                local ok, why = self:validatePendingRow(p)
+                candidates[#candidates + 1] = {
+                    payloadKind = "PENDING_ONLY", baseGeneration = p.baseGeneration,
+                    baseRevision = p.baseRevision,
+                    baseLastSettledMonotonicDay = p.baseLastSettledMonotonicDay,
+                    digest = p.digest, compactOk = ok == true, zoneOk = p.zoneOk == true,
+                    payload = p, source = source, reason = why,
+                }
+                if ok ~= true then
+                    csLog(string.format("SaveLoadHandler: %s PENDING_ONLY candidate (base %s) rejected (%s)",
+                        source, tostring(p.baseGeneration), tostring(why)))
+                end
+            end
+        end
+    end
+    return candidates
+end
+
+local function clamp01(v) return math.max(0.0, math.min(1.0, v or 0)) end
+
+--- THE RESTORE APPLY. Called exactly once by the manager's barrier after
+--- compact data, fields, the provider decision, settings and the absorption
+--- freeze are all ready. Selects one coherent SCS-039 view from the staged
+--- candidates, probes the ONE native image that selection would use
+--- (ctx.nativeProbe(envelope) -> true only when the file opens with the right
+--- shape), applies the selected envelope plus any identity-matching
+--- PENDING_ONLY overlay together, then hands the permitted absorption leaf to
+--- the absorption loader with the enclosing provider identity, current hour and
+--- field membership. Legacy scalar saves (no envelope) migrate through the same
+--- path with no absorption allowance.
+---@param ctx table|nil { nativeProbe=fn(env)->bool, liveMode, liveGrain, currentHour }
+---@return table result
+function SaveLoadHandler:restoreMissionWater(ctx)
+    ctx = ctx or {}
+    local soil = self.manager ~= nil and self.manager.soilSystem or nil
+    local stressModifier = self.manager ~= nil and self.manager.stressModifier or nil
+    local result = {
+        mode = "NONE", generation = nil, digest = nil, pendingStatus = "NONE",
+        source = nil, provider = nil, absorption = nil,
+        fieldsApplied = 0, fieldsIgnored = 0, declined = nil,
+    }
+    if soil == nil or type(soil.fieldData) ~= "table" then return result end
+
+    local candidates = self:collectMoistureCandidates()
+    local mode, generation, digest, pendingDigest, pendingStatus =
+        self:selectMoistureCarrier(candidates)
+
+    -- Probe native availability for the generation the selection lands on, and
+    -- only that one (SDS 3.7: a newer compact never pairs with an older file).
+    local selectedRow = nil
+    if mode ~= "NONE" and digest ~= nil then
+        for _, c in ipairs(candidates) do
+            if c.payloadKind == "COMPLETE" and c.compactOk
+               and c.generation == generation and c.digest == digest then
+                selectedRow = c
+                break
+            end
+        end
+        if selectedRow ~= nil then
+            local ok = false
+            if type(ctx.nativeProbe) == "function" and selectedRow.payload.filename ~= nil then
+                ok = ctx.nativeProbe(selectedRow.payload) == true
+            end
+            if ok then
+                for _, c in ipairs(candidates) do
+                    if c.payloadKind == "COMPLETE" and c.generation == generation
+                       and c.digest == digest then
+                        c.nativeOk = true
+                    end
+                end
+            end
+            mode, generation, digest, pendingDigest, pendingStatus =
+                self:selectMoistureCarrier(candidates)
+        end
+    end
+
+    local pendingRow = nil
+    if pendingStatus == "APPLIED" and pendingDigest ~= nil then
+        for _, c in ipairs(candidates) do
+            if c.payloadKind == "PENDING_ONLY" and c.compactOk and c.digest == pendingDigest then
+                pendingRow = c
+                break
+            end
+        end
+    end
+
+    -- The field rows come from the surface that supplied the winning candidate
+    -- (identical mirrors dedupe; a lone surface wins by default in stage order).
+    local source = (selectedRow ~= nil and selectedRow.source)
+        or (pendingRow ~= nil and pendingRow.source) or nil
+    if source == nil then
+        for _, s in ipairs(STAGE_ORDER) do
+            if self._staged ~= nil and self._staged[s] ~= nil then source = s; break end
+        end
+    end
+    local snap = (source ~= nil and self._staged ~= nil) and self._staged[source] or {}
+    result.source = source
+
+    -- 1. Compact fallback rows load first (cells as migration evidence, scalar,
+    --    stress, soil type, field-wide carry). Rows absent from the current map
+    --    population are ignored and logged, never attached to another field.
+    for fieldId, f in pairs(snap.fields or {}) do
+        local d = soil.fieldData[fieldId]
+        if d ~= nil then
+            d.moisture = clamp01(f.moisture ~= nil and f.moisture or 0.50)
+            if stressModifier ~= nil and stressModifier.fieldStress ~= nil then
+                stressModifier.fieldStress[fieldId] = clamp01(f.stress or 0.0)
+            end
+            if f.soilType ~= nil and SoilMoistureSystem ~= nil and SoilMoistureSystem.SOIL_PARAMS ~= nil
+               and SoilMoistureSystem.SOIL_PARAMS[f.soilType] ~= nil then
+                d.soilType = f.soilType
+            end
+            if f.cells ~= nil and type(soil.unpackCells) == "function" then
+                soil:unpackCells(fieldId, f.cells)
+            end
+            if f.mapPending ~= nil then d.mapPending = f.mapPending end
+            result.fieldsApplied = result.fieldsApplied + 1
+        else
+            result.fieldsIgnored = result.fieldsIgnored + 1
+            csLog(string.format("SaveLoadHandler: saved field %s is not in the current map population; row ignored",
+                tostring(fieldId)))
+        end
+    end
+
+    -- 2. The selected envelope's aggregate, revision and cursor install after
+    --    cell unpack; a matching PENDING_ONLY row replaces ONLY the pending stores.
+    local env = selectedRow ~= nil and selectedRow.payload or nil
+    local pending = pendingRow ~= nil and pendingRow.payload or nil
+    if env ~= nil then
+        for fieldId, agg in pairs(env.aggregates or {}) do
+            local d = soil.fieldData[fieldId]
+            if d ~= nil then d.moisture = clamp01(agg) end
+        end
+        soil.moistureRevision = env.moistureRevision
+        soil._lastSettledDay = env.lastSettledMonotonicDay
+        local pendSrc = pending or env
+        for fieldId, d in pairs(soil.fieldData) do
+            d.mapPending = (pendSrc.fieldPending or {})[fieldId] or 0
+        end
+        if type(soil.unpackMapWaterPending) == "function" then
+            soil:unpackMapWaterPending(pendSrc.positionalRows or {})
+        end
+        self._completePair.current = {
+            generation = env.generation, digest = env.digest,
+            revision = env.moistureRevision,
+            lastSettledMonotonicDay = env.lastSettledMonotonicDay,
+            envelope = env,
+        }
+        local previous = nil
+        for _, c in ipairs(candidates) do
+            if c.payloadKind == "COMPLETE" and c.compactOk and c.source == source
+               and type(c.generation) == "number" and c.generation < env.generation
+               and (previous == nil or c.generation > previous.generation) then
+                previous = c
+            end
+        end
+        self._completePair.previous = previous ~= nil and {
+            generation = previous.generation, digest = previous.digest,
+            revision = previous.revision,
+            lastSettledMonotonicDay = previous.lastSettledMonotonicDay,
+            envelope = previous.payload,
+        } or nil
+        self._pendingOnly = pending
+        if mode == "ZONE" and env.filename ~= nil then
+            result.declined = string.format("native image %s for generation %d unusable",
+                tostring(env.filename), env.generation)
+        end
+    elseif mode == "ZONE" and pending ~= nil then
+        -- Explicit zone recovery: the PENDING_ONLY row supplies only its own
+        -- zone state, pending stores and copied base cursor.
+        for fieldId, agg in pairs(pending.aggregates or {}) do
+            local d = soil.fieldData[fieldId]
+            if d ~= nil then d.moisture = clamp01(agg) end
+        end
+        soil.moistureRevision = pending.baseRevision
+        soil._lastSettledDay = pending.baseLastSettledMonotonicDay
+        for fieldId, d in pairs(soil.fieldData) do
+            d.mapPending = (pending.fieldPending or {})[fieldId] or 0
+        end
+        if type(soil.unpackMapWaterPending) == "function" then
+            soil:unpackMapWaterPending(pending.positionalRows or {})
+        end
+        self._completePair.current = {
+            generation = pending.baseGeneration, digest = nil,
+            revision = pending.baseRevision,
+            lastSettledMonotonicDay = pending.baseLastSettledMonotonicDay,
+            envelope = nil,
+        }
+        self._completePair.previous = nil
+        self._pendingOnly = pending
+        result.declined = "no usable COMPLETE native pair; PENDING_ONLY zone recovery"
+    else
+        -- Legacy scalar schema 2 (or a fresh game): migrate the flat keys with
+        -- no absorption allowance. A legacy csMoistureMap.grle, when the probe
+        -- imported it, stays generation 0.
+        if snap.moistureRevision ~= nil then
+            soil.moistureRevision = snap.moistureRevision
+            self._completePair.current.revision = snap.moistureRevision
+        end
+        if snap.lastSettledDay ~= nil then
+            soil._lastSettledDay = snap.lastSettledDay
+            self._completePair.current.lastSettledMonotonicDay = snap.lastSettledDay
+        end
+        if snap.saveGeneration ~= nil then
+            self._completePair.current.generation = snap.saveGeneration
+        end
+        if type(snap.mapWaterPending) == "table" and type(soil.unpackMapWaterPending) == "function" then
+            soil:unpackMapWaterPending(snap.mapWaterPending)
+        end
+    end
+
+    -- 3. A selection that names a native image it could not use, or that has no
+    --    complete native pair at all, leaves the zone store authoritative: the
+    --    live map is declined rather than paired with another generation's file.
+    if result.declined ~= nil and type(soil.declineNativeCarrier) == "function" then
+        soil:declineNativeCarrier(result.declined)
+    end
+
+    -- 4. The absorption leaf, admitted only against the enclosing provider
+    --    identity (mode + grain), the current valid hour and live membership.
+    local leaf = self:selectedAbsorptionLeaf(env, pending)
+    if type(leaf) == "table" then
+        leaf = copyAbsorptionLeaf(leaf)
+        leaf.outerSchema = ENVELOPE_SCHEMA
+    end
+    local liveMode = ctx.liveMode or soil.providerMode
+    local liveGrain = ctx.liveGrain
+    if liveGrain == nil then
+        if liveMode == "TRUTH" and soil.valueMap ~= nil
+           and type(soil.valueMap.getGrainMetres) == "function" then
+            liveGrain = soil.valueMap:getGrainMetres()
+        elseif type(soil.getCellSize) == "function" then
+            liveGrain = soil:getCellSize()
+        end
+    end
+    local currentHour = ctx.currentHour
+    if currentHour == nil and SoilMoistureSystem ~= nil
+       and type(SoilMoistureSystem.resolveCurrentHourKey) == "function" then
+        local environment = g_currentMission ~= nil and g_currentMission.environment or nil
+        local tg = (g_currentMission ~= nil and g_currentMission.timeGuard) or g_timeGuard
+        currentHour = SoilMoistureSystem.resolveCurrentHourKey(environment, tg)
+    end
+    if type(soil.loadAbsorptionWindow) == "function" then
+        local _, disposition = soil:loadAbsorptionWindow(leaf, liveMode, liveGrain, currentHour)
+        result.absorption = disposition
+        if type(soil.pruneAbsorptionMissingFields) == "function" then
+            local live = {}
+            for fieldId in pairs(soil.fieldData) do live[fieldId] = true end
+            result.absorptionPruned = soil:pruneAbsorptionMissingFields(live)
+        end
+    end
+
+    result.mode = mode
+    result.generation = generation
+    result.digest = digest
+    result.pendingStatus = pendingStatus
+    result.provider = soil.providerMode
+    csLog(string.format(
+        "SaveLoadHandler: mission water restored (%s, generation %s, pending %s, source %s, provider %s, absorption %s, %d fields, %d ignored)",
+        tostring(mode), tostring(generation), tostring(pendingStatus), tostring(source),
+        tostring(soil.providerMode), tostring(result.absorption),
+        result.fieldsApplied, result.fieldsIgnored))
+    return result
 end
 
 function SaveLoadHandler:delete()
