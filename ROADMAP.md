@@ -10,9 +10,9 @@
 - Keep it honest: near-term is committed, mid-term is intended, long-term is aspirational.
 
 ## Current baseline
-- Version at baseline: v1.2.0.0
-- Audit reference: ecosystem-dev-tracking Point 1-6 (FS25_SeasonalCropStress, 2026-06-30)
-- Baseline date: 2026-06-30
+- Shipped version: 1.2.5.143 (modDesc.xml, development head 95fbd95, 2026-09-15)
+- Original audit baseline: v1.2.0.0, ecosystem-dev-tracking Point 1-6 (FS25_SeasonalCropStress, 2026-06-30)
+- Baseline refreshed: 2026-09-15 (issue #69); the v1.2.0 tracks that issue tracked are re-checked below
 
 ## Near-term (next release cycle)
 - [~] SCS-046 rain key (2026-09-01): an optional center-pivot rain key watches current rain at that machine and pauses water, pivot movement and operating cost together when meaningful rain trips it, clearing after 30 readable dry game minutes. Engine half built on feat/SCS-046-rain-key: per-pivot fitted/trip/dial/accumulator state, WeatherGuard-first current-rain read with base-game fallback, the continuous sensor tick before the hourly branch, the one operational gate in activateSystem (fitted tripped rows refuse every start), fractional active-hour settle (fitted pivots never enter the legacy whole-hour gain or charge pass), copy-only snapshot expansion on getIrrigationSystems, server-authoritative FIT/REMOVE/SET_TRIP_MM command + result events, the csRainKeyCheck diagnostic, and the release-gate row rain_key_pause LOCKED. 47 assertions in SCS-046-pivot-rain-key_spec_test.lua. Release token stays locked until runtime trip/reset, both player surfaces, dedicated-server transport and balance observations pass.
@@ -48,6 +48,14 @@
 ## Deferred / parked
 - Any Precision Farming compatibility: never. Detect-to-stand-down only.
 
+
+## 2026-09-15 (Fred): issue #69 re-checked against the shipped source (doc only, no new intent)
+Issue #69 was the GitHub tracker for the v1.2.0 gaps. Every track is compared with the source and the release history at 1.2.5.143; nothing here adds intent.
+- [x] Track 1, 3D asset replacement: the center pivot ships as real geometry, placeables/reinkeA22 (Reinke_Pivot_3, _5 and _10 i3d with their .shapes companions and store icons, 2026-09-06) with its scripts folder; the water pump ships as placeables/waterPump (i3d, xml, lua). The drip irrigation line has no placeable in the repo at all: not shipped and not tracked anywhere else, so it is UNCLEAR whether it was dropped or is still owed; it stays listed as open until Design or Antler22 says.
+- [x] Track 2, weather forecast accuracy: shipped in 1.0.9.1 as the issue records; WeatherIntegration:isForecastApproximate() (src/WeatherIntegration.lua:571) is the consumer contract and the HUD shows the approximate marker.
+- [x] Track 3, NPCFavor persistence at the SCS boundary: the Alex Chen relationship is written to cropStressData.xml (SaveLoadHandler.lua:319-324, npc#relationship) and read back (:457), and NPCIntegration:applyLoadedState (:125) holds it until NPCFavor has registered the NPC, which is the race the issue named. Favor quest progress itself is NPCFavor's own record and persists through NPCFavor's RSF-F148 and RSF-F221 work (merged 2026-09-15); SCS carries the relationship only, by design.
+- [x] Track 4, multiplayer hardening: #76 (moisture and stress to joining clients) is CLOSED since 2026-05-13 and the events exist (src/events CropStressMoistureInitEvent, CropStressMoistureRowEvent, CropStressMoistureDeltaEvent), with the join load-gates and the d.cells guards noted above; settings sync fires on a host change (CropStressSettingsPanel.lua:363-368 broadcasts CropStressSettingsSyncEvent) and on join (CropStressManager.lua:1065 sends all to the connection); the stream read/write order rule for IrrigationPivot stays a standing rule in CLAUDE.md (it is a rule, not a task); the sidecar save uses the engine XML API only (no io.* call in SaveLoadHandler.lua), so nothing there breaks a console build.
+- [ ] Remaining from #69: the drip irrigation line placeable (Track 1, unclear owner) and the irrigation help dialog (issue #89, already under Long-term).
 
 ## 2026-08-06 (Fred): Esc RF doors + map moisture button restored
 - [x] With the RF Esc door live, the legacy menuCropStress Esc page is stood down, which nilled inGameMenu[pageName] and killed the moisture map overlay button (it read the nil page and returned silently).
