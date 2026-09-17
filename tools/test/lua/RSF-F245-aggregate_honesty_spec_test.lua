@@ -167,6 +167,30 @@ group("H refresh outcomes", function()
     T.eq("H7b not EMPTY or INVALID_FIELD_GEOMETRY, and never the old scalar as current", tostring(d.moisture) .. ":" .. state(d), "nil:UNAVAILABLE:PROVIDER_REFUSAL")
     T.eq("H7c tested before any geometry", walks, 0)
     T.eq("H7d getMoisture answers nothing afterwards", (sys:getMoisture(1)), nil)
+
+    -- Bob #192 MAJOR (model :97): call site b fires only on EMPTY. Ready, carrier
+    -- recorded, blank outline: only the read's outcome differs between rows.
+    local function probed(readFn)
+        local s, v = F245H.newSystem()
+        local fd = F245H.addField(s, 1, SQ, 0.5)
+        s._probes = 0
+        local realProbe = s._parcelHasWrittenPixels
+        s._parcelHasWrittenPixels = function(self, id) self._probes = self._probes + 1; return realProbe(self, id) end
+        if readFn ~= nil then v.readAverageOfPolygon = readFn end
+        return s, v, fd
+    end
+    sys, vm, d = probed(nil)
+    sys:_refreshFieldAggregate(1, d)
+    T.eq("H8a [reached: an EMPTY read on the same fixture probes and seeds]", tostring(sys._probes) .. ":" .. tostring(vm.modifier.calls.set > 0), "1:true")
+    sys, vm, d = probed(function() return "OK", nil end)
+    sys:_refreshFieldAggregate(1, d)
+    T.eq("H8b [OK with no mean is unavailable EMPTY]", state(d), "UNAVAILABLE:EMPTY")
+    T.eq("H8c NAMED (Bob #192 MAJOR): OK with no mean runs no ground-check probe", sys._probes, 0)
+    T.eq("H8d and no fill", vm.modifier.calls.set, 0)
+    T.eq("H8e and no decision", sys._groundChecked[1], nil)
+    sys, vm, d = probed(function() return "SOMETHING_ELSE", nil end)
+    sys:_refreshFieldAggregate(1, d)
+    T.eq("H8f an unknown outcome runs no probe either", tostring(sys._probes) .. ":" .. state(d), "0:UNAVAILABLE:EMPTY")
 end)
 
 -- =====================================================================
@@ -343,6 +367,19 @@ group("W write paths", function()
     z:applyWaterAtCell(1, 2, 2, 0.05)
     local cx, cz = z:worldToCell(2, 2)
     T.near("W3 ZONE: a new cell starts from the field value, never 0", zd.cells[cx][cz].moisture, 0.45, 1e-9)
+
+    -- Bob #192 MINOR: a ZONE field with no current value makes no cell from 0.
+    local z2 = SoilMoistureSystem.new({})
+    z2.isInitialized = true
+    z2.providerMode = "ZONE"
+    local zd2 = F245H.addField(z2, 1, SQ, nil)
+    z2:_markAggregateUnavailable(zd2, "NO_CURRENT_VALUE")
+    local rev2 = z2.moistureRevision
+    T.eq("W4a [reached: the water is accepted]", z2:applyWaterAtCell(1, 2, 2, 0.05), true)
+    T.eq("W4b NAMED (Bob #192 MINOR): no ZONE cell is made from an invented 0", zd2.cellCount, 0)
+    T.near("W4c the water stays field-wide pending", zd2.mapPending, 0.05, 1e-12)
+    T.eq("W4d no revision", z2.moistureRevision, rev2)
+    T.eq("W4e the field still has no number", zd2.moisture, nil)
 end)
 
 -- =====================================================================
@@ -435,6 +472,25 @@ group("D daily settle", function()
     sys:settleDaily(1)
     T.eq("D3a settle: a provider with no typed read fails closed", sys.providerMode, "UNAVAILABLE_PENDING_RELOAD")
     T.eq("D3b and the field keeps no old scalar as current", tostring(d1.moisture) .. ":" .. state(d1), "nil:UNAVAILABLE:PROVIDER_REFUSAL")
+
+    -- Bob #192 MAJOR (model :97): the settle's call site b fires only on EMPTY.
+    local function settled(readFn)
+        local s, v = F245H.newSystem()
+        local fd = F245H.addField(s, 1, SQ, 0.5)
+        s._drainFieldOnMap = function() return false end
+        s._probes = 0
+        local realProbe = s._parcelHasWrittenPixels
+        s._parcelHasWrittenPixels = function(self, id) self._probes = self._probes + 1; return realProbe(self, id) end
+        if readFn ~= nil then v.readAverageOfPolygon = readFn end
+        s:settleDaily(1)
+        return s, v, fd
+    end
+    sys, vm, d1 = settled(nil)
+    T.eq("D4a [reached: an EMPTY settle on the same fixture probes]", sys._probes, 1)
+    sys, vm, d1 = settled(function() return "OK", nil end)
+    T.eq("D4b NAMED (Bob #192 MAJOR): a settle read of OK with no mean runs no probe", sys._probes, 0)
+    T.eq("D4c and no fill", vm.modifier.calls.set, 0)
+    T.eq("D4d the field is unavailable EMPTY", state(d1), "UNAVAILABLE:EMPTY")
 end)
 
 -- =====================================================================

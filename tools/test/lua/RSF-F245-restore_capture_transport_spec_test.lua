@@ -274,3 +274,66 @@ group("N transport", function()
     T.eq("N3a an init receive never writes a non-number over a value", clientSoil.fieldData[2].moisture, 0.55)
     T.eq("N3b nor creates a field from one", clientSoil.fieldData[7], nil)
 end)
+
+-- =====================================================================
+-- C: a pure client keeps the host's number (Bob #192 BLOCKER)
+-- Shape: g_server nil, a live streamed map with no pixels, a dirty field, the
+-- HUD's once-a-second rebuild before and after the host value is delivered.
+-- =====================================================================
+local function liveClient(providerMode)
+    local sys, vm = F245H.newSystem({ ready = false })
+    sys.providerMode = providerMode
+    local d = F245H.addField(sys, 1, SQ, 0.6)
+    local box = { reads = 0 }
+    local realRead = vm.readAverageOfPolygon
+    vm.readAverageOfPolygon = function(self, ...) box.reads = box.reads + 1; return realRead(self, ...) end
+    g_cropStressManager = { soilSystem = sys, stressModifier = { fieldStress = {} } }
+    return sys, vm, d, box
+end
+
+group("C pure client", function()
+    g_server = nil
+    local sys, vm, d, box = liveClient("TRUTH")
+    sys:getFieldsSortedByMoisture()
+    local ev = CropStressMoistureInitEvent.emptyNew()
+    ev.fieldData = { [1] = { moisture = 0.55 } }
+    ev.fieldStress = { [1] = 0.1 }
+    ev:run(nil)
+    local list = sys:getFieldsSortedByMoisture()
+    T.near("C1a NAMED (Bob #192 BLOCKER): init event: a pure client lists the host's number after its HUD rebuild",
+        list[1] and list[1].moisture, 0.55, 1e-12)
+    T.eq("C1b the client never marks the field unavailable", state(d), "CURRENT:nil")
+    T.eq("C1c the client's publication walk reads nothing native", box.reads, 0)
+    T.near("C1d a field read on the client answers the host's number", (sys:getMoisture(1)), 0.55, 1e-12)
+    T.eq("C1e and still leaves the field current", state(d), "CURRENT:nil")
+
+    -- the NetworkSync mirror applies while the client's map is live but not current
+    g_server = nil
+    sys, vm, d, box = liveClient(nil)
+    T.ok("C2a [reached: the map is live and the mirror applies]", sys:mapActive() and not sys:isMoistureMapCurrent())
+    sys:getFieldsSortedByMoisture()
+    CropStressNetworkSyncBridge._onReadState(CropStressNetworkSyncBridge.serializeFields(
+        { [1] = { moisture = 0.55, aggregateState = "CURRENT" } }, { [1] = 0.1 }))
+    list = sys:getFieldsSortedByMoisture()
+    T.near("C2b NAMED (Bob #192 BLOCKER): NetworkSync mirror: a pure client lists the host's number after its HUD rebuild",
+        list[1] and list[1].moisture, 0.55, 1e-12)
+    T.eq("C2c the client never marks the field unavailable", state(d), "CURRENT:nil")
+    T.eq("C2d the client's publication walk reads nothing native", box.reads, 0)
+
+    -- the host still marks the same shape unavailable
+    g_server = {}
+    sys, vm, d, box = liveClient("TRUTH")
+    sys:getFieldsSortedByMoisture()
+    T.eq("C3 [reached: the host marks a blank dirty field unavailable]", state(d), "UNAVAILABLE:EMPTY")
+
+    -- a native refusal on a pure client fails its provider closed, as before F245,
+    -- but never blanks the host's number in the client's list
+    g_server = nil
+    sys, vm, d, box = liveClient("TRUTH")
+    vm.readAverageOfPolygon = function() return "PROVIDER_REFUSAL", nil, nil end
+    sys:getMoisture(1)
+    T.eq("C4a [reached: the client's provider failed closed]", sys.providerMode, "UNAVAILABLE_PENDING_RELOAD")
+    T.eq("C4b a refusal on a pure client never marks the field unavailable", state(d), "CURRENT:nil")
+    list = sys:getFieldsSortedByMoisture()
+    T.near("C4c the client's list keeps the host's number", list[1] and list[1].moisture, 0.6, 1e-12)
+end)

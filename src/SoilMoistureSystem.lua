@@ -1343,6 +1343,10 @@ end
 --- explicit). Nothing under ZONE.
 ---@return integer refreshed
 function SoilMoistureSystem:refreshForPublication()
+    -- Host only. A pure client keeps the numbers the host sends; client truth is
+    -- RSF-F249's (F245 brief :155, :186). Without this a client whose streamed map
+    -- has no pixels for a field marks it unavailable and blanks the host's value.
+    if g_server == nil then return 0 end
     if not self:mapActive() then return 0 end
     local ids = {}
     for fieldId, d in pairs(self.fieldData) do
@@ -1393,14 +1397,21 @@ function SoilMoistureSystem:_refreshFieldAggregate(fieldId, d)
         self:_markAggregateCurrent(d, mean)
         d.aggregateDirty = false
     elseif outcome == "PROVIDER_REFUSAL" then
-        self:_markAggregateUnavailable(d, "PROVIDER_REFUSAL")
+        if g_server ~= nil then
+            self:_markAggregateUnavailable(d, "PROVIDER_REFUSAL")
+        end
         self:_failNativeClosed(refusal or "polygon-aggregate refusal on field refresh")
+    elseif g_server == nil then
+        -- A pure client never marks a field unavailable from its own streamed map:
+        -- it keeps the host's number, as before F245 (client truth is RSF-F249's).
     elseif outcome == "INVALID_FIELD_GEOMETRY" then
         self:_markAggregateUnavailable(d, "INVALID_FIELD_GEOMETRY")
     else
         self:_markAggregateUnavailable(d, "EMPTY")
-        -- RSF-F247 item 3, call site b: the ground check is this branch's last act.
-        if type(self._checkFieldGround) == "function" then
+        -- RSF-F247 item 3, call site b: the ground check is this branch's last act,
+        -- and only for EMPTY (the certified model's refresh, model :97). OK with no
+        -- mean, or an unknown outcome, is unavailable without a probe.
+        if outcome == "EMPTY" and type(self._checkFieldGround) == "function" then
             self:_checkFieldGround(fieldId)
         end
     end
@@ -1802,7 +1813,15 @@ function SoilMoistureSystem:_rawWaterStore(fieldId, x, z, gain)
             d.mapPending = (d.mapPending or 0) + gain
             return true
         end
-        cell = { moisture = self:_fallbackAggregate(d) or 0 }
+        local seed = self:_fallbackAggregate(d)
+        if seed == nil then
+            -- RSF-F245: no current value to start the new cell from. Accepted water
+            -- stays field-wide pending, like the cap branch above, rather than
+            -- landing on an invented 0; pending-only does not advance the revision.
+            d.mapPending = (d.mapPending or 0) + gain
+            return true
+        end
+        cell = { moisture = seed }
         row[cz] = cell
         d.cellCount = d.cellCount + 1
         d.cellSum = d.cellSum + cell.moisture
@@ -2723,8 +2742,8 @@ function SoilMoistureSystem:settleDaily(boundariesCrossed)
                 self:_markAggregateUnavailable(d, "INVALID_FIELD_GEOMETRY")
             else
                 self:_markAggregateUnavailable(d, "EMPTY")
-                -- RSF-F247 item 3, call site b.
-                if type(self._checkFieldGround) == "function" then
+                -- RSF-F247 item 3, call site b, only for EMPTY (model :97).
+                if outcome == "EMPTY" and type(self._checkFieldGround) == "function" then
                     self:_checkFieldGround(fieldId)
                 end
                 if not self:mapActive() then break end
