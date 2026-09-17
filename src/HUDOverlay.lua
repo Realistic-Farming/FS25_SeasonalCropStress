@@ -43,6 +43,8 @@ end
 -- Wizard 2026-08-21: factory home is the suite layout Wizard arranged in-game
 -- (must match CropStressSettings DEFAULTS hudPanelX/Y).
 HUDOverlay.PANEL_X          = 0.012604
+-- update(dt) receives milliseconds (BaseMission:update adds dt to mission time).
+HUDOverlay.REBUILD_INTERVAL_MS = 1000
 HUDOverlay.PANEL_Y          = 0.236481
 HUDOverlay.PANEL_W          = 0.160
 HUDOverlay.ROW_H            = 0.024
@@ -298,7 +300,7 @@ function HUDOverlay:update(dt)
 
     -- Throttle row rebuilds to once per second to avoid per-frame cost
     self.rebuildTimer = self.rebuildTimer + dt
-    if self.rebuildTimer >= 1.0 then
+    if self.rebuildTimer >= HUDOverlay.REBUILD_INTERVAL_MS then
         self.rebuildTimer = 0
         self:rebuildDisplayRows()
     end
@@ -1655,7 +1657,7 @@ end
 -- ============================================================
 function HUDOverlay:onMoistureUpdated(data)
     -- Always force a row rebuild so bar values reflect the latest moisture data.
-    self.rebuildTimer = 1.0  -- force rebuild on next update() tick
+    self.rebuildTimer = HUDOverlay.REBUILD_INTERVAL_MS  -- force rebuild on next update() tick
 
     -- Also refresh the forecast when the selected field's moisture changed.
     if data ~= nil and data.fieldId == self.selectedFieldId then
