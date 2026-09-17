@@ -37,6 +37,7 @@ if command -v zip &>/dev/null; then
         --exclude "./*.sh" \
         --exclude "./.claude/*" \
         --exclude "./.git/*" \
+        --exclude "./.git" \
         --exclude "./*.md" \
         --exclude "./.gitignore" \
         --exclude "./__MACOSX/*" \
@@ -61,7 +62,9 @@ ZIP_PATH = os.path.join(os.path.dirname(MOD_DIR), os.path.basename(MOD_DIR) + ".
 
 EXCLUDE_DIRS  = {".git", ".claude", ".github", "__MACOSX", "node_modules", "tools"}
 EXCLUDE_EXTS  = {".sh", ".md", ".DS_Store", ".zip"}
-EXCLUDE_FILES = {".gitignore", "build.py"}
+# ".git" is a FILE, not a directory, in a git worktree (it points at the main
+# clone's git dir), so EXCLUDE_DIRS alone does not keep it out of the zip.
+EXCLUDE_FILES = {".git", ".gitignore", "build.py"}
 
 def rel(path):
     return os.path.relpath(path, MOD_DIR).replace("\\", "/")
