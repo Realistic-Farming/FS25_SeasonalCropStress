@@ -938,8 +938,12 @@ function CropStressSettingsPanel:handleClick(id, data)
         elseif actionId == "admin_heat" then
             local msg = "Simulating 3-day heat wave..."
             if g_cropStressManager then
-                g_cropStressManager:consoleSimulateHeat("3")
-                msg = "3-day heat wave simulated.\nCheck field moisture — stress may have increased."
+                if g_cropStressManager:consoleSimulateHeat("3") == false then
+                    -- SCS #191: a multiplayer client does not run the simulation.
+                    msg = "Heat wave simulation runs on the host only."
+                else
+                    msg = "3-day heat wave simulated.\nCheck field moisture: stress may have increased."
+                end
             end
             self:showPopup(msg)
         elseif actionId == "admin_reset" then
