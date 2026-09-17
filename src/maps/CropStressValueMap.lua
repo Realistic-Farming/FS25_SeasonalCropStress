@@ -607,6 +607,74 @@ function CropStressValueMap:readAverageOfPolygon(vx, vz, n)
 end
 
 -- ─────────────────────────────────────────────────────────
+-- RSF-F247 item 1: the written-pixel probe and the unwritten-only fill.
+-- Both bind the SAME modifier and filter the delta path uses. The delta path
+-- changes the filter's compare values (applyDeltaToPolygon), so each helper sets
+-- its own compare values on every call.
+-- ─────────────────────────────────────────────────────────
+
+--- Is anything written inside this polygon? Never averages and never writes.
+--- The count is the filtered pixel count (raw BETWEEN RAW_MIN..RAW_MAX), the
+--- second value of executeGet(filter) (FieldManager.lua:100), so the answer does
+--- not depend on what the unfiltered count means (F250 item 3).
+---@return string outcome  "INVALID_FIELD_GEOMETRY" | "PROVIDER_REFUSAL" | "UNPROVEN" | "PRESENT" | "NONE"
+function CropStressValueMap:hasWrittenPixels(vx, vz, n)
+    if vx == nil or vz == nil or n == nil or n < 3 then
+        return "INVALID_FIELD_GEOMETRY"
+    end
+    if not self.available then return "PROVIDER_REFUSAL" end
+    local m = self.modifier
+    if m == nil or m.executeGet == nil then return "PROVIDER_REFUSAL" end
+    local f = self.filter
+    if f == nil then
+        -- No filter class on this engine: the probe cannot prove anything, which
+        -- is a refusal of the decision, not of the provider.
+        if DensityMapFilter == nil or DensityMapFilter.new == nil then return "UNPROVEN" end
+        return "PROVIDER_REFUSAL"
+    end
+    if not self:_setPolygonRegion(vx, vz, n) then return "PROVIDER_REFUSAL" end
+    local ok, _, count = pcall(function()
+        f:setValueCompareParams(DensityValueCompareType.BETWEEN, RAW_MIN, RAW_MAX)
+        return m:executeGet(f)
+    end)
+    if not ok or type(count) ~= "number" then return "PROVIDER_REFUSAL" end
+    if count > 0 then return "PRESENT" end
+    return "NONE"
+end
+
+--- Paint only the unwritten (raw 0) pixels inside this polygon. Movement is proved
+--- only by the filtered raw-0 count falling across the set; executeSet has no
+--- receipt (StoneSystem.lua:253 ignores its return). Because the filter admits
+--- only raw 0, a written pixel can never change.
+---@return string outcome  "EMPTY_OUTLINE" | "OK" | "NOOP" | "PROVIDER_REFUSAL"
+---@return boolean setRan  true when executeSet was called (a NOOP with setRan is
+---  a set that proved no movement; the caller logs it once per field)
+function CropStressValueMap:fillUnwrittenPolygon(vx, vz, n, value)
+    if not self.available then return "NOOP", false end
+    local m, f = self.modifier, self.filter
+    if m == nil or f == nil or m.executeGet == nil or m.executeSet == nil then
+        return "NOOP", false
+    end
+    if not self:_setPolygonRegion(vx, vz, n) then return "PROVIDER_REFUSAL", false end
+    local raw = encode(value, CropStressValueMap.LAYER_DEF)
+    local okBefore, _, before = pcall(function()
+        f:setValueCompareParams(DensityValueCompareType.EQUAL, 0)
+        return m:executeGet(f)
+    end)
+    if not okBefore or type(before) ~= "number" then return "PROVIDER_REFUSAL", false end
+    if before == 0 then return "EMPTY_OUTLINE", false end
+    local okSet = pcall(function() m:executeSet(raw, f) end)
+    if not okSet then return "PROVIDER_REFUSAL", true end
+    local okAfter, _, after = pcall(function()
+        f:setValueCompareParams(DensityValueCompareType.EQUAL, 0)
+        return m:executeGet(f)
+    end)
+    if not okAfter or type(after) ~= "number" then return "PROVIDER_REFUSAL", true end
+    if after < before then return "OK", true end
+    return "NOOP", true
+end
+
+-- ─────────────────────────────────────────────────────────
 -- MULTIPLAYER DELIVERY (brief step 5, the six-layer precedent)
 --
 -- The server owns the moisture truth; a client allocates the same map and is

@@ -412,14 +412,17 @@ function IrrigationScheduleDialog:updateCoveredFields(system)
 
     local y = 0
     for _, fieldId in ipairs(system.coveredFields) do
-        local moisture = 0
+        local moisture = nil
         local stress   = 0
         if g_cropStressManager ~= nil then
-            if g_cropStressManager.soilSystem    ~= nil then moisture = g_cropStressManager:getMoisture(fieldId) or 0 end
+            if g_cropStressManager.soilSystem    ~= nil then moisture = g_cropStressManager:getMoisture(fieldId) end
             if g_cropStressManager.stressModifier ~= nil then stress  = g_cropStressManager:getStress(fieldId) or 0 end
         end
         local cropName = self:getCropName(fieldId)
-        local labelStr = string.format("Field %d · %s  %d%%", fieldId, cropName, math.floor(moisture * 100))
+        -- RSF-F245 item 6: no percent for a field with no current value.
+        local labelStr = type(moisture) == "number"
+            and string.format("Field %d · %s  %d%%", fieldId, cropName, math.floor(moisture * 100))
+            or string.format("Field %d · %s", fieldId, cropName)
         if stress > 0.2 then labelStr = labelStr .. " !" end
         makeTextRow(labelStr, y)
         y = y - 20

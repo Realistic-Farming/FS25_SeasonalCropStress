@@ -435,6 +435,11 @@ function CsPDAScreen:_rebuildData()
 
     local localFarmId = self.showOwnedOnly and mgr.getLocalFarmId() or nil
 
+    -- RSF-F245 item 6: refresh before the table reads the slots.
+    if type(soilSystem.refreshForPublication) == "function" then
+        soilSystem:refreshForPublication()
+    end
+
     local rows = {}
     for fid, entry in pairs(soilSystem.fieldData) do
         local field = fieldById[fid]
@@ -448,7 +453,9 @@ function CsPDAScreen:_rebuildData()
         if include then
             local ftiIndex   = field and field.fieldState and field.fieldState.fruitTypeIndex or 0
             local cropName   = getCropName(ftiIndex)
-            local moisture   = entry.moisture or 0
+            -- RSF-F245: the row stays; its moisture is nil when there is no reading.
+            local moisture   = (entry.aggregateState ~= "UNAVAILABLE" and type(entry.moisture) == "number")
+                and entry.moisture or nil
             local stress     = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
             local systemId   = coveredFields[fid]  -- nil if not irrigated
             local irrigated  = systemId ~= nil or vehicleFields[fid] == true
@@ -491,7 +498,10 @@ function CsPDAScreen:_rebuildData()
                     for _, mid in ipairs(members) do
                         local m = byId[mid]
                         if m ~= nil then
-                            if m.moisture < row.moisture then row.moisture = m.moisture end
+                            -- RSF-F245: the minimum over members with a reading only.
+                            if type(m.moisture) == "number" and (row.moisture == nil or m.moisture < row.moisture) then
+                                row.moisture = m.moisture
+                            end
                             if m.stress > row.stress then row.stress = m.stress end
                             if m.irrigated then row.irrigated = true end
                             if row.systemId == nil then row.systemId = m.systemId end
@@ -508,10 +518,21 @@ function CsPDAScreen:_rebuildData()
         end
     end
 
+    -- RSF-F245 item 6: numeric rows first ascending, rows with no reading last; no
+    -- compare on nil. Ties order by field id.
+    local function moistureLess(a, b)
+        if a.moisture == nil or b.moisture == nil then
+            if a.moisture == nil and b.moisture == nil then return a.fieldId < b.fieldId end
+            return b.moisture == nil
+        end
+        if a.moisture == b.moisture then return a.fieldId < b.fieldId end
+        return a.moisture < b.moisture
+    end
+
     -- Sort field list: alphabetical crop, then by moisture asc within crop
     table.sort(rows, function(a, b)
         if a.cropName ~= b.cropName then return a.cropName < b.cropName end
-        return a.moisture < b.moisture
+        return moistureLess(a, b)
     end)
     self.fieldData = rows
 
@@ -520,9 +541,7 @@ function CsPDAScreen:_rebuildData()
     for _, r in ipairs(rows) do
         table.insert(irrRows, r)
     end
-    table.sort(irrRows, function(a, b)
-        return a.moisture < b.moisture
-    end)
+    table.sort(irrRows, moistureLess)
     self.irrigationData = irrRows
 end
 
@@ -568,13 +587,22 @@ function CsPDAScreen:_rebuildStats()
         end
     end
 
+    -- RSF-F245 item 6: refresh first; a field with no reading stays tracked but is
+    -- left out of the average and the healthy, warning and critical counts.
+    if type(soilSystem.refreshForPublication) == "function" then
+        soilSystem:refreshForPublication()
+    end
+    local withReading = 0
     for fid, entry in pairs(soilSystem.fieldData) do
         totalTracked = totalTracked + 1
-        local m = entry.moisture or 0
-        sumMoisture = sumMoisture + m
-        if m >= 0.40 then healthy = healthy + 1
-        elseif m >= 0.25 then warning = warning + 1
-        else critical = critical + 1 end
+        if entry.aggregateState ~= "UNAVAILABLE" and type(entry.moisture) == "number" then
+            local m = entry.moisture
+            withReading = withReading + 1
+            sumMoisture = sumMoisture + m
+            if m >= 0.40 then healthy = healthy + 1
+            elseif m >= 0.25 then warning = warning + 1
+            else critical = critical + 1 end
+        end
 
         local s = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
         sumStress = sumStress + s
@@ -587,7 +615,7 @@ function CsPDAScreen:_rebuildStats()
         end
     end
 
-    local avgMoisture = totalTracked > 0 and (sumMoisture / totalTracked) or 0
+    local avgMoisture = withReading > 0 and (sumMoisture / withReading) or nil
     local avgStress   = totalTracked > 0 and (sumStress   / totalTracked) or 0
     -- BUILD 15:00: the live cap (settings clamp 30-75%, factory 30%), never a hardcode.
     local maxLoss = (CropStressModifier ~= nil and CropStressModifier.MAX_YIELD_LOSS) or 0.30
@@ -616,8 +644,12 @@ function CsPDAScreen:_rebuildStats()
     setText(self.statsFieldsOwned,   totalOwned)
 
     if self.statsAvgMoisture then
-        self.statsAvgMoisture:setText(string.format("%.0f%%", avgMoisture * 100))
-        setColor(self.statsAvgMoisture, getMoistureColor(avgMoisture))
+        if avgMoisture ~= nil then
+            self.statsAvgMoisture:setText(string.format("%.0f%%", avgMoisture * 100))
+            setColor(self.statsAvgMoisture, getMoistureColor(avgMoisture))
+        else
+            self.statsAvgMoisture:setText("")
+        end
     end
 
     if self.statsHealthy  then
@@ -681,13 +713,15 @@ function CsPDAScreen:_populateFieldCell(index, cell)
     if idEl     then idEl:setText("F" .. tostring(row.fieldId)) end
     if cropEl   then cropEl:setText(row.cropName) end
 
+    -- RSF-F245 item 6: a row with no reading shows blank cells, no status colour.
+    local hasMoisture = type(row.moisture) == "number"
     if moistEl  then
-        moistEl:setText(string.format("%.0f%%", row.moisture * 100))
-        moistEl:setTextColor(unpack(getMoistureColor(row.moisture)))
+        moistEl:setText(hasMoisture and string.format("%.0f%%", row.moisture * 100) or "")
+        if hasMoisture then moistEl:setTextColor(unpack(getMoistureColor(row.moisture))) end
     end
     if statusEl then
-        statusEl:setText(getMoistureStatus(row.moisture))
-        statusEl:setTextColor(unpack(getMoistureColor(row.moisture)))
+        statusEl:setText(hasMoisture and getMoistureStatus(row.moisture) or "")
+        if hasMoisture then statusEl:setTextColor(unpack(getMoistureColor(row.moisture))) end
     end
 end
 
@@ -705,8 +739,12 @@ function CsPDAScreen:_populateIrrigationCell(index, cell)
     if cropEl then cropEl:setText(row.cropName) end
 
     if moistEl then
-        moistEl:setText(string.format("%.0f%%", row.moisture * 100))
-        moistEl:setTextColor(unpack(getMoistureColor(row.moisture)))
+        if type(row.moisture) == "number" then
+            moistEl:setText(string.format("%.0f%%", row.moisture * 100))
+            moistEl:setTextColor(unpack(getMoistureColor(row.moisture)))
+        else
+            moistEl:setText("")
+        end
     end
     if strEl then
         local stressPct = math.floor(row.stress * 100)

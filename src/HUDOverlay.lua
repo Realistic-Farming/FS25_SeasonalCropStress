@@ -1093,7 +1093,10 @@ end
 -- ============================================================
 function HUDOverlay:drawFieldRow(row, px, rowY, s)
     s = s or self.scale
-    local moisture = row.moisture or 0
+    -- RSF-F245 item 6: a row with no current moisture draws no bar, no percent and
+    -- no severity colour; its label still shows.
+    local hasMoisture = type(row.moisture) == "number"
+    local moisture = row.moisture
     local stress   = row.stress   or 0
     local barW     = HUDOverlay.BAR_W * s
     local barH     = HUDOverlay.BAR_H * s
@@ -1131,21 +1134,23 @@ function HUDOverlay:drawFieldRow(row, px, rowY, s)
     local pctW = HUDOverlay.PCT_W * s
     local barX = px + panelW - pad - gutW - pctW - barW
     local barY = rowY + (rowH - barH) * 0.5
-    local renderer = getHUDRenderer()
-    local moistureColor = self:getMoistureColor(moisture)
-    local renderedNativeBar = renderer ~= nil and type(renderer.renderProgressBar) == "function"
-        and renderer:renderProgressBar(barX, barY, barW, barH, moisture, moistureColor)
-    if not renderedNativeBar then
-        setOverlayColor(self.fillOverlay, unpack(HUDOverlay.COLOR_BAR_BG))
-        renderOverlay(self.fillOverlay, barX, barY, barW, barH)
+    if hasMoisture then
+        local renderer = getHUDRenderer()
+        local moistureColor = self:getMoistureColor(moisture)
+        local renderedNativeBar = renderer ~= nil and type(renderer.renderProgressBar) == "function"
+            and renderer:renderProgressBar(barX, barY, barW, barH, moisture, moistureColor)
+        if not renderedNativeBar then
+            setOverlayColor(self.fillOverlay, unpack(HUDOverlay.COLOR_BAR_BG))
+            renderOverlay(self.fillOverlay, barX, barY, barW, barH)
 
-        setOverlayColor(self.fillOverlay, unpack(moistureColor))
-        renderOverlay(self.fillOverlay, barX, barY, barW * moisture, barH)
+            setOverlayColor(self.fillOverlay, unpack(moistureColor))
+            renderOverlay(self.fillOverlay, barX, barY, barW * moisture, barH)
+        end
+
+        setTextColor(unpack(HUDOverlay.COLOR_TEXT))
+        renderText(barX + barW + pad * 0.5, rowY + pad, HUDOverlay.TEXT_SIZE * s * 0.90,
+            string.format("%d%%", math.floor(moisture * 100 + 0.5)))
     end
-
-    setTextColor(unpack(HUDOverlay.COLOR_TEXT))
-    renderText(barX + barW + pad * 0.5, rowY + pad, HUDOverlay.TEXT_SIZE * s * 0.90,
-        string.format("%d%%", math.floor(moisture * 100 + 0.5)))
 
     -- SoilFertilizer enrichment: render a compact pressure/needs strip
     -- below the moisture bar when SF data is available for this field.
@@ -1249,49 +1254,57 @@ function HUDOverlay:drawForecastStrip(px, py)
     local labelY   = barBaseY + barAreaH + pad
 
     local colLabels  = {"Now", "D+1", "D+2", "D+3", "D+4"}
-    local currentMoisture = 0
+    -- RSF-F245 item 6: a field with no current moisture draws no column at all; "Now"
+    -- and its projections are not defaulted.
+    local currentMoisture = nil
     if self.manager ~= nil and self.manager.soilSystem ~= nil then
-        currentMoisture = self.manager:getMoisture(fieldId) or 0
+        currentMoisture = self.manager:getMoisture(fieldId)
     end
-    local displayVals = {
-        currentMoisture,
-        projections[1] or currentMoisture,
-        projections[2] or currentMoisture,
-        projections[3] or currentMoisture,
-        projections[4] or currentMoisture,
-    }
+    local proj = projections or {}
+    local displayVals = {}
+    if type(currentMoisture) == "number" then
+        displayVals = {
+            currentMoisture,
+            proj[1] or currentMoisture,
+            proj[2] or currentMoisture,
+            proj[3] or currentMoisture,
+            proj[4] or currentMoisture,
+        }
+    end
     local colGap    = (panelW - pad * 2) / HUDOverlay.FORECAST_COLS
     local colStartX = px + pad
 
     for i = 1, HUDOverlay.FORECAST_COLS do
-        local val = displayVals[i] or 0
-        local cx  = colStartX + (i - 1) * colGap + pad
-        -- Bar width derives from the column gap (not the fixed FORECAST_COL_W)
-        -- so an edge-drag widening of the pane stretches the bars with it.
-        local bw  = math.max(0.004, colGap - pad)
+        local val = displayVals[i]
+        if type(val) == "number" then
+            local cx  = colStartX + (i - 1) * colGap + pad
+            -- Bar width derives from the column gap (not the fixed FORECAST_COL_W)
+            -- so an edge-drag widening of the pane stretches the bars with it.
+            local bw  = math.max(0.004, colGap - pad)
 
-        -- Day label: "Now" uses normal color; projected days (i>1) use a dimmer
-        -- tone when forecast is approximate, signalling reduced certainty.
-        local isProjected = (i > 1) and isApprox
-        if isProjected then
-            setTextColor(0.55, 0.65, 0.75, 0.80)    -- desaturated blue-grey
-        else
-            setTextColor(unpack(HUDOverlay.COLOR_DIM_TEXT))
+            -- Day label: "Now" uses normal color; projected days (i>1) use a dimmer
+            -- tone when forecast is approximate, signalling reduced certainty.
+            local isProjected = (i > 1) and isApprox
+            if isProjected then
+                setTextColor(0.55, 0.65, 0.75, 0.80)    -- desaturated blue-grey
+            else
+                setTextColor(unpack(HUDOverlay.COLOR_DIM_TEXT))
+            end
+            renderText(cx, labelY, textSz, colLabels[i] or "?")
+
+            setOverlayColor(self.fillOverlay, unpack(HUDOverlay.COLOR_BAR_BG))
+            renderOverlay(self.fillOverlay, cx, barBaseY, bw, barAreaH)
+
+            setOverlayColor(self.fillOverlay, unpack(self:getMoistureColor(val)))
+            renderOverlay(self.fillOverlay, cx, barBaseY, bw, barAreaH * val)
+
+            -- Percentage text: prefix "~" on projected columns to signal approximation.
+            setTextColor(unpack(HUDOverlay.COLOR_TEXT))
+            local pctStr = isProjected
+                and string.format("~%d%%", math.floor(val * 100 + 0.5))
+                or  string.format("%d%%",  math.floor(val * 100 + 0.5))
+            renderText(cx, pctBaseY, textSz, pctStr)
         end
-        renderText(cx, labelY, textSz, colLabels[i] or "?")
-
-        setOverlayColor(self.fillOverlay, unpack(HUDOverlay.COLOR_BAR_BG))
-        renderOverlay(self.fillOverlay, cx, barBaseY, bw, barAreaH)
-
-        setOverlayColor(self.fillOverlay, unpack(self:getMoistureColor(val)))
-        renderOverlay(self.fillOverlay, cx, barBaseY, bw, barAreaH * val)
-
-        -- Percentage text: prefix "~" on projected columns to signal approximation.
-        setTextColor(unpack(HUDOverlay.COLOR_TEXT))
-        local pctStr = isProjected
-            and string.format("~%d%%", math.floor(val * 100 + 0.5))
-            or  string.format("%d%%",  math.floor(val * 100 + 0.5))
-        renderText(cx, pctBaseY, textSz, pctStr)
     end
 end
 
@@ -1408,8 +1421,16 @@ function HUDOverlay:rebuildDisplayRows()
                     grouped[#grouped + 1] = e
                 end
             end
-            -- driest first, the order getFieldsSortedByMoisture gave the singles
-            table.sort(grouped, function(a, b) return (a.moisture or 0) < (b.moisture or 0) end)
+            -- driest first, the order getFieldsSortedByMoisture gave the singles.
+            -- RSF-F245 item 6: a block with no current member sorts last; no `or 0`.
+            table.sort(grouped, function(a, b)
+                if a.moisture == nil or b.moisture == nil then
+                    if a.moisture == nil and b.moisture == nil then return a.fieldId < b.fieldId end
+                    return b.moisture == nil
+                end
+                if a.moisture == b.moisture then return a.fieldId < b.fieldId end
+                return a.moisture < b.moisture
+            end)
             fieldsToDisplay = grouped
         end
     end
@@ -1588,7 +1609,7 @@ function HUDOverlay:toggle()
                 end
                 table.insert(self.displayRows, {
                     fieldId        = fid,
-                    moisture       = 0,
+                    moisture       = nil,   -- RSF-F245: a stub row invents no 0 percent
                     stress         = stress,
                     cropName       = cn or "Fallow",
                     growthStage    = gs,

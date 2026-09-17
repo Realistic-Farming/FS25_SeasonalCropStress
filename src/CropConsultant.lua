@@ -146,9 +146,15 @@ function CropConsultant:hourlyEvaluate()
     -- Use configured cooldown; fall back to class constant if not yet applied
     local cooldownHours = self.alertCooldown or CropConsultant.COOLDOWN_HOURS
 
+    -- RSF-F245 item 6: refresh before the band check; a field with no current value
+    -- is skipped.
+    if type(self.manager.soilSystem.refreshForPublication) == "function" then
+        self.manager.soilSystem:refreshForPublication()
+    end
     for fieldId, data in pairs(self.manager.soilSystem.fieldData) do
         -- Only alert for fields the local player owns
-        if self:isOwnedByLocalPlayer(fieldId) then
+        if self:isOwnedByLocalPlayer(fieldId) and data.aggregateState ~= "UNAVAILABLE"
+           and type(data.moisture) == "number" then
             local moisture = data.moisture
 
             -- Only evaluate INFO range here (WARNING covered by band-crossing in onMoistureUpdated)
@@ -191,6 +197,11 @@ function CropConsultant:onCriticalThreshold(data)
         hourKey = (env.currentMonotonicDay or 0) * 24 + (env.currentHour or 0)
     end
 
+    -- RSF-F245: never an alert on an invented 0 (the hourly act publishes no
+    -- critical event for a field with no current value). Tested before the
+    -- cooldown so an event with no number never uses up the field's cooldown.
+    if type(data.moistureLevel) ~= "number" then return end
+
     local cooldownHours = self.alertCooldown or CropConsultant.COOLDOWN_HOURS
     local cooldownKey = fieldId .. "_critical"
     local lastAlert   = self.alertCooldowns[cooldownKey] or -999
@@ -198,7 +209,7 @@ function CropConsultant:onCriticalThreshold(data)
 
     self.alertCooldowns[cooldownKey] = hourKey
 
-    local moisture = data.moistureLevel or 0
+    local moisture = data.moistureLevel
     local cropName = self:getCropName(fieldId)
     self:showAlert(fieldId, moisture, "CRITICAL", cropName)
 end
@@ -214,8 +225,10 @@ function CropConsultant:onMoistureUpdated(data)
 
     local fieldId  = data.fieldId
     if not self:isOwnedByLocalPlayer(fieldId) then return end
-    local previous = data.previous or 1.0
-    local current  = data.current  or 1.0
+    -- RSF-F245 item 6: a missing previous or current value is no crossing.
+    if type(data.previous) ~= "number" or type(data.current) ~= "number" then return end
+    local previous = data.previous
+    local current  = data.current
 
     -- Trigger when crossing INTO the warning band from healthy
     if previous >= CropConsultant.SEVERITY_WARNING_MAX

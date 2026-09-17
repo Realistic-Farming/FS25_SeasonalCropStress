@@ -70,6 +70,29 @@ local function pointInPolygon(px, pz, vx, vz, n)
     return inside
 end
 
+--- RSF-F247 item 8: the two display-centre water calls land at a point inside the
+--- field's outline. The display centre is kept when it is a member (byte-for-byte
+--- today's call); a field with no member anchor skips the call with one log line
+--- per field per mission.
+function IrrigationManager:_waterAtMemberAnchor(soil, fieldId, d, gain)
+    local ax, az
+    if type(soil._memberAnchor) == "function" then
+        ax, az = soil:_memberAnchor(fieldId)
+    else
+        ax, az = d.centerX or 0, d.centerZ or 0
+    end
+    if ax == nil then
+        local msg = string.format("Irrigation: field %d has no point inside its outline; water call skipped", fieldId)
+        if type(soil._logOnce) == "function" then
+            soil:_logOnce(fieldId, "anchor-skip", msg)
+        else
+            csLog(msg)
+        end
+        return false
+    end
+    return soil:applyWaterAtCell(fieldId, ax, az, gain)
+end
+
 function IrrigationManager.new(manager)
     local self = setmetatable({}, IrrigationManager)
     self.manager = manager
@@ -857,8 +880,9 @@ function IrrigationManager:applyOneTimeIrrigation(systemId)
                     end
                 end
             else
-                -- Fallback: field-level (unchanged behaviour for unknown types).
-                soilSystem:applyWaterAtCell(fieldId, d.centerX or 0, d.centerZ or 0, effectiveRate)
+                -- Fallback: field-level (unchanged behaviour for unknown types),
+                -- at the field's member anchor (RSF-F247 item 8).
+                self:_waterAtMemberAnchor(soilSystem, fieldId, d, effectiveRate)
             end
             applied = applied + 1
         end
@@ -1406,7 +1430,9 @@ function IrrigationManager:settleFittedSystem(system, reason)
             for _, fieldId in ipairs(system.coveredFields or {}) do
                 local d = soil.fieldData[fieldId]
                 if d ~= nil then
-                    soil:applyWaterAtCell(fieldId, d.centerX or 0, d.centerZ or 0, rate * hours)
+                    -- RSF-F247 item 8: at the member anchor. The running-cost
+                    -- deduction below is unchanged (it never depended on acceptance).
+                    self:_waterAtMemberAnchor(soil, fieldId, d, rate * hours)
                 end
             end
         end

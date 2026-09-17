@@ -150,10 +150,14 @@ do
   sys:settleDaily(1)
   T.near("settle.scalarReDerived", sys.fieldData[1].moisture, 0.42, 1e-9)
 
-  -- A map that cannot answer must leave the scalar alone rather than zero it.
+  -- RSF-F245 item 3 (reverses the old "leave the scalar" rule): an EMPTY read
+  -- never zeroes the field and never keeps last value as current. The field has no
+  -- current value; the last current value is kept aside, labelled.
   sys.valueMap.meanToReturn = nil
   sys:settleDaily(1)
-  T.near("settle.nilMeanLeavesScalar", sys.fieldData[1].moisture, 0.42, 1e-9)
+  T.eq("settle.emptyLeavesNoCurrentValue (F245)", sys.fieldData[1].moisture, nil)
+  T.eq("settle.emptyMarksUnavailable (F245)", sys.fieldData[1].aggregateState, "UNAVAILABLE")
+  T.near("settle.emptyKeepsLastKnownAside (F245)", sys.fieldData[1].moistureLastKnown, 0.42, 1e-9)
 end
 
 -- 6. THE DAILY SETTLE ON THE FALLBACK still runs the conserving drainage and
