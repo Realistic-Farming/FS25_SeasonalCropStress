@@ -1,4 +1,4 @@
---!load: src/SoilMoistureSystem.lua, src/CropStressManager.lua, src/settings/CropStressSettingsPanel.lua
+--!load: src/SoilMoistureSystem.lua, src/events/CropStressMoistureInitEvent.lua, src/CropStressManager.lua, src/settings/CropStressSettingsPanel.lua, src/events/CropStressHeatRequestEvent.lua, src/events/CropStressHeatResultEvent.lua
 -- SCS #191: csSimulateHeat and the settings panel's Simulate Heat Wave button never
 -- run the hourly moisture and stress simulation on a pure multiplayer client. The
 -- engine creates g_server only for singleplayer and a hosted game
@@ -8,7 +8,7 @@
 local function group(name, fn)
     local ok, err = pcall(fn)
     if not ok then T.ok(name .. " [group crashed]", false, tostring(err)) end
-    g_server = {}
+    g_server = { broadcastEvent = function() end }
     g_cropStressManager = nil
 end
 
@@ -47,7 +47,7 @@ group("C client", function()
     local mgr, soil, counts = heatManager()
     g_server = nil
     local ret = mgr:consoleSimulateHeat("3")
-    T.eq("C1a a client's csSimulateHeat answers false", ret, false)
+    T.ok("C1a a client's csSimulateHeat never runs the simulation locally (#191 follow-up: it may send a request)", ret ~= "RAN")
     T.eq("C1b and runs no soil hourly update", counts.soil, 0)
     T.eq("C1c nor any stress hourly update", counts.stress, 0)
     T.eq("C1d the client's field moisture is untouched", soil.fieldData[1].moisture, 0.6)
@@ -56,14 +56,14 @@ group("C client", function()
     local panel, popups = panelFor(mgr)
     panel:handleClick("admin_action_admin_heat", { actionId = "admin_heat" })
     T.eq("C2a a client admin's panel button runs no hourly update", counts.soil + counts.stress, 0)
-    T.eq("C2b and says it runs on the host only", popups[#popups], "Heat wave simulation runs on the host only.")
+    T.ok("C2b and never claims a simulation ran", type(popups[#popups]) == "string" and popups[#popups]:find("Simulated", 1, true) == nil, popups[#popups])
 end)
 
 group("H host", function()
     local mgr, soil, counts = heatManager()
-    g_server = {}
+    g_server = { broadcastEvent = function() end }
     local ret = mgr:consoleSimulateHeat("1")
-    T.ok("H1a [reached: the host runs the simulation]", ret ~= false)
+    T.eq("H1a [reached: the host runs the simulation]", ret, "RAN")
     T.eq("H1b one day is 24 soil hourly updates", counts.soil, 24)
     T.eq("H1c and 24 stress hourly updates", counts.stress, 24)
     T.ok("H1d the host's field dried", soil.fieldData[1].moisture < 0.6)
@@ -73,5 +73,5 @@ group("H host", function()
     local panel, popups = panelFor(mgr)
     panel:handleClick("admin_action_admin_heat", { actionId = "admin_heat" })
     T.eq("H2a the host panel button runs three days", counts.soil, 72)
-    T.ok("H2b and reports the simulation", type(popups[#popups]) == "string" and popups[#popups]:find("3-day heat wave simulated", 1, true) ~= nil)
+    T.ok("H2b and reports the simulation", type(popups[#popups]) == "string" and popups[#popups]:find("Simulated 3-day heat wave", 1, true) ~= nil)
 end)
