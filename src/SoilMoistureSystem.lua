@@ -347,8 +347,10 @@ function SoilMoistureSystem:initValueMap(savegameDir)
         return false
     end
 
+    -- RSF-F244: initialize stands a FRESH map up and opens no file. Any saved
+    -- image is opened later, inside the restore barrier.
     self.valueMap = CropStressValueMap.new()
-    local ok = self.valueMap:initialize(savegameDir)
+    local ok = self.valueMap:initialize()
     if ok then
         self.providerMode = "TRUTH"
         csLog("Moisture: the 2m value map is live; the cell store is now the fallback only")
@@ -364,19 +366,37 @@ function SoilMoistureSystem:initValueMap(savegameDir)
 end
 
 --- SCS-039 SDS 3.8: adopt the native generation the restore barrier selected.
---- The probe stood the map up (and may have imported the legacy file as
---- generation 0); this opens the selected envelope's generation-qualified image
---- over it and proves the shape. Returns true only when that file is usable.
+--- The probe stood a fresh map up; this opens the image the selected envelope
+--- RECORDS (RSF-F244: by its filename, a slot name or a PR188-era g<N> name, never
+--- a name rebuilt from the generation) and proves the shape. Returns true only
+--- when that file is usable.
 ---@param savegameDir string|nil
 ---@param envelope table  the selected COMPLETE envelope (filename, generation, mapWidth)
 ---@return boolean
 function SoilMoistureSystem:adoptNativeGeneration(savegameDir, envelope)
     if not self:mapActive() or savegameDir == nil or type(envelope) ~= "table" then return false end
     if envelope.filename == nil or type(envelope.generation) ~= "number" then return false end
-    if type(self.valueMap.loadGenerationFile) ~= "function" then return false end
-    local ok = self.valueMap:loadGenerationFile(savegameDir, envelope.generation, envelope.mapWidth) == true
+    if type(self.valueMap.loadNativeFile) ~= "function" then return false end
+    local ok = self.valueMap:loadNativeFile(savegameDir, envelope.filename, envelope.mapWidth) == true
     if ok then
         self.providerMode = "TRUTH"
+    end
+    return ok
+end
+
+--- RSF-F244: the barrier's legacy import (ctx.legacyProbe). Loads csMoistureMap.grle
+--- as generation 0 when the save is pre-generation. A no-op returning false when
+--- the map is not carrying the truth (release gate off, no engine, already
+--- declined) or there is no save directory. If the map could not even be reset
+--- after a failed load, it is declined for the mission.
+---@param savegameDir string|nil
+---@return boolean imported
+function SoilMoistureSystem:importLegacyNativeMap(savegameDir)
+    if not self:mapActive() or savegameDir == nil then return false end
+    if type(self.valueMap.importLegacyFile) ~= "function" then return false end
+    local ok = self.valueMap:importLegacyFile(savegameDir) == true
+    if not ok and self.valueMap.available ~= true then
+        self:declineNativeCarrier("the map could not be reset after a failed legacy load")
     end
     return ok
 end
@@ -1100,9 +1120,11 @@ end
 --- mission still trusting the fine map. The per-field scalar rows the save
 --- handler writes next are the honest degrade layer, and the next load re-selects
 --- a readable TRUTH or ZONE carrier. Returns the literal save receipt.
-function SoilMoistureSystem:saveNativeMap(savegameDir, generation)
+---@param savegameDir string|nil
+---@param filename string  RSF-F244: the slot name the save cut chose, written as is
+function SoilMoistureSystem:saveNativeMap(savegameDir, filename)
     if self.valueMap == nil or not self.valueMap.available then return false end
-    local savedOk = self.valueMap:saveToSavegame(savegameDir, generation) == true
+    local savedOk = self.valueMap:saveToSavegame(savegameDir, filename) == true
     if not savedOk then
         self:_failNativeClosed("native save refusal")
     end
