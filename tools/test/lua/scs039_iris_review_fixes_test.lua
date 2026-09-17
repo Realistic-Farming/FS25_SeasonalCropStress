@@ -17,6 +17,9 @@ local function newSysWithCell()
     fieldId = 1, moisture = 0.5, soilType = "loamy", mapPending = 0,
     cells = { [0] = { [0] = { moisture = 0.9 } } }, cellSum = 0.9, cellCount = 1,
   }
+  -- RSF-F247 item 7: positional doors now prove membership, so the fixture's
+  -- field has an outline that contains the probe point (10, 10).
+  s._fieldVerts[1] = { vx = { 0, 100, 100, 0 }, vz = { 0, 0, 100, 100 }, n = 4 }
   return s
 end
 
@@ -65,6 +68,7 @@ do
   local s = SoilMoistureSystem.new({})
   s.isInitialized = true
   s.fieldData[1] = { fieldId = 1, moisture = 0.5, soilType = "loamy", cells = {} }
+  s._fieldVerts[1] = { vx = { 0, 100, 100, 0 }, vz = { 0, 0, 100, 100 }, n = 4 }   -- RSF-F247 membership
   local v, grain = s:getMoisture(1, 10, nil)
   T.eq('fix3.mixedNilValue', v, nil)
   T.eq('fix3.mixedNilGrain', grain, nil)

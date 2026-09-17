@@ -53,6 +53,9 @@ source(modDir .. "src/SoilFineSnapshot.lua")
 
 -- Core simulation
 source(modDir .. "src/SoilMoistureSystem.lua")
+-- RSF-F247: the parcel probe, fill, ground check and member anchor (adds methods
+-- to SoilMoistureSystem, so it loads right after it).
+source(modDir .. "src/SoilMoistureGround.lua")
 source(modDir .. "src/CropStressModifier.lua")
 source(modDir .. "src/IrrigationManager.lua")
 

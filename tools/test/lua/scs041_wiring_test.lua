@@ -11,6 +11,9 @@ local function sys()
   s.valueMap = nil
   s.providerMode = "ZONE"
   s.fieldData[1] = { soilType = "clay" }
+  -- RSF-F247 item 7: the public water door proves membership first, so the field
+  -- has an outline containing every probe point used below.
+  s._fieldVerts[1] = { vx = { 0, 100, 100, 0 }, vz = { 0, 0, 100, 100 }, n = 4 }
   return s
 end
 

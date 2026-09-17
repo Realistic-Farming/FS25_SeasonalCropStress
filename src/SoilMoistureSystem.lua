@@ -209,10 +209,52 @@ function SoilMoistureSystem:getFieldPolygonWorld(field)
     for i = 1, n do
         local node = pts[i]
         if node == nil or node == 0 then return nil end
-        local wx, _, wz = getWorldTranslation(node)
+        -- RSF-F247 item 2: each translation is protected; a throw or a non-finite
+        -- coordinate fails only this field's walk.
+        local ok, wx, _, wz = pcall(getWorldTranslation, node)
+        if not ok or type(wx) ~= "number" or type(wz) ~= "number"
+           or wx ~= wx or wz ~= wz or math.abs(wx) == math.huge or math.abs(wz) == math.huge then
+            return nil
+        end
         vx[i] = wx
         vz[i] = wz
     end
+    return vx, vz, n
+end
+
+--- RSF-F247 item 2: the engine's own field polygon, read through the getter when
+--- it is callable (decompiled Field.lua:170-171), otherwise through the official
+--- instance field `densityMapPolygon` (official Field.lua:34, :86). Vertices come
+--- from getVerticesList() as x, z pairs (DensityMapPolygon.lua:67-77). Any missing
+--- object, missing method, throw, odd length, fewer than three points or a
+--- non-finite coordinate is a failed read (nil).
+function SoilMoistureSystem:_engineFieldPolygon(field)
+    if type(field) ~= "table" then return nil end
+    local ok, vx, vz, n = pcall(function()
+        local poly = nil
+        if type(field.getDensityMapPolygon) == "function" then
+            poly = field:getDensityMapPolygon()
+        elseif type(field.densityMapPolygon) == "table" then
+            poly = field.densityMapPolygon
+        end
+        if type(poly) ~= "table" or type(poly.getVerticesList) ~= "function" then return nil end
+        local list = poly:getVerticesList()
+        if type(list) ~= "table" then return nil end
+        local len = #list
+        if len % 2 ~= 0 or len < 6 then return nil end
+        local ax, az = {}, {}
+        for i = 1, len / 2 do
+            local x, z = list[2 * i - 1], list[2 * i]
+            if type(x) ~= "number" or type(z) ~= "number" or x ~= x or z ~= z
+               or math.abs(x) == math.huge or math.abs(z) == math.huge then
+                return nil
+            end
+            ax[i] = x
+            az[i] = z
+        end
+        return ax, az, len / 2
+    end)
+    if not ok or vx == nil then return nil end
     return vx, vz, n
 end
 
@@ -293,6 +335,20 @@ function SoilMoistureSystem.new(manager)
     -- _getFieldPolygons returns the whole collection (parcel-domain callers).
     self._fieldVerts = {}      -- fieldId -> parcel polygon collection cache
     self._mapSeeded  = {}      -- fieldId -> true once migrated onto the map
+    -- RSF-F245/F247 mission-only server memory (never saved, never sent; emptied
+    -- by delete). _restoreRows: fieldId -> { valueInstalled } for the fields a
+    -- saved row installed this load. _restoredMoisture: fieldId -> { value, kind }
+    -- (kind SAVED or FRESH_START). _carrierRecord: the carrier the barrier made
+    -- current (SELECTED_PAIR | LEGACY_IMPORT | FRESH) or nil. _groundChecked: the
+    -- ground check decided. _lastGoodFingerprint / _geometryRetryHour: the retry
+    -- doors. _onceLogged: once-per-field-per-mission log flags.
+    self._restoreRows         = {}
+    self._restoredMoisture    = {}
+    self._carrierRecord       = nil
+    self._groundChecked       = {}
+    self._lastGoodFingerprint = {}
+    self._geometryRetryHour   = {}
+    self._onceLogged          = {}
     -- SCS-039 quantisation remainders for positional water writes, keyed
     -- fieldId -> [pixelKey] -> pending sub-step moisture. The cell store holds
     -- a float so it never floors; the 2 m map has 254 raw steps, so a single
@@ -432,19 +488,131 @@ end
 --- existing polygon extraction stays the primitive; this is its parcel-domain
 --- fan-out. (SCS-041 owner-ratified field-boundary correction.)
 function SoilMoistureSystem:_collectParcelPolygons(fieldId)
-    local polys = {}
+    -- RSF-F247 item 2: for each engine field on this farmland, the node walk is
+    -- stored whenever it is valid (it keeps the fingerprint text stable and the
+    -- live nodes authoritative); the engine polygon is stored only when the walk
+    -- fails. A field that fails both contributes nothing, and the collection is
+    -- then PARTIAL (second return true) when another field succeeded.
+    local polys, failed = {}, 0
     if g_fieldManager ~= nil and g_fieldManager.fields ~= nil then
         for _, f in pairs(g_fieldManager.fields) do
             if f.farmland ~= nil and f.farmland.id == fieldId then
                 local vx, vz, n = self:getFieldPolygonWorld(f)
+                local ex, ez, en = self:_engineFieldPolygon(f)
                 if vx ~= nil and n ~= nil and n >= 3 then
                     polys[#polys + 1] = { vx = vx, vz = vz, n = n }
+                    if ex ~= nil and SoilMoistureSystem.polygonsDiffer(vx, vz, n, ex, ez, en) then
+                        self:_logOnce(fieldId, "engine-polygon-differs", string.format(
+                            "Moisture: field %d engine polygon differs from its node walk (node walk kept)", fieldId))
+                    end
+                elseif ex ~= nil then
+                    polys[#polys + 1] = { vx = ex, vz = ez, n = en }
+                else
+                    failed = failed + 1
                 end
             end
         end
     end
-    if #polys == 0 then return nil end
+    if #polys == 0 then return nil, false end
+    return polys, failed > 0
+end
+
+--- Diagnostic only: point count differs, or any vertex differs by more than 0.01 m.
+function SoilMoistureSystem.polygonsDiffer(ax, az, an, bx, bz, bn)
+    if an ~= bn then return true end
+    for i = 1, an do
+        if math.abs(ax[i] - bx[i]) > 0.01 or math.abs(az[i] - bz[i]) > 0.01 then return true end
+    end
+    return false
+end
+
+--- One log line per field per mission for a named reason.
+function SoilMoistureSystem:_logOnce(fieldId, what, msg)
+    self._onceLogged = self._onceLogged or {}
+    local key = tostring(what) .. ":" .. tostring(fieldId)
+    if self._onceLogged[key] then return false end
+    self._onceLogged[key] = true
+    csLog(msg)
+    return true
+end
+
+--- RSF-F247 item 5: the running mission clock in ms, or nil when unavailable.
+function SoilMoistureSystem:_geometryClock()
+    local t = g_currentMission ~= nil and g_currentMission.time or nil
+    if type(t) ~= "number" then return nil end
+    return t
+end
+
+SoilMoistureSystem.GEOMETRY_RETRY_MS = 5000
+
+local function isRefusalEntry(entry)
+    return entry ~= nil and entry.polys == nil and entry.vx == nil and entry.n == 0
+end
+
+--- Door B, expiry: a refusal or partial entry may be re-collected once both times
+--- are known and GEOMETRY_RETRY_MS have passed since its refusedAt.
+function SoilMoistureSystem:_geometryEntryExpired(entry)
+    local now = self:_geometryClock()
+    if entry.refusedAt == nil or now == nil then return false end
+    return now - entry.refusedAt >= SoilMoistureSystem.GEOMETRY_RETRY_MS
+end
+
+--- Collect a parcel and cache the result. Every refused or partial collection
+--- stamps its own refusedAt, so a replacement restarts the wait. A complete
+--- collection runs the fingerprint reopen (item 5).
+function SoilMoistureSystem:_collectAndCacheGeometry(fieldId)
+    local polys, partial = self:_collectParcelPolygons(fieldId)
+    local now = self:_geometryClock()
+    if polys == nil then
+        self._fieldVerts[fieldId] = { n = 0, refusedAt = now }
+        return nil
+    end
+    if partial then
+        self._fieldVerts[fieldId] = { polys = polys, partial = true, refusedAt = now }
+        return polys
+    end
+    if #polys == 1 then
+        local p = polys[1]
+        self._fieldVerts[fieldId] = { vx = p.vx, vz = p.vz, n = p.n }
+    else
+        self._fieldVerts[fieldId] = { polys = polys }
+    end
+    self:_onGeometryCollected(fieldId)
     return polys
+end
+
+--- RSF-F247 item 5: after a successful (complete) collection, compare the parcel
+--- fingerprint with the last good one; none or different stores it and reopens
+--- only this field's ground check. _mapSeeded is never cleared here.
+function SoilMoistureSystem:_onGeometryCollected(fieldId)
+    self._lastGoodFingerprint = self._lastGoodFingerprint or {}
+    local fp = self:fieldGeometryFingerprint(fieldId)
+    if fp == nil then return end
+    if self._lastGoodFingerprint[fieldId] ~= fp then
+        self._lastGoodFingerprint[fieldId] = fp
+        if self._groundChecked ~= nil then self._groundChecked[fieldId] = nil end
+    end
+end
+
+--- Door C, hourly backstop (server only): drop each refused or partial entry once
+--- per hour key so a retry happens even without a clock. Walks sorted ids.
+---@return integer dropped
+function SoilMoistureSystem:_retryRefusedGeometry(hourKey)
+    if g_server == nil then return 0 end
+    self._geometryRetryHour = self._geometryRetryHour or {}
+    local ids = {}
+    for fieldId, entry in pairs(self._fieldVerts) do
+        if (isRefusalEntry(entry) or entry.partial == true)
+           and self._geometryRetryHour[fieldId] ~= hourKey then
+            ids[#ids + 1] = fieldId
+        end
+    end
+    table.sort(ids)
+    for _, fieldId in ipairs(ids) do
+        self._fieldVerts[fieldId] = nil
+        self._geometryRetryHour[fieldId] = hourKey
+    end
+    return #ids
 end
 
 --- The COMPLETE cultivated polygon collection for one parcel, cached. Prefers a
@@ -455,25 +623,23 @@ end
 function SoilMoistureSystem:_getFieldPolygons(fieldId)
     local cached = self._fieldVerts[fieldId]
     if cached ~= nil then
+        -- RSF-F247 item 5: a refusal or partial entry runs door B first; only if it
+        -- does not re-collect does the lookup return what the entry holds.
+        if isRefusalEntry(cached) or cached.partial == true then
+            if not self:_geometryEntryExpired(cached) then
+                if isRefusalEntry(cached) then return nil end
+                return cached.polys
+            end
+            return self:_collectAndCacheGeometry(fieldId)
+        end
         if cached.polys ~= nil then
             if #cached.polys == 0 then return nil end
             return cached.polys
         end
-        if cached.n == 0 then return nil end
         if cached.vx ~= nil then return { cached } end
-    end
-    local polys = self:_collectParcelPolygons(fieldId)
-    if polys == nil then
-        self._fieldVerts[fieldId] = { n = 0 }
         return nil
     end
-    if #polys == 1 then
-        local p = polys[1]
-        self._fieldVerts[fieldId] = { vx = p.vx, vz = p.vz, n = p.n }
-    else
-        self._fieldVerts[fieldId] = { polys = polys }
-    end
-    return polys
+    return self:_collectAndCacheGeometry(fieldId)
 end
 
 --- A world point is inside the parcel when it lies inside ANY of the parcel's
@@ -508,14 +674,30 @@ end
 --- the most that can be promised when 10-40 m cells land on a 2 m grid.
 function SoilMoistureSystem:migrateFieldToMap(fieldId)
     if not self:mapActive() then return false end
+    -- RSF-F247 item 3: once the restore barrier is ready, migration is ONLY the
+    -- field ground check. It never reaches the unfiltered paint or the cell stamps
+    -- below, whatever the check decided.
+    if self:_missionWaterReady() then
+        if type(self._checkFieldGround) == "function" then
+            self:_checkFieldGround(fieldId)
+        end
+        return self._mapSeeded[fieldId] == true
+    end
     if self._mapSeeded[fieldId] then return true end
     local d = self.fieldData[fieldId]
     if d == nil then return false end
     local vx, vz, n = self:_getFieldVerts(fieldId)
     if vx == nil then return false end
 
+    -- RSF-F245 item 4: the barrier's fresh-map seed takes its base from the
+    -- fallback helper, never 0.5. A field with no base is not painted and has no
+    -- current value.
+    local base = self:_seedBase(d)
+    if base == nil then
+        self:_markAggregateUnavailable(d, "NO_CURRENT_VALUE")
+        return false
+    end
     self._mapSeeded[fieldId] = true
-    local base = self:getFieldAggregate(d) or 0.5
     self.valueMap:paintPolygon(vx, vz, n, base)
 
     -- Stamp the materialised cells over the base coat. Absent cells were always
@@ -546,7 +728,12 @@ end
 ---@return integer number of fields painted
 function SoilMoistureSystem:seedMapFromStore()
     if not self:mapActive() then return 0 end
-    if self.valueMap.loadedFromSave then return 0 end
+    if self.valueMap.loadedFromSave then
+        -- RSF-F245 item 4: a map loaded from its own save is never flattened. One
+        -- marking pass, pure Lua: it paints nothing and reads nothing native.
+        self:_markRestoredFields()
+        return 0
+    end
     local count = 0
     local varied = 0
     for fid in pairs(self.fieldData) do
@@ -554,8 +741,8 @@ function SoilMoistureSystem:seedMapFromStore()
             count = count + 1
             local d = self.fieldData[fid]
             local vx, vz, n = self:_getFieldVerts(fid)
-            if vx ~= nil then
-                local base = self:getFieldAggregate(d) or 0.5
+            local base = self:_seedBase(d)
+            if vx ~= nil and base ~= nil then
                 if self:_seedMapRelief(vx, vz, n, base) > 0 then
                     varied = varied + 1
                 end
@@ -578,6 +765,38 @@ end
 ---@param n integer vertex count
 ---@param base number field aggregate moisture
 ---@return integer number of varied regions painted
+--- RSF-F245 item 4: the loaded-map marking pass. Every enumerated field with a
+--- saved row applied this load is marked seeded; a row that installed a value
+--- stays current and dirty, a row that installed none is unavailable
+--- (NO_CURRENT_VALUE). A field with no saved row is left for the post-barrier
+--- ground check. Idempotent.
+---@return integer marked
+function SoilMoistureSystem:_markRestoredFields()
+    local marked, blank = 0, 0
+    for fieldId, d in pairs(self.fieldData) do
+        local row = self._restoreRows ~= nil and self._restoreRows[fieldId] or nil
+        if row ~= nil then
+            self._mapSeeded[fieldId] = true
+            if row.valueInstalled == true then
+                d.aggregateDirty = true
+            else
+                self:_markAggregateUnavailable(d, "NO_CURRENT_VALUE")
+                blank = blank + 1
+            end
+            marked = marked + 1
+        end
+    end
+    csLog(string.format("Moisture map: loaded from save; %d fields marked (%d with no saved value), nothing painted",
+        marked, blank))
+    return marked
+end
+
+--- True once the manager's restore barrier has applied for this mission.
+function SoilMoistureSystem:_missionWaterReady()
+    local m = self.manager
+    return m ~= nil and type(m.isMissionWaterReady) == "function" and m:isMissionWaterReady() == true
+end
+
 function SoilMoistureSystem:_seedMapRelief(vx, vz, n, base)
     if not self:mapActive() then return 0 end
     if getTerrainHeightAtWorldPos == nil or g_terrainNode == nil then return 0 end
@@ -705,6 +924,12 @@ function SoilMoistureSystem:enumerateFields()
                 cellSum     = 0,
                 cellCount   = 0,
                 reliefScan  = false,
+                -- RSF-F245 (Bob intake finding 2, option 1): a new record is
+                -- explicitly dirty, so on a map loaded from its own save the first
+                -- publication door reads the field's real ground instead of
+                -- trusting the season start. aggregateDirty nil means clean.
+                aggregateState = "CURRENT",
+                aggregateDirty = true,
             }
             count = count + 1
         elseif fid ~= nil and self.fieldData[fid] ~= nil and self.fieldData[fid].soilType == nil then
@@ -780,6 +1005,15 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
         hourKey = (env.currentMonotonicDay or 0) * 24 + (env.currentHour or 0)
     end
 
+    -- RSF-F247 item 5, door C (server only; the explicit guard does not rely on
+    -- the caller): drop each refused or partial geometry entry once per hour key.
+    if g_server ~= nil then
+        self:_retryRefusedGeometry(hourKey)
+    end
+    -- RSF-F245 item 6: one publication refresh before the field loop, so previous,
+    -- current, the critical compare and the debug line start from a refreshed value.
+    self:refreshForPublication()
+
     -- Hoist SoilFertilizer integration reference outside the field loop — it is
     -- constant for the entire tick and resolving it per-field is wasteful.
     local settingsEvapMult = self.evapMultiplier or 1.0
@@ -851,7 +1085,8 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
             and 0.0
             or ((self.irrigationGains[fieldId] or 0.0) * hours)
 
-        local prevMoisture = self:getFieldAggregate(data)
+        -- RSF-F245: a field with no current value publishes nil, never a number.
+        local prevMoisture = self:_currentAggregate(data)
         -- SCS-039 MAP PATH. The hourly net is almost always SMALLER than one raw
         -- step (one step is ~0.0039 moisture), so writing it straight through
         -- would floor to nothing every hour and the ground would stop answering
@@ -876,11 +1111,18 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
                         -- same amount, so the field mean moves by exactly that.
                         -- The daily settle re-derives from the map and corrects
                         -- any drift the positional writes introduce.
-                        data.moisture = math.max(0.0, math.min(1.0, data.moisture + moved))
+                        -- RSF-F245: no scalar is derived from a delta while the
+                        -- field has no current value; pixels still moved.
+                        if data.aggregateState ~= "UNAVAILABLE" and type(data.moisture) == "number" then
+                            data.moisture = math.max(0.0, math.min(1.0, data.moisture + moved))
+                        end
                         readableChanged = true
                     end
                 end
             end
+        elseif data.aggregateState == "UNAVAILABLE" then
+            -- RSF-F245: after a native fail-closed, the non-map branches do no
+            -- scalar arithmetic for a field that has no current value.
         elseif data.cellCount ~= nil and data.cellCount > 0 then
             local net = -evapLoss + rainGain + irrigGain
             local newSum = 0
@@ -905,7 +1147,7 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
             self.manager.eventBus.publish("CS_MOISTURE_UPDATED", {
                 fieldId  = fieldId,
                 previous = prevMoisture,
-                current  = self:getFieldAggregate(data),
+                current  = self:_currentAggregate(data),
             })
         end
 
@@ -919,8 +1161,9 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
         local sfStressMod = sfHasStress and sfInteg:getFieldStressMod(fieldId) or 0.0
         local sfCompactMod = (sfInteg ~= nil and type(sfInteg.getFieldCompactMod) == "function")
             and sfInteg:getFieldCompactMod(fieldId) or 0.0
-        local agg = self:getFieldAggregate(data)
-        if agg <= (self:getCriticalMoisture() + sfStressMod + sfCompactMod) then
+        local agg = self:_currentAggregate(data)
+        -- RSF-F245: no critical event for a field with no current value.
+        if agg ~= nil and agg <= (self:getCriticalMoisture() + sfStressMod + sfCompactMod) then
             local lastAlert = self.criticalAlertCooldown[fieldId] or -999
             if (hourKey - lastAlert) >= 12 then
                 self.criticalAlertCooldown[fieldId] = hourKey
@@ -933,7 +1176,7 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
             end
         end
 
-        if self.manager ~= nil and self.manager.debugMode then
+        if self.manager ~= nil and self.manager.debugMode and prevMoisture ~= nil and agg ~= nil then
             csLog(string.format(
                 "Field %d: %.1f%% → %.1f%% (evap=%.4f rain=%.4f irr=%.4f cells=%d)",
                 fieldId, prevMoisture * 100, agg * 100,
@@ -976,6 +1219,12 @@ function SoilMoistureSystem:getMoisture(fieldId, x, z)
         return nil, nil, rev
     end
 
+    -- RSF-F247 item 7: a positional read proves membership first, on TRUTH and
+    -- ZONE and before the fail-closed test. A refused outline proves nothing.
+    if x ~= nil and not self:_pointInParcel(fieldId, x, z) then
+        return nil, nil, rev
+    end
+
     -- SCS-039 v2.1 (Iris fix): a native provider that has failed closed for the
     -- mission answers UNAVAILABLE. Its retained zone cells and cached aggregate
     -- are never promoted as current ground, and no zone mutation may follow.
@@ -997,6 +1246,9 @@ function SoilMoistureSystem:getMoisture(fieldId, x, z)
                 return nil, nil, rev
             end
             self:_refreshFieldAggregate(fieldId, d)
+            -- RSF-F245 item 3: an unwritten point on an unavailable field answers
+            -- nothing, like the provider-closed path.
+            if d.aggregateState == "UNAVAILABLE" then return nil, nil, rev end
             return d.moisture, nil, rev
         end
         local cx, cz = self:worldToCell(x, z)
@@ -1014,19 +1266,99 @@ function SoilMoistureSystem:getMoisture(fieldId, x, z)
         -- revisioned polygon aggregate, refreshed when a positional write marked
         -- it dirty. It is NEVER derived from the retained zone cells.
         self:_refreshFieldAggregate(fieldId, d)
+        if d.aggregateState == "UNAVAILABLE" then return nil, nil, rev end
         return d.moisture, nil, rev
     end
     return self:getFieldAggregate(d), nil, rev
 end
 
--- Derived field aggregate, O(1). Once a field has cells it is the mean of the
--- materialised cells; before any cell exists it returns exactly the field scalar.
+-- Derived field aggregate, O(1).
+-- RSF-F245 item 2: while the fine map is active, retained cells NEVER answer: the
+-- aggregate is the current slot, or nil when the field has no current value.
+-- While the map is not active (ZONE), today's rule stands: the mean of the
+-- materialised cells, else the field scalar.
 function SoilMoistureSystem:getFieldAggregate(d)
     if d == nil then return nil end
+    if self:mapActive() then
+        if d.aggregateState == "UNAVAILABLE" then return nil end
+        return d.moisture
+    end
     if d.cellCount ~= nil and d.cellCount > 0 then
         return d.cellSum / d.cellCount
     end
     return d.moisture
+end
+
+--- RSF-F245 item 2: today's cell-mean-or-scalar, whatever the mode. Only ZONE
+--- paths and the seed base use it; it is never a read.
+function SoilMoistureSystem:_fallbackAggregate(d)
+    if d == nil then return nil end
+    if d.cellCount ~= nil and d.cellCount > 0 then
+        return d.cellSum / d.cellCount
+    end
+    if type(d.moisture) == "number" then return d.moisture end
+    return nil
+end
+
+--- RSF-F245 item 2: the seed base. The fallback value, else the field's own
+--- last-known value (for a new field, its enumeration start moved aside by an
+--- earlier unavailable read). Never 0.5; nil when there is none.
+function SoilMoistureSystem:_seedBase(d)
+    local v = self:_fallbackAggregate(d)
+    if v ~= nil then return v end
+    if d ~= nil and type(d.moistureLastKnown) == "number" then return d.moistureLastKnown end
+    return nil
+end
+
+--- The value a publication may use: nil for a field with no current value (in
+--- any mode), else getFieldAggregate.
+function SoilMoistureSystem:_currentAggregate(d)
+    if d == nil or d.aggregateState == "UNAVAILABLE" then return nil end
+    return self:getFieldAggregate(d)
+end
+
+--- RSF-F245 item 1: mark a field's aggregate current. Dirty is left to the caller.
+function SoilMoistureSystem:_markAggregateCurrent(d, value)
+    d.moisture = value
+    d.aggregateState = "CURRENT"
+    d.aggregateUnavailableReason = nil
+    d.moistureLastKnown = nil
+end
+
+--- RSF-F245 item 1: mark a field's aggregate unavailable. A numeric current value
+--- moves to moistureLastKnown (memory only; never saved, sent or read as current);
+--- the current slot empties; the field stays dirty so the next door reads again.
+function SoilMoistureSystem:_markAggregateUnavailable(d, reason)
+    if type(d.moisture) == "number" then d.moistureLastKnown = d.moisture end
+    d.moisture = nil
+    d.aggregateState = "UNAVAILABLE"
+    d.aggregateUnavailableReason = reason
+    d.aggregateDirty = true
+end
+
+--- RSF-F245 item 6: THE publication refresh. Every host path that reads
+--- fieldData[*].moisture directly calls this once first. While the map is active
+--- it refreshes every dirty field, current or unavailable, in ascending field id
+--- order (the bench's fengari pairs is insertion ordered, so the order is made
+--- explicit). Nothing under ZONE.
+---@return integer refreshed
+function SoilMoistureSystem:refreshForPublication()
+    if not self:mapActive() then return 0 end
+    local ids = {}
+    for fieldId, d in pairs(self.fieldData) do
+        if d.aggregateDirty == true then ids[#ids + 1] = fieldId end
+    end
+    table.sort(ids)
+    local refreshed = 0
+    for _, fieldId in ipairs(ids) do
+        if not self:mapActive() then break end
+        local d = self.fieldData[fieldId]
+        if d ~= nil then
+            self:_refreshFieldAggregate(fieldId, d)
+            refreshed = refreshed + 1
+        end
+    end
+    return refreshed
 end
 
 --- SCS-039 v2.1 (SDS 3.2): refresh the cached native field aggregate when a
@@ -1035,27 +1367,37 @@ end
 --- nil native answer leaves the last cached scalar in place rather than zeroing.
 function SoilMoistureSystem:_refreshFieldAggregate(fieldId, d)
     if not self:mapActive() then return end
-    if d.aggregateDirty == false then return end
+    -- RSF-F245: nil dirty means clean (the certified paired contract model), and
+    -- every new record is created dirty (enumerateFields).
+    if d.aggregateDirty ~= true then return end
+    -- A value map without the typed read is a test double, not a native state; it
+    -- keeps today's silent return (Bob intake finding 3, named in the PR).
     if self.valueMap.readAverageOfPolygon == nil then return end
     local vx, vz, n = self:_getFieldVerts(fieldId)
-    if vx == nil then return end
-    -- SCS-039 v2.1 (SDS 3.2/3.3): typed outcome. Only OK re-derives the scalar and
-    -- clears the dirty flag; a genuine PROVIDER_REFUSAL fails the provider closed
-    -- for the mission; EMPTY and INVALID_FIELD_GEOMETRY are not refusals and leave
-    -- the last cached scalar (and the dirty flag) exactly as they were.
-    local outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
-    -- SCS-039 v2.1 (root-cause fix): readAverageOfPolygon can return "OK" with a nil
-    -- mean when the written pixels average to raw "no data" (decode() returns nil for
-    -- raw <= 0). An "OK"-with-nil-mean is not a usable answer, so honour the stated
-    -- invariant above - the scalar holds a real polygon mean or the last cached one,
-    -- never nil - by leaving the cached scalar and the dirty flag untouched so a later
-    -- read re-derives it. Without the `mean ~= nil` guard this wrote nil into
-    -- d.moisture, which crashed the per-frame HUD sort (getFieldsSortedByMoisture).
+    -- RSF-F245 item 3: typed outcomes, and no silent return. No usable geometry is
+    -- INVALID_FIELD_GEOMETRY. OK with a numeric mean makes the field current and
+    -- clean. EMPTY, INVALID_FIELD_GEOMETRY and OK with no mean make it unavailable
+    -- and leave it dirty, so a later door reads again; the old value never stays
+    -- current. PROVIDER_REFUSAL keeps the one-way fail-closed path.
+    local outcome, mean
+    if vx == nil then
+        outcome = "INVALID_FIELD_GEOMETRY"
+    else
+        outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+    end
     if outcome == "OK" and mean ~= nil then
-        d.moisture = mean
+        self:_markAggregateCurrent(d, mean)
         d.aggregateDirty = false
     elseif outcome == "PROVIDER_REFUSAL" then
         self:_failNativeClosed("polygon-aggregate refusal on field refresh")
+    elseif outcome == "INVALID_FIELD_GEOMETRY" then
+        self:_markAggregateUnavailable(d, "INVALID_FIELD_GEOMETRY")
+    else
+        self:_markAggregateUnavailable(d, "EMPTY")
+        -- RSF-F247 item 3, call site b: the ground check is this branch's last act.
+        if type(self._checkFieldGround) == "function" then
+            self:_checkFieldGround(fieldId)
+        end
     end
 end
 
@@ -1148,8 +1490,9 @@ function SoilMoistureSystem:_writeCell(fieldId, cx, cz, newValue)
     end
     local cell = row[cz]
     if cell == nil then
-        -- New cell seeds from the field's CURRENT aggregate (brief 3.2).
-        local seed = self:getFieldAggregate(d)
+        -- New cell seeds from the field's CURRENT aggregate (brief 3.2). RSF-F245:
+        -- through the fallback helper; with no value at all it seeds at newValue.
+        local seed = self:_fallbackAggregate(d) or newValue
         cell = { moisture = seed }
         row[cz] = cell
         d.cellCount = d.cellCount + 1
@@ -1196,7 +1539,7 @@ function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
         -- leaf would re-spend onto ground the replacement already overwrote.
         d.mapPending = 0
         self._mapWaterPending[fieldId] = nil
-        d.moisture = newValue
+        self:_markAggregateCurrent(d, newValue)
         -- A uniform paint makes the polygon mean exactly newValue: cache is clean.
         d.aggregateDirty = false
         self:_advanceMoistureRevision()
@@ -1204,7 +1547,7 @@ function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
     end
 
     if d.cellCount ~= nil and d.cellCount > 0 then
-        local delta = newValue - self:getFieldAggregate(d)
+        local delta = newValue - (self:_fallbackAggregate(d) or newValue)
         for _, row in pairs(d.cells) do
             for _, cell in pairs(row) do
                 cell.moisture = math.max(0.0, math.min(1.0, cell.moisture + delta))
@@ -1212,7 +1555,7 @@ function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
         end
         d.cellSum = d.cellSum + delta * d.cellCount
     end
-    d.moisture = newValue
+    self:_markAggregateCurrent(d, newValue)
     -- ZONE whole-field replacement is a readable mutation too.
     self:_advanceMoistureRevision()
     return newValue
@@ -1303,6 +1646,10 @@ function SoilMoistureSystem:materialiseRelief(fieldId)
     for i = 1, count do meanH = meanH + heights[i].h end
     meanH = meanH / count
 
+    -- RSF-F245 item 2: relief seeds from the fallback helper; with no value there is
+    -- nothing honest to seed a cell from.
+    local reliefSeed = self:_fallbackAggregate(d)
+    if reliefSeed == nil then return end
     local materialised = 0
     for i = 1, count do
         if materialised >= SoilMoistureSystem.CELL_BACKSTOP_CAP then break end
@@ -1313,7 +1660,7 @@ function SoilMoistureSystem:materialiseRelief(fieldId)
         if math.abs(offset) > SoilMoistureSystem.CELL_RELIEF_THRESHOLD then
             local cell = d.cells[entry.cx]
             if cell == nil then cell = {}; d.cells[entry.cx] = cell end
-            cell[entry.cz] = { moisture = self:getFieldAggregate(d) }
+            cell[entry.cz] = { moisture = reliefSeed }
             d.cellCount = d.cellCount + 1
             d.cellSum = d.cellSum + cell[entry.cz].moisture
             materialised = materialised + 1
@@ -1396,7 +1743,15 @@ function SoilMoistureSystem:_rawWaterStore(fieldId, x, z, gain)
                 self:_failNativeClosed("native destination-read refusal on water spend")
                 return true
             end
-            if current == nil then current = self:getFieldAggregate(d) or 0 end
+            if current == nil then
+                -- RSF-F245 item 2: an unwritten destination with no current aggregate
+                -- does not invent 0. The water stays pending and nothing is written.
+                current = self:getFieldAggregate(d)
+                if current == nil then
+                    fieldAcc[key] = pending
+                    return true
+                end
+            end
             local grain = self.valueMap:getGrainMetres() or 2
             local _, writeOutcome = self.valueMap:writeValueAtWorld(x, z,
                 math.max(0.0, math.min(1.0, current + applied)), grain * 0.5)
@@ -1442,7 +1797,7 @@ function SoilMoistureSystem:_rawWaterStore(fieldId, x, z, gain)
             d.mapPending = (d.mapPending or 0) + gain
             return true
         end
-        cell = { moisture = self:getFieldAggregate(d) }
+        cell = { moisture = self:_fallbackAggregate(d) or 0 }
         row[cz] = cell
         d.cellCount = d.cellCount + 1
         d.cellSum = d.cellSum + cell.moisture
@@ -1553,6 +1908,13 @@ end
 -- existing caller source-compatible; a coverage-span table routes through the
 -- controlled boundary. The first return is a literal boolean.
 function SoilMoistureSystem:applyWaterAtCell(fieldId, x, z, gainOrSpans)
+    -- RSF-F247 item 7: before any routing, the field is known, both coordinates are
+    -- finite and the point lies inside the field's complete outline. Otherwise
+    -- nothing is written and nothing enters either pending store.
+    if self.fieldData[fieldId] == nil or not finiteNumber(x) or not finiteNumber(z) then
+        return false
+    end
+    if not self:_pointInParcel(fieldId, x, z) then return false end
     if type(gainOrSpans) == "number" then
         if self.absorptionMode == "CAPPED" then
             return self:_applyControlledNumeric(fieldId, x, z, gainOrSpans)
@@ -2330,18 +2692,31 @@ function SoilMoistureSystem:settleDaily(boundariesCrossed)
                 blocks = blocks + (self._lastFieldBlocks or 0)
             end
             local vx, vz, n = self:_getFieldVerts(fieldId)
-            if vx ~= nil then
-                -- SCS-039 v2.1 (SDS 3.2/3.3): only OK re-derives the scalar. A
-                -- genuine native refusal fails the provider closed for the mission
-                -- and stops trusting the fine map this settle; EMPTY and invalid
-                -- geometry are not refusals and leave the scalar in place.
-                local outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
-                if outcome == "OK" then
-                    d.moisture = mean
-                elseif outcome == "PROVIDER_REFUSAL" then
-                    self:_failNativeClosed("polygon-aggregate refusal on daily settle")
-                    break
+            -- RSF-F245 item 3: the settle re-derive follows the refresh rules and never
+            -- writes nil into the current slot. OK with a mean makes the field current
+            -- and clean; EMPTY, OK with no mean and missing geometry make it
+            -- unavailable and dirty; a genuine refusal fails the provider closed.
+            local outcome, mean
+            if vx == nil then
+                outcome = "INVALID_FIELD_GEOMETRY"
+            else
+                outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+            end
+            if outcome == "OK" and mean ~= nil then
+                self:_markAggregateCurrent(d, mean)
+                d.aggregateDirty = false
+            elseif outcome == "PROVIDER_REFUSAL" then
+                self:_failNativeClosed("polygon-aggregate refusal on daily settle")
+                break
+            elseif outcome == "INVALID_FIELD_GEOMETRY" then
+                self:_markAggregateUnavailable(d, "INVALID_FIELD_GEOMETRY")
+            else
+                self:_markAggregateUnavailable(d, "EMPTY")
+                -- RSF-F247 item 3, call site b.
+                if type(self._checkFieldGround) == "function" then
+                    self:_checkFieldGround(fieldId)
                 end
+                if not self:mapActive() then break end
             end
         end
         self._lastSettleFields = fields
@@ -2355,7 +2730,9 @@ function SoilMoistureSystem:settleDaily(boundariesCrossed)
     end
 
     for fieldId, d in pairs(self.fieldData) do
-        if d.cellCount ~= nil and d.cellCount > 0 then
+        -- RSF-F245: after a native fail-closed, no scalar arithmetic for a field
+        -- that has no current value.
+        if d.aggregateState ~= "UNAVAILABLE" and d.cellCount ~= nil and d.cellCount > 0 then
             -- Drainage: bleed a fraction of each cell's moisture toward its
             -- downhill neighbours, conserving the field total (the write path
             -- keeps cellSum honest; drainage only moves water between cells).
@@ -2805,9 +3182,10 @@ function SoilMoistureSystem:unpackCells(fieldId, packed)
             d.cellSum = d.cellSum + val / 10000
         end
     end
-    -- Sibling of the F1 path: rebuilding cells on load moves the aggregate, so the
-    -- scalar has to follow or a reloaded save paints the pre-save number.
-    d.moisture = self:getFieldAggregate(d)
+    -- RSF-F245 item 5: unpack no longer writes the scalar. The carrier is not final
+    -- at unpack time (the decline step runs after rows, cells and the envelope);
+    -- the restore settles a ZONE field's scalar from its cells after that step, and
+    -- under TRUTH cells are migration evidence only.
 end
 
 -- ============================================================
@@ -2824,6 +3202,41 @@ end
 -- unresolved leaves ascend by field id then canonical world coordinates. Only
 -- non-zero amounts are emitted and there is no 1024-entry ceiling (Group C).
 -- ============================================================
+
+-- ============================================================
+-- RSF-F245 item 5 / RSF-F247 items 3 and 6: the per-load restore record. The
+-- restore handler calls these; everything is mission-only memory.
+-- ============================================================
+
+--- Start of each restore: clear the per-load record, the restored values and the
+--- carrier record.
+function SoilMoistureSystem:beginRestoreRecord()
+    self._restoreRows = {}
+    self._restoredMoisture = {}
+    self._carrierRecord = nil
+end
+
+--- A saved row (or envelope aggregate) for a current field. valueInstalled true
+--- records the SAVED number actually installed (after the clamp); false records
+--- the enumeration start still in the slot as FRESH_START context.
+function SoilMoistureSystem:recordRestoredField(fieldId, valueInstalled, value)
+    self._restoreRows = self._restoreRows or {}
+    self._restoredMoisture = self._restoredMoisture or {}
+    self._restoreRows[fieldId] = { valueInstalled = valueInstalled == true }
+    if valueInstalled == true then
+        self._restoredMoisture[fieldId] = { value = value, kind = "SAVED" }
+    elseif type(value) == "number" then
+        self._restoredMoisture[fieldId] = { value = value, kind = "FRESH_START" }
+    else
+        self._restoredMoisture[fieldId] = nil
+    end
+end
+
+--- The carrier the barrier made current for this load: SELECTED_PAIR,
+--- LEGACY_IMPORT, FRESH, or nil when none was proven.
+function SoilMoistureSystem:setCarrierRecord(tag)
+    self._carrierRecord = tag
+end
 
 --- Pack the whole positional pending store into a deterministic row array.
 ---@return table rows  {fieldId, status, ...} sorted; empty array when nothing
@@ -3093,17 +3506,29 @@ function SoilMoistureSystem:onFarmlandOwnerChanged(farmlandId, farmId, loadFromS
 end
 
 -- Returns a sorted list of {fieldId, moisture, soilType} for HUD display
+-- RSF-F245 item 6: every tracked field stays in the list. A field with no current
+-- value carries moisture = nil and unavailable = true and sorts after every
+-- numeric field; no `or 0` in the comparator. Ties order by field id.
 function SoilMoistureSystem:getFieldsSortedByMoisture()
+    self:refreshForPublication()
     local list = {}
     for fieldId, data in pairs(self.fieldData) do
-        -- Guard: a field whose moisture is momentarily nil (data-path gap) must not
-        -- crash the per-frame HUD sort. Skip it here and keep the sort nil-safe so a
-        -- single incomplete field can never take down the whole update loop.
-        if data.moisture ~= nil then
-            table.insert(list, { fieldId = fieldId, moisture = data.moisture, soilType = data.soilType })
-        end
+        local unavailable = data.aggregateState == "UNAVAILABLE" or type(data.moisture) ~= "number"
+        table.insert(list, {
+            fieldId = fieldId,
+            moisture = (not unavailable) and data.moisture or nil,
+            soilType = data.soilType,
+            unavailable = unavailable,
+        })
     end
-    table.sort(list, function(a, b) return (a.moisture or 0) < (b.moisture or 0) end)
+    table.sort(list, function(a, b)
+        if a.moisture == nil or b.moisture == nil then
+            if a.moisture == nil and b.moisture == nil then return a.fieldId < b.fieldId end
+            return b.moisture == nil
+        end
+        if a.moisture == b.moisture then return a.fieldId < b.fieldId end
+        return a.moisture < b.moisture
+    end)
     return list
 end
 
@@ -3171,6 +3596,18 @@ function SoilMoistureSystem:delete()
         g_messageCenter:unsubscribeAll(self)
     end
     self._farmlandSubscribed = false
+    -- RSF-F247 item 9: every mission-only table this repair uses empties on
+    -- teardown, so a same-process reload starts with no refusal, partial entry,
+    -- anchor, flag or restored value.
+    self._fieldVerts          = {}
+    self._mapSeeded           = {}
+    self._restoreRows         = {}
+    self._restoredMoisture    = {}
+    self._carrierRecord       = nil
+    self._groundChecked       = {}
+    self._lastGoodFingerprint = {}
+    self._geometryRetryHour   = {}
+    self._onceLogged          = {}
     self.isInitialized = false
 end
 
