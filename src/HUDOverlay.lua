@@ -45,6 +45,11 @@ end
 HUDOverlay.PANEL_X          = 0.012604
 -- update(dt) receives milliseconds (BaseMission:update adds dt to mission time).
 HUDOverlay.REBUILD_INTERVAL_MS = 1000
+-- A critical alert shows the hidden HUD for two minutes, counted in dt milliseconds.
+HUDOverlay.AUTO_HIDE_MS = 120000
+-- Edit-mode border pulse: 4 radians per second (period about 1.57 s), the rate the
+-- `sin(animTimer * 4)` pulse was written for, expressed per millisecond of dt.
+HUDOverlay.PULSE_RAD_PER_MS = 0.004
 HUDOverlay.PANEL_Y          = 0.236481
 HUDOverlay.PANEL_W          = 0.160
 HUDOverlay.ROW_H            = 0.024
@@ -157,7 +162,7 @@ function HUDOverlay.new(manager)
 
     -- Auto-show / auto-hide state
     self.autoShowActive = false
-    self.autoHideTimer  = 0   -- real-time seconds; 0 = no auto-hide
+    self.autoHideTimer  = 0   -- milliseconds left; 0 = no auto-hide
     self.rebuildTimer   = 0   -- throttles row rebuilds
 
     -- LMB click-vs-drag detection: set true on LMB-down inside HUD, cleared on LMB-up.
@@ -322,6 +327,11 @@ function HUDOverlay:update(dt)
             self.isVisible      = false
         end
     end
+end
+
+--- The edit-mode border pulse, 0..1. animTimer accumulates dt milliseconds.
+function HUDOverlay:editPulse()
+    return 0.5 + 0.5 * math.sin(self.animTimer * HUDOverlay.PULSE_RAD_PER_MS)
 end
 
 -- Recalculate panel position from saved relative coordinates when resolution changes.
@@ -926,7 +936,7 @@ function HUDOverlay:draw()
         local fx, fy, fw, fh = self:getForecastRect()
         self:drawForecastStrip(fx, fy)
         if self.editMode then
-            local pulse = 0.5 + 0.5 * math.sin(self.animTimer * 4)
+            local pulse = self:editPulse()
             local bw = 0.002
             local ec = HUDOverlay.COLOR_EDIT_BORDER
             setOverlayColor(self.fillOverlay, ec[1], ec[2], ec[3], 0.4 + 0.4 * pulse)
@@ -997,7 +1007,7 @@ function HUDOverlay:draw()
     -- derive from the same constant: idle at reduced alpha, hover lifted toward
     -- white so the hovered corner still reads brighter, never a different hue.
     if self.editMode then
-        local pulse = 0.5 + 0.5 * math.sin(self.animTimer * 4)
+        local pulse = self:editPulse()
         local bw = 0.002
         local ec = HUDOverlay.COLOR_EDIT_BORDER
         setOverlayColor(self.fillOverlay, ec[1], ec[2], ec[3], 0.4 + 0.4 * pulse)
@@ -1648,7 +1658,7 @@ function HUDOverlay:onCriticalThreshold(data)
     if not self.isVisible then
         self.isVisible      = true
         self.autoShowActive = true
-        self.autoHideTimer  = 120
+        self.autoHideTimer  = HUDOverlay.AUTO_HIDE_MS
 
         -- Auto-select the critical field
         if data ~= nil and data.fieldId ~= nil then
