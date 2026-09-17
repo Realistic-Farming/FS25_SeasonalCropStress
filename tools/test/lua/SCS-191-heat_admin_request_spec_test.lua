@@ -5,7 +5,8 @@
 -- answers the requesting connection with CropStressHeatResultEvent. Every event is
 -- delivered through a stream round trip (writeStream -> readStream), because the
 -- engine never calls run for an incoming event (Server.lua:435-437).
--- Groups: S server receipt, C client console and panel, E end to end, A isAdmin().
+-- Groups: S server receipt, C client console and panel, E end to end, H hourly push,
+-- A isAdmin().
 
 local function group(name, fn)
     local ok, err = pcall(fn)
@@ -185,6 +186,62 @@ group("E end to end", function()
     deliver(adminAtServer.sent[1], CropStressHeatResultEvent, connection({ isServer = true }))
     T.eq("E1b NAMED: a client admin's click runs the host simulation and then shows it", popups[#popups],
         "Simulated 3-day heat wave. Check field moisture: stress may have increased.")
+end)
+
+-- =====================================================================
+-- H: the hourly act pushes to clients through the shared helper (Bob #199 MAJOR)
+-- =====================================================================
+--- A manager whose hourly act runs to the end on the server, counting the
+--- moisture push the act makes. Every integration the act touches is a no-op,
+--- so the only thing these rows can observe is the push itself.
+local function hourlyManager()
+    local counts = { soilHourly = 0, stressHourly = 0, refresh = 0, broadcasts = 0, initEvents = 0, dirty = 0 }
+    local mgr = setmetatable({}, { __index = CropStressManager })
+    local noop = function() end
+    mgr.settings = { enabled = true }
+    mgr.lastFieldMapDay = 1
+    mgr.weatherIntegration = { update = noop }
+    mgr.soilFertilizerIntegration = { hourlyRefresh = noop }
+    mgr.coursePlayIntegration = { hourlyRefresh = noop }
+    mgr.autoDriveIntegration = { hourlyRefresh = noop }
+    mgr.irrigationManager = { systems = {}, hourlyScheduleCheck = noop }
+    mgr.soilSystem = {
+        fieldData = {},
+        hourlyUpdate = function() counts.soilHourly = counts.soilHourly + 1 end,
+        refreshForPublication = function() counts.refresh = counts.refresh + 1 end,
+    }
+    mgr.getSkipRainHours = function() return nil end
+    mgr.stressModifier = { fieldStress = {}, hourlyUpdate = function() counts.stressHourly = counts.stressHourly + 1 end }
+    mgr.financeIntegration = { chargeHourlyCosts = noop }
+    mgr.consultant = { hourlyEvaluate = noop }
+    mgr.debugMode = false
+    g_server = { broadcastEvent = function(_, ev)
+        counts.broadcasts = counts.broadcasts + 1
+        if getmetatable(ev) == CropStressMoistureInitEvent_mt then counts.initEvents = counts.initEvents + 1 end
+    end }
+    g_currentMission.isMissionStarted = true
+    g_currentMission.environment = { currentDay = 1 }
+    return mgr, counts
+end
+
+group("H hourly push", function()
+    local savedBridge = CropStressNetworkSyncBridge
+    CropStressNetworkSyncBridge = nil
+    local mgr, counts = hourlyManager()
+    mgr:onHourlyTick(1)
+    T.eq("H1a [reached: the hourly body ran on the server]", tostring(counts.soilHourly) .. ":" .. counts.stressHourly, "1:1")
+    T.eq("H1b NAMED: with no active NetworkSync bridge the hourly act broadcasts exactly one CropStressMoistureInitEvent",
+        tostring(counts.initEvents) .. ":" .. counts.broadcasts, "1:1")
+    T.eq("H1c after refreshing the slots once", counts.refresh, 1)
+
+    mgr, counts = hourlyManager()
+    CropStressNetworkSyncBridge = { active = true, markFieldDirty = function() counts.dirty = counts.dirty + 1 end }
+    mgr:onHourlyTick(1)
+    T.eq("H2a [reached: the hourly body ran on the server]", tostring(counts.soilHourly) .. ":" .. counts.stressHourly, "1:1")
+    T.eq("H2b NAMED: with the NetworkSync bridge active the hourly act marks it dirty exactly once", counts.dirty, 1)
+    T.eq("H2c and broadcasts nothing directly", counts.broadcasts, 0)
+    CropStressNetworkSyncBridge = savedBridge
+    g_currentMission.isMissionStarted = nil
 end)
 
 -- =====================================================================
