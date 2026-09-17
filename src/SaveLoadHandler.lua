@@ -230,7 +230,11 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
         for fieldId, data in pairs(soilSystem.fieldData) do
             local key = string.format("%s.fields.field(%d)", root, i)
             setInt(   key .. "#id",       fieldId)
-            setFloat( key .. "#moisture", data.moisture)
+            -- RSF-F245 item 5: a field with no current value saves no number (no
+            -- setFloat with nil); last-known is never saved.
+            if type(data.moisture) == "number" and data.aggregateState ~= "UNAVAILABLE" then
+                setFloat(key .. "#moisture", data.moisture)
+            end
             setFloat( key .. "#stress",   self.manager.stressModifier:getStress(fieldId))
             setString(key .. "#soilType", data.soilType or "loamy")
             -- SCS-018 3.8: packed cell leaf per field (nil when no cells exist).
@@ -394,13 +398,22 @@ function SaveLoadHandler:loadFromXMLFile(xmlFile)
     -- restore barrier; HUD, schedules and the NPC row apply on arrival as before.
     local snap = { fields = {}, irrigation = {}, source = "XML" }
 
+    -- RSF-F245 item 5: a missing saved value stays absent. The attribute's presence
+    -- is tested first, so an engine that answers 0 for a missing attribute cannot
+    -- turn "no reading" into a number. nil means the API cannot tell.
+    local function hasKey(key)
+        if xmlFile.hasProperty ~= nil then return xmlFile:hasProperty(key) == true end
+        if hasXMLProperty ~= nil and type(xmlFile) ~= "table" then return hasXMLProperty(xmlFile, key) == true end
+        return nil
+    end
+
     local i = 0
     while true do
         local key     = string.format("%s.fields.field(%d)", root, i)
         local fieldId = getInt(key .. "#id", nil)
         if fieldId == nil then break end
         snap.fields[fieldId] = {
-            moisture   = getFloat(key .. "#moisture", 0.50),
+            moisture   = (hasKey(key .. "#moisture") ~= false) and getFloat(key .. "#moisture", nil) or nil,
             stress     = getFloat(key .. "#stress",   0.0),
             soilType   = getString(key .. "#soilType", nil),
             cells      = getString(key .. "#cells", nil),
@@ -481,7 +494,8 @@ function SaveLoadHandler:buildStateTable()
     if soilSystem ~= nil then
         for fieldId, data in pairs(soilSystem.fieldData) do
             local entry = {
-                moisture = data.moisture,
+                -- RSF-F245 item 5: an unavailable field's moisture key is omitted.
+                moisture = (data.aggregateState ~= "UNAVAILABLE") and data.moisture or nil,
                 stress   = (stressModifier ~= nil) and stressModifier:getStress(fieldId) or 0.0,
                 soilType = data.soilType or "loamy",
             }
@@ -743,7 +757,7 @@ function SaveLoadHandler:captureMoistureEnvelope()
         filename   = nil,
         mapWidth   = nil,
         grain      = nil,
-        moistureRevision = soil.moistureRevision or 1,
+        moistureRevision = nil,   -- RSF-F247 item 9: assigned after the dirty refresh
         lastSettledMonotonicDay = soil._lastSettledDay,
         aggregates = {},
         fieldPending = {},
@@ -764,11 +778,19 @@ function SaveLoadHandler:captureMoistureEnvelope()
            and type(soil._refreshFieldAggregate) == "function" then
             soil:_refreshFieldAggregate(fieldId, d)
         end
-        env.aggregates[fieldId] = d.moisture
+        -- RSF-F245 item 5: an unavailable field is left out of the aggregates.
+        if type(d.moisture) == "number" and d.aggregateState ~= "UNAVAILABLE" then
+            env.aggregates[fieldId] = d.moisture
+        end
         if d.mapPending ~= nil and d.mapPending ~= 0 then
             env.fieldPending[fieldId] = d.mapPending
         end
     end
+    -- RSF-F247 item 9: a capture-time refresh can reach the ground check and seed,
+    -- which advances the revision, so the envelope's revision is read after that
+    -- loop: the compact envelope, its aggregates and the native image of the same
+    -- save describe one revision.
+    env.moistureRevision = soil.moistureRevision or 1
     if type(soil.packMapWaterPending) == "function" then
         env.positionalRows = soil:packMapWaterPending()
     end
@@ -1373,6 +1395,24 @@ end
 
 local function clamp01(v) return math.max(0.0, math.min(1.0, v or 0)) end
 
+-- RSF-F245 item 5: an install marks the field current and dirty (the first
+-- refresh re-derives it from the map under TRUTH).
+local function installFieldValue(soil, d, value)
+    if type(soil._markAggregateCurrent) == "function" then
+        soil:_markAggregateCurrent(d, value)
+    else
+        d.moisture = value
+    end
+    d.aggregateDirty = true
+end
+
+-- RSF-F245 item 5 / RSF-F247 item 6: the per-load restore record.
+local function recordRestoredField(soil, fieldId, valueInstalled, value)
+    if type(soil.recordRestoredField) == "function" then
+        soil:recordRestoredField(fieldId, valueInstalled, value)
+    end
+end
+
 --- THE RESTORE APPLY. Called exactly once by the manager's barrier after
 --- compact data, fields, the provider decision, settings and the absorption
 --- freeze are all ready. Selects one coherent SCS-039 view from the staged
@@ -1451,13 +1491,26 @@ function SaveLoadHandler:restoreMissionWater(ctx)
     local snap = (source ~= nil and self._staged ~= nil) and self._staged[source] or {}
     result.source = source
 
+    -- RSF-F245/F247: clear the per-load record, restored values and carrier record.
+    if type(soil.beginRestoreRecord) == "function" then soil:beginRestoreRecord() end
+
     -- 1. Compact fallback rows load first (cells as migration evidence, scalar,
     --    stress, soil type, field-wide carry). Rows absent from the current map
     --    population are ignored and logged, never attached to another field.
     for fieldId, f in pairs(snap.fields or {}) do
         local d = soil.fieldData[fieldId]
         if d ~= nil then
-            d.moisture = clamp01(f.moisture ~= nil and f.moisture or 0.50)
+            -- RSF-F245 item 5: a row without a value installs nothing and never
+            -- calls clamp01(nil); the enumeration value stays, recorded as the
+            -- field's FRESH_START context. A value installs, marks current and is
+            -- recorded as SAVED.
+            if type(f.moisture) == "number" then
+                local v = clamp01(f.moisture)
+                installFieldValue(soil, d, v)
+                recordRestoredField(soil, fieldId, true, v)
+            else
+                recordRestoredField(soil, fieldId, false, d.moisture)
+            end
             if stressModifier ~= nil and stressModifier.fieldStress ~= nil then
                 stressModifier.fieldStress[fieldId] = clamp01(f.stress or 0.0)
             end
@@ -1484,7 +1537,13 @@ function SaveLoadHandler:restoreMissionWater(ctx)
     if env ~= nil then
         for fieldId, agg in pairs(env.aggregates or {}) do
             local d = soil.fieldData[fieldId]
-            if d ~= nil then d.moisture = clamp01(agg) end
+            if d ~= nil and type(agg) == "number" then
+                -- The envelope overwrites the row, as it always did, and its number
+                -- is the SAVED value the ground check may repaint from.
+                local v = clamp01(agg)
+                installFieldValue(soil, d, v)
+                recordRestoredField(soil, fieldId, true, v)
+            end
         end
         soil.moistureRevision = env.moistureRevision
         soil._lastSettledDay = env.lastSettledMonotonicDay
@@ -1525,7 +1584,8 @@ function SaveLoadHandler:restoreMissionWater(ctx)
         -- zone state, pending stores and copied base cursor.
         for fieldId, agg in pairs(pending.aggregates or {}) do
             local d = soil.fieldData[fieldId]
-            if d ~= nil then d.moisture = clamp01(agg) end
+            -- Bob intake: the ZONE PENDING_ONLY install marks the field current too.
+            if d ~= nil and type(agg) == "number" then installFieldValue(soil, d, clamp01(agg)) end
         end
         soil.moistureRevision = pending.baseRevision
         soil._lastSettledDay = pending.baseLastSettledMonotonicDay
@@ -1582,6 +1642,46 @@ function SaveLoadHandler:restoreMissionWater(ctx)
     --    live map is declined rather than paired with another generation's file.
     if result.declined ~= nil and type(soil.declineNativeCarrier) == "function" then
         soil:declineNativeCarrier(result.declined)
+    end
+
+    local mapLive = type(soil.mapActive) == "function" and soil:mapActive()
+
+    -- RSF-F245 item 5: with the carrier now final, a ZONE mission (selected ZONE,
+    -- declined, or no map) settles each field with restored cells to its cell mean,
+    -- so every screen agrees with getMoisture from the first frame. Under TRUTH
+    -- cells are migration evidence only and never enter the current slot.
+    if not mapLive then
+        for _, d in pairs(soil.fieldData) do
+            if d.cellCount ~= nil and d.cellCount > 0 and d.aggregateState ~= "UNAVAILABLE" then
+                if type(soil._markAggregateCurrent) == "function" then
+                    soil:_markAggregateCurrent(d, d.cellSum / d.cellCount)
+                else
+                    d.moisture = d.cellSum / d.cellCount
+                end
+            end
+        end
+    end
+
+    -- RSF-F247 item 3: the carrier this load made current. SELECTED_PAIR when the
+    -- selected COMPLETE envelope's image was adopted and nothing was declined;
+    -- LEGACY_IMPORT when the legacy branch imported the pre-generation image;
+    -- FRESH for every other load that ends on a TRUTH map not loaded from a save
+    -- (a fresh game, a pre-generation save with no legacy file, a failed-legacy
+    -- reset). Empty otherwise.
+    if type(soil.setCarrierRecord) == "function" then
+        local tag = nil
+        if mapLive and soil.providerMode == "TRUTH" and soil.valueMap ~= nil then
+            local fromSave = soil.valueMap.loadedFromSave == true
+            if env ~= nil and result.declined == nil and fromSave then
+                tag = "SELECTED_PAIR"
+            elseif result.legacyImported == true and fromSave then
+                tag = "LEGACY_IMPORT"
+            elseif not fromSave then
+                tag = "FRESH"
+            end
+        end
+        soil:setCarrierRecord(tag)
+        result.carrier = tag
     end
 
     -- 4. The absorption leaf, admitted only against the enclosing provider
