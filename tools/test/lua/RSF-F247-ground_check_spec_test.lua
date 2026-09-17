@@ -170,6 +170,12 @@ end)
 local function fieldSystem(opts)
     local sys, vm, grid, mgr = F245H.newSystem(opts)
     local d = F245H.addField(sys, 1, SQ, 0.5)
+    -- Bob intake: every row asserts its parcel probe count (0 refused, partial or
+    -- not run; 1 decided). Counted at the wrapper, not at executeGet, because the
+    -- fill's own before and after counts are filtered gets too.
+    sys._probes = 0
+    local realProbe = sys._parcelHasWrittenPixels
+    sys._parcelHasWrittenPixels = function(self, id) self._probes = self._probes + 1; return realProbe(self, id) end
     return sys, vm, grid, mgr, d
 end
 
@@ -185,6 +191,7 @@ group("G ground check", function()
     F245H.paint(grid, -8, -8, 8, 8, 100)
     local rev = sys.moistureRevision
     T.eq("G1a saved row + PRESENT preserves", sys:_checkFieldGround(1), "PRESERVE_RESTORED")
+    T.eq("G1p [parcel probes: 1]", sys._probes, 1)
     T.eq("G1b [one probe]", vm.modifier.calls.getFiltered, 1)
     T.eq("G1c no set", vm.modifier.calls.set, 0)
     T.eq("G1d restored entry dropped", sys._restoredMoisture[1], nil)
@@ -197,6 +204,7 @@ group("G ground check", function()
     sys:_markAggregateUnavailable(d, "EMPTY")
     rev = sys.moistureRevision
     T.eq("G2a saved row + NONE + SAVED seeds", sys:_checkFieldGround(1), "SEEDED")
+    T.eq("G2p [parcel probes: 1]", sys._probes, 1)
     T.eq("G2b [one probe]", vm.modifier.calls.getFiltered >= 1, true)
     T.eq("G2c the blank outline now holds the saved number", F245H.count(grid, F245H.rawOf(0.6)), 256)
     T.eq("G2d revision advanced exactly once", sys.moistureRevision, rev + 1)
@@ -210,6 +218,7 @@ group("G ground check", function()
     savedRow(sys, 0.35, "FRESH_START", false)
     sys:_markAggregateUnavailable(d, "NO_CURRENT_VALUE")
     T.eq("G3a saved row + NONE + FRESH_START seeds", sys:_checkFieldGround(1), "SEEDED")
+    T.eq("G3p [parcel probes: 1]", sys._probes, 1)
     T.near("G3b from the recorded start value", d.moisture, 0.35, 0.005)
 
     -- saved row, blank, no entry
@@ -217,6 +226,7 @@ group("G ground check", function()
     savedRow(sys, nil)
     sys:_markAggregateUnavailable(d, "EMPTY")
     T.eq("G4a saved row + NONE + no entry invents nothing", sys:_checkFieldGround(1), "BLANK_NO_ENTRY")
+    T.eq("G4p [parcel probes: 1]", sys._probes, 1)
     T.eq("G4b no set", vm.modifier.calls.set, 0)
     T.eq("G4c still unavailable", d.aggregateState, "UNAVAILABLE")
 
@@ -224,17 +234,20 @@ group("G ground check", function()
     sys, vm, grid, _, d = fieldSystem()
     d.moisture = 0.45
     T.eq("G5a new blank field seeds", sys:_checkFieldGround(1), "SEEDED")
+    T.eq("G5p [parcel probes: 1]", sys._probes, 1)
     T.near("G5b from its fallback base", d.moisture, 0.45, 0.005)
     sys, vm, grid, _, d = fieldSystem()
     d.moisture = 0.42
     sys:_markAggregateUnavailable(d, "EMPTY")
     T.eq("G5c an earlier unavailable read does not block the seed", sys:_checkFieldGround(1), "SEEDED")
+    T.eq("G5cp [parcel probes: 1]", sys._probes, 1)
     T.near("G5d the last-known start is the base", d.moisture, 0.42, 0.005)
 
     -- no row, blank, seeded earlier
     sys, vm, grid, _, d = fieldSystem()
     sys._mapSeeded[1] = true
     T.eq("G6a no row + NONE + seeded earlier: no second seed", sys:_checkFieldGround(1), "BLANK_SEEDED_EARLIER")
+    T.eq("G6p [parcel probes: 1]", sys._probes, 1)
     T.eq("G6b no set", vm.modifier.calls.set, 0)
     T.eq("G6c unavailable NO_CURRENT_VALUE", tostring(d.aggregateState) .. ":" .. tostring(d.aggregateUnavailableReason), "UNAVAILABLE:NO_CURRENT_VALUE")
 
@@ -243,6 +256,7 @@ group("G ground check", function()
     sys._mapSeeded[1] = true
     F245H.paint(grid, -8, -8, 8, 8, 100)
     T.eq("G7a no row + PRESENT + seeded earlier preserves", sys:_checkFieldGround(1), "PRESERVE_SEEDED_EARLIER")
+    T.eq("G7p [parcel probes: 1]", sys._probes, 1)
     T.eq("G7b state untouched", d.aggregateState, "CURRENT")
     T.eq("G7c slot untouched", d.moisture, 0.5)
 
@@ -250,6 +264,7 @@ group("G ground check", function()
     sys, vm, grid, _, d = fieldSystem()
     F245H.paint(grid, -8, -8, 8, 8, 100)
     T.eq("G8a renumbered ground preserved", sys:_checkFieldGround(1), "PRESERVE_RENUMBERED")
+    T.eq("G8p [parcel probes: 1]", sys._probes, 1)
     T.eq("G8b no set", vm.modifier.calls.set, 0)
     T.eq("G8c unavailable until its read", d.aggregateState, "UNAVAILABLE")
     T.eq("G8d seeded flag set", sys._mapSeeded[1], true)
@@ -258,16 +273,19 @@ group("G ground check", function()
     sys, vm, grid, _, d = fieldSystem()
     sys._fieldVerts[1] = { n = 0, refusedAt = g_currentMission.time }
     T.eq("G9a refused outline: no decision", sys:_checkFieldGround(1), "GEOMETRY_NOT_COMPLETE")
+    T.eq("G9p [parcel probes: 0]", sys._probes, 0)
     T.eq("G9b [no probe]", vm.modifier.calls.get, 0)
     T.eq("G9c no flag", sys._groundChecked[1], nil)
     sys._fieldVerts[1] = { polys = { SQ }, partial = true, refusedAt = g_currentMission.time }
     T.eq("G10a partial outline: no decision", sys:_checkFieldGround(1), "GEOMETRY_NOT_COMPLETE")
+    T.eq("G10p [parcel probes: 0]", sys._probes, 0)
     T.eq("G10b [no probe]", vm.modifier.calls.get, 0)
 
     -- probe refusal
     sys, vm, grid, _, d = fieldSystem()
     vm.modifier.hook = function(kind) if kind == "get" then return "throw" end end
     T.eq("G11a probe refusal", sys:_checkFieldGround(1), "PROBE_REFUSAL")
+    T.eq("G11p [parcel probes: 1]", sys._probes, 1)
     T.eq("G11b fails the provider closed", sys.providerMode, "UNAVAILABLE_PENDING_RELOAD")
 
     -- UNPROVEN
@@ -276,6 +294,7 @@ group("G ground check", function()
     DensityMapFilter = nil
     vm.filter = nil
     T.eq("G12a UNPROVEN preserves", sys:_checkFieldGround(1), "PRESERVE_UNPROVEN")
+    T.eq("G12p [parcel probes: 1]", sys._probes, 1)
     DensityMapFilter = savedClass
     T.eq("G12b decided, nothing painted", tostring(sys._groundChecked[1]) .. tostring(vm.modifier.calls.set), "true0")
 
@@ -283,6 +302,7 @@ group("G ground check", function()
     sys, vm, grid, _, d = fieldSystem({ carrier = false })
     savedRow(sys, 0.6)
     T.eq("G13a no carrier: a seed row paints nothing", sys:_checkFieldGround(1), "SEED_REFUSED_CARRIER")
+    T.eq("G13p [parcel probes: 1]", sys._probes, 1)
     T.eq("G13b no set", vm.modifier.calls.set, 0)
     T.eq("G13c decided", sys._groundChecked[1], true)
     T.ok("G13d logged once", sys._onceLogged["carrier-unproven:1"] == true)
@@ -290,10 +310,12 @@ group("G ground check", function()
     savedRow(sys, 0.6)
     F245H.paint(grid, -8, -8, 8, 8, 100)
     T.eq("G13e no carrier: a preserve row still preserves", sys:_checkFieldGround(1), "PRESERVE_RESTORED")
+    T.eq("G13ep [parcel probes: 1]", sys._probes, 1)
     sys, vm, grid, _, d = fieldSystem()
     sys.providerMode = "ZONE"
     savedRow(sys, 0.6)
     T.eq("G14 a provider that is not TRUTH seeds nothing", sys:_checkFieldGround(1), "SEED_REFUSED_CARRIER")
+    T.eq("G14p [parcel probes: 1]", sys._probes, 1)
 
     -- fill outcomes
     sys, vm, grid, _, d = fieldSystem()
@@ -301,6 +323,7 @@ group("G ground check", function()
     vm.modifier.hook = function(kind) if kind == "set" then return "noop" end end
     rev = sys.moistureRevision
     T.eq("G15a a fill with no fall preserves", sys:_checkFieldGround(1), "SEED_NOOP_PRESERVED")
+    T.eq("G15p [parcel probes: 1]", sys._probes, 1)
     T.eq("G15b revision unchanged", sys.moistureRevision, rev)
     T.eq("G15c decided", sys._groundChecked[1], true)
 
@@ -309,6 +332,7 @@ group("G ground check", function()
     vm.modifier.hook = function(kind) if kind == "set" then return "throw" end end
     rev = sys.moistureRevision
     T.eq("G16a a seed refusal", sys:_checkFieldGround(1), "SEED_REFUSAL")
+    T.eq("G16p [parcel probes: 1]", sys._probes, 1)
     T.eq("G16b fails closed", sys.providerMode, "UNAVAILABLE_PENDING_RELOAD")
     T.eq("G16c no flags", tostring(sys._mapSeeded[1]) .. tostring(sys._groundChecked[1]), "nilnil")
     T.eq("G16d restored entry kept", sys._restoredMoisture[1] ~= nil, true)
@@ -320,6 +344,7 @@ group("G ground check", function()
     vm.modifier.hook = function(kind, idx) if kind == "set" and idx == 2 then return "throw" end end
     rev = sys.moistureRevision
     T.eq("G17a a part-way fill", sys:_checkFieldGround(1), "SEED_PARTIAL")
+    T.eq("G17p [parcel probes: 1]", sys._probes, 1)
     T.eq("G17b revision advanced once", sys.moistureRevision, rev + 1)
     T.eq("G17c dirty", d.aggregateDirty, true)
     T.eq("G17d fails closed", sys.providerMode, "UNAVAILABLE_PENDING_RELOAD")
@@ -330,6 +355,7 @@ group("G ground check", function()
     sys, vm, grid, _, d = fieldSystem()
     d.moisture = nil
     T.eq("G22a a new field with no base is not painted", sys:_checkFieldGround(1), "SEED_NO_BASE")
+    T.eq("G22p [parcel probes: 1]", sys._probes, 1)
     T.eq("G22b unavailable NO_CURRENT_VALUE", d.aggregateUnavailableReason, "NO_CURRENT_VALUE")
     T.eq("G22c no set", vm.modifier.calls.set, 0)
 
@@ -337,11 +363,13 @@ group("G ground check", function()
     sys, vm, grid, _, d = fieldSystem({ ready = false })
     savedRow(sys, 0.6)
     T.eq("G20a before the barrier the check does nothing", sys:_checkFieldGround(1), nil)
+    T.eq("G20p [parcel probes: 0]", sys._probes, 0)
     T.eq("G20b [no native call, no flag]", tostring(vm.modifier.calls.get) .. tostring(sys._groundChecked[1]), "0nil")
     sys, vm, grid, _, d = fieldSystem()
     savedRow(sys, 0.6)
     g_server = nil
     T.eq("G21a a client never runs the check", sys:_checkFieldGround(1), nil)
+    T.eq("G21p [parcel probes: 0]", sys._probes, 0)
     T.eq("G21b [no native call]", vm.modifier.calls.get, 0)
     g_server = {}
 
@@ -413,4 +441,13 @@ group("M migration", function()
     T.eq("M5a call site b seeded the field", sys._groundChecked[1], true)
     T.eq("M5b current from what reads back", d.aggregateState, "CURRENT")
     T.near("M5c at its start value", d.moisture, 0.47, 0.005)
+
+    -- a post-ready check that leaves the field unseeded must still paint nothing
+    sys, vm, grid, mgr, d = fieldSystem({ carrier = false })
+    paints = 0
+    local realPaint6 = vm.paintPolygon
+    vm.paintPolygon = function(self, ...) paints = paints + 1; return realPaint6(self, ...) end
+    T.eq("M6a [reached: no carrier, the check declines to seed]", tostring(sys:migrateFieldToMap(1)) .. ":" .. tostring(sys._mapSeeded[1]), "false:nil")
+    T.eq("M6b post-ready migration never falls through to the unfiltered paint", paints, 0)
+    T.eq("M6c nor writes any pixel", F245H.count(grid), 0)
 end)
