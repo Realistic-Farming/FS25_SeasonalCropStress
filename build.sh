@@ -91,6 +91,11 @@ echo ""
 echo "  Output: $ZIP_PATH"
 
 # --deploy flag: copy zip to mods folder
+# The installed zip is never removed before the new one is known good. The zip
+# this run built must exist, be non-empty and carry modDesc.xml at its root; it
+# is copied beside the installed zip under a temporary name, compared byte for
+# byte, and only then moved over the installed one. Any failure before that move
+# leaves the installed mod exactly as it was.
 if [[ "$1" == "--deploy" ]]; then
     echo ""
     echo "  Deploying to mods folder..."
@@ -101,13 +106,38 @@ if [[ "$1" == "--deploy" ]]; then
         exit 1
     fi
 
-    # Remove old deployed version
-    if [ -f "$MODS_DIR/${MOD_NAME}.zip" ]; then
-        rm "$MODS_DIR/${MOD_NAME}.zip"
+    DEST="$MODS_DIR/${MOD_NAME}.zip"
+    STAGED="$DEST.deploying"
+
+    if [ ! -s "$ZIP_PATH" ]; then
+        echo "  ERROR: no built zip at $ZIP_PATH"
+        echo "  The installed mod was NOT touched."
+        exit 1
+    fi
+    if command -v unzip &>/dev/null; then
+        if ! unzip -l "$ZIP_PATH" 2>/dev/null | grep -q " modDesc.xml$"; then
+            echo "  ERROR: $ZIP_PATH is not a readable zip with modDesc.xml at its root"
+            echo "  The installed mod was NOT touched."
+            exit 1
+        fi
+    else
+        echo "  (unzip not found: the zip's contents were not checked, only its size)"
     fi
 
-    cp "$ZIP_PATH" "$MODS_DIR/${MOD_NAME}.zip"
-    echo "  Deployed: $MODS_DIR/${MOD_NAME}.zip"
+    rm -f "$STAGED" 2>/dev/null || true
+    if ! cp "$ZIP_PATH" "$STAGED" 2>/dev/null || ! cmp -s "$ZIP_PATH" "$STAGED"; then
+        rm -f "$STAGED" 2>/dev/null || true
+        echo "  ERROR: could not stage a byte-identical copy at $STAGED"
+        echo "  The installed mod was NOT touched."
+        exit 1
+    fi
+    if ! mv -f "$STAGED" "$DEST"; then
+        rm -f "$STAGED" 2>/dev/null || true
+        echo "  ERROR: could not replace $DEST (is the game running?)"
+        echo "  The installed mod was NOT touched."
+        exit 1
+    fi
+    echo "  Deployed: $DEST"
 fi
 
 echo ""
