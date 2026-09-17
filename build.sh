@@ -53,11 +53,13 @@ else
     elif command -v py &>/dev/null; then PYTHON_CMD="py"
     else echo "ERROR: no Python found (need python3 or py)"; exit 1
     fi
-    $PYTHON_CMD - <<'PYEOF'
+    CS_MOD_NAME="$MOD_NAME" $PYTHON_CMD - <<'PYEOF'
 import zipfile, os, sys
 
 MOD_DIR = os.getcwd()
-ZIP_PATH = os.path.join(os.path.dirname(MOD_DIR), os.path.basename(MOD_DIR) + ".zip")
+# Named after MOD_NAME, like the shell's ZIP_PATH, so --deploy finds it. The folder
+# name is only a fallback: in a git worktree it is not the mod's name.
+ZIP_PATH = os.path.join(os.path.dirname(MOD_DIR), (os.environ.get("CS_MOD_NAME") or os.path.basename(MOD_DIR)) + ".zip")
 
 EXCLUDE_DIRS  = {".git", ".claude", ".github", "__MACOSX", "node_modules", "tools"}
 EXCLUDE_EXTS  = {".sh", ".md", ".DS_Store", ".zip"}
