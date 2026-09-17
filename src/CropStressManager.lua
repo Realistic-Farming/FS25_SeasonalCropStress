@@ -1733,6 +1733,14 @@ function CropStressManager:consoleForceStress(fieldIdStr)
 end
 
 function CropStressManager:consoleSimulateHeat(daysStr)
+    -- SCS #191: moisture and stress are server-authoritative. The engine creates
+    -- g_server only for a singleplayer or hosted game (MPLoadingScreen:startLocal
+    -- and :startServer), so a pure multiplayer client, an admin one included, never
+    -- runs the hourly simulation on its own copy and diverges from the host.
+    if g_server == nil then
+        print("csSimulateHeat runs on the host only")
+        return false
+    end
     local days = tonumber(daysStr) or 1
     if days < 1 or days > 30 then
         print("Usage: csSimulateHeat <1-30>")
