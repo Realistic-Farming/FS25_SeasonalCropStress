@@ -197,6 +197,11 @@ function CropConsultant:onCriticalThreshold(data)
         hourKey = (env.currentMonotonicDay or 0) * 24 + (env.currentHour or 0)
     end
 
+    -- RSF-F245: never an alert on an invented 0 (the hourly act publishes no
+    -- critical event for a field with no current value). Tested before the
+    -- cooldown so an event with no number never uses up the field's cooldown.
+    if type(data.moistureLevel) ~= "number" then return end
+
     local cooldownHours = self.alertCooldown or CropConsultant.COOLDOWN_HOURS
     local cooldownKey = fieldId .. "_critical"
     local lastAlert   = self.alertCooldowns[cooldownKey] or -999
@@ -204,9 +209,6 @@ function CropConsultant:onCriticalThreshold(data)
 
     self.alertCooldowns[cooldownKey] = hourKey
 
-    -- RSF-F245: never an alert on an invented 0 (the hourly act publishes no
-    -- critical event for a field with no current value).
-    if type(data.moistureLevel) ~= "number" then return end
     local moisture = data.moistureLevel
     local cropName = self:getCropName(fieldId)
     self:showAlert(fieldId, moisture, "CRITICAL", cropName)

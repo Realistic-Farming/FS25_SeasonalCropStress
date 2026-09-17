@@ -755,16 +755,6 @@ function SoilMoistureSystem:seedMapFromStore()
     return count
 end
 
---- Paint per-pixel relief variation over a field's aggregate base coat so the
---- moisture map is not one flat average per field. Low ground reads wetter by
---- the same SENS/MAX the store's relief pass uses, and the offsets sum to about
---- zero over the field, so the derived field mean is unchanged. Sampled on a
---- coarse grid to bound the one-time load cost.
----@param vx number[] polygon x
----@param vz number[] polygon z
----@param n integer vertex count
----@param base number field aggregate moisture
----@return integer number of varied regions painted
 --- RSF-F245 item 4: the loaded-map marking pass. Every enumerated field with a
 --- saved row applied this load is marked seeded; a row that installed a value
 --- stays current and dirty, a row that installed none is unavailable
@@ -797,6 +787,16 @@ function SoilMoistureSystem:_missionWaterReady()
     return m ~= nil and type(m.isMissionWaterReady) == "function" and m:isMissionWaterReady() == true
 end
 
+--- Paint per-pixel relief variation over a field's aggregate base coat so the
+--- moisture map is not one flat average per field. Low ground reads wetter by
+--- the same SENS/MAX the store's relief pass uses, and the offsets sum to about
+--- zero over the field, so the derived field mean is unchanged. Sampled on a
+--- coarse grid to bound the one-time load cost.
+---@param vx number[] polygon x
+---@param vz number[] polygon z
+---@param n integer vertex count
+---@param base number field aggregate moisture
+---@return integer number of varied regions painted
 function SoilMoistureSystem:_seedMapRelief(vx, vz, n, base)
     if not self:mapActive() then return 0 end
     if getTerrainHeightAtWorldPos == nil or g_terrainNode == nil then return 0 end
@@ -1370,26 +1370,31 @@ function SoilMoistureSystem:_refreshFieldAggregate(fieldId, d)
     -- RSF-F245: nil dirty means clean (the certified paired contract model), and
     -- every new record is created dirty (enumerateFields).
     if d.aggregateDirty ~= true then return end
-    -- A value map without the typed read is a test double, not a native state; it
-    -- keeps today's silent return (Bob intake finding 3, named in the PR).
-    if self.valueMap.readAverageOfPolygon == nil then return end
-    local vx, vz, n = self:_getFieldVerts(fieldId)
-    -- RSF-F245 item 3: typed outcomes, and no silent return. No usable geometry is
+    -- RSF-F245 item 3: typed outcomes, and no silent return. A provider without the
+    -- typed polygon read is a capability refusal (Design, ledger a2ae501, Bob intake
+    -- finding 3), tested before any geometry. No usable geometry is
     -- INVALID_FIELD_GEOMETRY. OK with a numeric mean makes the field current and
     -- clean. EMPTY, INVALID_FIELD_GEOMETRY and OK with no mean make it unavailable
     -- and leave it dirty, so a later door reads again; the old value never stays
-    -- current. PROVIDER_REFUSAL keeps the one-way fail-closed path.
-    local outcome, mean
-    if vx == nil then
-        outcome = "INVALID_FIELD_GEOMETRY"
+    -- current. PROVIDER_REFUSAL marks the field unavailable too (the certified
+    -- contract model's refresh) and takes the one-way fail-closed path.
+    local outcome, mean, refusal
+    if type(self.valueMap.readAverageOfPolygon) ~= "function" then
+        outcome, refusal = "PROVIDER_REFUSAL", "provider has no polygon-aggregate read"
     else
-        outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+        local vx, vz, n = self:_getFieldVerts(fieldId)
+        if vx == nil then
+            outcome = "INVALID_FIELD_GEOMETRY"
+        else
+            outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+        end
     end
     if outcome == "OK" and mean ~= nil then
         self:_markAggregateCurrent(d, mean)
         d.aggregateDirty = false
     elseif outcome == "PROVIDER_REFUSAL" then
-        self:_failNativeClosed("polygon-aggregate refusal on field refresh")
+        self:_markAggregateUnavailable(d, "PROVIDER_REFUSAL")
+        self:_failNativeClosed(refusal or "polygon-aggregate refusal on field refresh")
     elseif outcome == "INVALID_FIELD_GEOMETRY" then
         self:_markAggregateUnavailable(d, "INVALID_FIELD_GEOMETRY")
     else
@@ -2691,22 +2696,28 @@ function SoilMoistureSystem:settleDaily(boundariesCrossed)
                 fields = fields + 1
                 blocks = blocks + (self._lastFieldBlocks or 0)
             end
-            local vx, vz, n = self:_getFieldVerts(fieldId)
             -- RSF-F245 item 3: the settle re-derive follows the refresh rules and never
             -- writes nil into the current slot. OK with a mean makes the field current
             -- and clean; EMPTY, OK with no mean and missing geometry make it
-            -- unavailable and dirty; a genuine refusal fails the provider closed.
-            local outcome, mean
-            if vx == nil then
-                outcome = "INVALID_FIELD_GEOMETRY"
+            -- unavailable and dirty; a refusal (a missing typed read included, ledger
+            -- a2ae501) marks the field unavailable and fails the provider closed.
+            local outcome, mean, refusal
+            if type(self.valueMap.readAverageOfPolygon) ~= "function" then
+                outcome, refusal = "PROVIDER_REFUSAL", "provider has no polygon-aggregate read"
             else
-                outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+                local vx, vz, n = self:_getFieldVerts(fieldId)
+                if vx == nil then
+                    outcome = "INVALID_FIELD_GEOMETRY"
+                else
+                    outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+                end
             end
             if outcome == "OK" and mean ~= nil then
                 self:_markAggregateCurrent(d, mean)
                 d.aggregateDirty = false
             elseif outcome == "PROVIDER_REFUSAL" then
-                self:_failNativeClosed("polygon-aggregate refusal on daily settle")
+                self:_markAggregateUnavailable(d, "PROVIDER_REFUSAL")
+                self:_failNativeClosed(refusal or "polygon-aggregate refusal on daily settle")
                 break
             elseif outcome == "INVALID_FIELD_GEOMETRY" then
                 self:_markAggregateUnavailable(d, "INVALID_FIELD_GEOMETRY")
