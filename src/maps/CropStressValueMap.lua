@@ -36,16 +36,51 @@ CropStressValueMap.LAYER_DEF = {
     maxVal = 1.0,
 }
 
---- SCS-039 v2.1 (SDS 3.5): generation-qualified native file name. Generation 0
---- (or nil) is the LEGACY baseline name and is never overwritten once
---- generation-qualified storage starts; a qualified generation writes a
---- distinct file so a save never clobbers either retained complete pair.
-function CropStressValueMap.generationFileName(generation)
-    if generation == nil or generation <= 0 then return CropStressValueMap.LAYER_DEF.file end
-    local base = CropStressValueMap.LAYER_DEF.file
-    local stem = base:match("^(.*)%.grle$")
-    if stem == nil then stem = base end
-    return string.format("%s.g%d.grle", stem, generation)
+--- RSF-F244: THE NATIVE IMAGE LIVES IN ONE OF THREE ROTATING SLOT FILES.
+--- PR188 named each generation's image csMoistureMap.g<N>.grle, so every save
+--- left the previous image behind for good. A mod cannot clean those up: the mod
+--- environment wraps deleteFile so it only reaches modSettings/<modName>
+--- (decompiled mods.lua:708-733), and the savegame folder is outside it. So the
+--- files are reused instead: the selected current, the selected previous and one
+--- candidate. The generation stays in the envelope and is no longer in the name.
+CropStressValueMap.SLOT_FILES = {
+    "csMoistureMap.s1.grle",
+    "csMoistureMap.s2.grle",
+    "csMoistureMap.s3.grle",
+}
+
+function CropStressValueMap.isSlotFileName(name)
+    for _, slot in ipairs(CropStressValueMap.SLOT_FILES) do
+        if name == slot then return true end
+    end
+    return false
+end
+
+--- RSF-F244: the whole-string door check every native open passes. Accepts
+--- exactly the legacy name, a PR188-era generation name with a positive N and no
+--- leading zero (so g0 and g01 are refused), or one of the three slot names.
+--- Anchored at both ends, so any separator, "..", prefix or suffix is refused.
+--- This is a door check, not an identity check: the compact digest does not cover
+--- the file name, so one legal name can still stand in for another (a named limit).
+function CropStressValueMap.isAcceptedNativeName(name)
+    if type(name) ~= "string" then return false end
+    if name == CropStressValueMap.LAYER_DEF.file then return true end
+    if CropStressValueMap.isSlotFileName(name) then return true end
+    return name:match("^csMoistureMap%.g[1-9]%d*%.grle$") ~= nil
+end
+
+--- RSF-F244: the slot a save cut writes: the lowest slot named by neither the
+--- selected current nor the selected previous retained record. At most two are
+--- excluded, so one is always free. A pure function of those two names, so a
+--- retried failed cut picks the same slot, and the legacy name is never returned.
+---@param currentName string|nil  file named by the selected current record's envelope
+---@param previousName string|nil file named by the selected previous record's envelope
+---@return string
+function CropStressValueMap.chooseSlotFileName(currentName, previousName)
+    for _, slot in ipairs(CropStressValueMap.SLOT_FILES) do
+        if slot ~= currentName and slot ~= previousName then return slot end
+    end
+    return CropStressValueMap.SLOT_FILES[1]
 end
 
 local NUM_CHANNELS = 8      -- bits per pixel
@@ -136,6 +171,10 @@ function CropStressValueMap.new()
     self.modifier     = nil
     self.filter       = nil
     self.resolution   = 0
+    -- RSF-F244: the resolution computed from the terrain, and the width the
+    -- modifier and filter were last built at.
+    self.computedResolution = 0
+    self.toolWidth    = 0
     self.terrainSize  = 0
     self.loadedFromSave = false
     self.hasExecuteAdd  = true
@@ -155,7 +194,12 @@ local function engineCapable()
        and g_terrainNode ~= 0
 end
 
-function CropStressValueMap:initialize(savegameDir)
+--- Stand a FRESH map up. RSF-F244: THE PROBE OPENS NO FILE. It used to import
+--- csMoistureMap.grle here, at field-ready and before the restore barrier had
+--- read any envelope, so a stale legacy picture could sit in memory as current
+--- truth and survive on the barrier's no-candidate path. Native images are now
+--- opened only inside the barrier, through loadNativeFile.
+function CropStressValueMap:initialize()
     if self.initialized then return self.available end
     self.initialized = true
 
@@ -172,6 +216,7 @@ function CropStressValueMap:initialize(savegameDir)
 
     self.resolution = math.max(MIN_RESOLUTION,
                       math.min(MAX_RESOLUTION, math.floor(self.terrainSize / 2)))
+    self.computedResolution = self.resolution
 
     local ok, err = pcall(function()
         self.bvm = createBitVectorMap("CSMoistureMap")
@@ -179,29 +224,9 @@ function CropStressValueMap:initialize(savegameDir)
             error("createBitVectorMap returned nothing")
         end
 
-        local loaded = false
-        if savegameDir ~= nil and fileExists ~= nil then
-            local path = savegameDir .. "/" .. CropStressValueMap.LAYER_DEF.file
-            if fileExists(path) and loadBitVectorMapFromFile ~= nil then
-                loaded = loadBitVectorMapFromFile(self.bvm, path, NUM_CHANNELS) and true or false
-                if loaded and getBitVectorMapSize ~= nil then
-                    -- Adopt the persisted resolution: it may differ from the one
-                    -- computed above if the cap changed between versions, and the
-                    -- file is the authority for data already on disk.
-                    local w = getBitVectorMapSize(self.bvm)
-                    if w ~= nil and w > 0 then self.resolution = w end
-                end
-            end
-        end
-        if not loaded then
-            loadBitVectorMapNew(self.bvm, self.resolution, self.resolution, NUM_CHANNELS, false)
-        end
-        self.loadedFromSave = loaded
-
-        self.modifier = DensityMapModifier.new(self.bvm, 0, NUM_CHANNELS, g_terrainNode)
-        if DensityMapFilter ~= nil and DensityMapFilter.new ~= nil then
-            self.filter = DensityMapFilter.new(self.bvm, 0, NUM_CHANNELS)
-        end
+        loadBitVectorMapNew(self.bvm, self.resolution, self.resolution, NUM_CHANNELS, false)
+        self.loadedFromSave = false
+        self:_buildTools()
     end)
 
     if not ok then
@@ -217,10 +242,23 @@ function CropStressValueMap:initialize(savegameDir)
 
     self.available = true
     csvmLog(string.format(
-        "Moisture map: %dx%d at %.1f m/px%s",
-        self.resolution, self.resolution, self:getGrainMetres(),
-        self.loadedFromSave and " [restored from savegame]" or " [fresh]"))
+        "Moisture map: %dx%d at %.1f m/px [fresh; the restore barrier opens any saved image]",
+        self.resolution, self.resolution, self:getGrainMetres()))
     return true
+end
+
+--- Build the modifier and filter against the map's CURRENT width and record that
+--- width. Whether an engine modifier stays valid after a load changes the map's
+--- size cannot be determined from Lua, so no painting or reading may use tools
+--- built at another width. The base game builds these freely and never deletes
+--- them, so replacing them needs no teardown.
+function CropStressValueMap:_buildTools()
+    self.modifier = DensityMapModifier.new(self.bvm, 0, NUM_CHANNELS, g_terrainNode)
+    self.filter = nil
+    if DensityMapFilter ~= nil and DensityMapFilter.new ~= nil then
+        self.filter = DensityMapFilter.new(self.bvm, 0, NUM_CHANNELS)
+    end
+    self.toolWidth = self.resolution
 end
 
 --- THE CONCORDANCE'S TEETH: the grain, in metres, that any value read off this
@@ -242,29 +280,41 @@ function CropStressValueMap:delete()
     self.available = false
 end
 
---- SCS-039 SDS 3.7/3.8: open the generation-qualified native image the restore
---- barrier selected and prove its shape. File existence alone is not validity:
---- the engine load must return literal true AND the persisted width must match
---- the envelope's mapWidth (when the envelope carries one). Returns true only
---- then; on any refusal the caller declines the map rather than pairing the
---- compact half of one generation with another generation's pixels.
----@param savegameDir string
----@param generation number
+--- SCS-039 SDS 3.7/3.8, RSF-F244: THE ONE NATIVE LOADER, called only from inside
+--- the restore barrier. Opens the file the caller names (an envelope's recorded
+--- filename, or the legacy name) and proves its shape. The name must pass the
+--- whole-string door check, the file must exist, the engine load must return
+--- literal true, and the persisted width must match when a width is expected.
+--- A successful load that moved the width rebuilds the modifier and filter.
+---
+--- The second return says whether an engine load was ATTEMPTED. A refusal before
+--- any load (a rejected name, a missing file, a nil directory) leaves the map as
+--- it was. After an attempted load that failed, the map's state is not
+--- determinable from Lua; what to do about that belongs to the caller (the
+--- generation path declines the map, the legacy path resets it), not to this
+--- loader on every false return.
+---@param savegameDir string|nil
+---@param filename string|nil
 ---@param expectedWidth number|nil
----@return boolean
-function CropStressValueMap:loadGenerationFile(savegameDir, generation, expectedWidth)
-    if not self.available or savegameDir == nil then return false end
-    if self.bvm == nil or self.bvm == 0 then return false end
-    if fileExists == nil or loadBitVectorMapFromFile == nil then return false end
-    local path = savegameDir .. "/" .. CropStressValueMap.generationFileName(generation)
+---@return boolean loaded
+---@return boolean attempted
+function CropStressValueMap:loadNativeFile(savegameDir, filename, expectedWidth)
+    if not self.available or savegameDir == nil then return false, false end
+    if self.bvm == nil or self.bvm == 0 then return false, false end
+    if not CropStressValueMap.isAcceptedNativeName(filename) then
+        csvmLog(string.format("Moisture map: refused native image name %s", tostring(filename)))
+        return false, false
+    end
+    if fileExists == nil or loadBitVectorMapFromFile == nil then return false, false end
+    local path = savegameDir .. "/" .. filename
     if fileExists(path) ~= true then
         csvmLog(string.format("Moisture map: native image %s is absent", path))
-        return false
+        return false, false
     end
     local ok, loaded = pcall(loadBitVectorMapFromFile, self.bvm, path, NUM_CHANNELS)
     if not ok or loaded ~= true then
         csvmLog(string.format("Moisture map: native image %s refused to load", path))
-        return false
+        return false, true
     end
     local width = nil
     if getBitVectorMapSize ~= nil then
@@ -274,22 +324,72 @@ function CropStressValueMap:loadGenerationFile(savegameDir, generation, expected
     if expectedWidth ~= nil and (width == nil or width ~= expectedWidth) then
         csvmLog(string.format("Moisture map: native image %s has width %s, envelope expects %s",
             path, tostring(width), tostring(expectedWidth)))
-        return false
+        return false, true
     end
     if width ~= nil and width > 0 then self.resolution = width end
+    if self.resolution ~= self.toolWidth then
+        local okTools = pcall(function() self:_buildTools() end)
+        if not okTools then
+            csvmLog(string.format("Moisture map: tools could not be rebuilt at the loaded width %d", self.resolution))
+            return false, true
+        end
+        csvmLog(string.format("Moisture map: tools rebuilt at the loaded width %d", self.resolution))
+    end
     self.loadedFromSave = true
     csvmLog(string.format("Moisture map: native image %s adopted (%dx%d)", path, self.resolution, self.resolution))
+    return true, true
+end
+
+--- RSF-F244: import the pre-generation csMoistureMap.grle, once, from the restore
+--- barrier's legacy branch only. No expected width: the file is the authority for
+--- data already on disk. A refusal or absence before any engine load leaves the
+--- fresh map initialize stood up. An ATTEMPTED load that failed leaves the map
+--- and its tools not determinable, so the map is reset fresh at the computed
+--- resolution and the tools are rebuilt unconditionally, even when the width did
+--- not change.
+---@param savegameDir string|nil
+---@return boolean imported
+function CropStressValueMap:importLegacyFile(savegameDir)
+    local loaded, attempted = self:loadNativeFile(savegameDir, CropStressValueMap.LAYER_DEF.file, nil)
+    if loaded then return true end
+    if attempted then self:_resetFresh() end
+    return false
+end
+
+--- Reset the map to a fresh one at the computed resolution and rebuild its tools.
+--- If even that fails, the map is released, and the soil system declines it.
+function CropStressValueMap:_resetFresh()
+    local ok, err = pcall(function()
+        self.resolution = self.computedResolution
+        loadBitVectorMapNew(self.bvm, self.resolution, self.resolution, NUM_CHANNELS, false)
+        self.loadedFromSave = false
+        self:_buildTools()
+    end)
+    if not ok then
+        csvmLog(string.format("Moisture map: reset after a failed legacy load failed (%s); map released", tostring(err)))
+        self:delete()
+        return false
+    end
+    csvmLog(string.format("Moisture map: legacy image failed after an engine load; map reset fresh at %dx%d and tools rebuilt",
+        self.resolution, self.resolution))
     return true
 end
 
-function CropStressValueMap:saveToSavegame(savegameDir, generation)
+---@param savegameDir string|nil
+---@param filename string  the slot name the save cut chose
+---@return boolean
+function CropStressValueMap:saveToSavegame(savegameDir, filename)
     if not self.available or savegameDir == nil then return false end
     if saveBitVectorMapToFile == nil then return false end
-    -- SCS-039 v2.1 (SDS 3.5): the native file is generation-qualified when a
-    -- generation is supplied (the candidate COMPLETE generation), so a save
-    -- never overwrites the legacy baseline or either retained complete pair.
-    local name = CropStressValueMap.generationFileName(generation)
-    local path = savegameDir .. "/" .. name
+    -- RSF-F244: ONE NAME, END TO END. The save cut chooses the slot string once;
+    -- this writes exactly that string, and nothing here derives a path from the
+    -- generation. Only a slot name is writable: the legacy file and PR188-era
+    -- g<N> names are never written again.
+    if not CropStressValueMap.isSlotFileName(filename) then
+        csvmLog(string.format("Moisture map: refused to write non-slot name %s", tostring(filename)))
+        return false
+    end
+    local path = savegameDir .. "/" .. filename
     -- SCS-039 v2.1: a native mutator succeeds only when BOTH the outer pcall
     -- survived AND the engine returned literal true. A non-throwing false return
     -- was previously misread as a saved file, a silent data-loss report.

@@ -48,9 +48,10 @@ local function fakeValueMap(log)
   return {
     available = true, resolution = 1024, loadedFromSave = true,
     getGrainMetres = function() return 2 end,
-    loadGenerationFile = function(_self, dir, generation, width)
-      log[#log + 1] = { dir = dir, generation = generation, width = width }
-      return log.answer ~= false
+    -- RSF-F244: the one loader opens the file the envelope RECORDS.
+    loadNativeFile = function(_self, dir, filename, width)
+      log[#log + 1] = { dir = dir, filename = filename, width = width }
+      return log.answer ~= false, true
     end,
     delete = function(self) self.available = false end,
   }
@@ -67,8 +68,8 @@ local function truthSoil(revision, cursor, log)
   soil.providerMode = "TRUTH"
   soil.valueMap = fakeValueMap(log or {})
   soil._nativeSaves = {}
-  soil.saveNativeMap = function(self, dir, generation)
-    self._nativeSaves[#self._nativeSaves + 1] = generation
+  soil.saveNativeMap = function(self, dir, filename)
+    self._nativeSaves[#self._nativeSaves + 1] = filename
     return self._nativeAnswer ~= false
   end
   soil._nativeAnswer = true
@@ -121,11 +122,11 @@ do
 
   local v1 = m:ensureMissionWaterSaveCut("PUMP")
   T.eq("cut.fittedSettledForSave", m.irrigationManager.settled[1], "SAVE")
-  T.eq("cut.nativeWrittenForCandidate", soil._nativeSaves[1], 1)
+  T.eq("cut.nativeWrittenToFirstSlot", soil._nativeSaves[1], "csMoistureMap.s1.grle")
   T.eq("cut.generationAdvances", m.saveLoad._completePair.current.generation, 1)
   T.eq("cut.viewHasOneComplete", #v1.complete, 1)
   T.eq("cut.completeGeneration", v1.complete[1].generation, 1)
-  T.eq("cut.completeFilename", v1.complete[1].filename, "csMoistureMap.g1.grle")
+  T.eq("cut.completeFilename", v1.complete[1].filename, "csMoistureMap.s1.grle")
   T.eq("cut.completeMapWidth", v1.complete[1].mapWidth, 1024)
   T.eq("cut.leafCaptured", v1.complete[1].absorption ~= nil, true)
   T.eq("cut.leafWindow", v1.complete[1].absorption.windowId, HOUR)
@@ -143,7 +144,7 @@ do
   T.ok("cut.dirtyRecaptures", v3 ~= v1)
   T.eq("cut.secondGeneration", v3.complete[1].generation, 2)
   T.eq("cut.previousRetained", v3.complete[2].generation, 1)
-  T.eq("cut.secondNativeCandidate", soil._nativeSaves[2], 2)
+  T.eq("cut.secondNativeSlot", soil._nativeSaves[2], "csMoistureMap.s2.grle")
 end
 
 -- ============================================================
@@ -197,7 +198,8 @@ do
   T.eq("xml.schema", xmlHandle[ROOT .. ".moisture#schema"], 3)
   T.eq("xml.currentGeneration", xmlHandle[ROOT .. ".moisture.complete(0)#generation"], 2)
   T.eq("xml.previousGeneration", xmlHandle[ROOT .. ".moisture.complete(1)#generation"], 1)
-  T.eq("xml.currentFilename", xmlHandle[ROOT .. ".moisture.complete(0)#filename"], "csMoistureMap.g2.grle")
+  T.eq("xml.currentFilename", xmlHandle[ROOT .. ".moisture.complete(0)#filename"], "csMoistureMap.s2.grle")
+  T.eq("xml.previousFilename", xmlHandle[ROOT .. ".moisture.complete(1)#filename"], "csMoistureMap.s1.grle")
   T.eq("xml.leafAdler", type(xmlHandle[ROOT .. ".moisture.complete(0).absorption#rowsAdler32"]), "string")
   T.eq("xml.leafRowCount", xmlHandle[ROOT .. ".moisture.complete(0).absorption#rowCount"], 1)
   T.eq("xml.legacyRevisionKept", xmlHandle[ROOT .. "#moistureRevision"], 8)
@@ -217,7 +219,7 @@ do
   T.eq("xml.restoreMode", r.mode, "TRUTH")
   T.eq("xml.restoreGeneration", r.generation, 2)
   T.eq("xml.probeOnce", #log, 1)
-  T.eq("xml.probeGeneration", log[1].generation, 2)
+  T.eq("xml.probeOpensTheRecordedFile", log[1].filename, "csMoistureMap.s2.grle")
   T.eq("xml.probeWidth", log[1].width, 1024)
   T.eq("xml.revision", soil2.moistureRevision, 8)
   T.eq("xml.cursor", soil2._lastSettledDay, 20)
@@ -317,7 +319,7 @@ do
   })
   T.eq("corrupt.fallsToPrevious", r.generation, 1)
   T.eq("corrupt.previousIsTruth", r.mode, "TRUTH")
-  T.eq("corrupt.probedGeneration1", log[1].generation, 1)
+  T.eq("corrupt.probedGeneration1File", log[1].filename, "csMoistureMap.s1.grle")
   T.eq("corrupt.revisionFromGeneration1", soil2.moistureRevision, 7)
   T.near("corrupt.aggregateFromGeneration1", soil2.fieldData[1].moisture, 0.62, 1e-12)
 end
@@ -345,7 +347,7 @@ do
   })
   T.eq("conflict.generationTwoRejected", r.generation, 1)
   T.eq("conflict.selectsLowerPair", r.mode, "TRUTH")
-  T.eq("conflict.neverProbedGenerationTwo", log[1].generation, 1)
+  T.eq("conflict.neverProbedGenerationTwo", log[1].filename, "csMoistureMap.s1.grle")
 end
 
 -- ============================================================

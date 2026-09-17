@@ -970,6 +970,12 @@ function CropStressManager:tryRestoreMissionWater()
             if type(soil.adoptNativeGeneration) ~= "function" then return false end
             return soil:adoptNativeGeneration(sgDir, envelope) == true
         end,
+        -- RSF-F244: the legacy image import, called only from the barrier's
+        -- legacy branch on a pre-generation load.
+        legacyProbe = function()
+            if type(soil.importLegacyNativeMap) ~= "function" then return false end
+            return soil:importLegacyNativeMap(sgDir) == true
+        end,
     }
     local result = nil
     if self.saveLoad ~= nil and type(self.saveLoad.restoreMissionWater) == "function" then

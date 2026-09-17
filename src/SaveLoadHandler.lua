@@ -994,7 +994,7 @@ end
 --
 -- performMissionWaterSaveCut is the mechanical cut the manager's
 -- ensureMissionWaterSaveCut drives: capture at the current revision, write the
--- generation-qualified native image through the REAL saveNativeMap receipt,
+-- native image to its chosen slot file through the REAL saveNativeMap receipt,
 -- commit, and hand back the logical view (current + previous COMPLETE, any
 -- PENDING_ONLY row). The view encoders below carry that view to own XML and to
 -- the StateLedger table; the candidate collector rebuilds and validates it from
@@ -1015,6 +1015,13 @@ function SaveLoadHandler:_missionWaterSaveView(reason)
     return view
 end
 
+--- RSF-F244: the native file a retained record's envelope names, or nil (a ZONE
+--- generation or a record with no envelope names no file).
+local function retainedFileName(record)
+    if type(record) ~= "table" or type(record.envelope) ~= "table" then return nil end
+    return record.envelope.filename
+end
+
 --- The mechanical cut. Returns the logical view and the commit outcome
 --- ("COMPLETE" | "PENDING_ONLY" | "FAILED"). Only COMPLETE advances the
 --- generation; anything else retains the prior pairs byte-current.
@@ -1032,17 +1039,24 @@ function SaveLoadHandler:performMissionWaterSaveCut(reason)
         -- mission; the compact write records PENDING_ONLY against the retained pair.
         nativeOk = false
     elseif type(soil.mapActive) == "function" and soil:mapActive() then
-        local candidate = (capture.generation or 0) + 1
-        if CropStressValueMap ~= nil and CropStressValueMap.generationFileName ~= nil then
-            filename = CropStressValueMap.generationFileName(candidate)
+        -- RSF-F244: THREE ROTATING SLOTS, ONE NAME END TO END. The slot is chosen
+        -- here, once, before the native write: the lowest one named by neither
+        -- the selected current nor the selected previous retained record. That
+        -- exact string is capture.filename, the argument written down through
+        -- saveNativeMap and saveToSavegame, and the path checked on disk below.
+        -- Nothing derives a name from the generation any more.
+        if CropStressValueMap ~= nil and CropStressValueMap.chooseSlotFileName ~= nil then
+            filename = CropStressValueMap.chooseSlotFileName(
+                retainedFileName(self._completePair.current),
+                retainedFileName(self._completePair.previous))
         end
         local sgDir = g_currentMission ~= nil and g_currentMission.missionInfo ~= nil
             and g_currentMission.missionInfo.savegameDirectory or nil
-        if sgDir ~= nil and type(soil.saveNativeMap) == "function" then
+        if sgDir ~= nil and filename ~= nil and type(soil.saveNativeMap) == "function" then
             -- The engine receipt must be literal true: a non-throwing false is a
             -- failure even when the outer pcall survived (saveToSavegame enforces
             -- that; saveNativeMap routes a refusal through the fail-closed path).
-            nativeOk = soil:saveNativeMap(sgDir, candidate) == true
+            nativeOk = soil:saveNativeMap(sgDir, filename) == true
             if nativeOk and fileExists ~= nil and filename ~= nil
                and fileExists(sgDir .. "/" .. filename) ~= true then
                 csLog("SaveLoadHandler: native image reported saved but is not on disk; treating the write as failed")
@@ -1286,6 +1300,33 @@ function SaveLoadHandler:validatePendingRow(p)
     return true
 end
 
+--- RSF-F244: has this save moved to generation storage? True when either mirror
+--- staged any COMPLETE candidate, valid or not, or either staged snapshot carries
+--- saveGeneration above 0. Built from both surfaces, never from the selector's
+--- mode (it groups only valid rows, so all-invalid envelopes read as NONE) nor
+--- from the legacy branch's single snapshot (the first staged surface only).
+---
+--- It does not look at slot files, on purpose. A save cut writes its slot image
+--- before either mirror commits it, so a pre-generation save interrupted after
+--- its first slot write leaves the same disk picture as a generation-era save
+--- that lost both moisture records. Only the first may keep its legacy image, and
+--- nothing on disk separates them, so the lost-both-records save is a named
+--- residual, not a detected case.
+---@param candidates table  every row collectMoistureCandidates returned
+---@return boolean
+function SaveLoadHandler:isGenerationEraLoad(candidates)
+    for _, c in ipairs(candidates or {}) do
+        if c.payloadKind == "COMPLETE" then return true end
+    end
+    for _, source in ipairs(STAGE_ORDER) do
+        local snap = self._staged ~= nil and self._staged[source] or nil
+        if type(snap) == "table" and type(snap.saveGeneration) == "number" and snap.saveGeneration > 0 then
+            return true
+        end
+    end
+    return false
+end
+
 --- Collect candidate rows from every staged surface with their FULL payloads
 --- attached (the selector's returned identifiers alone are never restored
 --- material). Native availability is left false here: the barrier probes the
@@ -1342,7 +1383,7 @@ local function clamp01(v) return math.max(0.0, math.min(1.0, v or 0)) end
 --- the absorption loader with the enclosing provider identity, current hour and
 --- field membership. Legacy scalar saves (no envelope) migrate through the same
 --- path with no absorption allowance.
----@param ctx table|nil { nativeProbe=fn(env)->bool, liveMode, liveGrain, currentHour }
+---@param ctx table|nil { nativeProbe=fn(env)->bool, legacyProbe=fn()->bool, liveMode, liveGrain, currentHour }
 ---@return table result
 function SaveLoadHandler:restoreMissionWater(ctx)
     ctx = ctx or {}
@@ -1505,8 +1546,21 @@ function SaveLoadHandler:restoreMissionWater(ctx)
         result.declined = "no usable COMPLETE native pair; PENDING_ONLY zone recovery"
     else
         -- Legacy scalar schema 2 (or a fresh game): migrate the flat keys with
-        -- no absorption allowance. A legacy csMoistureMap.grle, when the probe
-        -- imported it, stays generation 0.
+        -- no absorption allowance.
+        --
+        -- RSF-F244: the legacy csMoistureMap.grle is imported HERE, never by the
+        -- probe, and only on a pre-generation load, where it stays generation 0.
+        -- A generation-era load whose envelopes are all unusable declines the
+        -- live map to ZONE instead: that legacy picture predates every generation
+        -- save, and a fresh fine map would invent detail. With the map not live
+        -- (release gate off) there is nothing to import or decline.
+        if self:isGenerationEraLoad(candidates) then
+            if type(soil.mapActive) == "function" and soil:mapActive() then
+                result.declined = "generation-era save with no usable moisture envelope; legacy image not imported"
+            end
+        elseif type(ctx.legacyProbe) == "function" then
+            result.legacyImported = ctx.legacyProbe() == true
+        end
         if snap.moistureRevision ~= nil then
             soil.moistureRevision = snap.moistureRevision
             self._completePair.current.revision = snap.moistureRevision
