@@ -140,16 +140,25 @@ function CsRfPdaGuest.computeGlanceStats()
     local critical = 0
     local irrigatedCount = 0
 
+    -- RSF-F245 item 6: refresh first; a field with no reading stays tracked but is
+    -- left out of the average and the band counts.
+    if type(soilSystem.refreshForPublication) == "function" then
+        soilSystem:refreshForPublication()
+    end
+    local withReading = 0
     for fid, entry in pairs(soilSystem.fieldData) do
         totalTracked = totalTracked + 1
-        local m = entry.moisture or 0
-        sumMoisture = sumMoisture + m
-        if m >= 0.40 then
-            healthy = healthy + 1
-        elseif m >= 0.25 then
-            warning = warning + 1
-        else
-            critical = critical + 1
+        if entry.aggregateState ~= "UNAVAILABLE" and type(entry.moisture) == "number" then
+            local m = entry.moisture
+            withReading = withReading + 1
+            sumMoisture = sumMoisture + m
+            if m >= 0.40 then
+                healthy = healthy + 1
+            elseif m >= 0.25 then
+                warning = warning + 1
+            else
+                critical = critical + 1
+            end
         end
 
         local s = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
@@ -170,7 +179,7 @@ function CsRfPdaGuest.computeGlanceStats()
         end
     end
 
-    local avgMoisture = totalTracked > 0 and (sumMoisture / totalTracked) or 0
+    local avgMoisture = withReading > 0 and (sumMoisture / withReading) or nil
     local avgStress = totalTracked > 0 and (sumStress / totalTracked) or 0
     -- Honest max: CropStressModifier.getMaxYieldLoss (not stale 0.60).
     local maxLoss = 0.30
@@ -286,10 +295,13 @@ function CsRfPdaGuest.buildNextStepLine(fieldId)
         return nil, nil
     end
 
-    local moisture = 0
+    -- RSF-F245 item 6: nil when the field has no reading; every moisture term below
+    -- is skipped for it.
+    local moisture = nil
     if type(mgr.getMoisture) == "function" then
-        moisture = mgr:getMoisture(fieldId) or 0
+        moisture = mgr:getMoisture(fieldId)
     end
+    if type(moisture) ~= "number" then moisture = nil end
     local stress = 0
     if type(mgr.getStress) == "function" then
         stress = mgr:getStress(fieldId) or 0
@@ -321,7 +333,7 @@ function CsRfPdaGuest.buildNextStepLine(fieldId)
     local color = COLOR_HEALTHY
 
     -- Priority 1: Critical moisture
-    if moisture < 0.25 then
+    if moisture ~= nil and moisture < 0.25 then
         color = COLOR_CRITICAL
         if watering then
             tip = tr("cs_rf_pda_next_critical_watering",
@@ -342,7 +354,7 @@ function CsRfPdaGuest.buildNextStepLine(fieldId)
         end
 
     -- Priority 2: Sensitive growth window + under that crop's window moisture
-    elseif inWindow and winMoist ~= nil and moisture < winMoist then
+    elseif moisture ~= nil and inWindow and winMoist ~= nil and moisture < winMoist then
         color = COLOR_WARNING
         tip = tr("cs_rf_pda_next_window",
             "Sensitive growth window - keep this field watered so stress does not climb.")
@@ -357,6 +369,11 @@ function CsRfPdaGuest.buildNextStepLine(fieldId)
         local tpl = tr("cs_rf_pda_next_stress",
             "Stress is high (about %s harvest risk) - water / protect before it gets worse.")
         tip = string.format(tpl, lossLabel)
+
+    -- RSF-F245: with no reading there is no moisture advice and no healthy tick; the
+    -- line is left out.
+    elseif moisture == nil then
+        return nil, nil
 
     -- Priority 4: Warning moisture (25-40%)
     elseif moisture < 0.40 then
@@ -495,11 +512,17 @@ function CsRfPdaGuest.buildFieldRows()
         end
     end
 
+    -- RSF-F245 item 6: nil, not 0, when neither the entry nor getMoisture gives a number.
     local function moistureFor(fid, entry)
-        local moisture = (entry and entry.moisture) or 0
+        local moisture = nil
+        if entry ~= nil and entry.aggregateState ~= "UNAVAILABLE" and type(entry.moisture) == "number" then
+            moisture = entry.moisture
+        end
         if type(soilSystem.getMoisture) == "function" then
             local okM, mv = pcall(function() return soilSystem:getMoisture(fid) end)
-            if okM and type(mv) == "number" then moisture = mv end
+            if okM then
+                if type(mv) == "number" then moisture = mv else moisture = nil end
+            end
         end
         return moisture
     end
@@ -513,7 +536,7 @@ function CsRfPdaGuest.buildFieldRows()
         for _, fid in ipairs(members) do
             local entry = soilSystem.fieldData[fid]
             local moisture = moistureFor(fid, entry)
-            if minMoist == nil or moisture < minMoist then
+            if moisture ~= nil and (minMoist == nil or moisture < minMoist) then
                 minMoist = moisture
             end
             local stress = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
@@ -534,8 +557,12 @@ function CsRfPdaGuest.buildFieldRows()
                 cropMixed = true
             end
         end
-        if minMoist == nil then minMoist = 0 end
-        local statusText, statusColor = moistureStatus(minMoist)
+        -- RSF-F245: no member with a reading shows a blank moisture text with no
+        -- status or colour, never 0.
+        local statusText, statusColor = "", nil
+        if minMoist ~= nil then
+            statusText, statusColor = moistureStatus(minMoist)
+        end
         local displayCrop = cropMixed and tr("cs_rf_pda_crop_mixed", "Mixed") or (cropName or "-")
         local displayLabel = label
         if displayLabel == nil and FarmPatchUtil ~= nil then
@@ -549,8 +576,8 @@ function CsRfPdaGuest.buildFieldRows()
             memberFieldIds = members,
             fieldLabel = displayLabel,
             cropName = displayCrop,
-            moistureText = string.format("%.0f%%", minMoist * 100),
-            moistureColor = moistureColor(minMoist),
+            moistureText = minMoist ~= nil and string.format("%.0f%%", minMoist * 100) or "",
+            moistureColor = minMoist ~= nil and moistureColor(minMoist) or nil,
             stressText = string.format("%.0f%%", maxStress * 100),
             irrigatedText = anyIrrigated and yesText or noText,
             statusText = statusText,
@@ -587,11 +614,15 @@ local function formatGlanceBody(stats)
     end
 
     local line1 = string.format(
-        "%s %d  |  %s %d  |  %s %.0f%%",
+        "%s %d  |  %s %d",
         tr("cs_pda_fields_tracked", "Fields Tracked"), stats.totalTracked,
-        tr("cs_pda_fields_owned", "Fields Owned"), stats.totalOwned,
-        tr("cs_pda_avg_moisture", "Average Moisture"), stats.avgMoisture * 100
+        tr("cs_pda_fields_owned", "Fields Owned"), stats.totalOwned
     )
+    -- RSF-F245: no average when no field has a reading.
+    if type(stats.avgMoisture) == "number" then
+        line1 = line1 .. string.format("  |  %s %.0f%%",
+            tr("cs_pda_avg_moisture", "Average Moisture"), stats.avgMoisture * 100)
+    end
     local line2 = string.format(
         "%s %d  |  %s %d  |  %s %d",
         tr("cs_pda_fields_healthy", "Healthy (>=40%)"), stats.healthy,
@@ -895,7 +926,8 @@ local function topRiskFields(mgr, limit)
         -- buildFieldRows carries FORMATTED strings (moistureText / stressText), not
         -- numbers, so the risk maths reads the certified getters the dialog itself
         -- uses. Reading r.moisture would silently score every field identically.
-        local moisture, stress = 0.5, 0
+        -- RSF-F245 item 6: a field with no current moisture is left out, never scored at 0.5.
+        local moisture, stress = nil, 0
         if type(mgr.getMoisture) == "function" then
             local ok, v = pcall(function() return mgr:getMoisture(r.fieldId) end)
             if ok and type(v) == "number" then moisture = v end
@@ -905,11 +937,13 @@ local function topRiskFields(mgr, limit)
             if ok and type(v) == "number" then stress = v end
         end
         -- dialog formula (CropConsultantDialog.lua:164), not a new one
-        local risk = stress * 0.6 + (1 - moisture) * 0.4
-        out[#out + 1] = {
-            fieldId = r.fieldId, label = r.fieldLabel or r.label,
-            crop = r.cropName, moisture = moisture, stress = stress, risk = risk,
-        }
+        if moisture ~= nil then
+            local risk = stress * 0.6 + (1 - moisture) * 0.4
+            out[#out + 1] = {
+                fieldId = r.fieldId, label = r.fieldLabel or r.label,
+                crop = r.cropName, moisture = moisture, stress = stress, risk = risk,
+            }
+        end
     end
     table.sort(out, function(a, b) return a.risk > b.risk end)
     while #out > (limit or 5) do table.remove(out) end
@@ -2470,15 +2504,16 @@ local function updateDetailBand(container)
             alertHint = hint
         end
     end
-    local moisture = 0
+    local moisture = nil
     if mgr ~= nil and type(mgr.getMoisture) == "function" then
-        moisture = mgr:getMoisture(fieldId) or 0
+        moisture = mgr:getMoisture(fieldId)
     end
 
     -- Line 2: Next (coach). Ladder unchanged; optional Critical-tip alert append only.
+    -- RSF-F245: no critical append for a field with no reading.
     local nextBody, nextColor = CsRfPdaGuest.buildNextStepLine(fieldId)
     local alertOnStatus = false
-    if alertHint ~= nil and nextBody ~= nil and nextBody ~= "" and moisture < 0.25 then
+    if alertHint ~= nil and nextBody ~= nil and nextBody ~= "" and type(moisture) == "number" and moisture < 0.25 then
         local sepTpl = tr("cs_rf_pda_next_alert_sep", " - %s")
         local append = string.format(sepTpl, alertHint)
         if (#nextBody + #append) <= 110 then

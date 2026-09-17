@@ -1000,11 +1000,18 @@ function CropStressSettingsPanel:buildStatusString()
     local sorted = m.soilSystem and m.soilSystem:getFieldsSortedByMoisture()
     if sorted and #sorted > 0 then
         table.insert(lines, "  Driest fields:")
-        for i = 1, math.min(8, #sorted) do
+        -- RSF-F245 item 6: no percent for a field with no current value; those sort
+        -- last, so the eight driest fields with a reading are listed.
+        local listed = 0
+        for i = 1, #sorted do
+            if listed >= 8 then break end
             local f = sorted[i]
-            local stress = m:getStress(f.fieldId)
-            table.insert(lines, string.format("    Field %d: %d%% moisture  stress %.2f",
-                f.fieldId, math.floor((f.moisture or 0) * 100 + 0.5), stress))
+            if type(f.moisture) == "number" then
+                local stress = m:getStress(f.fieldId)
+                table.insert(lines, string.format("    Field %d: %d%% moisture  stress %.2f",
+                    f.fieldId, math.floor(f.moisture * 100 + 0.5), stress))
+                listed = listed + 1
+            end
         end
     end
 

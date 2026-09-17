@@ -52,9 +52,13 @@ end
 
 function CropStressMoistureInitEvent:writeStream(streamId, connection)
     -- Collect field IDs into a list so we know the count before writing
+    -- RSF-F245 item 5: an unavailable field's row is left out entirely, never sent
+    -- as 0.0; the count covers only the rows written.
     local ids = {}
-    for fid in pairs(self.fieldData) do
-        table.insert(ids, fid)
+    for fid, entry in pairs(self.fieldData) do
+        if entry ~= nil and entry.aggregateState ~= "UNAVAILABLE" and type(entry.moisture) == "number" then
+            table.insert(ids, fid)
+        end
     end
 
     streamWriteUInt16(streamId, #ids)
@@ -62,7 +66,7 @@ function CropStressMoistureInitEvent:writeStream(streamId, connection)
         local entry  = self.fieldData[fid]
         local stress = self.fieldStress[fid] or 0.0
         streamWriteUInt16(streamId, fid)
-        streamWriteFloat32(streamId, entry.moisture or 0.0)
+        streamWriteFloat32(streamId, entry.moisture)
         streamWriteFloat32(streamId, stress)
     end
 end
@@ -96,7 +100,9 @@ function CropStressMoistureInitEvent:run(connection)
     local applied = 0
     for fid, entry in pairs(self.fieldData) do
         local existing = mgr.soilSystem.fieldData[fid]
-        if existing ~= nil then
+        if type(entry.moisture) ~= "number" then
+            -- RSF-F245: the receive never writes a non-number.
+        elseif existing ~= nil then
             -- Preserve soilType and other local data; update only simulation values
             existing.moisture = entry.moisture
         else

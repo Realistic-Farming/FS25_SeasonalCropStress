@@ -156,9 +156,14 @@ function CropStressModifier:hourlyUpdate(elapsedHours)
     -- getFieldByIndex(n) returns fields[n] (array index), NOT the field with fieldId==n.
     local fieldById = (self.manager ~= nil) and self.manager.fieldById or {}
 
+    -- RSF-F245 item 6: refresh before reading the slots; a field with no current
+    -- value is skipped this hour (no drought, waterlog or nutrient change).
+    if type(soilSystem.refreshForPublication) == "function" then
+        soilSystem:refreshForPublication()
+    end
     for fieldId, data in pairs(soilSystem.fieldData) do
         local field = fieldById[fieldId]
-        if field ~= nil then
+        if field ~= nil and data.aggregateState ~= "UNAVAILABLE" and type(data.moisture) == "number" then
             self:processFieldStress(field, fieldId, data.moisture, hours)
         end
         -- If field not in map this tick, skip silently — map will be rebuilt on next lateInitialize

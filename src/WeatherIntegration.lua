@@ -633,7 +633,10 @@ function WeatherIntegration:getMoistureForecast(fieldId, days)
         return t
     end
 
-    local current = soilSystem:getMoisture(fieldId) or 0.5
+    -- RSF-F245 item 6: no projections for a field with no current value, rather
+    -- than projecting from 0.5.
+    local current = soilSystem:getMoisture(fieldId)
+    if type(current) ~= "number" then return nil end
 
     local soilType = "loamy"
     if soilSystem.fieldData ~= nil and soilSystem.fieldData[fieldId] ~= nil then

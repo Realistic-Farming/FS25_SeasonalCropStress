@@ -72,10 +72,14 @@ function CropStressNetworkSyncBridge.serializeFields(fieldData, fieldStress)
     local arr = { 0 }   -- slot 1 reserved for the count
     local n = 0
     for fieldId, entry in pairs(fieldData or {}) do
-        n = n + 1
-        arr[#arr + 1] = fieldId
-        arr[#arr + 1] = (entry and entry.moisture) or 0.0
-        arr[#arr + 1] = (fieldStress and fieldStress[fieldId]) or 0.0
+        -- RSF-F245 item 5: an unavailable field's row is left out entirely, never
+        -- sent as 0.0 (client truth for it is RSF-F249's).
+        if entry ~= nil and entry.aggregateState ~= "UNAVAILABLE" and type(entry.moisture) == "number" then
+            n = n + 1
+            arr[#arr + 1] = fieldId
+            arr[#arr + 1] = entry.moisture
+            arr[#arr + 1] = (fieldStress and fieldStress[fieldId]) or 0.0
+        end
     end
     arr[1] = n
     return arr
@@ -172,6 +176,10 @@ function CropStressNetworkSyncBridge._onWriteState()
     local mgr = getManager()
     local soilSystem     = mgr and mgr.soilSystem
     local stressModifier = mgr and mgr.stressModifier
+    -- RSF-F245 item 6: refresh before the snapshot reads the slots.
+    if soilSystem ~= nil and type(soilSystem.refreshForPublication) == "function" then
+        soilSystem:refreshForPublication()
+    end
     local arr = CropStressNetworkSyncBridge.serializeFields(
         soilSystem and soilSystem.fieldData or {},
         stressModifier and stressModifier.fieldStress or {}
@@ -212,7 +220,9 @@ function CropStressNetworkSyncBridge._onReadState(arr)
 
     for fieldId, entry in pairs(fieldData) do
         local existing = mgr.soilSystem.fieldData[fieldId]
-        if existing ~= nil then
+        if type(entry.moisture) ~= "number" then
+            -- RSF-F245: a receive never writes a non-number.
+        elseif existing ~= nil then
             existing.moisture = entry.moisture
         else
             -- [SCS-036] NO soilType key: an absent key is detectable and the

@@ -171,13 +171,34 @@ function CropConsultantDialog:buildFieldList()
     end
     local localFarmId = getLocalFarmId()
 
+    -- RSF-F245 item 6: refresh first. A field with no current moisture keeps its
+    -- entry with moisture = nil, risk = nil and unavailable = true.
+    if type(soilSystem.refreshForPublication) == "function" then
+        soilSystem:refreshForPublication()
+    end
+    local function riskEntry(fieldId, data)
+        local stress = g_cropStressManager:getStress(fieldId)
+        if data.aggregateState == "UNAVAILABLE" or type(data.moisture) ~= "number" then
+            return { fieldId = fieldId, moisture = nil, stress = stress, risk = nil, unavailable = true }
+        end
+        local moisture = data.moisture
+        return { fieldId = fieldId, moisture = moisture, stress = stress, risk = stress * 0.6 + (1 - moisture) * 0.4 }
+    end
+    -- Entries with a risk sort by risk, highest first; entries with no risk sort
+    -- after every entry that has one. Ties order by field id.
+    local function riskGreater(a, b)
+        if a.risk == nil or b.risk == nil then
+            if a.risk == nil and b.risk == nil then return a.fieldId < b.fieldId end
+            return b.risk == nil
+        end
+        if a.risk == b.risk then return a.fieldId < b.fieldId end
+        return a.risk > b.risk
+    end
+
     local riskList = {}
     for fieldId, data in pairs(soilSystem.fieldData) do
         if isFarmlandOwnedByFarm(fieldId, localFarmId) then
-            local stress   = g_cropStressManager:getStress(fieldId)
-            local moisture = data.moisture or 0.5
-            local risk     = stress * 0.6 + (1 - moisture) * 0.4
-            table.insert(riskList, { fieldId = fieldId, moisture = moisture, stress = stress, risk = risk })
+            table.insert(riskList, riskEntry(fieldId, data))
         end
     end
     -- BUILD 19:23 (George CLOSED DESIGN 19:12): owned ids group into GPS-outline blocks through the
@@ -197,15 +218,24 @@ function CropConsultantDialog:buildFieldList()
                 local lead = byId[g.fieldId]
                 local members = g.memberIds or { g.fieldId }
                 if lead ~= nil then
-                    local e = { fieldId = g.fieldId, memberIds = members, moisture = lead.moisture, stress = lead.stress, risk = lead.risk }
+                    -- RSF-F245 item 6: grouping keeps every member; moisture is the
+                    -- minimum and risk the maximum over members with a reading, stress
+                    -- the maximum over all members. A group whose lead has no reading
+                    -- is never lost.
+                    local e = { fieldId = g.fieldId, memberIds = members, moisture = nil, stress = lead.stress, risk = nil }
                     for _, mid in ipairs(members) do
                         local m = byId[mid]
                         if m ~= nil then
-                            if m.moisture < e.moisture then e.moisture = m.moisture end
+                            if type(m.moisture) == "number" and (e.moisture == nil or m.moisture < e.moisture) then
+                                e.moisture = m.moisture
+                            end
                             if m.stress > e.stress then e.stress = m.stress end
-                            if m.risk > e.risk then e.risk = m.risk end
+                            if type(m.risk) == "number" and (e.risk == nil or m.risk > e.risk) then
+                                e.risk = m.risk
+                            end
                         end
                     end
+                    if e.moisture == nil then e.unavailable = true end
                     if #members > 1 and type(merge.shortLabel) == "function" then
                         local okL, text = pcall(merge.shortLabel, members)
                         if okL and type(text) == "string" then e.label = "Field " .. text end
@@ -216,18 +246,15 @@ function CropConsultantDialog:buildFieldList()
             riskList = grouped
         end
     end
-    table.sort(riskList, function(a, b) return a.risk > b.risk end)
+    table.sort(riskList, riskGreater)
 
     -- If no owned fields, show all as a fallback so the dialog is never blank
     if #riskList == 0 and next(soilSystem.fieldData) ~= nil then
         print("[CropStress] CropConsultantDialog: No owned fields found, showing all tracked fields as a fallback.")
         for fieldId, data in pairs(soilSystem.fieldData) do
-            local stress   = g_cropStressManager:getStress(fieldId)
-            local moisture = data.moisture or 0.5
-            local risk     = stress * 0.6 + (1 - moisture) * 0.4
-            table.insert(riskList, { fieldId = fieldId, moisture = moisture, stress = stress, risk = risk })
+            table.insert(riskList, riskEntry(fieldId, data))
         end
-        table.sort(riskList, function(a, b) return a.risk > b.risk end)
+        table.sort(riskList, riskGreater)
     end
 
     local function addRow(text, yPos)
@@ -252,18 +279,27 @@ function CropConsultantDialog:buildFieldList()
         local entry = riskList[i]
         local cropName    = self:getCropName(entry.fieldId)
         local yieldImpact = stressModifier ~= nil and stressModifier:getYieldImpactString(entry.fieldId) or "0%"
-        local severityStr
-        if entry.moisture < 0.25 then
-            severityStr = "[CRITICAL]"
-        elseif entry.moisture < 0.40 then
-            severityStr = "[WARNING]"
+        local labelStr
+        if type(entry.moisture) == "number" then
+            local severityStr
+            if entry.moisture < 0.25 then
+                severityStr = "[CRITICAL]"
+            elseif entry.moisture < 0.40 then
+                severityStr = "[WARNING]"
+            else
+                severityStr = "[OK]"
+            end
+            labelStr = string.format(
+                "%s · %s  %d%% moisture  Yield %s  %s",
+                entry.label or ("Field " .. tostring(entry.fieldId)), cropName, math.floor(entry.moisture * 100), yieldImpact, severityStr
+            )
         else
-            severityStr = "[OK]"
+            -- RSF-F245: a row with no reading keeps a blank moisture cell and no severity.
+            labelStr = string.format(
+                "%s · %s  Yield %s",
+                entry.label or ("Field " .. tostring(entry.fieldId)), cropName, yieldImpact
+            )
         end
-        local labelStr = string.format(
-            "%s · %s  %d%% moisture  Yield %s  %s",
-            entry.label or ("Field " .. tostring(entry.fieldId)), cropName, math.floor(entry.moisture * 100), yieldImpact, severityStr
-        )
         addRow(labelStr, y)
         y = y - 22
     end
@@ -281,16 +317,27 @@ function CropConsultantDialog:buildRecommendation()
 
     local function t(key, ...) return (g_i18n ~= nil and string.format(g_i18n:getText(key), ...)) or key end
 
-    if soilSystem == nil or soilSystem.fieldData == nil then
-        self.recommendText:setText("—")
-        return
+    -- RSF-F245 item 6: the worst field is chosen only among fields with a reading.
+    -- Fields exist but none has a reading: the existing dash text, never an urgent
+    -- or healthy line.
+    local worst = nil
+    local anyField = false
+    if soilSystem ~= nil and soilSystem.fieldData ~= nil then
+        if type(soilSystem.refreshForPublication) == "function" then
+            soilSystem:refreshForPublication()
+        end
+        for fieldId, data in pairs(soilSystem.fieldData) do
+            anyField = true
+            if data.aggregateState ~= "UNAVAILABLE" and type(data.moisture) == "number"
+               and (worst == nil or data.moisture < worst.moisture) then
+                worst = { fieldId = fieldId, moisture = data.moisture }
+            end
+        end
     end
 
-    local worst = nil
-    for fieldId, data in pairs(soilSystem.fieldData) do
-        if worst == nil or data.moisture < worst.moisture then
-            worst = { fieldId = fieldId, moisture = data.moisture }
-        end
+    if soilSystem == nil or soilSystem.fieldData == nil or (anyField and worst == nil) then
+        self.recommendText:setText("—")
+        return
     end
 
     if worst == nil then
