@@ -103,6 +103,9 @@ source(modDir .. "src/events/CropStressScheduleSyncEvent.lua")
 -- SCS-046 rain-key command + result events (server-authoritative rain-key controls)
 source(modDir .. "src/events/CropStressRainKeyCommandEvent.lua")
 source(modDir .. "src/events/CropStressRainKeyResultEvent.lua")
+-- SCS #191 follow-up: a client admin's Simulate Heat Wave request + server result
+source(modDir .. "src/events/CropStressHeatRequestEvent.lua")
+source(modDir .. "src/events/CropStressHeatResultEvent.lua")
 
 -- Persistence
 source(modDir .. "src/SaveLoadHandler.lua")

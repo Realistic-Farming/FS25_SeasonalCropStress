@@ -791,19 +791,8 @@ function CropStressManager:onHourlyTick(elapsedHours)
         -- mode) preserves the pre-feature isActive * hours fallback.
         self.financeIntegration:chargeHourlyCosts(hours, finitePlan)
 
-        -- Push updated moisture/stress to all connected clients. When the
-        -- NetworkSync bridge is active the whole field map batches through its 1Hz
-        -- tick (markFieldDirty); otherwise broadcast the moisture event directly.
-        if CropStressNetworkSyncBridge ~= nil and CropStressNetworkSyncBridge.active then
-            CropStressNetworkSyncBridge.markFieldDirty()
-        else
-            -- RSF-F245 item 6: refresh before a client snapshot reads the slots.
-            self.soilSystem:refreshForPublication()
-            g_server:broadcastEvent(CropStressMoistureInitEvent.new(
-                self.soilSystem.fieldData,
-                self.stressModifier.fieldStress
-            ), false)
-        end
+        -- Push updated moisture/stress to all connected clients.
+        self:pushMoistureToClients()
     end
 
     -- Consultant alert evaluation runs everywhere (reads synced field data)
@@ -1745,21 +1734,94 @@ function CropStressManager:consoleForceStress(fieldIdStr)
     print(string.format("Field %d stress forced to maximum (1.0)", fieldId))
 end
 
-function CropStressManager:consoleSimulateHeat(daysStr)
-    -- SCS #191: moisture and stress are server-authoritative. The engine creates
-    -- g_server only for a singleplayer or hosted game (MPLoadingScreen:startLocal
-    -- and :startServer), so a pure multiplayer client, an admin one included, never
-    -- runs the hourly simulation on its own copy and diverges from the host.
-    if g_server == nil then
-        print("csSimulateHeat runs on the host only")
-        return false
+--- Push updated moisture/stress to all connected clients (server). When the
+--- NetworkSync bridge is active the whole field map batches through its 1Hz tick
+--- (markFieldDirty); otherwise broadcast the moisture event directly. Shared by
+--- the hourly act and the heat simulation.
+function CropStressManager:pushMoistureToClients()
+    if g_server == nil then return end
+    if CropStressNetworkSyncBridge ~= nil and CropStressNetworkSyncBridge.active then
+        CropStressNetworkSyncBridge.markFieldDirty()
+    else
+        -- RSF-F245 item 6: refresh before a client snapshot reads the slots.
+        self.soilSystem:refreshForPublication()
+        g_server:broadcastEvent(CropStressMoistureInitEvent.new(
+            self.soilSystem.fieldData,
+            self.stressModifier.fieldStress
+        ), false)
     end
-    local days = tonumber(daysStr) or 1
-    if days < 1 or days > 30 then
-        print("Usage: csSimulateHeat <1-30>")
-        return
-    end
+end
 
+CropStressManager.HEAT_MAX_DAYS = 30
+
+--- A heat-wave day count the server accepts: a whole number 1-30, else nil.
+function CropStressManager.validHeatDays(value)
+    local days = tonumber(value)
+    if days == nil or days ~= days then return nil end
+    days = math.floor(days)
+    if days < 1 or days > CropStressManager.HEAT_MAX_DAYS then return nil end
+    return days
+end
+
+--- The text a player sees for a heat-wave outcome.
+function CropStressManager.heatResultText(accepted, code, days)
+    if accepted then
+        return string.format("Simulated %d-day heat wave. Check field moisture: stress may have increased.", days)
+    end
+    if code == "NOT_ADMIN" then
+        return "Only a server admin can run the heat wave simulation."
+    end
+    if code == "BAD_DAYS" then
+        return "Usage: csSimulateHeat <1-30>"
+    end
+    return "Heat wave simulation refused (" .. tostring(code) .. ")."
+end
+
+--- The one entry for the console command and the settings panel button.
+--- On a server (host or singleplayer) the simulation runs here; a pure client
+--- sends CropStressHeatRequestEvent and claims nothing until the server answers.
+---@return string status "RAN" | "SENT" | "REFUSED"
+---@return string text what to show now
+function CropStressManager:requestHeatWave(daysValue, origin)
+    local days = CropStressManager.validHeatDays(daysValue)
+    if days == nil then
+        return "REFUSED", CropStressManager.heatResultText(false, "BAD_DAYS", 0)
+    end
+    if g_server ~= nil then
+        self:runHeatSimulation(days)
+        return "RAN", CropStressManager.heatResultText(true, "OK", days)
+    end
+    if CropStressHeatRequestEvent == nil or not CropStressHeatRequestEvent.sendToServer(days) then
+        return "REFUSED", "Heat wave request could not be sent to the server."
+    end
+    self._pendingHeatOrigin = origin or "console"
+    return "SENT", "Heat wave request sent to the server."
+end
+
+--- Client: the server answered a heat-wave request. Shows the answer where the
+--- request came from.
+function CropStressManager:onHeatResult(accepted, code, days)
+    local text = CropStressManager.heatResultText(accepted, code, days)
+    local origin = self._pendingHeatOrigin
+    self._pendingHeatOrigin = nil
+    if origin == "panel" and self.settingsPanel ~= nil and self.settingsPanel.showPopup ~= nil then
+        self.settingsPanel:showPopup(text)
+    else
+        print(text)
+    end
+    return text
+end
+
+function CropStressManager:consoleSimulateHeat(daysStr)
+    local status, text = self:requestHeatWave(daysStr, "console")
+    print(text)
+    return status
+end
+
+--- Server: run the heat-wave simulation for a validated day count, then push the
+--- result to clients. Moisture and stress are server-authoritative (SCS #191).
+function CropStressManager:runHeatSimulation(days)
+    if g_server == nil then return false end
     -- Temporarily override weather state for the simulation
     local savedTemp = self.weatherIntegration.currentTemp
     local savedRain = self.weatherIntegration.hourlyRainAmount
@@ -1777,7 +1839,9 @@ function CropStressManager:consoleSimulateHeat(daysStr)
     self.weatherIntegration.currentTemp      = savedTemp
     self.weatherIntegration.hourlyRainAmount = savedRain
 
-    print(string.format("Simulated %d-day heat wave. Check csStatus for field state.", days))
+    -- A client admin's request would otherwise show nothing until the next hour.
+    self:pushMoistureToClients()
+    return true
 end
 
 

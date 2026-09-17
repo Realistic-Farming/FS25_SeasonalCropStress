@@ -319,9 +319,11 @@ function CropStressSettingsPanel:isAdmin()
     local isMP = g_currentMission.missionDynamicInfo and
                  g_currentMission.missionDynamicInfo.isMultiplayer
     if not isMP then return true end
-    local user = g_currentMission.userManager and
-                 g_currentMission.userManager:getUserByUserId(g_currentMission.playerUserId)
-    return user and user:getIsAdmin() or false
+    -- Display only: the server re-checks master-user rights on every admin request.
+    -- A user has getIsMasterUser, not getIsAdmin (decompiled users/User.lua:93);
+    -- the mission's own flag is set for this player in FSBaseMission:onMasterUserAdded
+    -- (FSBaseMission.lua:2974-2976).
+    return g_currentMission.isMasterUser == true
 end
 
 function CropStressSettingsPanel:requestChange(id, value)
@@ -936,14 +938,12 @@ function CropStressSettingsPanel:handleClick(id, data)
             local msg = self:buildStatusString()
             self:showPopup(msg)
         elseif actionId == "admin_heat" then
-            local msg = "Simulating 3-day heat wave..."
+            local msg = "Heat wave simulation is not available."
             if g_cropStressManager then
-                if g_cropStressManager:consoleSimulateHeat("3") == false then
-                    -- SCS #191: a multiplayer client does not run the simulation.
-                    msg = "Heat wave simulation runs on the host only."
-                else
-                    msg = "3-day heat wave simulated.\nCheck field moisture: stress may have increased."
-                end
+                -- On the host this runs and says so; on a client it only says the
+                -- request was sent, and the server's answer arrives as a new popup.
+                local _, text = g_cropStressManager:requestHeatWave("3", "panel")
+                msg = text
             end
             self:showPopup(msg)
         elseif actionId == "admin_reset" then
