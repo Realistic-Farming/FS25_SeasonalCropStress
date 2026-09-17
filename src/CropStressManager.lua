@@ -797,6 +797,8 @@ function CropStressManager:onHourlyTick(elapsedHours)
         if CropStressNetworkSyncBridge ~= nil and CropStressNetworkSyncBridge.active then
             CropStressNetworkSyncBridge.markFieldDirty()
         else
+            -- RSF-F245 item 6: refresh before a client snapshot reads the slots.
+            self.soilSystem:refreshForPublication()
             g_server:broadcastEvent(CropStressMoistureInitEvent.new(
                 self.soilSystem.fieldData,
                 self.stressModifier.fieldStress
@@ -1072,6 +1074,10 @@ function CropStressManager:sendInitialClientState(connection)
 
     -- 2. Push full field moisture + stress snapshot so the client HUD is
     --    populated immediately on join rather than showing an empty screen
+    --    (RSF-F245 item 6: refreshed first; an unavailable field's row is left out)
+    if type(self.soilSystem.refreshForPublication) == "function" then
+        self.soilSystem:refreshForPublication()
+    end
     local moistureEvent = CropStressMoistureInitEvent.new(
         self.soilSystem.fieldData,
         self.stressModifier.fieldStress
@@ -1567,11 +1573,18 @@ function CropStressManager:consoleStatus()
     -- Print top 5 driest fields
     local sorted = self.soilSystem:getFieldsSortedByMoisture()
     print("  Driest fields:")
-    for i = 1, math.min(5, #sorted) do
+    -- RSF-F245 item 6: no percent for a field with no current value; those sort
+    -- last, so the top five numeric fields are printed.
+    local printed = 0
+    for i = 1, #sorted do
+        if printed >= 5 then break end
         local f = sorted[i]
-        local stress = self:getStress(f.fieldId)
-        print(string.format("    Field %d: %.1f%% moisture, stress %.2f",
-            f.fieldId, f.moisture * 100, stress))
+        if type(f.moisture) == "number" then
+            local stress = self:getStress(f.fieldId)
+            print(string.format("    Field %d: %.1f%% moisture, stress %.2f",
+                f.fieldId, f.moisture * 100, stress))
+            printed = printed + 1
+        end
     end
 end
 
