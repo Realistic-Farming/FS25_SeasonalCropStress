@@ -46,6 +46,14 @@ end
 --- The remote path exactly as the dispatcher performs it: write, read, delete.
 --- run is deliberately absent here. Returns the received event and the stream so
 --- a wire fault cannot be mistaken for a wiring fault.
+---
+--- Two honest limits on what the returned stream proves. It omits the engine's
+--- post-readStream bits validation (Server.lua:438-448), and the prelude's
+--- streamWriteUIntN discards its width argument (prelude.lua:88-89), so a
+--- wireClean row cannot see width drift. Neither reaches these five, which read
+--- no UIntN and whose writeStream bodies never touch connection, but read
+--- wireClean as "write order matched read order here", not as a general
+--- guarantee about the wire.
 local function deliverRemote(cls, event, connection)
   local s = _sfMockStream()
   event:writeStream(s, connection)
@@ -155,8 +163,12 @@ local function pivotFixture()
   }
   irr.applyScheduleNow = function() end
 
+  local seen = { broadcasts = {}, sendLocal = {} }
   resetGlobals()
-  g_server = { broadcastEvent = function() end }
+  g_server = { broadcastEvent = function(_s, ev, sendLocal)
+    seen.broadcasts[#seen.broadcasts + 1] = ev
+    seen.sendLocal[#seen.sendLocal + 1] = sendLocal
+  end }
   g_cropStressManager = { irrigationManager = irr }
   g_currentMission.placeableSystem = {
     placeables = {
@@ -165,7 +177,7 @@ local function pivotFixture()
     },
   }
   g_currentMission.getPlayerByConnection = function(_m, _c) return { farmId = 2 } end
-  return irr
+  return irr, seen
 end
 
 local PIVOT_AUTO_MANUAL = CropStressPivotRemoteEvent.ACTION.AUTO_MANUAL_TOGGLE
@@ -179,11 +191,17 @@ end
 
 do
   -- ROW: the same effect must follow a wire delivery, with no call to run.
-  local irr = pivotFixture()
+  local irr, seen = pivotFixture()
   local _, s = deliverRemote(CropStressPivotRemoteEvent,
     CropStressPivotRemoteEvent.new(10, PIVOT_AUTO_MANUAL), remoteConn())
   T.eq('pivot.wireClean', s.typeErrors + s.underflows, 0)
   T.eq('pivot.remoteToggled', irr.systems[10].manualMode, true)
+  -- The OTHER half of "cannot double-run", and the half the once.* rows do not
+  -- cover. Server.lua:542-544 skips the LOCAL stream unless arg 2 (sendLocal) is
+  -- true, so this false is what stops a listen host's own client receiving the
+  -- broadcast and applying the toggle a second time. Flipped to true, every
+  -- other row in this file stays green.
+  T.eq('pivot.broadcastNotSentLocal', seen.sendLocal[1], false)
 end
 
 do
@@ -216,12 +234,15 @@ local function scheduleFixture(isServer)
              coveredFields = { 6 },
              schedule = { startHour = 6, endHour = 10, activeDays = {} } },
   }
-  local seen = { scheduleApplied = 0, broadcasts = {} }
+  local seen = { scheduleApplied = 0, broadcasts = {}, sendLocal = {} }
   irr.applyScheduleNow = function() seen.scheduleApplied = seen.scheduleApplied + 1 end
 
   resetGlobals()
   if isServer then
-    g_server = { broadcastEvent = function(_s, ev) seen.broadcasts[#seen.broadcasts + 1] = ev end }
+    g_server = { broadcastEvent = function(_s, ev, sendLocal)
+      seen.broadcasts[#seen.broadcasts + 1] = ev
+      seen.sendLocal[#seen.sendLocal + 1] = sendLocal
+    end }
   end
   g_cropStressManager = { irrigationManager = irr }
   g_currentMission.getPlayerByConnection = function(_m, _c) return { farmId = 2 } end
@@ -253,6 +274,10 @@ do
   T.eq('schedule.serverAppliedNow', seen.scheduleApplied, 1)
   T.eq('schedule.serverBroadcast', #seen.broadcasts, 1)
   T.eq('schedule.serverBroadcastRow', field(seen.broadcasts[1], "startHour"), 4)
+  -- Same listen-host gate as pivot.broadcastNotSentLocal (Server.lua:542-544):
+  -- arg 2 false is what keeps the host's own client from applying this row a
+  -- second time. Nothing else in this file can see that argument.
+  T.eq('schedule.broadcastNotSentLocal', seen.sendLocal[1], false)
 end
 
 do
@@ -322,6 +347,23 @@ do
 end
 
 do
+  -- ROW: the one CONDITIONAL read in all five readStream bodies. RainKeyCommand
+  -- writes a hasValue bool and only then a Float32 (CropStressRainKeyCommandEvent.lua:43-44),
+  -- and every FIT row above sends value=nil, so that Float32 leg is never taken
+  -- and wireClean cannot see a branch it never enters. SET_TRIP_MM carries a
+  -- number, and the dial value landing proves it survived the round trip: a
+  -- dropped value reads back nil and the command refuses with INVALID_TRIP_MM.
+  local irr = rainKeyFixture(2)
+  local conn = remoteConn()
+  local rx, s = deliverRemote(CropStressRainKeyCommandEvent,
+    CropStressRainKeyCommandEvent.new(1, "SET_TRIP_MM", 7.5, -1), conn)
+  T.eq('rainKeyCmd.valueWireClean', s.typeErrors + s.underflows, 0)
+  T.near('rainKeyCmd.valueSurvivedWire', rx.value, 7.5, 1e-9)
+  T.near('rainKeyCmd.valueApplied', irr.systems[1].rainKeyTripMm, 7.5, 1e-9)
+  T.eq('rainKeyCmd.valueReplyCode', field(conn.sent[1], "resultCode"), "OK")
+end
+
+do
   -- ROW: an unauthorized requester is refused over the wire, with no mutation.
   -- The refusal itself is a reply, so this row cannot be satisfied by silence.
   local irr = rainKeyFixture(9)
@@ -339,6 +381,11 @@ end
 -- The run body only logs today (the result never reaches the UI; that gap is
 -- named in the PR body and is not fixed here). The log line is therefore the
 -- whole observable effect, so that is what the row asserts.
+--
+-- Scope of the claim: this row witnesses DISPATCH, that the delivered event
+-- reached its run body carrying the right fields. It says nothing about
+-- behaviour, because this body has none yet. It still goes red on a revert,
+-- which is what a detector has to do.
 
 local function rainKeyResultFixture()
   resetGlobals()
@@ -379,11 +426,21 @@ end
 do
   -- LOCAL path (network/Connection.lua:71-74): the host's own send runs the
   -- event directly, exactly once, and readStream is never reached.
+  --
+  -- These three are future-regression pins, NOT detectors of this diff: no
+  -- mutation of the five self:run lines can fail them, because this path never
+  -- calls readStream. They exist so that a later run added to a dispatcher, or a
+  -- readStream call on the local path, fails here.
+  --
+  -- once.localResults counts what the server DISPATCHED to the requester, not
+  -- what the requester acted on: on a host the result event is sent and then
+  -- dropped by its own guard (CropStressIrrigateNowResultEvent.lua:66, the
+  -- server never handles a result it produced itself).
   local mgr = irrigateFixture()
   local host = localConn()
   host:sendEvent(CropStressIrrigateNowEvent.new(10, -1))
   T.eq('once.localRequests', countByClass(host.sent, "CropStressIrrigateNowEvent"), 1)
-  T.eq('once.localResults', countByClass(host.sent, "CropStressIrrigateNowResultEvent"), 1)
+  T.eq('once.localResultsDispatched', countByClass(host.sent, "CropStressIrrigateNowResultEvent"), 1)
   T.eq('once.localApplied', mgr.lastIrrigateNowResultByFarm[2] ~= nil, true)
 end
 
