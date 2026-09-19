@@ -40,6 +40,7 @@ function CropStressRainKeyResultEvent:readStream(streamId, connection)
     self.accepted   = streamReadBool(streamId)
     self.resultCode = streamReadString(streamId)
     self.stateRevision = streamReadInt32(streamId)
+    self:run(connection)
 end
 
 function CropStressRainKeyResultEvent:run(connection)

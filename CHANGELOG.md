@@ -18,6 +18,9 @@ the repo's git history and README.
 - Playtest fixes: CS_TOGGLE_HUD (RShift+M) and CS_EDIT_HUD (RShift+N) chord defaults, HUD/settings alignment, in-cab vehicle key hook.
 - Control Center actions (suite Control Center, requires SettingsHub): `CS_OPEN_IRRIGATION`, `CS_OPEN_CONSULTANT`, `CS_OPEN_SETTINGS`.
 
+### Fixed
+- Multiplayer: Irrigate Now, the pivot remote, the schedule save, and the rain-key command and its result had no effect for a player joining a server. The engine hands an arriving event to readStream and then discards it, so each of the five never reached the code that does the work. Hosting a game or playing single player was never affected.
+
 ## [1.2.5.96] - 2026-08-22
 
 - First entry under changelog tracking.

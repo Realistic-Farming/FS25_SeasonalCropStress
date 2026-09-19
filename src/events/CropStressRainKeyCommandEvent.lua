@@ -43,6 +43,7 @@ function CropStressRainKeyCommandEvent:readStream(streamId, connection)
     local hasValue = streamReadBool(streamId)
     self.value = hasValue and streamReadFloat32(streamId) or nil
     self.expectedRevision = streamReadInt32(streamId)
+    self:run(connection)
 end
 
 -- Server applies the command (server-only; clients never mutate locally).
