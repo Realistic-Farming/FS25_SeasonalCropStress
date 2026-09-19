@@ -33,6 +33,7 @@ end
 function CropStressIrrigateNowEvent:readStream(streamId, connection)
     self.systemId = streamReadInt32(streamId)
     self.expectedRainKeyRevision = streamReadInt32(streamId)
+    self:run(connection)
 end
 
 -- Server applies the water through the ONE transaction wrapper and sends the

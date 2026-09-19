@@ -289,6 +289,7 @@ end
 function CropStressPivotRemoteEvent:readStream(streamId, connection)
     self.systemId = streamReadInt32(streamId)
     self.action = streamReadUInt8(streamId)
+    self:run(connection)
 end
 
 function CropStressPivotRemoteEvent:run(connection)

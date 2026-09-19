@@ -129,6 +129,7 @@ function CropStressScheduleSyncEvent:readStream(streamId, connection)
     for i = 1, 7 do
         self.activeDays[i] = streamReadBool(streamId) == true
     end
+    self:run(connection)
 end
 
 --- Write this event's row onto a system table. Shared by the server (after the
