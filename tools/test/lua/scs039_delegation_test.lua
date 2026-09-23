@@ -54,6 +54,17 @@ local function stubMap(grain)
     if self.meanToReturn == nil then return "EMPTY", nil, self.grain end
     return "OK", self.meanToReturn, self.grain
   end
+  -- SCS-041 parcel union: the collection ops, which the real map routes to the
+  -- one-polygon ops for a one-polygon parcel.
+  function m:paintPolygons(polys, value)
+    return self:paintPolygon(polys[1].vx, polys[1].vz, polys[1].n, value)
+  end
+  function m:applyDeltaToPolygons(polys, delta)
+    return self:applyDeltaToPolygon(polys[1].vx, polys[1].vz, polys[1].n, delta)
+  end
+  function m:readAverageOfPolygons(polys)
+    return self:readAverageOfPolygon(polys[1].vx, polys[1].vz, polys[1].n)
+  end
   return m
 end
 

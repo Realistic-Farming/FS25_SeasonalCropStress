@@ -19,12 +19,30 @@
 --
 -- ITERATION ORDER: fengari's pairs() is insertion ordered, so the bench cannot show
 -- hash-order nondeterminism. Rows that depend on order insert out of order.
+--
+-- SCS-041 PARCEL UNION: an execute call may carry SEVERAL filters (every one must
+-- match, as the engine stacks them), and a filter may be BOUND to another grid,
+-- the shape of DensityMapFilter.new(otherMap, ...). The engine constructors the
+-- real map calls for its union work set (createBitVectorMap, loadBitVectorMapNew,
+-- DensityMapModifier.new, delete) build a second grid of the same width here.
 
 F245H = F245H or {}
 
 DensityValueCompareType = DensityValueCompareType
     or { EQUAL = "EQUAL", BETWEEN = "BETWEEN", NOTEQUAL = "NOTEQUAL" }
-DensityMapFilter = DensityMapFilter or { new = function() return F245H.newFilter() end }
+DensityMapFilter = DensityMapFilter or { new = function(target)
+    -- Bound to another map when handed one (the union work set); else unbound.
+    if type(target) == "table" and target.raw ~= nil then return F245H.newFilter(target) end
+    return F245H.newFilter()
+end }
+DensityCoordType = DensityCoordType or { POINT_POINT_POINT = 0 }
+createBitVectorMap = createBitVectorMap or function(name) return { name = name, size = 0, raw = {} } end
+loadBitVectorMapNew = loadBitVectorMapNew or function(bvm, width, _height, _channels, _)
+    bvm.size = width
+    bvm.raw = {}
+end
+DensityMapModifier = DensityMapModifier or { new = function(bvm) return F245H.newModifier(bvm) end }
+delete = delete or function(obj) if type(obj) == "table" then obj.deleted = true end end
 g_server = g_server or {}
 
 -- UInt16 stream stubs (the prelude has none); same typed-FIFO shape.
@@ -49,17 +67,29 @@ local function pointInPoly(px, pz, xs, zs)
     return inside
 end
 
-function F245H.newFilter()
-    local f = { type = nil, a = nil, b = nil }
+--- A filter. `grid` binds it to ANOTHER map (the parcel-union work set); unbound,
+--- it reads the modifier's own pixel.
+function F245H.newFilter(grid)
+    local f = { type = nil, a = nil, b = nil, grid = grid }
     function f:setValueCompareParams(t, a, b) self.type, self.a, self.b = t, a, b end
     return f
 end
 
-local function filterMatches(f, r)
+local function filterMatches(f, r, k)
+    if f.grid ~= nil then r = f.grid.raw[k] or 0 end
     if f.type == "EQUAL" then return r == f.a end
     if f.type == "BETWEEN" then return r >= f.a and r <= f.b end
     if f.type == "NOTEQUAL" then return r ~= f.a end
     error("fake filter: no compare values set")
+end
+
+--- Every filter of one execute call must match (CoverMap.lua:196-197,
+--- PlaceableHusbandryMeadow.lua:519 stack them the same way).
+local function allMatch(filters, r, k)
+    for i = 1, #filters do
+        if not filterMatches(filters[i], r, k) then return false end
+    end
+    return true
 end
 
 function F245H.newModifier(grid)
@@ -88,7 +118,9 @@ function F245H.newModifier(grid)
         if self.hook ~= nil then return self.hook(kind, idx, filter) end
         return nil
     end
-    function m:executeGet(filter)
+    function m:executeGet(...)
+        local filters = { ... }
+        local filter = filters[1]
         self.calls.get = self.calls.get + 1
         if filter ~= nil then self.calls.getFiltered = self.calls.getFiltered + 1
         else self.calls.getUnfiltered = self.calls.getUnfiltered + 1 end
@@ -99,26 +131,28 @@ function F245H.newModifier(grid)
         eachPixel(self, function(k)
             local r = self.grid.raw[k] or 0
             local hit
-            if filter ~= nil then hit = filterMatches(filter, r) else hit = r > 0 end
+            if filter ~= nil then hit = allMatch(filters, r, k) else hit = r > 0 end
             if hit then acc = acc + r; n = n + 1 end
         end)
         return acc, n, n
     end
-    function m:executeSet(value, filter)
+    function m:executeSet(value, ...)
+        local filters = { ... }
         self.calls.set = self.calls.set + 1
-        local a = action(self, "set", self.calls.set, filter)
+        local a = action(self, "set", self.calls.set, filters[1])
         if a == "throw" then error("fake executeSet threw") end
         if a == "noop" then return end
         eachPixel(self, function(k)
             local r = self.grid.raw[k] or 0
-            if filter == nil or filterMatches(filter, r) then self.grid.raw[k] = value end
+            if allMatch(filters, r, k) then self.grid.raw[k] = value end
         end)
     end
-    function m:executeAdd(delta, filter)
+    function m:executeAdd(delta, ...)
+        local filters = { ... }
         self.calls.add = self.calls.add + 1
         eachPixel(self, function(k)
             local r = self.grid.raw[k] or 0
-            if filter == nil or filterMatches(filter, r) then
+            if allMatch(filters, r, k) then
                 self.grid.raw[k] = math.max(0, math.min(255, r + delta))
             end
         end)
