@@ -693,10 +693,15 @@ end
 -- rasterisation, the same coverage convention as the one-polygon ops, so the
 -- mask holds the union. The moisture modifier is then bound to the union's
 -- bounding box and every execute takes a filter on the mask (EQUAL 1). A filter
--- may sit on another map than the modifier (DensityMapHeightManager.lua:592-596
--- binds a filter on the placement collision map beside a modifier on it, and
--- PrecisionFarming's CoverMap.lua:196-197 stacks a mask filter with others), so
--- one executeSet, executeAdd or executeGet touches each union cell exactly once.
+-- may sit on another map than the modifier: PrecisionFarming's CoverMap.lua:184
+-- builds a modifier on the cover map and :189 a mask filter on
+-- g_farmlandManager.localMap, and :196-197 stack that mask filter with others in
+-- one executeGet. So one executeSet, executeAdd or executeGet touches each union
+-- cell exactly once. The references bind a modifier by polygon points or by a
+-- parallelogram, never one modifier switching between the two, so the polygon
+-- points are cleared before every box bind here: the box is the only region
+-- either way (the same assumption writeValueAtWorld has always made after a
+-- polygon op; the TESTING row carries its in-game falsifier).
 -- The mask is cleared over the box afterwards, and cleared again over the next
 -- box before that union is painted, so a failed clear can never lend a stale
 -- cell to another parcel. The mask is machinery: never saved, never synced,
@@ -740,9 +745,12 @@ function CropStressValueMap:_deleteUnionMask()
     self._unionBox = nil
 end
 
---- The work-set map at the moisture map's current width, built on first use.
+--- The work-set map at the moisture map's current width, built on first use. A
+--- failure is latched per width: the engine is asked once and the refusal logged
+--- once, not on every union call; a new width asks again.
 function CropStressValueMap:_ensureUnionMask()
     if self.maskBvm ~= nil and self.maskWidth == self.resolution then return true end
+    if self.maskFailedWidth == self.resolution then return false end
     if not self.available or self.resolution <= 0 then return false end
     if createBitVectorMap == nil or loadBitVectorMapNew == nil
        or DensityMapModifier == nil or DensityMapModifier.new == nil
@@ -764,6 +772,7 @@ function CropStressValueMap:_ensureUnionMask()
         csvmLog(string.format("Moisture map: parcel-union work set unavailable (%s); a multi-field parcel refuses",
             tostring(err)))
         self:_deleteUnionMask()
+        self.maskFailedWidth = self.resolution
         return false
     end
     return true
@@ -784,6 +793,9 @@ function CropStressValueMap:_bindUnion(polys)
     self._unionBox = { x0, z0, x1, z1 }
     local ok = pcall(function()
         -- Clear the box first: nothing a failed release left behind joins this parcel.
+        -- Polygon points are cleared before each box bind so the box is the only
+        -- region on either modifier.
+        mm:clearPolygonPoints()
         mm:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)
         mm:executeSet(0)
         for pi = 1, #polys do
@@ -794,6 +806,7 @@ function CropStressValueMap:_bindUnion(polys)
             end
             mm:executeSet(1)
         end
+        self.modifier:clearPolygonPoints()
         self.modifier:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)
         self.maskFilter:setValueCompareParams(DensityValueCompareType.EQUAL, 1)
     end)
@@ -812,6 +825,7 @@ function CropStressValueMap:_releaseUnion()
     local mm = self.maskModifier
     if box == nil or mm == nil then return end
     pcall(function()
+        mm:clearPolygonPoints()
         mm:setParallelogramWorldCoords(box[1], box[2], box[3], box[2], box[1], box[4], DensityCoordType.POINT_POINT_POINT)
         mm:executeSet(0)
     end)

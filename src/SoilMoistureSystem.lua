@@ -675,6 +675,23 @@ local function pointInEarlierPolygon(x, z, polys, index)
     return false
 end
 
+--- The parcel collection only when it is COMPLETE. A partial collection (one
+--- engine field of the farmland failed both polygon walks, so the entry holds
+--- fewer polygons than the deed has fields) is not a parcel-wide domain: no map
+--- operation paints, shifts, publishes or commits on it (brief :28, "no partial
+--- union may be published as a complete aggregate or committed as a completed
+--- parcel-wide operation; missing geometry retains accepted pending water").
+--- The retry doors (RSF-F247 item 5) re-collect it later.
+---@return table|nil polys   the complete collection
+---@return string|nil reason "PARTIAL" when the entry is partial
+function SoilMoistureSystem:_getCompleteFieldPolygons(fieldId)
+    local polys = self:_getFieldPolygons(fieldId)
+    if polys == nil then return nil end
+    local entry = self._fieldVerts[fieldId]
+    if entry ~= nil and entry.partial == true then return nil, "PARTIAL" end
+    return polys
+end
+
 --- The first usable polygon of the parcel collection. No map operation reads it
 --- any more: paint, delta, mean, relief and drainage run on the complete
 --- collection's union (Design return 2026-09-09, section 2). Kept for the
@@ -708,8 +725,9 @@ function SoilMoistureSystem:migrateFieldToMap(fieldId)
     local d = self.fieldData[fieldId]
     if d == nil then return false end
     -- The complete parcel collection: the seed covers every cultivated polygon
-    -- of the farmland, each cell once, and never the gaps between them.
-    local polys = self:_getFieldPolygons(fieldId)
+    -- of the farmland, each cell once, and never the gaps between them. A
+    -- partial collection is not seeded (brief :28); the retry doors re-collect it.
+    local polys = self:_getCompleteFieldPolygons(fieldId)
     if polys == nil then return false end
 
     -- RSF-F245 item 4: the barrier's fresh-map seed takes its base from the
@@ -763,7 +781,7 @@ function SoilMoistureSystem:seedMapFromStore()
         if self:migrateFieldToMap(fid) then
             count = count + 1
             local d = self.fieldData[fid]
-            local polys = self:_getFieldPolygons(fid)
+            local polys = self:_getCompleteFieldPolygons(fid)
             local base = self:_seedBase(d)
             if polys ~= nil and base ~= nil then
                 if self:_seedMapRelief(polys, base) > 0 then
@@ -1128,8 +1146,12 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
             data.mapPending = remainder
             if applied ~= 0 then
                 -- The whole parcel, each cell shifted once (Design return, section 2).
-                local polys = self:_getFieldPolygons(fieldId)
-                if polys ~= nil then
+                -- A partial or missing collection keeps the accepted water pending
+                -- (brief :28): nothing is shifted and nothing is dropped.
+                local polys = self:_getCompleteFieldPolygons(fieldId)
+                if polys == nil then
+                    data.mapPending = pending
+                elseif polys ~= nil then
                     local moved = self.valueMap:applyDeltaToPolygons(polys, applied)
                     if moved == 0 then
                         -- The engine refused the add path. Give the delta back to
@@ -1417,8 +1439,10 @@ function SoilMoistureSystem:_refreshFieldAggregate(fieldId, d)
         outcome, refusal = "PROVIDER_REFUSAL", "provider has no polygon-aggregate read"
     else
         -- The mean over the unique written cells of the whole parcel, never an
-        -- average of polygon averages (Design return 2026-09-09, section 2).
-        local polys = self:_getFieldPolygons(fieldId)
+        -- average of polygon averages (Design return 2026-09-09, section 2). A
+        -- partial collection is not published as a complete aggregate (brief
+        -- :28): it is unavailable geometry until the retry doors complete it.
+        local polys = self:_getCompleteFieldPolygons(fieldId)
         if polys == nil then
             outcome = "INVALID_FIELD_GEOMETRY"
         else
@@ -1567,7 +1591,10 @@ function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
     -- for a few hours and then undo themselves, which is worse than refusing.
     if self:mapActive() then
         self:migrateFieldToMap(fieldId)
-        local polys = self:_getFieldPolygons(fieldId)
+        -- A partial collection is never committed as a completed parcel-wide
+        -- operation (brief :28): the replacement refuses and the caller keeps the
+        -- old ground.
+        local polys = self:_getCompleteFieldPolygons(fieldId)
         local painted = false
         if polys ~= nil then
             painted = self.valueMap:paintPolygons(polys, newValue) == true
@@ -2757,7 +2784,7 @@ function SoilMoistureSystem:settleDaily(boundariesCrossed)
                or type(self.valueMap.readAverageOfPolygons) ~= "function" then
                 outcome, refusal = "PROVIDER_REFUSAL", "provider has no polygon-aggregate read"
             else
-                local polys = self:_getFieldPolygons(fieldId)
+                local polys = self:_getCompleteFieldPolygons(fieldId)
                 if polys == nil then
                     outcome = "INVALID_FIELD_GEOMETRY"
                 else
@@ -2849,7 +2876,14 @@ function SoilMoistureSystem:_drainFieldOnMap(fieldId, days)
     -- crosses between a parcel's fields (the runoff fence, in the same words),
     -- and a block centre inside two polygons is sampled once, by the first
     -- (Design return 2026-09-09, section 2). One polygon drains exactly as before.
-    local polys = self:_getFieldPolygons(fieldId)
+    -- A partial collection is not drained: its known fields would settle while
+    -- the missing one waits, which is a parcel-wide operation left half done.
+    --
+    -- A stated limit: a block's 16 m write square is not clipped to its polygon,
+    -- so at the seam between two fields of a deed the later field's squares
+    -- overwrite the earlier field's within 8 m of the seam, exactly as one field's
+    -- squares already reach 8 m beyond its outline today.
+    local polys = self:_getCompleteFieldPolygons(fieldId)
     if polys == nil then return false end
 
     local step = SoilMoistureSystem.MAP_DRAIN_BLOCK

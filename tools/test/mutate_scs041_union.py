@@ -20,7 +20,15 @@
 #     union's; row R3 pins the single native set by count instead, which is the
 #     "once per covered cell" wording of the return, and that row is the kill;
 #   - a delta of zero raw steps: the caller quantises through quantiseDelta first,
-#     as the one-polygon op already requires.
+#     as the one-polygon op already requires;
+#   - the polygon points cleared before a box bind: the harness models a
+#     parallelogram bind as replacing the polygon points (f245_harness.lua), the
+#     same assumption writeValueAtWorld has always made, so removing the clear
+#     changes nothing on the bench; the TESTING row carries the in-game falsifier
+#     (two deeds with overlapping boxes painted in turn);
+#   - the drainage fence on a partial collection: drainage needs terrain, and the
+#     partial bar (group F) runs without a terrain node, so the settle's drain
+#     returns before geometry either way; the re-derive fence (F6) is the kill.
 #
 # Anchors are written with "\n"; in a CRLF file they are matched as "\r\n".
 #
@@ -78,11 +86,39 @@ MUTATIONS = [
  ("U11-mask-filter-not-armed", VM,
   [("        self.maskFilter:setValueCompareParams(DensityValueCompareType.EQUAL, 1)\n", "        self.maskFilter:setValueCompareParams(DensityValueCompareType.BETWEEN, 0, 1)\n", 1)],
   "the box, gaps included, is the region"),
+ ("U12-work-set-failure-not-latched", VM,
+  [("    if self.maskFailedWidth == self.resolution then return false end\n", "", 1)],
+  "a refused work set is asked for and logged on every union call"),
+
+ # ── the partial fence (brief :28) ──────────────────────────────────────────
+ ("F1-partial-fence-removed", SMS,
+  [("    if entry ~= nil and entry.partial == true then return nil, \"PARTIAL\" end\n", "", 1)],
+  "a partial collection is a parcel: seeded, shifted, published and committed"),
+ ("F2-seed-unfenced", SMS,
+  [("partial collection is not seeded (brief :28); the retry doors re-collect it.\n    local polys = self:_getCompleteFieldPolygons(fieldId)",
+    "partial collection is not seeded (brief :28); the retry doors re-collect it.\n    local polys = self:_getFieldPolygons(fieldId)", 1)],
+  "the seed paints a partial parcel's known fields"),
+ ("F3-hourly-unfenced", SMS,
+  [("                local polys = self:_getCompleteFieldPolygons(fieldId)\n                if polys == nil then\n                    data.mapPending = pending\n                elseif polys ~= nil then",
+    "                local polys = self:_getFieldPolygons(fieldId)\n                if false then\n                elseif polys ~= nil then", 1)],
+  "the hourly weather shifts a partial parcel and forgets the rest"),
+ ("F4-refresh-unfenced", SMS,
+  [("        local polys = self:_getCompleteFieldPolygons(fieldId)\n        if polys == nil then\n            outcome = \"INVALID_FIELD_GEOMETRY\"",
+    "        local polys = self:_getFieldPolygons(fieldId)\n        if polys == nil then\n            outcome = \"INVALID_FIELD_GEOMETRY\"", 1)],
+  "the publication refresh reads a partial parcel as the aggregate"),
+ ("F5-replacement-unfenced", SMS,
+  [("        local polys = self:_getCompleteFieldPolygons(fieldId)\n        local painted = false",
+    "        local polys = self:_getFieldPolygons(fieldId)\n        local painted = false", 1)],
+  "csSetMoisture commits a partial parcel as a completed operation"),
+ ("F6-settle-unfenced", SMS,
+  [("                local polys = self:_getCompleteFieldPolygons(fieldId)\n                if polys == nil then\n                    outcome = \"INVALID_FIELD_GEOMETRY\"",
+    "                local polys = self:_getFieldPolygons(fieldId)\n                if polys == nil then\n                    outcome = \"INVALID_FIELD_GEOMETRY\"", 1)],
+  "the daily settle re-derives a partial parcel as the aggregate"),
 
  # ── the parcel-domain callers ──────────────────────────────────────────────
  ("C1-hourly-delta-on-the-first-polygon", SMS,
-  [("                local polys = self:_getFieldPolygons(fieldId)\n                if polys ~= nil then\n                    local moved = self.valueMap:applyDeltaToPolygons(polys, applied)",
-    "                local polys = self:_getFieldPolygons(fieldId)\n                if polys ~= nil then\n                    local moved = self.valueMap:applyDeltaToPolygons({ polys[1] }, applied)", 1)],
+  [("                    local moved = self.valueMap:applyDeltaToPolygons(polys, applied)",
+    "                    local moved = self.valueMap:applyDeltaToPolygons({ polys[1] }, applied)", 1)],
   "the hourly weather reaches only the first field of a parcel"),
  ("C2-refresh-reads-the-first-polygon", SMS,
   [("            outcome, mean = self.valueMap:readAverageOfPolygons(polys)\n        end\n    end\n    if outcome == \"OK\" and mean ~= nil then\n        self:_markAggregateCurrent(d, mean)\n        d.aggregateDirty = false\n    elseif outcome == \"PROVIDER_REFUSAL\" then\n        if g_server ~= nil then",

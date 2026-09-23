@@ -154,6 +154,67 @@ group("R", function()
     vm7.modifier.executeAdd = function() error("fake executeAdd threw") end
     T.eq("R19 a thrown union add applies nothing, disables the add path and releases the work set",
         tostring(vm7:applyDeltaToPolygons({ A, B }, 3 * UPR)) .. ":" .. tostring(vm7.hasExecuteAdd) .. ":" .. maskOnes(vm7), "0:false:0")
+
+    -- A refused work set is asked for once per width and logged once.
+    local asks = 0
+    local savedCreate2 = createBitVectorMap
+    createBitVectorMap = function() asks = asks + 1; return nil end
+    local lines = {}
+    local realPrint = print
+    print = function(s) lines[#lines + 1] = tostring(s); realPrint(s) end
+    local vm8 = F245H.newValueMap(64)
+    vm8:paintPolygons({ A, B }, 0.5)
+    vm8:paintPolygons({ A, B }, 0.5)
+    vm8:readAverageOfPolygons({ A, B })
+    print = realPrint
+    createBitVectorMap = savedCreate2
+    local logged = 0
+    for _, l in ipairs(lines) do
+        if l:find("parcel-union work set unavailable", 1, true) then logged = logged + 1 end
+    end
+    T.eq("R20 a work set the engine refused is asked for once per width and logged once, not on every union call", asks .. ":" .. logged, "1:1")
+end)
+
+-- ══════════════════════════════════════════════════════════════════════════
+-- F. A PARTIAL COLLECTION IS NOT A PARCEL (brief :28)
+-- ══════════════════════════════════════════════════════════════════════════
+group("F", function()
+    -- Field 2's node walk throws and it has no engine polygon: the collection is
+    -- PARTIAL (one polygon, field 1) until the retry door expires the entry.
+    local broken = { farmland = { id = 1 }, polygonPoints = {
+        { x = 8, z = 0, throw = true }, { x = 18, z = 0 }, { x = 18, z = 10 }, { x = 8, z = 10 } } }
+    g_fieldManager = { fields = { F245H.engineField(1, A), broken } }
+    g_server = {}
+    g_currentMission.time = 1000
+    local sys, vm, grid = F245H.newSystem({ ready = false })
+    sys:enumerateFields()
+    local d = sys.fieldData[1]
+    local polys = sys:_getFieldPolygons(1)
+    T.eq("F1 [reached] one engine field failed both walks: the collection is partial, one polygon",
+        #polys .. ":" .. tostring(sys._fieldVerts[1].partial), "1:true")
+    T.eq("F2 the seed paints nothing on a partial parcel and does not mark it seeded",
+        sys:seedMapFromStore() .. ":" .. F245H.count(grid) .. ":" .. tostring(sys._mapSeeded[1]), "0:0:nil")
+    local weather = setmetatable({
+        getHourlyEvapMultiplier = function() return 0 end,
+        getHourlyRainAmount = function() return 0.05 end,
+    }, { __index = function() return function() return 0 end end })
+    sys:hourlyUpdate(weather, 1)
+    T.eq("F3 the hourly weather keeps its water pending on a partial parcel: no cell moved, the accumulator holds the whole net",
+        F245H.count(grid) .. ":" .. tostring(d.mapPending ~= nil and d.mapPending > 0.04), "0:true")
+    T.eq("F4 the publication refresh never publishes a partial parcel as complete: unavailable geometry, not OK",
+        tostring(d.aggregateState) .. ":" .. tostring(d.aggregateUnavailableReason), "UNAVAILABLE:INVALID_FIELD_GEOMETRY")
+    T.eq("F5 the whole-field replacement refuses on a partial parcel and paints nothing",
+        tostring(sys:setMoisture(1, 0.3)) .. ":" .. F245H.count(grid), "false:0")
+    sys:settleDaily(1)
+    T.eq("F6 the daily settle leaves a partial parcel unavailable geometry, never EMPTY or OK",
+        tostring(d.aggregateState) .. ":" .. tostring(d.aggregateUnavailableReason), "UNAVAILABLE:INVALID_FIELD_GEOMETRY")
+    -- The broken field's walk recovers and the retry door expires the partial entry.
+    broken.polygonPoints[1].throw = nil
+    g_currentMission.time = 1000 + SoilMoistureSystem.GEOMETRY_RETRY_MS
+    T.eq("F7 once the walk recovers and the retry door expires, the collection is complete and the seed paints both fields",
+        sys:seedMapFromStore() .. ":" .. F245H.count(grid) .. ":" .. tostring(sys._fieldVerts[1].partial), "1:180:nil")
+    g_currentMission.time = 1000
+    g_fieldManager = nil
 end)
 
 -- ══════════════════════════════════════════════════════════════════════════
