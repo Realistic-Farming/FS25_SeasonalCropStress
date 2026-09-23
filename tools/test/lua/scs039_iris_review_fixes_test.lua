@@ -53,7 +53,8 @@ do
   s._fieldVerts[1] = { vx = { 0, 100, 100, 0 }, vz = { 0, 0, 100, 100 }, n = 4 }
   s.providerMode = "TRUTH"
   s.moistureRevision = 5
-  s.valueMap = { available = true, paintPolygon = function() return false end }
+  s.valueMap = { available = true, paintPolygon = function() return false end,
+                 paintPolygons = function() return false end }
   local ok = s:setMoisture(1, 0.8)
   T.eq('fix2.receiptFalse', ok, false)
   T.near('fix2.scalarKept', s.fieldData[1].moisture, 0.6, 1e-12)

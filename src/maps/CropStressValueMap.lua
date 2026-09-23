@@ -259,6 +259,9 @@ function CropStressValueMap:_buildTools()
         self.filter = DensityMapFilter.new(self.bvm, 0, NUM_CHANNELS)
     end
     self.toolWidth = self.resolution
+    -- A parcel-union work set built at another width is stale: drop it, and it
+    -- rebuilds lazily at this width (the SCS-041 parcel union below).
+    self:_deleteUnionMask()
 end
 
 --- THE CONCORDANCE'S TEETH: the grain, in metres, that any value read off this
@@ -277,6 +280,7 @@ function CropStressValueMap:delete()
     self.bvm = nil
     self.modifier = nil
     self.filter = nil
+    self:_deleteUnionMask()
     self.available = false
 end
 
@@ -672,6 +676,241 @@ function CropStressValueMap:fillUnwrittenPolygon(vx, vz, n, value)
     if not okAfter or type(after) ~= "number" then return "PROVIDER_REFUSAL", true end
     if after < before then return "OK", true end
     return "NOOP", true
+end
+
+-- ─────────────────────────────────────────────────────────
+-- SCS-041 PARCEL UNION (Iris's Design return of 2026-09-09, section 2).
+--
+-- A parcel is every cultivated polygon sharing one farmland id. The region ops
+-- above take ONE polygon and let the engine rasterise it. For a parcel of several
+-- polygons the invariant is: each physical provider cell of the SET UNION is
+-- written once and sampled once, however the polygons touch or overlap, and the
+-- gaps between them are never covered. Looping the one-polygon ops would apply
+-- an additive delta twice on an overlap and average polygon averages.
+--
+-- THE NATIVE TECHNIQUE: a work set on a second bit-vector map of the same width
+-- (one channel). Each polygon is set to 1 on it with the engine's own polygon
+-- rasterisation, the same coverage convention as the one-polygon ops, so the
+-- mask holds the union. The moisture modifier is then bound to the union's
+-- bounding box and every execute takes a filter on the mask (EQUAL 1). A filter
+-- may sit on another map than the modifier: PrecisionFarming's CoverMap.lua:184
+-- builds a modifier on the cover map and :189 a mask filter on
+-- g_farmlandManager.localMap, and :196-197 stack that mask filter with others in
+-- one executeGet. So one executeSet, executeAdd or executeGet touches each union
+-- cell exactly once. The references bind a modifier by polygon points or by a
+-- parallelogram, never one modifier switching between the two, so the polygon
+-- points are cleared before every box bind here: the box is the only region
+-- either way (the same assumption writeValueAtWorld has always made after a
+-- polygon op; the TESTING row carries its in-game falsifier).
+-- The mask is cleared over the box afterwards, and cleared again over the next
+-- box before that union is painted, so a failed clear can never lend a stale
+-- cell to another parcel. The mask is machinery: never saved, never synced,
+-- never a truth grid.
+--
+-- A parcel of ONE polygon takes the one-polygon op unchanged (same bytes, same
+-- read); the mask exists only for a real union.
+-- ─────────────────────────────────────────────────────────
+local MASK_CHANNELS = 1
+
+--- The bounding box of a collection, or nil when any polygon is malformed.
+local function collectionBox(polys)
+    if type(polys) ~= "table" or #polys == 0 then return nil end
+    local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
+    for pi = 1, #polys do
+        local p = polys[pi]
+        if type(p) ~= "table" or type(p.vx) ~= "table" or type(p.vz) ~= "table"
+           or type(p.n) ~= "number" or p.n < 3 then
+            return nil
+        end
+        for i = 1, p.n do
+            local x, z = p.vx[i], p.vz[i]
+            if type(x) ~= "number" or type(z) ~= "number" or x ~= x or z ~= z
+               or math.abs(x) == math.huge or math.abs(z) == math.huge then
+                return nil
+            end
+            if x < minX then minX = x end
+            if x > maxX then maxX = x end
+            if z < minZ then minZ = z end
+            if z > maxZ then maxZ = z end
+        end
+    end
+    return minX, minZ, maxX, maxZ
+end
+
+function CropStressValueMap:_deleteUnionMask()
+    if self.maskBvm ~= nil and self.maskBvm ~= 0 and delete ~= nil then
+        pcall(delete, self.maskBvm)
+    end
+    self.maskBvm, self.maskModifier, self.maskFilter, self.maskWidth = nil, nil, nil, 0
+    self._unionBox = nil
+end
+
+--- The work-set map at the moisture map's current width, built on first use. A
+--- failure is latched per width: the engine is asked once and the refusal logged
+--- once, not on every union call; a new width asks again.
+function CropStressValueMap:_ensureUnionMask()
+    if self.maskBvm ~= nil and self.maskWidth == self.resolution then return true end
+    if self.maskFailedWidth == self.resolution then return false end
+    if not self.available or self.resolution <= 0 then return false end
+    if createBitVectorMap == nil or loadBitVectorMapNew == nil
+       or DensityMapModifier == nil or DensityMapModifier.new == nil
+       or DensityMapFilter == nil or DensityMapFilter.new == nil then
+        return false
+    end
+    self:_deleteUnionMask()
+    local ok, err = pcall(function()
+        local bvm = createBitVectorMap("CSMoistureUnionMask")
+        if bvm == nil or bvm == 0 then error("createBitVectorMap returned nothing") end
+        self.maskBvm = bvm
+        loadBitVectorMapNew(bvm, self.resolution, self.resolution, MASK_CHANNELS, false)
+        self.maskModifier = DensityMapModifier.new(bvm, 0, MASK_CHANNELS, g_terrainNode)
+        self.maskFilter = DensityMapFilter.new(bvm, 0, MASK_CHANNELS)
+        if self.maskModifier == nil or self.maskFilter == nil then error("mask tools unavailable") end
+        self.maskWidth = self.resolution
+    end)
+    if not ok then
+        csvmLog(string.format("Moisture map: parcel-union work set unavailable (%s); a multi-field parcel refuses",
+            tostring(err)))
+        self:_deleteUnionMask()
+        self.maskFailedWidth = self.resolution
+        return false
+    end
+    return true
+end
+
+--- Bind the union of two or more polygons: paint the work set, bind the moisture
+--- modifier to the union's box, arm the mask filter. Returns true, or false and
+--- a typed reason ("INVALID_FIELD_GEOMETRY" | "PROVIDER_REFUSAL").
+function CropStressValueMap:_bindUnion(polys)
+    local x0, z0, x1, z1 = collectionBox(polys)
+    if x0 == nil then return false, "INVALID_FIELD_GEOMETRY" end
+    if self.modifier == nil or not self.hasPolygonOps then return false, "PROVIDER_REFUSAL" end
+    if not self:_ensureUnionMask() then return false, "PROVIDER_REFUSAL" end
+    -- One grain of margin: a cell whose centre sits on the box edge is inside it.
+    local margin = self:getGrainMetres() or 2
+    x0, z0, x1, z1 = x0 - margin, z0 - margin, x1 + margin, z1 + margin
+    local mm = self.maskModifier
+    self._unionBox = { x0, z0, x1, z1 }
+    local ok = pcall(function()
+        -- Clear the box first: nothing a failed release left behind joins this parcel.
+        -- Polygon points are cleared before each box bind so the box is the only
+        -- region on either modifier.
+        mm:clearPolygonPoints()
+        mm:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)
+        mm:executeSet(0)
+        for pi = 1, #polys do
+            local p = polys[pi]
+            mm:clearPolygonPoints()
+            for i = 1, p.n do
+                mm:addPolygonPointWorldCoords(p.vx[i], p.vz[i])
+            end
+            mm:executeSet(1)
+        end
+        self.modifier:clearPolygonPoints()
+        self.modifier:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)
+        self.maskFilter:setValueCompareParams(DensityValueCompareType.EQUAL, 1)
+    end)
+    if not ok then
+        self:_releaseUnion()
+        return false, "PROVIDER_REFUSAL"
+    end
+    return true
+end
+
+--- Clear the work set over the last union's box. Best effort: the next bind
+--- clears its own box again before painting.
+function CropStressValueMap:_releaseUnion()
+    local box = self._unionBox
+    self._unionBox = nil
+    local mm = self.maskModifier
+    if box == nil or mm == nil then return end
+    pcall(function()
+        mm:clearPolygonPoints()
+        mm:setParallelogramWorldCoords(box[1], box[2], box[3], box[2], box[1], box[4], DensityCoordType.POINT_POINT_POINT)
+        mm:executeSet(0)
+    end)
+end
+
+--- Paint every cell of the parcel union to one value, once per cell. One
+--- polygon: paintPolygon, unchanged.
+function CropStressValueMap:paintPolygons(polys, value)
+    if type(polys) ~= "table" or #polys == 0 then return false end
+    if #polys == 1 then
+        local p = polys[1]
+        return self:paintPolygon(p.vx, p.vz, p.n, value)
+    end
+    if not self.available then return false end
+    if not self:_bindUnion(polys) then return false end
+    local raw = encode(value, CropStressValueMap.LAYER_DEF)
+    local ok = pcall(function() self.modifier:executeSet(raw, self.maskFilter) end)
+    self:_releaseUnion()
+    return ok
+end
+
+--- Shift every written cell of the parcel union by a whole number of raw steps,
+--- once per cell however the polygons overlap. One polygon: applyDeltaToPolygon,
+--- unchanged. The caller has quantised the delta through quantiseDelta().
+---@return number applied  semantic amount actually applied (0 when nothing moved)
+function CropStressValueMap:applyDeltaToPolygons(polys, delta)
+    if type(polys) ~= "table" or #polys == 0 then return 0 end
+    if #polys == 1 then
+        local p = polys[1]
+        return self:applyDeltaToPolygon(p.vx, p.vz, p.n, delta)
+    end
+    if not self.available or delta == nil or delta == 0 then return 0 end
+    local def = CropStressValueMap.LAYER_DEF
+    local upr = unitsPerRaw(def)
+    local rawDelta = (delta >= 0) and math.floor(delta / upr + 0.5)
+                                   or -math.floor(-delta / upr + 0.5)
+    if rawDelta == 0 then return 0 end
+    if not self.hasExecuteAdd then return 0 end
+    -- The written-range guard is a filter; without the filter class there is no
+    -- union add (the mask needs the same class), so nothing moves and nothing wraps.
+    if self.filter == nil then return 0 end
+    if not self:_bindUnion(polys) then return 0 end
+    local m, f = self.modifier, self.filter
+    local ok = pcall(function()
+        if rawDelta > 0 then
+            f:setValueCompareParams(DensityValueCompareType.BETWEEN, RAW_MIN, RAW_MAX - rawDelta)
+        else
+            f:setValueCompareParams(DensityValueCompareType.BETWEEN, RAW_MIN - rawDelta, RAW_MAX)
+        end
+        m:executeAdd(rawDelta, f, self.maskFilter)
+    end)
+    self:_releaseUnion()
+    if not ok then
+        csvmLog("Moisture map: executeAdd unavailable on the parcel union; disabling the add path")
+        self.hasExecuteAdd = false
+        return 0
+    end
+    return rawDelta * upr
+end
+
+--- The mean over the written cells of the parcel union: their native
+--- accumulation over the unique cells divided by their count, never an average
+--- of polygon averages. One polygon: readAverageOfPolygon, unchanged. Returns
+--- outcome, mean, grain with readAverageOfPolygon's typed outcomes.
+function CropStressValueMap:readAverageOfPolygons(polys)
+    if type(polys) ~= "table" or #polys == 0 then return "INVALID_FIELD_GEOMETRY", nil, nil end
+    if #polys == 1 then
+        local p = polys[1]
+        return self:readAverageOfPolygon(p.vx, p.vz, p.n)
+    end
+    if collectionBox(polys) == nil then return "INVALID_FIELD_GEOMETRY", nil, nil end
+    if not self.available then return "PROVIDER_REFUSAL", nil, nil end
+    local m, f = self.modifier, self.filter
+    if m == nil or m.executeGet == nil or f == nil then return "PROVIDER_REFUSAL", nil, nil end
+    if not self:_bindUnion(polys) then return "PROVIDER_REFUSAL", nil, nil end
+    local ok, acc, numPixels = pcall(function()
+        -- Written cells only, said explicitly: the unique written cells are the
+        -- samples and their count is the divisor.
+        f:setValueCompareParams(DensityValueCompareType.BETWEEN, RAW_MIN, RAW_MAX)
+        return m:executeGet(f, self.maskFilter)
+    end)
+    self:_releaseUnion()
+    if not ok or acc == nil or numPixels == nil then return "PROVIDER_REFUSAL", nil, nil end
+    if numPixels == 0 then return "EMPTY", nil, self:getGrainMetres() end
+    return "OK", decode(acc / numPixels, CropStressValueMap.LAYER_DEF), self:getGrainMetres()
 end
 
 -- ─────────────────────────────────────────────────────────

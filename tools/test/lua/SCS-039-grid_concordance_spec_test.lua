@@ -26,6 +26,11 @@ local function currentStubMap(grain)
         self.painted[#self.painted + 1] = value
         return true
     end
+    -- SCS-041 parcel union: the collection op, which the real map routes to the
+    -- one-polygon op for a one-polygon parcel.
+    function m:paintPolygons(polys, value)
+        return self:paintPolygon(polys[1].vx, polys[1].vz, polys[1].n, value)
+    end
     function m:readValueAtWorld(_x, _z)
         -- SCS-039 v2.1 typed contract: a resolvable pixel with nothing written
         -- is EMPTY (benign), never a provider refusal.

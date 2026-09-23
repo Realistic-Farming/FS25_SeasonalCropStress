@@ -331,8 +331,10 @@ function SoilMoistureSystem.new(manager)
     --   { vx=.., vz=.., n=.. }          legacy single-polygon seed (tests/ZONE)
     --   { polys = { {vx,vz,n}, ... } }  the full cultivated collection per parcel
     --   { n = 0 }                       cached refusal (no usable geometry)
-    -- _getFieldVerts returns the first usable polygon (single-field callers);
-    -- _getFieldPolygons returns the whole collection (parcel-domain callers).
+    -- _getFieldPolygons returns the whole collection, and every map operation
+    -- (paint, delta, mean, relief, drainage) runs on its set union (Iris's
+    -- Design return of 2026-09-09, section 2); _getFieldVerts, the first
+    -- polygon, is kept only for the single-polygon seeds the bench uses.
     self._fieldVerts = {}      -- fieldId -> parcel polygon collection cache
     self._mapSeeded  = {}      -- fieldId -> true once migrated onto the map
     -- RSF-F245/F247 mission-only server memory (never saved, never sent; emptied
@@ -654,10 +656,46 @@ function SoilMoistureSystem:_pointInParcel(fieldId, x, z)
     return false
 end
 
---- Field polygon in world space, cached. Returns the first usable polygon of the
---- parcel collection, so single-polygon callers keep exactly today's shape. The
---- map region ops that take ONE polygon (paint / delta / read-average) stay on
---- this first-polygon seam; their parcel-union raster is the flagged SDS core.
+--- A point is inside the parcel when it lies inside ANY of its polygons.
+local function pointInAnyPolygon(x, z, polys)
+    for pi = 1, #polys do
+        local p = polys[pi]
+        if csPointInPolygon(x, z, p.vx, p.vz, p.n) then return true end
+    end
+    return false
+end
+
+--- A point already claimed by a polygon earlier in the collection, so a block
+--- centre inside two polygons is sampled once, by the first.
+local function pointInEarlierPolygon(x, z, polys, index)
+    for pi = 1, index - 1 do
+        local p = polys[pi]
+        if csPointInPolygon(x, z, p.vx, p.vz, p.n) then return true end
+    end
+    return false
+end
+
+--- The parcel collection only when it is COMPLETE. A partial collection (one
+--- engine field of the farmland failed both polygon walks, so the entry holds
+--- fewer polygons than the deed has fields) is not a parcel-wide domain: no map
+--- operation paints, shifts, publishes or commits on it (brief :28, "no partial
+--- union may be published as a complete aggregate or committed as a completed
+--- parcel-wide operation; missing geometry retains accepted pending water").
+--- The retry doors (RSF-F247 item 5) re-collect it later.
+---@return table|nil polys   the complete collection
+---@return string|nil reason "PARTIAL" when the entry is partial
+function SoilMoistureSystem:_getCompleteFieldPolygons(fieldId)
+    local polys = self:_getFieldPolygons(fieldId)
+    if polys == nil then return nil end
+    local entry = self._fieldVerts[fieldId]
+    if entry ~= nil and entry.partial == true then return nil, "PARTIAL" end
+    return polys
+end
+
+--- The first usable polygon of the parcel collection. No map operation reads it
+--- any more: paint, delta, mean, relief and drainage run on the complete
+--- collection's union (Design return 2026-09-09, section 2). Kept for the
+--- single-polygon seeds the bench uses and for single-field readers.
 function SoilMoistureSystem:_getFieldVerts(fieldId)
     local polys = self:_getFieldPolygons(fieldId)
     if polys == nil or #polys == 0 then return nil end
@@ -686,8 +724,11 @@ function SoilMoistureSystem:migrateFieldToMap(fieldId)
     if self._mapSeeded[fieldId] then return true end
     local d = self.fieldData[fieldId]
     if d == nil then return false end
-    local vx, vz, n = self:_getFieldVerts(fieldId)
-    if vx == nil then return false end
+    -- The complete parcel collection: the seed covers every cultivated polygon
+    -- of the farmland, each cell once, and never the gaps between them. A
+    -- partial collection is not seeded (brief :28); the retry doors re-collect it.
+    local polys = self:_getCompleteFieldPolygons(fieldId)
+    if polys == nil then return false end
 
     -- RSF-F245 item 4: the barrier's fresh-map seed takes its base from the
     -- fallback helper, never 0.5. A field with no base is not painted and has no
@@ -698,7 +739,7 @@ function SoilMoistureSystem:migrateFieldToMap(fieldId)
         return false
     end
     self._mapSeeded[fieldId] = true
-    self.valueMap:paintPolygon(vx, vz, n, base)
+    self.valueMap:paintPolygons(polys, base)
 
     -- Stamp the materialised cells over the base coat. Absent cells were always
     -- "read the aggregate", and the base coat is exactly that, so nothing is lost.
@@ -740,10 +781,10 @@ function SoilMoistureSystem:seedMapFromStore()
         if self:migrateFieldToMap(fid) then
             count = count + 1
             local d = self.fieldData[fid]
-            local vx, vz, n = self:_getFieldVerts(fid)
+            local polys = self:_getCompleteFieldPolygons(fid)
             local base = self:_seedBase(d)
-            if vx ~= nil and base ~= nil then
-                if self:_seedMapRelief(vx, vz, n, base) > 0 then
+            if polys ~= nil and base ~= nil then
+                if self:_seedMapRelief(polys, base) > 0 then
                     varied = varied + 1
                 end
             end
@@ -792,23 +833,28 @@ end
 --- the same SENS/MAX the store's relief pass uses, and the offsets sum to about
 --- zero over the field, so the derived field mean is unchanged. Sampled on a
 --- coarse grid to bound the one-time load cost.
----@param vx number[] polygon x
----@param vz number[] polygon z
----@param n integer vertex count
+---@param polys table the parcel's complete polygon collection ({ vx, vz, n } each)
 ---@param base number field aggregate moisture
 ---@return integer number of varied regions painted
-function SoilMoistureSystem:_seedMapRelief(vx, vz, n, base)
+function SoilMoistureSystem:_seedMapRelief(polys, base)
     if not self:mapActive() then return 0 end
     if getTerrainHeightAtWorldPos == nil or g_terrainNode == nil then return 0 end
+    if type(polys) ~= "table" or #polys == 0 then return 0 end
     local grain = self.valueMap:getGrainMetres() or 2
     local step = math.max(grain * 4, 8)
     local half = step * 0.5
+    -- One block grid over the parcel's bounding box, a block counted once when
+    -- its centre lies in ANY polygon (the union, never a per-polygon repeat), and
+    -- one mean height over that union (Design return 2026-09-09, section 2).
     local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
-    for i = 1, n do
-        if vx[i] < minX then minX = vx[i] end
-        if vx[i] > maxX then maxX = vx[i] end
-        if vz[i] < minZ then minZ = vz[i] end
-        if vz[i] > maxZ then maxZ = vz[i] end
+    for pi = 1, #polys do
+        local p = polys[pi]
+        for i = 1, p.n do
+            if p.vx[i] < minX then minX = p.vx[i] end
+            if p.vx[i] > maxX then maxX = p.vx[i] end
+            if p.vz[i] < minZ then minZ = p.vz[i] end
+            if p.vz[i] > maxZ then maxZ = p.vz[i] end
+        end
     end
     if minX == math.huge then return 0 end
     local samples, count = {}, 0
@@ -817,7 +863,7 @@ function SoilMoistureSystem:_seedMapRelief(vx, vz, n, base)
     while x <= maxX and count < limit do
         local z = minZ + half
         while z <= maxZ and count < limit do
-            if csPointInPolygon(x, z, vx, vz, n) then
+            if pointInAnyPolygon(x, z, polys) then
                 local ok, h = pcall(getTerrainHeightAtWorldPos, g_terrainNode, x, 0, z)
                 if ok and h ~= nil then
                     count = count + 1
@@ -1099,9 +1145,14 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
             local applied, remainder = CropStressValueMap.quantiseDelta(pending)
             data.mapPending = remainder
             if applied ~= 0 then
-                local vx, vz, n = self:_getFieldVerts(fieldId)
-                if vx ~= nil then
-                    local moved = self.valueMap:applyDeltaToPolygon(vx, vz, n, applied)
+                -- The whole parcel, each cell shifted once (Design return, section 2).
+                -- A partial or missing collection keeps the accepted water pending
+                -- (brief :28): nothing is shifted and nothing is dropped.
+                local polys = self:_getCompleteFieldPolygons(fieldId)
+                if polys == nil then
+                    data.mapPending = pending
+                elseif polys ~= nil then
+                    local moved = self.valueMap:applyDeltaToPolygons(polys, applied)
                     if moved == 0 then
                         -- The engine refused the add path. Give the delta back to
                         -- the accumulator rather than dropping it on the floor.
@@ -1383,14 +1434,19 @@ function SoilMoistureSystem:_refreshFieldAggregate(fieldId, d)
     -- current. PROVIDER_REFUSAL marks the field unavailable too (the certified
     -- contract model's refresh) and takes the one-way fail-closed path.
     local outcome, mean, refusal
-    if type(self.valueMap.readAverageOfPolygon) ~= "function" then
+    if type(self.valueMap.readAverageOfPolygon) ~= "function"
+       or type(self.valueMap.readAverageOfPolygons) ~= "function" then
         outcome, refusal = "PROVIDER_REFUSAL", "provider has no polygon-aggregate read"
     else
-        local vx, vz, n = self:_getFieldVerts(fieldId)
-        if vx == nil then
+        -- The mean over the unique written cells of the whole parcel, never an
+        -- average of polygon averages (Design return 2026-09-09, section 2). A
+        -- partial collection is not published as a complete aggregate (brief
+        -- :28): it is unavailable geometry until the retry doors complete it.
+        local polys = self:_getCompleteFieldPolygons(fieldId)
+        if polys == nil then
             outcome = "INVALID_FIELD_GEOMETRY"
         else
-            outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+            outcome, mean = self.valueMap:readAverageOfPolygons(polys)
         end
     end
     if outcome == "OK" and mean ~= nil then
@@ -1535,10 +1591,13 @@ function SoilMoistureSystem:_writeFieldMoisture(fieldId, newValue)
     -- for a few hours and then undo themselves, which is worse than refusing.
     if self:mapActive() then
         self:migrateFieldToMap(fieldId)
-        local vx, vz, n = self:_getFieldVerts(fieldId)
+        -- A partial collection is never committed as a completed parcel-wide
+        -- operation (brief :28): the replacement refuses and the caller keeps the
+        -- old ground.
+        local polys = self:_getCompleteFieldPolygons(fieldId)
         local painted = false
-        if vx ~= nil then
-            painted = self.valueMap:paintPolygon(vx, vz, n, newValue) == true
+        if polys ~= nil then
+            painted = self.valueMap:paintPolygons(polys, newValue) == true
         end
         -- SCS-039 v2.1 (Iris fix 2): a whole-field replacement commits ONLY when
         -- the native paint was accepted. A failed polygon binding or a thrown
@@ -2721,14 +2780,15 @@ function SoilMoistureSystem:settleDaily(boundariesCrossed)
             -- unavailable and dirty; a refusal (a missing typed read included, ledger
             -- a2ae501) marks the field unavailable and fails the provider closed.
             local outcome, mean, refusal
-            if type(self.valueMap.readAverageOfPolygon) ~= "function" then
+            if type(self.valueMap.readAverageOfPolygon) ~= "function"
+               or type(self.valueMap.readAverageOfPolygons) ~= "function" then
                 outcome, refusal = "PROVIDER_REFUSAL", "provider has no polygon-aggregate read"
             else
-                local vx, vz, n = self:_getFieldVerts(fieldId)
-                if vx == nil then
+                local polys = self:_getCompleteFieldPolygons(fieldId)
+                if polys == nil then
                     outcome = "INVALID_FIELD_GEOMETRY"
                 else
-                    outcome, mean = self.valueMap:readAverageOfPolygon(vx, vz, n)
+                    outcome, mean = self.valueMap:readAverageOfPolygons(polys)
                 end
             end
             if outcome == "OK" and mean ~= nil then
@@ -2811,73 +2871,95 @@ SoilMoistureSystem.MAP_DRAIN_MAX_BLOCKS = 400    -- per field, per settle
 function SoilMoistureSystem:_drainFieldOnMap(fieldId, days)
     if not self:mapActive() then return false end
     if getTerrainHeightAtWorldPos == nil or g_terrainNode == nil then return false end
-    local vx, vz, n = self:_getFieldVerts(fieldId)
-    if vx == nil then return false end
+    -- The complete parcel collection, drained POLYGON BY POLYGON: each cultivated
+    -- field levels toward its own mean over its own block set, so water never
+    -- crosses between a parcel's fields (the runoff fence, in the same words),
+    -- and a block centre inside two polygons is sampled once, by the first
+    -- (Design return 2026-09-09, section 2). One polygon drains exactly as before.
+    -- A partial collection is not drained: its known fields would settle while
+    -- the missing one waits, which is a parcel-wide operation left half done.
+    --
+    -- A stated limit: a block's 16 m write square is not clipped to its polygon,
+    -- so at the seam between two fields of a deed the later field's squares
+    -- overwrite the earlier field's within 8 m of the seam, exactly as one field's
+    -- squares already reach 8 m beyond its outline today.
+    local polys = self:_getCompleteFieldPolygons(fieldId)
+    if polys == nil then return false end
 
     local step = SoilMoistureSystem.MAP_DRAIN_BLOCK
     local half = step * 0.5
-    local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
-    for i = 1, n do
-        if vx[i] < minX then minX = vx[i] end
-        if vx[i] > maxX then maxX = vx[i] end
-        if vz[i] < minZ then minZ = vz[i] end
-        if vz[i] > maxZ then maxZ = vz[i] end
-    end
-
-    -- Pass 1: sample the ground and the water at each block centre inside the
-    -- polygon. Both reads are fresh; neither is cached between settles.
-    local bx, bz, bh, bm = {}, {}, {}, {}
-    local count = 0
-    local x = minX + half
-    while x <= maxX and count < SoilMoistureSystem.MAP_DRAIN_MAX_BLOCKS do
-        local z = minZ + half
-        while z <= maxZ and count < SoilMoistureSystem.MAP_DRAIN_MAX_BLOCKS do
-            if csPointInPolygon(x, z, vx, vz, n) then
-                local ok, h = pcall(getTerrainHeightAtWorldPos, g_terrainNode, x, 0, z)
-                local m = self.valueMap:readValueAtWorld(x, z)
-                if ok and h ~= nil and m ~= nil then
-                    count = count + 1
-                    bx[count], bz[count], bh[count], bm[count] = x, z, h, m
-                end
-            end
-            z = z + step
-        end
-        x = x + step
-    end
-    self._lastFieldBlocks = count
-    if count < 2 then return false end
-
-    -- Pass 2: the drift. A block's share of the move is set by how far its
-    -- GROUND sits from the field's mean ground, so water leaves high blocks and
-    -- arrives at low ones; the amount it can give is bounded by how much water
-    -- it holds relative to the field's mean water, so a dry ridge cannot donate
-    -- water it does not have.
-    local sumH, sumM = 0, 0
-    for i = 1, count do
-        sumH = sumH + bh[i]
-        sumM = sumM + bm[i]
-    end
-    local meanH, meanM = sumH / count, sumM / count
-
+    local limit = SoilMoistureSystem.MAP_DRAIN_MAX_BLOCKS
     local frac = math.min(0.5, SoilMoistureSystem.CELL_DRAIN_FRACTION * math.max(1, days))
+    local total, drained = 0, false
 
-    -- TWO TERMS, AND EACH ONE SUMS TO ZERO ON ITS OWN, so their sum does too and
-    -- conservation needs no correction pass to rescue it:
-    --   waterTerm  = (meanM - m_i)  levels the water toward the field mean
-    --   reliefTerm = (meanH - h_i) * CELL_SENS  pushes it downhill, positive for
-    --                low ground, so a hollow gains and a ridge gives
-    -- Both are deviations from a mean over the same block set, which is exactly
-    -- why they are zero-sum for every possible field shape.
-    for i = 1, count do
-        local waterTerm  = (meanM - bm[i])
-        local reliefTerm = (meanH - bh[i]) * SoilMoistureSystem.CELL_SENS
-        local addition   = frac * (waterTerm + reliefTerm)
-        -- The write clamps to 0..1. On a field already sitting at a bound the
-        -- clamp absorbs part of the move, which is the known clamp residual and
-        -- the one place conservation is approximate rather than exact.
-        self.valueMap:writeValueAtWorld(bx[i], bz[i], bm[i] + addition, half)
+    for pi = 1, #polys do
+        local p = polys[pi]
+        local vx, vz, n = p.vx, p.vz, p.n
+        local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
+        for i = 1, n do
+            if vx[i] < minX then minX = vx[i] end
+            if vx[i] > maxX then maxX = vx[i] end
+            if vz[i] < minZ then minZ = vz[i] end
+            if vz[i] > maxZ then maxZ = vz[i] end
+        end
+
+        -- Pass 1: sample the ground and the water at each block centre inside this
+        -- polygon and not inside an earlier one. Both reads are fresh; neither is
+        -- cached between settles. The block budget is the parcel's.
+        local bx, bz, bh, bm = {}, {}, {}, {}
+        local count = 0
+        local x = minX + half
+        while x <= maxX and total + count < limit do
+            local z = minZ + half
+            while z <= maxZ and total + count < limit do
+                if csPointInPolygon(x, z, vx, vz, n) and not pointInEarlierPolygon(x, z, polys, pi) then
+                    local ok, h = pcall(getTerrainHeightAtWorldPos, g_terrainNode, x, 0, z)
+                    local m = self.valueMap:readValueAtWorld(x, z)
+                    if ok and h ~= nil and m ~= nil then
+                        count = count + 1
+                        bx[count], bz[count], bh[count], bm[count] = x, z, h, m
+                    end
+                end
+                z = z + step
+            end
+            x = x + step
+        end
+        total = total + count
+
+        if count >= 2 then
+            -- Pass 2: the drift. A block's share of the move is set by how far its
+            -- GROUND sits from this field's mean ground, so water leaves high blocks
+            -- and arrives at low ones; the amount it can give is bounded by how much
+            -- water it holds relative to the field's mean water, so a dry ridge
+            -- cannot donate water it does not have.
+            local sumH, sumM = 0, 0
+            for i = 1, count do
+                sumH = sumH + bh[i]
+                sumM = sumM + bm[i]
+            end
+            local meanH, meanM = sumH / count, sumM / count
+
+            -- TWO TERMS, AND EACH ONE SUMS TO ZERO ON ITS OWN, so their sum does too
+            -- and conservation needs no correction pass to rescue it:
+            --   waterTerm  = (meanM - m_i)  levels the water toward the field mean
+            --   reliefTerm = (meanH - h_i) * CELL_SENS  pushes it downhill, positive
+            --                for low ground, so a hollow gains and a ridge gives
+            -- Both are deviations from a mean over the same block set, which is
+            -- exactly why they are zero-sum for every possible field shape.
+            for i = 1, count do
+                local waterTerm  = (meanM - bm[i])
+                local reliefTerm = (meanH - bh[i]) * SoilMoistureSystem.CELL_SENS
+                local addition   = frac * (waterTerm + reliefTerm)
+                -- The write clamps to 0..1. On a field already sitting at a bound the
+                -- clamp absorbs part of the move, which is the known clamp residual
+                -- and the one place conservation is approximate rather than exact.
+                self.valueMap:writeValueAtWorld(bx[i], bz[i], bm[i] + addition, half)
+            end
+            drained = true
+        end
     end
-    return true
+    self._lastFieldBlocks = total
+    return drained
 end
 
 --- The drainage maths, pure and engine-free so the bench can prove the two
