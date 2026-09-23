@@ -181,6 +181,11 @@ function CropStressManager.new()
     self.weatherIntegration = WeatherIntegration.new(self)
     self.soilSystem         = SoilMoistureSystem.new(self)
     self.soilMoistureSystem = self.soilSystem   -- FarmTablet compatibility alias
+    -- SCS-042: the one-hop runoff sibling, a local object constructed after the
+    -- moisture owner it calls back into (brief section 1); no persistent table,
+    -- no event, no save payload (section 6). SCS-041's ledger reads it as
+    -- manager.runoffSystem and keeps every candidate local when it is absent.
+    self.runoffSystem       = (RunoffSystem ~= nil) and RunoffSystem.new(self) or nil
     self.stressModifier     = CropStressModifier.new(self)
     self.irrigationManager  = IrrigationManager.new(self)       -- Phase 2 stub
     -- BUILD 04:34 (Wizard Motherbarn 2026-08-21 02:10Z): the real HUD is BACK. The
@@ -1499,6 +1504,10 @@ function CropStressManager:delete()
     if self.moistureMapOverlay ~= nil then self.moistureMapOverlay:delete() end
     self.irrigationManager:delete()
     self.stressModifier:delete()
+    if self.runoffSystem ~= nil then
+        self.runoffSystem:delete()
+        self.runoffSystem = nil
+    end
     self.soilSystem:delete()
     self.weatherIntegration:delete()
     self.saveLoad:delete()

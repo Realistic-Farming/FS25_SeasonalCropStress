@@ -847,17 +847,11 @@ function IrrigationManager:applyOneTimeIrrigation(systemId)
             if system.type == "pivot" then
                 local radius = system.radius or 200
                 local r2 = radius * radius
-                for _, field in pairs(self:_fieldsForId(fieldId)) do
-                    local vx, vz, n = self:getFieldPolygonWorld(field)
-                    if vx ~= nil then
-                        local cs = soilSystem:getCellSize()
-                        for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cs)) do
-                            local dx = entry.wx - x0
-                            local dz = entry.wz - z0
-                            if dx * dx + dz * dz <= r2 then
-                                soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, effectiveRate)
-                            end
-                        end
+                for _, entry in ipairs(self:_parcelCells(fieldId, soilSystem:getCellSize())) do
+                    local dx = entry.wx - x0
+                    local dz = entry.wz - z0
+                    if dx * dx + dz * dz <= r2 then
+                        soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, effectiveRate)
                     end
                 end
             elseif system.type == "drip" then
@@ -867,16 +861,10 @@ function IrrigationManager:applyOneTimeIrrigation(systemId)
                 local endZ = system.endZ or system.z
                 local spacing = system.lineSpacing or 0.8
                 local half = spacing * 0.5
-                for _, field in pairs(self:_fieldsForId(fieldId)) do
-                    local vx, vz, n = self:getFieldPolygonWorld(field)
-                    if vx ~= nil then
-                        local cs = soilSystem:getCellSize()
-                        for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cs)) do
-                            local dsq = pointSegDistSq(entry.wx, entry.wz, startX, startZ, endX, endZ)
-                            if dsq <= half * half then
-                                soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, effectiveRate)
-                            end
-                        end
+                for _, entry in ipairs(self:_parcelCells(fieldId, soilSystem:getCellSize())) do
+                    local dsq = pointSegDistSq(entry.wx, entry.wz, startX, startZ, endX, endZ)
+                    if dsq <= half * half then
+                        soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, effectiveRate)
                     end
                 end
             else
@@ -1065,30 +1053,24 @@ function IrrigationManager:_applyOneShotGain(system, gain)
     for _, fieldId in ipairs(system.coveredFields or {}) do
         local d = soilSystem.fieldData[fieldId]
         if d ~= nil then
-            for _, field in ipairs(self:_fieldsForId(fieldId)) do
-                local vx, vz, n = self:getFieldPolygonWorld(field)
-                if vx ~= nil then
-                    local cs = soilSystem:getCellSize()
-                    for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cs)) do
-                        local hit = false
-                        if system.type == "pivot" then
-                            local radius = system.radius or 200
-                            local dx = entry.wx - x0
-                            local dz = entry.wz - z0
-                            hit = dx * dx + dz * dz <= radius * radius
-                        elseif system.type == "drip" then
-                            local startX = x0
-                            local startZ = z0
-                            local endX = system.endX or (x0 + 100)
-                            local endZ = system.endZ or z0
-                            local spacing = system.lineSpacing or 0.8
-                            hit = pointSegDistSq(entry.wx, entry.wz, startX, startZ, endX, endZ) <= (spacing * 0.5) ^ 2
-                        end
-                        if hit then
-                            local accepted = soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, gain)
-                            if accepted then count = count + 1 end
-                        end
-                    end
+            for _, entry in ipairs(self:_parcelCells(fieldId, soilSystem:getCellSize())) do
+                local hit = false
+                if system.type == "pivot" then
+                    local radius = system.radius or 200
+                    local dx = entry.wx - x0
+                    local dz = entry.wz - z0
+                    hit = dx * dx + dz * dz <= radius * radius
+                elseif system.type == "drip" then
+                    local startX = x0
+                    local startZ = z0
+                    local endX = system.endX or (x0 + 100)
+                    local endZ = system.endZ or z0
+                    local spacing = system.lineSpacing or 0.8
+                    hit = pointSegDistSq(entry.wx, entry.wz, startX, startZ, endX, endZ) <= (spacing * 0.5) ^ 2
+                end
+                if hit then
+                    local accepted = soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, gain)
+                    if accepted then count = count + 1 end
                 end
             end
         end
@@ -1129,10 +1111,40 @@ function IrrigationManager:_cellsInPolygon(vx, vz, n, cellSize)
             local wx = (cx + 0.5) * cs
             local wz = (cz + 0.5) * cs
             if pointInPolygon(wx, wz, vx, vz, n) then
-                out[#out + 1] = { wx = wx, wz = wz }
+                out[#out + 1] = { wx = wx, wz = wz, cellX = cx, cellZ = cz }
             end
         end
     end
+    return out
+end
+
+--- SCS-042 section 6 (and SCS-041 section 8, the SCS-023 COVER amendment): the
+--- provider positions of one parcel for one system's act. Every cultivated
+--- polygon of the farmland is enumerated, a provider cell reached from two
+--- touching polygons counts ONCE for this system, and the list is sorted by
+--- cellX ascending then cellZ ascending, so the controlled-water door and the
+--- runoff sibling see one deterministic server order. Separate systems are not
+--- de-duplicated against each other: each act calls this for itself.
+function IrrigationManager:_parcelCells(fieldId, cellSize)
+    local seen, out = {}, {}
+    for _, field in ipairs(self:_fieldsForId(fieldId)) do
+        local vx, vz, n = self:getFieldPolygonWorld(field)
+        if vx ~= nil then
+            for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cellSize)) do
+                local kx, kz = entry.cellX or entry.wx, entry.cellZ or entry.wz
+                local k = tostring(kx) .. ":" .. tostring(kz)
+                if not seen[k] then
+                    seen[k] = true
+                    out[#out + 1] = entry
+                end
+            end
+        end
+    end
+    table.sort(out, function(a, b)
+        local ax, bx = a.cellX or a.wx, b.cellX or b.wx
+        if ax ~= bx then return ax < bx end
+        return (a.cellZ or a.wz) < (b.cellZ or b.wz)
+    end)
     return out
 end
 
@@ -1702,31 +1714,25 @@ function IrrigationManager:applyGainToSystemCoverage(system, gain)
                 evidence.fields[fieldId] = "REFUSED"
             else
                 local accepted = 0
-                for _, field in ipairs(self:_fieldsForId(fieldId)) do
-                    local vx, vz, n = self:getFieldPolygonWorld(field)
-                    if vx ~= nil then
-                        local cs = soilSystem:getCellSize()
-                        for _, entry in ipairs(self:_cellsInPolygon(vx, vz, n, cs)) do
-                            local inside = false
-                            if system.type == "pivot" then
-                                local radius = system.radius or 200
-                                local dx = entry.wx - x0
-                                local dz = entry.wz - z0
-                                inside = dx * dx + dz * dz <= radius * radius
-                            elseif system.type == "drip" then
-                                local startX = x0
-                                local startZ = z0
-                                local endX = system.endX or (x0 + 100)
-                                local endZ = system.endZ or z0
-                                local spacing = system.lineSpacing or 0.8
-                                local half = spacing * 0.5
-                                inside = pointSegDistSq(entry.wx, entry.wz,
-                                    startX, startZ, endX, endZ) <= half * half
-                            end
-                            if inside and soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, gain) == true then
-                                accepted = accepted + 1
-                            end
-                        end
+                for _, entry in ipairs(self:_parcelCells(fieldId, soilSystem:getCellSize())) do
+                    local inside = false
+                    if system.type == "pivot" then
+                        local radius = system.radius or 200
+                        local dx = entry.wx - x0
+                        local dz = entry.wz - z0
+                        inside = dx * dx + dz * dz <= radius * radius
+                    elseif system.type == "drip" then
+                        local startX = x0
+                        local startZ = z0
+                        local endX = system.endX or (x0 + 100)
+                        local endZ = system.endZ or z0
+                        local spacing = system.lineSpacing or 0.8
+                        local half = spacing * 0.5
+                        inside = pointSegDistSq(entry.wx, entry.wz,
+                            startX, startZ, endX, endZ) <= half * half
+                    end
+                    if inside and soilSystem:applyWaterAtCell(fieldId, entry.wx, entry.wz, gain) == true then
+                        accepted = accepted + 1
                     end
                 end
                 evidence.fields[fieldId] = (accepted > 0) and "ACCEPTED" or "REFUSED"
