@@ -133,6 +133,24 @@ group("X conflict", function()
     T.eq("X1 two saved rows with the token: CONFLICT, nobody linked, no lower-number winner", v.availability .. "/" .. tostring(v.personId) .. "/" .. tostring(v.trust) .. "/" .. v.reasonKey .. "/" .. tostring(int2.isRegistered), "CONFLICT/nil/nil/cs_consultant_conflict/false")
     T.eq("X2 every row is kept on the host", dup.people:count(), 4)
     T.eq("X3 the trust read is nil, never a fake zero", int2:getRelationshipLevel(), nil)
+    -- Ten seconds of a standing conflict: the caller polls the silent getter and
+    -- claims again only once the host stops saying conflict; the host's refusal
+    -- line is printed once, not once a second (Bob's MAJOR on #206).
+    local claims = spy(dup, "claimCropStressConsultant")
+    local refusals = 0
+    local realPrint = print
+    print = function(...) local s = tostring((...)) if s:find("Consultant claim refused", 1, true) then refusals = refusals + 1 end return realPrint(...) end
+    for _ = 1, 10 do tick(mgr2, 1000) end
+    print = realPrint
+    T.eq("X4 ten seconds of conflict: no new claim, no host refusal line, CONFLICT holds", claims() .. "/" .. refusals .. "/" .. int2.availability .. "/" .. tostring(int2.isRegistered), "0/0/CONFLICT/false")
+    -- The conflict is resolved on the host (one row loses the token): the next poll claims.
+    local carriers = dup.people:peopleWithToken("cs_alex_chen")
+    carriers[1].providerToken = nil
+    carriers[1].providerConflict = nil
+    carriers[2].providerConflict = nil
+    carriers[2].waitingReason = "npc_person_waiting_companion"   -- the host's own reason once the conflict is gone
+    tick(mgr2, 1000)
+    T.eq("X5 once the host stops reporting the conflict the caller claims and links the remaining person", claims() .. "/" .. int2.availability .. "/" .. tostring(int2.consultantNPCId == carriers[2].id), "1/READY/true")
 end)
 
 -- =========================================================
@@ -245,7 +263,7 @@ group("L legacy scalar", function()
     tick(mgr)
     local alex = host:getNPCById(4)
     T.eq("L2 once the host proves her, her trust is the host's own, never the scalar as a floor", tostring(alex.relationship ~= 42 and alex.relationship <= 35) .. "/" .. tostring(int:getRelationshipLevel() == alex.relationship), "true/true")
-    T.eq("L3 the farmer is told once that the old trust could not be safely linked", #(g_currentMission.notices or {}) .. "/" .. tostring(g_currentMission.notices[1]), "1/cs_consultant_legacy_trust_held")
+    T.eq("L3 the farmer is told once that the old trust could not be safely linked (the English behind the key the engine does not have here)", #(g_currentMission.notices or {}) .. "/" .. tostring(g_currentMission.notices[1]), "1/Alex Chen's old trust could not be safely linked to this neighbour; it is kept aside, not applied")
     tick(mgr, 1000)
     T.eq("L4 the notice is not repeated", #g_currentMission.notices, 1)
     -- Even a re-registration (she waited, the server's claim woke her again) says it only once.

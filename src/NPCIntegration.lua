@@ -80,19 +80,26 @@ local function nowMs()
     return (g_currentMission ~= nil and g_currentMission.time) or 0
 end
 
---- The bounded display name the claim carries: the localized text when the
---- engine has it, else the English. A missing key never becomes a name.
-local function consultantDisplayName()
-    if g_i18n ~= nil then
-        local ok, text = pcall(function() return g_i18n:getText(NPCIntegration.NPC_NAME) end)
-        if ok and type(text) == "string" and text ~= "" then
-            local lower = text:lower()
-            if lower ~= NPCIntegration.NPC_NAME and not lower:find("^missing") and text ~= ("$l10n_" .. NPCIntegration.NPC_NAME) then
+--- A localized text through the engine's own presence test first (the gate shape
+--- since SoilFertilizer #973): hasText, then getText, then a type and empty check.
+--- A key the engine does not have never becomes a name or a notice.
+local function localizedText(key, fallback)
+    if g_i18n ~= nil and type(g_i18n.hasText) == "function" then
+        local okHas, has = pcall(g_i18n.hasText, g_i18n, key)
+        if okHas and has == true then
+            local ok, text = pcall(g_i18n.getText, g_i18n, key)
+            if ok and type(text) == "string" and text ~= "" then
                 return text
             end
         end
     end
-    return NPCIntegration.NPC_NAME_FALLBACK
+    return fallback
+end
+
+--- The bounded display name the claim carries: the localized text when the
+--- engine has it, else the English.
+local function consultantDisplayName()
+    return localizedText(NPCIntegration.NPC_NAME, NPCIntegration.NPC_NAME_FALLBACK)
 end
 
 -- ============================================================
@@ -222,6 +229,13 @@ end
 function NPCIntegration:attemptRegistration(sys)
     local id, why
     if self:isServerSide(sys) then
+        -- A conflict (two saved consultant rows) cannot be resolved by claiming
+        -- again: the host refuses and logs every time. While the last answer was
+        -- CONFLICT, poll the silent getter and claim only once it stops saying so.
+        if self.availability == NPCIntegration.AVAIL_CONFLICT then
+            local _, stillWhy = sys:getCropStressConsultantId()
+            if stillWhy == "npc_person_identity_conflict" then return false end
+        end
         id, why = sys:claimCropStressConsultant(consultantDisplayName(), self:claimPosition(sys))
     else
         id, why = sys:getCropStressConsultantId()
@@ -290,12 +304,8 @@ function NPCIntegration:noticeLegacyTrust()
     self.legacyTrustNoticed = true
     csLog(string.format("NPCIntegration: legacy consultant trust %d could not be safely linked to person #%s; kept aside",
         self.legacyTrust, tostring(self.consultantNPCId)))
-    local key = "cs_consultant_legacy_trust_held"
-    local text = key
-    if g_i18n ~= nil then
-        local ok, t = pcall(function() return g_i18n:getText(key) end)
-        if ok and type(t) == "string" and t ~= "" and not t:lower():find("^missing") then text = t end
-    end
+    local text = localizedText("cs_consultant_legacy_trust_held",
+        "Alex Chen's old trust could not be safely linked to this neighbour; it is kept aside, not applied")
     if g_currentMission ~= nil and type(g_currentMission.addIngameNotification) == "function"
         and FSBaseMission ~= nil and FSBaseMission.INGAME_NOTIFICATION_INFO ~= nil then
         pcall(function() g_currentMission:addIngameNotification(FSBaseMission.INGAME_NOTIFICATION_INFO, text) end)

@@ -71,28 +71,32 @@ MUTATIONS = [
 """, 1)],
   "an old host gets the pre-F357 name adoption and direct insert"),
  ("M03-name-adoption-restored", INT,
-  [("""    local id, why
-    if self:isServerSide(sys) then
-        id, why = sys:claimCropStressConsultant(consultantDisplayName(), self:claimPosition(sys))
-""",
-    """    local id, why
-    local name = consultantDisplayName()
-    for _, existing in ipairs(sys.activeNPCs or {}) do
-        if existing.name == name then id = existing.id end
-    end
-    if id == nil and self:isServerSide(sys) then
-        id, why = sys:claimCropStressConsultant(name, self:claimPosition(sys))
-""", 1)],
-  "a namesake in the host's town is adopted as the consultant"),
- # ── the claim and the read ──────────────────────────────────────────────────
- ("M04-client-claims", INT,
-  [("""    if self:isServerSide(sys) then
-        id, why = sys:claimCropStressConsultant(consultantDisplayName(), self:claimPosition(sys))
+  [("""        id, why = sys:claimCropStressConsultant(consultantDisplayName(), self:claimPosition(sys))
     else
         id, why = sys:getCropStressConsultantId()
     end
 """,
-    """    id, why = sys:claimCropStressConsultant(consultantDisplayName(), self:claimPosition(sys))
+    """        local name = consultantDisplayName()
+        for _, existing in ipairs(sys.activeNPCs or {}) do
+            if existing.name == name then id = existing.id end
+        end
+        if id == nil then id, why = sys:claimCropStressConsultant(name, self:claimPosition(sys)) end
+    else
+        id, why = sys:getCropStressConsultantId()
+    end
+""", 1)],
+  "a namesake in the host's town is adopted as the consultant"),
+ # ── the claim and the read ──────────────────────────────────────────────────
+ ("M04-client-claims", INT,
+  [("""        id, why = sys:claimCropStressConsultant(consultantDisplayName(), self:claimPosition(sys))
+    else
+        id, why = sys:getCropStressConsultantId()
+    end
+""",
+    """        id, why = sys:claimCropStressConsultant(consultantDisplayName(), self:claimPosition(sys))
+    else
+        id, why = sys:claimCropStressConsultant(consultantDisplayName(), self:claimPosition(sys))
+    end
 """, 1)],
   "a pure client tries to claim (the host refuses it as server-only) and never reads the getter"),
  ("M05-no-retry-throttle", INT,
@@ -123,11 +127,9 @@ MUTATIONS = [
 """, 1)],
   "a duplicate-record conflict reads as an ordinary wait"),
  ("M08-display-name-unguarded", INT,
-  [("""            if lower ~= NPCIntegration.NPC_NAME and not lower:find("^missing") and text ~= ("$l10n_" .. NPCIntegration.NPC_NAME) then
-                return text
-            end
+  [("""    return localizedText(NPCIntegration.NPC_NAME, NPCIntegration.NPC_NAME_FALLBACK)
 """,
-    """            return text
+    """    return (g_i18n ~= nil and g_i18n:getText(NPCIntegration.NPC_NAME)) or NPCIntegration.NPC_NAME_FALLBACK
 """, 1)],
   "a missing locale key becomes the consultant's display name"),
  # ── the identity view and the trust read ────────────────────────────────────
@@ -231,6 +233,35 @@ MUTATIONS = [
         self.legacyTrust = math.floor(relationship)
 """, 1)],
   "the loaded scalar is dropped instead of retained"),
+ # ── Bob's #206 verdict at 1faea704 ──────────────────────────────────────────
+ ("M22-conflict-reclaims-every-second", INT,
+  [("""        if self.availability == NPCIntegration.AVAIL_CONFLICT then
+            local _, stillWhy = sys:getCropStressConsultantId()
+            if stillWhy == "npc_person_identity_conflict" then return false end
+        end
+""", "", 1)],
+  "a standing conflict is claimed against once a second and the host logs every refusal"),
+ ("M23-text-gate-without-hasText", INT,
+  [("""    if g_i18n ~= nil and type(g_i18n.hasText) == "function" then
+        local okHas, has = pcall(g_i18n.hasText, g_i18n, key)
+        if okHas and has == true then
+            local ok, text = pcall(g_i18n.getText, g_i18n, key)
+            if ok and type(text) == "string" and text ~= "" then
+                return text
+            end
+        end
+    end
+    return fallback
+""",
+    """    if g_i18n ~= nil then
+        local ok, text = pcall(g_i18n.getText, g_i18n, key)
+        if ok and type(text) == "string" and text ~= "" then
+            return text
+        end
+    end
+    return fallback
+""", 1)],
+  "a key the engine does not have becomes the consultant's name and the notice"),
  # ── the PDA reader ──────────────────────────────────────────────────────────
  ("M19-pda-prints-a-fake-zero", PDA,
   [("""    if view.availability == "READY" and type(view.trust) == "number" then
