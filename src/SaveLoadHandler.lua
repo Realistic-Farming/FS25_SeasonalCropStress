@@ -320,12 +320,15 @@ function SaveLoadHandler:saveToXMLFile(xmlFile)
         end
     end
 
-    -- NPC relationship (Alex Chen / Agronomist)
+    -- NPC relationship (Alex Chen / Agronomist). RSF-F357 section 7: the saved
+    -- scalar is the RETAINED legacy value, re-emitted as it was loaded; it is
+    -- never the live host score (the host's own record owns her trust) and a
+    -- nil read writes nothing. This is the retention rule, not a trust writer.
     local npcInt = self.manager.npcIntegration
-    if npcInt ~= nil and npcInt.npcFavorActive then
-        local rel = npcInt:getRelationshipLevel()
-        if rel > 0 then
-            setInt(root .. ".npc#relationship", rel)
+    if npcInt ~= nil and type(npcInt.getRetainedLegacyTrust) == "function" then
+        local legacy = npcInt:getRetainedLegacyTrust()
+        if type(legacy) == "number" and legacy > 0 then
+            setInt(root .. ".npc#relationship", legacy)
         end
     end
 
@@ -566,11 +569,12 @@ function SaveLoadHandler:buildStateTable()
         end
     end
 
-    -- NPC relationship (only when NPCFavor is active, same guard as the XML path)
+    -- NPC relationship: the retained legacy scalar, same rule as the XML path
+    -- (RSF-F357 section 7); never the live host score.
     local npcInt = self.manager.npcIntegration
-    if npcInt ~= nil and npcInt.npcFavorActive then
-        local rel = npcInt:getRelationshipLevel()
-        if rel ~= nil and rel > 0 then out.npcRelationship = rel end
+    if npcInt ~= nil and type(npcInt.getRetainedLegacyTrust) == "function" then
+        local legacy = npcInt:getRetainedLegacyTrust()
+        if type(legacy) == "number" and legacy > 0 then out.npcRelationship = legacy end
     end
 
     return out

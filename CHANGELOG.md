@@ -13,6 +13,9 @@ the repo's git history and README.
 
 ## [Unreleased]
 
+### Fixed
+- **Alex Chen is the same neighbour after a reload, and never a namesake (RSF-F357, the consultant caller).** With FS25_NPCFavor present, the agronomist is now claimed through the host's own consultant door and kept by the number the host returns, instead of being adopted by name from whoever carries it or inserted into the host's town by hand. A pure multiplayer client reads her from the host's roster once it is complete and retries about once a second until she is there. If the host goes away, is too old to pair with, or shows more than one saved consultant, the link is cleared and the Agronomist page says why instead of showing a score; the standalone consultant alerts keep working on an old or absent host. The relationship value this mod saved before the update is kept as old evidence and re-saved as it was; it is no longer applied as a floor on the neighbour's trust (it may have been saved from a namesake), and you are told once that it could not be safely linked. Alerts raised before she is linked are kept, the latest eight, and shown once she is. Needs FS25_NPCFavor with saved neighbours (its RSF-F357 host); nothing to configure.
+
 ### Added
 - Changelog file established (suite ruling 2026-08-22).
 - Playtest fixes: CS_TOGGLE_HUD (RShift+M) and CS_EDIT_HUD (RShift+N) chord defaults, HUD/settings alignment, in-cab vehicle key hook.
