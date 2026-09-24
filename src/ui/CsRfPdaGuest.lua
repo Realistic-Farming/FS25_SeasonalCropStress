@@ -53,6 +53,27 @@ local function getMgr()
     return g_cropStressManager
 end
 
+--- RSF-F357 section 9a: the consultant line for a PDA surface, from the copied
+--- identity view. READY: the proved trust through `fmtKey` (plus a short note when
+--- an old scalar is kept aside). WAITING, OLD_HOST, CONFLICT: the availability's
+--- own explanation. ABSENT (no host) or no view: nil, so the surface prints nothing.
+--- Never a fake 0 / 100, never a raw model read.
+function CsRfPdaGuest.consultantRelationText(mgr, fmtKey, fmtFallback)
+    local npc = mgr ~= nil and mgr.npcIntegration or nil
+    if npc == nil or type(npc.getConsultantIdentityView) ~= "function" then return nil end
+    local ok, view = pcall(function() return npc:getConsultantIdentityView() end)
+    if not ok or type(view) ~= "table" then return nil end
+    if view.availability == "READY" and type(view.trust) == "number" then
+        local text = string.format(tr(fmtKey, fmtFallback), view.trust)
+        if view.legacyTrustHeld then
+            text = text .. " " .. tr("cs_consultant_legacy_trust_held_short", "(old trust kept aside)")
+        end
+        return text
+    end
+    if view.availability == "ABSENT" or view.reasonKey == nil or view.reasonKey == "" then return nil end
+    return tr(view.reasonKey, "Alex Chen is not linked yet")
+end
+
 local function getHost()
     -- Shared module registry only (NO HOST). Never rfPdaHost.
     if g_currentMission ~= nil and g_currentMission.rfEscModules ~= nil then
@@ -1076,17 +1097,15 @@ function CsRfPdaGuest.onPaintConsultant(container)
     consSetText(container, "csConsColYield",    tr("cs_rf_pda_cons_col_yield", "Yield keep"))
     consSetText(container, "csConsRecTitle",    tr("cs_rf_pda_cons_rec_title", "Recommendations"))
 
-    -- Relationship: shown ONLY when the NPC is really registered. An unregistered
-    -- consultant prints nothing at all rather than a fake 0 / 100.
+    -- Relationship (RSF-F357 section 9a): read through the copied identity view.
+    -- The proved trust only while the host proves the unique live consultant;
+    -- otherwise the availability's own explanation, never a fake 0 / 100, and
+    -- nothing at all when there is no host.
     local relShown = false
-    local npc = mgr ~= nil and mgr.npcIntegration or nil
-    if npc ~= nil and npc.isRegistered and type(npc.getRelationshipLevel) == "function" then
-        local ok, rel = pcall(function() return npc:getRelationshipLevel() end)
-        if ok and type(rel) == "number" then
-            consSetText(container, "csConsRelation",
-                string.format(tr("cs_rf_pda_cons_relation", "With Alex: %d / 100"), rel))
-            relShown = true
-        end
+    local relText = CsRfPdaGuest.consultantRelationText(mgr, "cs_rf_pda_cons_relation", "With Alex: %d / 100")
+    if relText ~= nil then
+        consSetText(container, "csConsRelation", relText)
+        relShown = true
     end
     if not relShown then consSetText(container, "csConsRelation", nil, false) end
 
@@ -2214,16 +2233,13 @@ local function updateAgronomistCard(container, fieldId)
     local mgr = getMgr()
     setPivotText(container, "csAgroTitle", tr("cs_rf_pda_agro_title", "AGRONOMIST"))
 
-    -- Relationship: only when the NPC is genuinely registered. Never a fake score.
+    -- Relationship (RSF-F357 section 9a): through the copied identity view; the
+    -- proved trust while READY, else the availability's explanation, never a fake score.
     local relShown = false
-    local npc = mgr ~= nil and mgr.npcIntegration or nil
-    if npc ~= nil and npc.isRegistered and type(npc.getRelationshipLevel) == "function" then
-        local ok, rel = pcall(function() return npc:getRelationshipLevel() end)
-        if ok and type(rel) == "number" then
-            setPivotText(container, "csAgroRelationship",
-                string.format(tr("cs_rf_pda_agro_relation", "Alex Chen - %d / 100"), rel), true)
-            relShown = true
-        end
+    local relText = CsRfPdaGuest.consultantRelationText(mgr, "cs_rf_pda_agro_relation", "Alex Chen - %d / 100")
+    if relText ~= nil then
+        setPivotText(container, "csAgroRelationship", relText, true)
+        relShown = true
     end
     if not relShown then
         setPivotText(container, "csAgroRelationship", "", false)

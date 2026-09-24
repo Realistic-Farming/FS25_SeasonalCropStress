@@ -467,5 +467,11 @@
         <text name="cs_rf_pda_cap_rain_key" text="레인 센서" />
     <text name="cs_release_irrigation_absorption_name" text="Thirsty ground (irrigation absorption)" />
     <text name="cs_release_irrigation_absorption_status" text="new; awaiting live observation, truthful surface, defect closure and balance" />
+    <!-- RSF-F357: consultant identity (host pairing) -->
+    <text name="cs_consultant_waiting" text="알렉스 첸이 아직 연결되지 않았습니다. 이웃을 불러오는 중입니다"/>
+    <text name="cs_consultant_host_old" text="NPC Favor가 너무 오래되어 알렉스 첸을 연결할 수 없습니다. 업데이트하세요"/>
+    <text name="cs_consultant_conflict" text="저장된 알렉스 첸이 둘 이상입니다. 신뢰도를 연결할 수 없습니다"/>
+    <text name="cs_consultant_legacy_trust_held" text="알렉스 첸의 이전 신뢰도를 이 이웃에 안전하게 연결할 수 없어 적용하지 않고 보관합니다"/>
+    <text name="cs_consultant_legacy_trust_held_short" text="(이전 신뢰도 보관됨)"/>
 </texts>
 </l10n>

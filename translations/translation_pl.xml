@@ -499,5 +499,11 @@
         <text name="cs_rf_pda_cap_rain_key" text="Czujnik deszczu" />
     <text name="cs_release_irrigation_absorption_name" text="Thirsty ground (irrigation absorption)" />
     <text name="cs_release_irrigation_absorption_status" text="new; awaiting live observation, truthful surface, defect closure and balance" />
+    <!-- RSF-F357: consultant identity (host pairing) -->
+    <text name="cs_consultant_waiting" text="Alex Chen nie jest jeszcze powiązana; oczekiwanie na wczytanie sąsiadów"/>
+    <text name="cs_consultant_host_old" text="NPC Favor jest zbyt stary, by powiązać Alex Chen; zaktualizuj go"/>
+    <text name="cs_consultant_conflict" text="Zapisano więcej niż jedną Alex Chen; jej zaufania nie da się powiązać"/>
+    <text name="cs_consultant_legacy_trust_held" text="Dawnego zaufania Alex Chen nie dało się bezpiecznie powiązać z tą sąsiadką; jest odłożone, nie zastosowane"/>
+    <text name="cs_consultant_legacy_trust_held_short" text="(dawne zaufanie odłożone)"/>
 </texts>
 </l10n>

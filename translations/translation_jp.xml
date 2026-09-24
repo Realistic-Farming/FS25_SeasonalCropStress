@@ -467,5 +467,11 @@
         <text name="cs_rf_pda_cap_rain_key" text="レインセンサー" />
     <text name="cs_release_irrigation_absorption_name" text="Thirsty ground (irrigation absorption)" />
     <text name="cs_release_irrigation_absorption_status" text="new; awaiting live observation, truthful surface, defect closure and balance" />
+    <!-- RSF-F357: consultant identity (host pairing) -->
+    <text name="cs_consultant_waiting" text="アレックス・チェンはまだ紐づいていません。近隣住民の読み込みを待っています"/>
+    <text name="cs_consultant_host_old" text="NPC Favor が古すぎてアレックス・チェンを紐づけられません。更新してください"/>
+    <text name="cs_consultant_conflict" text="保存されたアレックス・チェンが複数います。信頼を紐づけられません"/>
+    <text name="cs_consultant_legacy_trust_held" text="アレックス・チェンの以前の信頼はこの住民に安全に紐づけられなかったため、適用せず保留しています"/>
+    <text name="cs_consultant_legacy_trust_held_short" text="（以前の信頼は保留）"/>
 </texts>
 </l10n>

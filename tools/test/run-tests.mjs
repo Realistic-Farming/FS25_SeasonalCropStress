@@ -61,7 +61,11 @@ for (const tf of testFiles) {
   const parts = [prelude];
   for (const d of deps) {
     try {
-      parts.push(`-- <<< ${d} >>>\n` + readFileSync(join(REPO_ROOT, d), "utf8"));
+      // Each declared module is its own block, as the engine loads each file as its own
+      // chunk: file-level locals stay file-level, and a long load list (RSF-F357 loads the
+      // vendored NPCFavor host beside this mod's files) cannot exceed Lua's 200 locals per
+      // function. Globals are unaffected.
+      parts.push(`-- <<< ${d} >>>\ndo\n` + readFileSync(join(REPO_ROOT, d), "utf8") + "\nend");
     } catch {
       console.log(c.red(`✗ ${tf}: cannot read declared dependency '${d}'`));
       hadError = true;

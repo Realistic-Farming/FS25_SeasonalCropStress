@@ -502,5 +502,11 @@
         <text name="cs_rf_pda_cap_rain_key" text="Cidlo deste" />
     <text name="cs_release_irrigation_absorption_name" text="Thirsty ground (irrigation absorption)" />
     <text name="cs_release_irrigation_absorption_status" text="new; awaiting live observation, truthful surface, defect closure and balance" />
+    <!-- RSF-F357: consultant identity (host pairing) -->
+    <text name="cs_consultant_waiting" text="Alex Chen zatím není propojena; čeká se na načtení sousedů"/>
+    <text name="cs_consultant_host_old" text="NPC Favor je příliš starý na propojení Alex Chen; aktualizujte ho"/>
+    <text name="cs_consultant_conflict" text="Uloženo více než jedna Alex Chen; její důvěru nelze propojit"/>
+    <text name="cs_consultant_legacy_trust_held" text="Starou důvěru Alex Chen nebylo možné bezpečně propojit s touto sousedkou; je odložena, nepoužita"/>
+    <text name="cs_consultant_legacy_trust_held_short" text="(stará důvěra odložena)"/>
 </texts>
 </l10n>
