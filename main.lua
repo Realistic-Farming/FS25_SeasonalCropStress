@@ -58,6 +58,9 @@ source(modDir .. "src/SoilMoistureSystem.lua")
 source(modDir .. "src/SoilMoistureGround.lua")
 source(modDir .. "src/CropStressModifier.lua")
 source(modDir .. "src/IrrigationManager.lua")
+-- SCS-042 one-hop runoff: after IrrigationManager, before CropStressManager, which
+-- constructs it beside the moisture owner.
+source(modDir .. "src/RunoffSystem.lua")
 
 -- Option-Scaling Spine (pure library, vendored from SettingsHub)
 source(modDir .. "src/integrations/OptionScalingResolver.lua")
