@@ -2,23 +2,23 @@
 <l10n>
     <texts>
     <!-- ========== HUD OVERLAY ========== -->
-    <text name="cs_hud_title"         text="WILGOTNOÅšÄ† GLEBY"/>
+    <text name="cs_hud_title"         text="WILGOTNOŚĆ GLEBY"/>
     <text name="cs_hud_healthy"       text="Zdrowa"/>
     <text name="cs_hud_warning"       text="Stres suszy"/>
-    <text name="cs_hud_critical"      text="KRYTYCZNE â€” Nawadniaj teraz!"/>
+    <text name="cs_hud_critical"      text="KRYTYCZNE - Nawadniaj teraz!"/>
     <text name="cs_hud_no_crop"       text="Brak uprawy"/>
     <text name="cs_hud_forecast"      text="Prognoza 5-dniowa"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 zaÅ‚adowany. Alt+M otwiera HUD wilgotnoÅ›ci. Nowy uÅ¼ytkownik? OtwÃ³rz menu Pomoc (ESC â†’ Pomoc) i znajdÅº Seasonal Crop Stress, aby dowiedzieÄ‡ siÄ™ wszystkiego."/>
-    <text name="cs_hud_click_forecast" text="Kliknij wiersz aby zobaczyÄ‡ prognozÄ™ 5-dniowÄ…"/>
-    <text name="cs_hud_vehicle_disabled" text="NakÅ‚adka wyÅ‚Ä…czona w pojeÅºdzie"/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 załadowany. Alt+M otwiera HUD wilgotności. Nowy użytkownik? Otwórz menu Pomoc (ESC → Pomoc) i znajdź Seasonal Crop Stress, aby dowiedzieć się wszystkiego."/>
+    <text name="cs_hud_click_forecast" text="Kliknij wiersz aby zobaczyć prognozę 5-dniową"/>
+    <text name="cs_hud_vehicle_disabled" text="Nakładka wyłączona w pojeździe"/>
 
     <!-- ========== FIELD STATUS ========== -->
-    <text name="cs_field_moisture"        text="WilgotnoÅ›Ä‡"/>
+    <text name="cs_field_moisture"        text="Wilgotność"/>
     <text name="cs_field_soil_type"       text="Typ gleby"/>
     <text name="cs_field_stress"          text="Skumulowany stres"/>
-    <text name="cs_field_yield_impact"    text="Szac. wpÅ‚yw na plony"/>
+    <text name="cs_field_yield_impact"    text="Szac. wpływ na plony"/>
     <text name="cs_field_critical_window" text="Okno krytyczne: TERAZ"/>
-    <text name="cs_field_nearest_water"   text="NajbliÅ¼sza woda"/>
+    <text name="cs_field_nearest_water"   text="Najbliższa woda"/>
 
     <!-- ========== SOIL TYPES ========== -->
     <text name="cs_soil_sandy"  text="Piaszczysta"/>
@@ -26,37 +26,37 @@
     <text name="cs_soil_clay"   text="Ilasta"/>
 
     <!-- ========== ALERTS ========== -->
-    <text name="cs_alert_info"     text="Pole %d: %s wilgotnoÅ›Ä‡ spada â€” monitoruj warunki."/>
-    <text name="cs_alert_warning"  text="Pole %d: %s niska wilgotnoÅ›Ä‡ â€” zalecane nawadnianie."/>
-    <text name="cs_alert_critical" text="Pole %d: %s prÃ³g stresu suszy â€” nawadniaj TERAZ!"/>
+    <text name="cs_alert_info"     text="Pole %d: %s wilgotność spada - monitoruj warunki."/>
+    <text name="cs_alert_warning"  text="Pole %d: %s niska wilgotność - zalecane nawadnianie."/>
+    <text name="cs_alert_critical" text="Pole %d: %s próg stresu suszy - nawadniaj TERAZ!"/>
 
     <!-- ========== IRRIGATION ========== -->
-    <text name="cs_irr_title"          text="System nawadniania â€” %s"/>
-    <text name="cs_irr_water_source"   text="Å¹rÃ³dÅ‚o wody"/>
-    <text name="cs_irr_connected"      text="PodÅ‚Ä…czone"/>
-    <text name="cs_irr_disconnected"   text="NiepodÅ‚Ä…czone"/>
+    <text name="cs_irr_title"          text="System nawadniania - %s"/>
+    <text name="cs_irr_water_source"   text="Źródło wody"/>
+    <text name="cs_irr_connected"      text="Podłączone"/>
+    <text name="cs_irr_disconnected"   text="Niepodłączone"/>
     <text name="cs_irr_schedule"       text="Harmonogram"/>
-    <text name="cs_irr_flow_rate"      text="PrzepÅ‚yw"/>
-    <text name="cs_irr_efficiency"     text="WydajnoÅ›Ä‡"/>
+    <text name="cs_irr_flow_rate"      text="Przepływ"/>
+    <text name="cs_irr_efficiency"     text="Wydajność"/>
     <text name="cs_irr_cost"           text="Szac. koszt"/>
-    <text name="cs_irr_wear"           text="ZuÅ¼ycie"/>
+    <text name="cs_irr_wear"           text="Zużycie"/>
     <text name="cs_irr_covered_fields" text="Nawadniane pola"/>
     <text name="cs_irr_irrigate_now"   text="Nawadniaj teraz"/>
     <text name="cs_irr_save_schedule"  text="Zapisz harmonogram"/>
     <text name="cs_irr_pivot"          text="Nawadnianie pivot"/>
     <text name="cs_irr_drip"           text="Nawadnianie kroplowe"/>
     <text name="cs_irr_pump"           text="Pompa wodna"/>
-    <text name="cs_irr_start_time"     text="Czas rozpoczÄ™cia"/>
-    <text name="cs_irr_end_time"       text="Czas zakoÅ„czenia"/>
-    <text name="cs_irr_performance"    text="WydajnoÅ›Ä‡"/>
-    <text name="cs_irr_started"        text="Nawadnianie rozpoczÄ™te."/>
-    <text name="cs_irr_open_schedule"  text="OtwÃ³rz harmonogram nawadniania"/>
+    <text name="cs_irr_start_time"     text="Czas rozpoczęcia"/>
+    <text name="cs_irr_end_time"       text="Czas zakończenia"/>
+    <text name="cs_irr_performance"    text="Wydajność"/>
+    <text name="cs_irr_started"        text="Nawadnianie rozpoczęte."/>
+    <text name="cs_irr_open_schedule"  text="Otwórz harmonogram nawadniania"/>
     <text name="cs_schedule_saved"     text="Harmonogram zapisany."/>
 
     <!-- ========== DAY LABELS ========== -->
     <text name="cs_day_mon" text="P"/>
     <text name="cs_day_tue" text="W"/>
-    <text name="cs_day_wed" text="Åš"/>
+    <text name="cs_day_wed" text="Ś"/>
     <text name="cs_day_thu" text="C"/>
     <text name="cs_day_fri" text="P"/>
     <text name="cs_day_sat" text="S"/>
@@ -64,182 +64,182 @@
 
     <!-- ========== CONSULTANT ========== -->
     <text name="cs_consultant_name"            text="Alex Chen, Agronom"/>
-    <text name="cs_consultant_subtitle"        text="Stan pÃ³l &amp; Zalecenia"/>
+    <text name="cs_consultant_subtitle"        text="Stan pól &amp; Zalecenia"/>
     <text name="cs_consultant_relationship"    text="Relacja z Alexem:"/>
     <text name="cs_consultant_field_status"    text="Podsumowanie ryzyka (Top 5)"/>
     <text name="cs_consultant_recommendation"  text="Zalecenia"/>
-    <text name="cs_consultant_open_irrigation" text="OtwÃ³rz menedÅ¼era nawadniania"/>
+    <text name="cs_consultant_open_irrigation" text="Otwórz menedżera nawadniania"/>
     <text name="cs_consultant_no_data"         text="Brak danych o polach."/>
 
     <!-- ========== NPC FAVOR QUESTS ========== -->
-    <text name="cs_favor_soil_sample"     text="Pobierz prÃ³bkÄ™ gleby z pola %d"/>
-    <text name="cs_favor_irr_check"       text="SprawdÅº system nawadniania przy polu %d"/>
-    <text name="cs_favor_emergency_water" text="Nawodnij pole %d przed zachodem sÅ‚oÅ„ca!"/>
+    <text name="cs_favor_soil_sample"     text="Pobierz próbkę gleby z pola %d"/>
+    <text name="cs_favor_irr_check"       text="Sprawdź system nawadniania przy polu %d"/>
+    <text name="cs_favor_emergency_water" text="Nawodnij pole %d przed zachodem słońca!"/>
     <text name="cs_favor_seasonal_plan"   text="Przejrzyj sezonowy plan nawadniania"/>
 
     <!-- ========== PLACEABLES ========== -->
     <text name="cs_pivot_name"     text="Nawadnianie pivot"/>
     <text name="cs_pump_name"      text="Pompa wodna"/>
     <text name="cs_drip_name"      text="Linia nawadniania kroplowego"/>
-    <text name="cs_pivot_function" text="Nawadnianie pivotowe na duÅ¼ym promieniu. Pokrywa okrÄ…gÅ‚e obszary pÃ³l. Wymaga pompy wodnej."/>
-    <text name="cs_pump_function"  text="Zasila systemy pivot i kroplowe. UmieÅ›Ä‡ blisko ÅºrÃ³dÅ‚a wody."/>
-    <text name="cs_drip_function"  text="Precyzyjne nawadnianie kroplowe wzdÅ‚uÅ¼ rzÄ™dÃ³w pÃ³l. Wymaga pompy wodnej."/>
+    <text name="cs_pivot_function" text="Nawadnianie pivotowe na dużym promieniu. Pokrywa okrągłe obszary pól. Wymaga pompy wodnej."/>
+    <text name="cs_pump_function"  text="Zasila systemy pivot i kroplowe. Umieść blisko źródła wody."/>
+    <text name="cs_drip_function"  text="Precyzyjne nawadnianie kroplowe wzdłuż rzędów pól. Wymaga pompy wodnej."/>
 
     <!-- ========== IRRIGATION PERFORMANCE VALUES (dynamic, format strings) ========== -->
-    <text name="cs_irr_flow_rate_value"   text="PrzepÅ‚yw: %.3f/h"/>
-    <text name="cs_irr_efficiency_value"  text="WydajnoÅ›Ä‡: %d%%"/>
-    <text name="cs_irr_cost_value"        text="Szac. koszt: %d zÅ‚/h"/>
-    <text name="cs_irr_wear_value"        text="ZuÅ¼ycie: %d%%"/>
-    <text name="cs_irr_already_active"    text="System nawadniania juÅ¼ dziaÅ‚a."/>
-    <text name="cs_irr_no_covered_fields" text="Brak pÃ³l objÄ™tych tym systemem."/>
+    <text name="cs_irr_flow_rate_value"   text="Przepływ: %.3f/h"/>
+    <text name="cs_irr_efficiency_value"  text="Wydajność: %d%%"/>
+    <text name="cs_irr_cost_value"        text="Szac. koszt: %d zł/h"/>
+    <text name="cs_irr_wear_value"        text="Zużycie: %d%%"/>
+    <text name="cs_irr_already_active"    text="System nawadniania już działa."/>
+    <text name="cs_irr_no_covered_fields" text="Brak pól objętych tym systemem."/>
 
     <!-- ========== CONSULTANT RECOMMENDATIONS (dynamic, format strings) ========== -->
-    <text name="cs_rec_urgent"          text="PILNE: Pole %d na %.0f%% wilgotnoÅ›ci â€” nawadniaj natychmiast!"/>
-    <text name="cs_rec_warning"         text="Pole %d na %.0f%% wilgotnoÅ›ci â€” zalecane nawadnianie w ciÄ…gu 24h."/>
-    <text name="cs_rec_ok"              text="Wszystkie pola w akceptowalnym zakresie wilgotnoÅ›ci."/>
+    <text name="cs_rec_urgent"          text="PILNE: Pole %d na %.0f%% wilgotności - nawadniaj natychmiast!"/>
+    <text name="cs_rec_warning"         text="Pole %d na %.0f%% wilgotności - zalecane nawadnianie w ciągu 24h."/>
+    <text name="cs_rec_ok"              text="Wszystkie pola w akceptowalnym zakresie wilgotności."/>
     <text name="cs_rec_forecast"        text="Prognoza: ~ D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
-    <text name="cs_rec_systems_running" text="%d system(Ã³w) nawadniania aktywnych."/>
-    <text name="cs_rec_no_systems"      text="Brak aktywnych systemÃ³w nawadniania."/>
-    <text name="cs_rec_all_healthy"     text="Wszystkie pola wyglÄ…dajÄ… zdrowo."/>
+    <text name="cs_rec_systems_running" text="%d system(ów) nawadniania aktywnych."/>
+    <text name="cs_rec_no_systems"      text="Brak aktywnych systemów nawadniania."/>
+    <text name="cs_rec_all_healthy"     text="Wszystkie pola wyglądają zdrowo."/>
 
     <!-- ========== SHARED ========== -->
     <text name="cs_close"                 text="Zamknij"/>
-    <text name="cs_no_irrigation_systems" text="Nie umieszczono jeszcze systemÃ³w nawadniania."/>
+    <text name="cs_no_irrigation_systems" text="Nie umieszczono jeszcze systemów nawadniania."/>
 
     <!-- ========== INPUT ACTION DESCRIPTIONS ========== -->
-    <text name="input_CS_TOGGLE_HUD"      text="PrzeÅ‚Ä…cz HUD wilgotnoÅ›ci"/>
-    <text name="input_CS_OPEN_IRRIGATION" text="OtwÃ³rz menedÅ¼era nawadniania"/>
-    <text name="input_CS_OPEN_CONSULTANT" text="OtwÃ³rz konsultanta upraw"/>
-    <text name="input_CS_OPEN_SETTINGS"   text="OtwÃ³rz ustawienia stresu upraw"/>
-    <text name="input_CS_EDIT_HUD"        text="PrzesuÅ„/skaluj HUD wilgotnoÅ›ci"/>
+    <text name="input_CS_TOGGLE_HUD"      text="Przełącz HUD wilgotności"/>
+    <text name="input_CS_OPEN_IRRIGATION" text="Otwórz menedżera nawadniania"/>
+    <text name="input_CS_OPEN_CONSULTANT" text="Otwórz konsultanta upraw"/>
+    <text name="input_CS_OPEN_SETTINGS"   text="Otwórz ustawienia stresu upraw"/>
+    <text name="input_CS_EDIT_HUD"        text="Przesuń/skaluj HUD wilgotności"/>
 
     <!-- ========== PRECISION FARMING DLC ========== -->
 
     <!-- ========== SETTINGS ========== -->
     <text name="cs_settings_section"           text="Sezonowy stres upraw"/>
-    <text name="cs_settings_enabled_short"     text="WÅ‚Ä…cz mod"/>
-    <text name="cs_settings_enabled_long"      text="WÅ‚Ä…cz lub wyÅ‚Ä…cz caÅ‚y system Sezonowego stresu upraw"/>
-    <text name="cs_settings_difficulty_short"  text="Poziom trudnoÅ›ci"/>
-    <text name="cs_settings_difficulty_long"   text="Dostosuj akumulacjÄ™ stresu i wspÃ³Å‚czynniki ewapotranspiracji"/>
-    <text name="cs_settings_diff_easy"         text="Åatwy"/>
+    <text name="cs_settings_enabled_short"     text="Włącz mod"/>
+    <text name="cs_settings_enabled_long"      text="Włącz lub wyłącz cały system Sezonowego stresu upraw"/>
+    <text name="cs_settings_difficulty_short"  text="Poziom trudności"/>
+    <text name="cs_settings_difficulty_long"   text="Dostosuj akumulację stresu i współczynniki ewapotranspiracji"/>
+    <text name="cs_settings_diff_easy"         text="Łatwy"/>
     <text name="cs_settings_diff_normal"       text="Normalny"/>
     <text name="cs_settings_diff_hard"         text="Trudny"/>
-    <text name="cs_settings_hud_short"         text="WidocznoÅ›Ä‡ HUD"/>
-    <text name="cs_settings_hud_long"          text="PokaÅ¼ lub ukryj nakÅ‚adkÄ™ wilgotnoÅ›ci na liÅ›cie pÃ³l"/>
+    <text name="cs_settings_hud_short"         text="Widoczność HUD"/>
+    <text name="cs_settings_hud_long"          text="Pokaż lub ukryj nakładkę wilgotności na liście pól"/>
     <text name="cs_settings_evap_short"        text="Ewapotranspiracja"/>
-    <text name="cs_settings_evap_long"         text="Podstawowa szybkoÅ›Ä‡ utraty wilgotnoÅ›ci z gleby"/>
+    <text name="cs_settings_evap_long"         text="Podstawowa szybkość utraty wilgotności z gleby"/>
     <text name="cs_settings_evap_slow"         text="Wolna"/>
     <text name="cs_settings_evap_normal"       text="Normalna"/>
     <text name="cs_settings_evap_fast"         text="Szybka"/>
     <text name="cs_settings_yield_loss_short"  text="Maks. utrata plonu"/>
-    <text name="cs_settings_yield_loss_long"   text="Maksymalny procent plonu, ktÃ³ry moÅ¼e zostaÄ‡ utracony z powodu stresu suszy"/>
-    <text name="cs_settings_threshold_short"   text="PrÃ³g krytyczny"/>
-    <text name="cs_settings_threshold_long"    text="Poziom wilgotnoÅ›ci, poniÅ¼ej ktÃ³rego kumuluje siÄ™ stres"/>
+    <text name="cs_settings_yield_loss_long"   text="Maksymalny procent plonu, który może zostać utracony z powodu stresu suszy"/>
+    <text name="cs_settings_threshold_short"   text="Próg krytyczny"/>
+    <text name="cs_settings_threshold_long"    text="Poziom wilgotności, poniżej którego kumuluje się stres"/>
     <text name="cs_settings_irr_costs_short"   text="Koszty nawadniania"/>
-    <text name="cs_settings_irr_costs_long"    text="WÅ‚Ä…cz lub wyÅ‚Ä…cz koszty finansowe dziaÅ‚ania systemÃ³w nawadniania"/>
-    <text name="cs_settings_alerts_short"      text="Alerty wÅ‚Ä…czone"/>
-    <text name="cs_settings_alerts_long"       text="PokaÅ¼ powiadomienia, gdy pola potrzebujÄ… wody"/>
-    <text name="cs_settings_cooldown_short"    text="Czas odnowienia alertÃ³w"/>
-    <text name="cs_settings_cooldown_long"     text="Minimalna liczba godzin miÄ™dzy alertami dla tego samego pola"/>
+    <text name="cs_settings_irr_costs_long"    text="Włącz lub wyłącz koszty finansowe działania systemów nawadniania"/>
+    <text name="cs_settings_alerts_short"      text="Alerty włączone"/>
+    <text name="cs_settings_alerts_long"       text="Pokaż powiadomienia, gdy pola potrzebują wody"/>
+    <text name="cs_settings_cooldown_short"    text="Czas odnowienia alertów"/>
+    <text name="cs_settings_cooldown_long"     text="Minimalna liczba godzin między alertami dla tego samego pola"/>
     <text name="cs_settings_debug_short"       text="Tryb debugowania"/>
-    <text name="cs_settings_debug_long"        text="WÅ‚Ä…cz szczegÃ³Å‚owe logowanie do rozwiÄ…zywania problemÃ³w"/>
+    <text name="cs_settings_debug_long"        text="Włącz szczegółowe logowanie do rozwiązywania problemów"/>
 
     <!-- ========== HELP LINES ========== -->
-    <!-- Stary klucz zachowany dla kompatybilnoÅ›ci -->
+    <!-- Stary klucz zachowany dla kompatybilności -->
     <text name="helpLine_cs_category"          text="Sezonowy stres upraw"/>
-    <!-- TytuÅ‚y kategorii -->
-    <text name="helpLine_cs_cat_overview"      text="OgÃ³lne"/>
+    <!-- Tytuły kategorii -->
+    <text name="helpLine_cs_cat_overview"      text="Ogólne"/>
     <text name="helpLine_cs_cat_settings"      text="Ustawienia"/>
-    <text name="helpLine_cs_cat_tips"          text="WskazÃ³wki &amp; Triki"/>
+    <text name="helpLine_cs_cat_tips"          text="Wskazówki &amp; Triki"/>
     <text name="helpLine_cs_cat_info"          text="Informacje o modzie"/>
 
-    <!-- PrzeglÄ…d: Strona 1 -->
-    <text name="helpLine_cs_p1_title"          text="PrzeglÄ…d"/>
+    <!-- Przegląd: Strona 1 -->
+    <text name="helpLine_cs_p1_title"          text="Przegląd"/>
     <text name="helpLine_cs_p1_intro_title"    text="Co dodaje ten mod"/>
     <text name="helpLine_cs_p1_intro_text"     text="[EN] Seasonal Crop Stress gives every field its own soil moisture, from 0% (bone dry) to 100% (saturated). Rain fills it, heat and time dry it, and irrigation lets you put water back. While a crop is in its thirsty growth window and the field is drier than that crop needs, drought stress builds, and at harvest that stress takes a share of the yield. The Esc page lists the fields you own."/>
     <text name="helpLine_cs_p1_start_title"    text="Pierwsze kroki"/>
     <text name="helpLine_cs_p1_start_text"     text="[EN] Open the moisture HUD with the Controls action Toggle Moisture HUD (factory Right Shift+M; if nothing happens, look under Options &gt; Controls &gt; Seasonal Crop Stress, it may be bound to another key). Green fields are fine, yellow need water soon, red are losing yield. The Esc menu page Realistic Farming &gt; Crop Stress lists your fields with moisture, stress and irrigation; click a row for the detail card. Build a Water Pump first, then a Center Pivot within 500 m of it."/>
 
-    <!-- PrzeglÄ…d: Strona 2 -->
-    <text name="helpLine_cs_p2_title"          text="WilgotnoÅ›Ä‡ gleby"/>
-    <text name="helpLine_cs_p2_how_title"      text="Jak dziaÅ‚a wilgotnoÅ›Ä‡"/>
+    <!-- Przegląd: Strona 2 -->
+    <text name="helpLine_cs_p2_title"          text="Wilgotność gleby"/>
+    <text name="helpLine_cs_p2_how_title"      text="Jak działa wilgotność"/>
     <text name="helpLine_cs_p2_how_text"       text="[EN] Every in-game hour each field loses about 0.4% moisture before modifiers. Hot weather and summer speed that up, cool weather and winter slow it down. Rain and a sprayer filled with water add moisture. The Difficulty setting scales drying (Easy 0.7x, Normal 1.0x, Hard 1.4x) and the Evapotranspiration setting scales it again. The ground also holds water unevenly: low spots stay wetter longer and the high, dry patches show first."/>
     <text name="helpLine_cs_p2_soil_title"     text="Typy gleby"/>
     <text name="helpLine_cs_p2_soil_text"      text="[EN] Sandy soil dries 1.4 times faster than loamy and soaks up rain 1.25 times faster, so it swings quickly both ways. Clay dries at 0.7 times and takes rain at 0.72 times, so it holds water longest. Loamy is the 1.0 reference and the easiest to manage. The soil type shows on the HUD row and on the Esc detail card."/>
 
-    <!-- PrzeglÄ…d: Strona 3 -->
+    <!-- Przegląd: Strona 3 -->
     <text name="helpLine_cs_p3_title"          text="Stres upraw &amp; plony"/>
     <text name="helpLine_cs_p3_window_title"   text="Krytyczne okna wzrostu"/>
     <text name="helpLine_cs_p3_window_text"    text="[EN] Each crop has a thirsty growth window and its own moisture need. Stress builds every hour the crop is in that window and the field sits below that need, and it does not heal when rain returns. Needs at a glance: wheat 35%, barley 30%, corn 40%, canola 45%, sunflower 30%, soybeans 40%, sugar beet 50%, potato 55%, rice 70%. Other crops have their own window and need in the same table."/>
-    <text name="helpLine_cs_p3_yield_title"    text="Redukcja plonÃ³w przy zbiorach"/>
+    <text name="helpLine_cs_p3_yield_title"    text="Redukcja plonów przy zbiorach"/>
     <text name="helpLine_cs_p3_yield_text"     text="[EN] At harvest the yield is cut by the field's stress times your Max Yield Loss setting. The factory cap is 30%, so a fully stressed field still yields 70%; the setting can be raised as far as 75%. A new crop after harvest starts clean. The Esc page and the Crop Consultant show the yield risk per field, so water where it matters most."/>
 
-    <!-- PrzeglÄ…d: Strona 4 (Nawadnianie) -->
+    <!-- Przegląd: Strona 4 (Nawadnianie) -->
     <text name="helpLine_cs_p5_title"          text="Nawadnianie"/>
     <text name="helpLine_cs_p5_types_title"    text="Typy nawadniania"/>
     <text name="helpLine_cs_p5_types_text"     text="[EN] Two placeables live in the build menu. The Water Pump feeds the pivots and must sit within 500 m of a system; pressure drops about 30% at that full range, so keep pumps close. A Center Pivot waters a circle and comes in three spans. A pivot with no pump in range shows Disconnected. The shop also sells the irrigator vehicles, and a sprayer filled with WATER raises moisture wherever you spray it, handy for a small field or a corner a pivot cannot reach."/>
-    <text name="helpLine_cs_p5_schedule_title" text="Harmonogram &amp; dziaÅ‚anie"/>
+    <text name="helpLine_cs_p5_schedule_title" text="Harmonogram &amp; działanie"/>
     <text name="helpLine_cs_p5_schedule_text"  text="[EN] Open a system's Irrigation Manager with the Controls action Open Irrigation Manager, or with the Schedule chip on the pivot card of the Esc Crop Stress page when that system covers the selected field. Pick the days of the week, set a start and end hour, and Save. Irrigate Now waters the covered fields for one hour straight away. With Irrigation Costs on, a running system is charged per hour. Finite Water is off by default and is an experimental system: it takes effect only when both it and Experimental Systems are on. Then each pump carries a store in irrigation hours that runs consume and rain refills."/>
 
-    <!-- PrzeglÄ…d: Strona 5 (Konsultant upraw) -->
+    <!-- Przegląd: Strona 5 (Konsultant upraw) -->
     <text name="helpLine_cs_p6_title"          text="Konsultant upraw"/>
     <text name="helpLine_cs_p6_what_title"     text="Co pokazuje konsultant"/>
     <text name="helpLine_cs_p6_what_text"      text="[EN] The Crop Consultant (Controls action Open Crop Consultant, no factory key) ranks your riskiest fields by moisture and stress, gives a plain recommendation for the next 24 hours and shows the moisture forecast. Healthy is 40% and up, Warning is 25% to 40%, Critical is below 25%."/>
-    <text name="helpLine_cs_p6_act_title"      text="DziaÅ‚anie zgodnie z zaleceniami"/>
+    <text name="helpLine_cs_p6_act_title"      text="Działanie zgodnie z zaleceniami"/>
     <text name="helpLine_cs_p6_act_text"       text="[EN] Critical fields need water today, before yield loss grows. Warning fields should be watered within a day or two, or left to forecast rain if it is close. A field already building stress shows an exclamation mark on the HUD. Use the consultant's Open Irrigation Manager control to schedule the worst field first."/>
     <text name="helpLine_cs_p6_npc_title"      text="Opcjonalne integracje"/>
     <text name="helpLine_cs_p6_npc_text"       text="[EN] Other mods plug in when present. NPC Favor: the agronomist's favors unlock early drought warnings and irrigation advice. Soil and Fertilizer: high organic matter holds water, acid soil (pH under 6.0) stresses crops earlier; Crop Stress reads the soil manager through the mission handle. UsedPlus: irrigation running costs and wear. CoursePlay and AutoDrive: vehicle counts and water destinations in the alerts."/>
 
-    <!-- Ustawienia: Strona 1 â€” Ustawienia ogÃ³lne -->
-    <text name="helpLine_cs_s1_title"          text="Ustawienia ogÃ³lne"/>
-    <text name="helpLine_cs_s1_gen_title"      text="WÅ‚Ä…czanie moda"/>
+    <!-- Ustawienia: Strona 1 - Ustawienia ogólne -->
+    <text name="helpLine_cs_s1_title"          text="Ustawienia ogólne"/>
+    <text name="helpLine_cs_s1_gen_title"      text="Włączanie moda"/>
     <text name="helpLine_cs_s1_gen_text"       text="[EN] ESC &gt; Settings &gt; Seasonal Crop Stress. Enable Mod switches the whole system on or off without touching your irrigation placeables. Difficulty scales how fast stress builds and how fast fields dry: Easy 0.5x stress and 0.7x drying, Normal 1.0x, Hard 1.5x stress and 1.4x drying."/>
-    <text name="helpLine_cs_s1_evap_title"     text="SzybkoÅ›Ä‡ ewapotranspiracji"/>
+    <text name="helpLine_cs_s1_evap_title"     text="Szybkość ewapotranspiracji"/>
     <text name="helpLine_cs_s1_evap_text"      text="[EN] Evapotranspiration Rate scales drying on top of difficulty. Slow keeps moisture in the ground and makes rain go further. Fast can dry a field within a game day in hot weather, so scheduled irrigation becomes essential."/>
 
-    <!-- Ustawienia: Strona 2 â€” Ustawienia zaawansowane -->
+    <!-- Ustawienia: Strona 2 - Ustawienia zaawansowane -->
     <text name="helpLine_cs_s2_title"          text="Ustawienia zaawansowane"/>
-    <text name="helpLine_cs_s2_yield_title"    text="Utrata plonu &amp; prÃ³g stresu"/>
+    <text name="helpLine_cs_s2_yield_title"    text="Utrata plonu &amp; próg stresu"/>
     <text name="helpLine_cs_s2_yield_text"     text="[EN] Max Yield Loss caps the share of the harvest that stress can take. The factory value is 30%, so a fully stressed field still yields 70%; it can be raised as far as 75%. Critical Threshold (factory 25%, 15% to 35%) is the moisture level where the red Critical band and its alerts begin; each crop's own need still decides when stress builds."/>
     <text name="helpLine_cs_s2_alerts_title"   text="Koszty nawadniania &amp; alerty"/>
     <text name="helpLine_cs_s2_alerts_text"    text="[EN] Irrigation Costs charges an hourly fee while a system runs; turn it off for a simpler game. Alerts Enabled shows a warning when a field needs water, and Alert Cooldown (factory 12 hours) is the minimum time before the same field alerts again. Finite Water is off by default and is an experimental system: it takes effect only when both it and Experimental Systems are on. Then each pump carries a store in irrigation hours that scheduled runs and Irrigate Now consume and rain refills."/>
 
-    <!-- WskazÃ³wki &amp; Triki: Strona 1 (HUD &amp; sterowanie) -->
+    <!-- Wskazówki &amp; Triki: Strona 1 (HUD &amp; sterowanie) -->
     <text name="helpLine_cs_p4_title"          text="HUD &amp; sterowanie"/>
-    <text name="helpLine_cs_p4_hud_title"      text="NakÅ‚adka HUD wilgotnoÅ›ci"/>
+    <text name="helpLine_cs_p4_hud_title"      text="Nakładka HUD wilgotności"/>
     <text name="helpLine_cs_p4_hud_text"       text="[EN] The moisture HUD (Controls action Toggle Moisture HUD, factory Right Shift+M) lists every tracked field with crop, growth stage, a colour bar and the moisture percentage, with the forecast strip above it. Edit mode (Controls action Edit/Move Moisture HUD, factory Right Shift+N) lets you drag and resize the panes; the layout is saved per player."/>
     <text name="helpLine_cs_p4_reading_title"  text="Odczytywanie wiersza pola"/>
     <text name="helpLine_cs_p4_reading_text"   text="[EN] Each row shows the field number, the crop, its growth stage, the moisture bar and the percentage. An exclamation mark at the end means that field is already building drought stress. Only crops that can suffer drought stress are listed."/>
     <text name="helpLine_cs_p4_status_title"   text="Kolory statusu"/>
     <text name="helpLine_cs_p4_status_text"    text="[EN] Green is Healthy: 40% moisture and up, nothing to do. Yellow is Warning: 25% to 40%, plan water. Red is Critical: below 25%, yield loss can start, water now. The same bands colour the Esc Crop Stress page."/>
-    <text name="helpLine_cs_p4_keys_title"     text="SkrÃ³ty klawiszowe"/>
+    <text name="helpLine_cs_p4_keys_title"     text="Skróty klawiszowe"/>
     <text name="helpLine_cs_p4_keys_text"      text="[EN] Toggle Moisture HUD: factory Right Shift+M. Edit/Move Moisture HUD: factory Right Shift+N. Open Irrigation Manager, Open Crop Consultant and Open Crop Stress Settings have no factory key: bind them under Options &gt; Controls &gt; Seasonal Crop Stress. The Esc page Realistic Farming &gt; Crop Stress has a Help footer that opens the two-column guide."/>
 
-    <!-- WskazÃ³wki &amp; Triki: Strona 2 â€” Strategie rolnicze -->
+    <!-- Wskazówki &amp; Triki: Strona 2 - Strategie rolnicze -->
     <text name="helpLine_cs_t2_title"          text="Strategie rolnicze"/>
     <text name="helpLine_cs_t2_sandy_title"    text="Priorytetyzuj piaszczyste pola"/>
     <text name="helpLine_cs_t2_sandy_text"     text="[EN] Sandy soil dries 1.4 times faster than loamy and twice as fast as clay. If you farm mixed soils, put the first pivot on the sandy fields. A pivot over a large sandy area is often a better buy than one on a small clay field that holds water on its own."/>
     <text name="helpLine_cs_t2_forecast_title" text="Korzystaj z prognozy"/>
     <text name="helpLine_cs_t2_forecast_text"  text="[EN] The forecast strip shows whether moisture is heading up or down. If rain is a day or two away and the field is only in the yellow band, wait and save the running cost. Act early when several dry days line up with a thirsty growth window, especially on sandy fields."/>
 
-    <!-- Informacje o modzie: Strona 1 â€” O modzie -->
+    <!-- Informacje o modzie: Strona 1 - O modzie -->
     <text name="helpLine_cs_i1_title"           text="O tym modzie"/>
     <text name="helpLine_cs_i1_about_title"     text="[EN] Seasonal Crop Stress"/>
     <text name="helpLine_cs_i1_about_text"      text="[EN] Created by TisonK. Adds soil moisture per field, crop stress in thirsty growth windows, a harvest cut capped at 30% by default, and irrigation placeables with schedules, all inside Farming Simulator 25. Every field, every season, every decision counts."/>
-    <text name="helpLine_cs_i1_community_title" text="SpoÅ‚ecznoÅ›Ä‡ &amp; pomoc"/>
-    <text name="helpLine_cs_i1_community_text"  text="ZnajdÅº ten mod w Farming Simulator ModHub. W przypadku pytaÅ„, zgÅ‚oszeÅ„ bÅ‚Ä™dÃ³w i aktualizacji odwiedÅº stronÄ™ moda w ModHub lub repozytorium GitHub. DoÅ‚Ä…cz do forÃ³w spoÅ‚ecznoÅ›ciowych, aby dzieliÄ‡ siÄ™ wskazÃ³wkami z innymi graczami."/>
+    <text name="helpLine_cs_i1_community_title" text="Społeczność &amp; pomoc"/>
+    <text name="helpLine_cs_i1_community_text"  text="Znajdź ten mod w Farming Simulator ModHub. W przypadku pytań, zgłoszeń błędów i aktualizacji odwiedź stronę moda w ModHub lub repozytorium GitHub. Dołącz do forów społecznościowych, aby dzielić się wskazówkami z innymi graczami."/>
 
-    <!-- Informacje o modzie: Strona 2 â€” Opcjonalne integracje -->
+    <!-- Informacje o modzie: Strona 2 - Opcjonalne integracje -->
     <text name="helpLine_cs_i2_title"          text="Opcjonalne integracje"/>
     <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor &amp; FS25_SoilFertilizer"/>
     <text name="helpLine_cs_i2_npc_text"       text="[EN] With NPC Favor installed, the agronomist's favors unlock early drought warnings and specialist irrigation advice. With Soil and Fertilizer installed, each field's organic matter and pH change how fast it dries: high organic matter holds water, acid soil below pH 6.0 stresses crops earlier. Crop Stress reads the soil manager through the mission handle, so the two mods load in any order."/>
     <text name="helpLine_cs_i2_vehicle_title"  text="[EN] Vehicles and Multiplayer"/>
     <text name="helpLine_cs_i2_vehicle_text"   text="[EN] With CoursePlay active, the number of vehicles working a stressed field appears in that field's alert. With AutoDrive, critical alerts include water destination counts. With UsedPlus, hourly irrigation running costs and equipment wear are tracked. Multiplayer: the server runs moisture, stress and irrigation and sends the results to every client; the HUD layout is saved per player."/>
 
-    <!-- ========== OPCJONALNE INTEGRACJE MODÃ“W ========== -->
+    <!-- ========== OPCJONALNE INTEGRACJE MODÓW ========== -->
     <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d pojazd pracuje na tym polu"/>
-    <text name="cs_cp_vehicles_on_field" text="CoursePlay: %d pojazdy pracujÄ… na tym polu"/>
-    <text name="cs_ad_water_hint"    text="AutoDrive: %d punkt(y) wodny dostÄ™pny - skonfiguruj trasÄ™ transportu wody"/>
+    <text name="cs_cp_vehicles_on_field" text="CoursePlay: %d pojazdy pracują na tym polu"/>
+    <text name="cs_ad_water_hint"    text="AutoDrive: %d punkt(y) wodny dostępny - skonfiguruj trasę transportu wody"/>
     <text name="cs_ad_destinations"  text="AutoDrive: %d cel(e) skonfigurowany/e"/>
 
     <!-- ========== PDA SCREEN ========== -->
@@ -461,9 +461,9 @@
     <text name="cs_rf_pda_crop_mixed" text="[EN] Mixed"/>
     <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s - covers %s of this block"/>
         <!-- BUILD 11:27 F155 Esc RF button labels -->
-        <text name="wc_rf_pda_open_manager" text="OtwÃ³rz menedÅ¼era pracownikÃ³w" />
-        <text name="sf_pda_btn_rotation_planner" text="Planer pÅ‚odozmianu" />
-        <text name="sf_pda_btn_field_detail" text="SzczegÃ³Å‚y pola" />
+        <text name="wc_rf_pda_open_manager" text="Otwórz menedżera pracowników" />
+        <text name="sf_pda_btn_rotation_planner" text="Planer płodozmianu" />
+        <text name="sf_pda_btn_field_detail" text="Szczegóły pola" />
     <!-- ========== REINKE A22 PIVOT (vendored) ========== -->
     <text name="reinke_pivot_3_name"      text="Reinke A22 Center Pivot - 3 Tower (~115m)"/>
     <text name="reinke_pivot_5_name"      text="Reinke A22 Center Pivot - 5 Tower (~188m)"/>
