@@ -5,10 +5,10 @@
     <text name="cs_hud_title"         text="CROP MOISTURE"/>
     <text name="cs_hud_healthy"       text="Healthy"/>
     <text name="cs_hud_warning"       text="Drought Stress"/>
-    <text name="cs_hud_critical"      text="CRITICAL â€” Irrigate Now!"/>
+    <text name="cs_hud_critical"      text="CRITICAL - Irrigate Now!"/>
     <text name="cs_hud_no_crop"       text="No crop"/>
     <text name="cs_hud_forecast"      text="5-Day Forecast"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 loaded. Press Alt+M to open the moisture HUD. New to the mod? Open the Help menu (ESC â†’ Help) and find Seasonal Crop Stress to learn how everything works."/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 loaded. Press Alt+M to open the moisture HUD. New to the mod? Open the Help menu (ESC → Help) and find Seasonal Crop Stress to learn how everything works."/>
     <text name="cs_hud_click_forecast" text="Click a row for 5-day forecast"/>
     <text name="cs_hud_vehicle_disabled" text="Overlay disabled in vehicle"/>
 
@@ -26,12 +26,12 @@
     <text name="cs_soil_clay"   text="Clay"/>
 
     <!-- ========== ALERTS ========== -->
-    <text name="cs_alert_info"     text="Field %d: %s moisture dropping â€” monitor conditions."/>
-    <text name="cs_alert_warning"  text="Field %d: %s moisture low â€” irrigation recommended."/>
-    <text name="cs_alert_critical" text="Field %d: %s at drought stress threshold â€” irrigate NOW!"/>
+    <text name="cs_alert_info"     text="Field %d: %s moisture dropping - monitor conditions."/>
+    <text name="cs_alert_warning"  text="Field %d: %s moisture low - irrigation recommended."/>
+    <text name="cs_alert_critical" text="Field %d: %s at drought stress threshold - irrigate NOW!"/>
 
     <!-- ========== IRRIGATION ========== -->
-    <text name="cs_irr_title"          text="Irrigation System â€” %s"/>
+    <text name="cs_irr_title"          text="Irrigation System - %s"/>
     <text name="cs_irr_water_source"   text="Water Source"/>
     <text name="cs_irr_connected"      text="Connected"/>
     <text name="cs_irr_disconnected"   text="Disconnected"/>
@@ -94,8 +94,8 @@
     <text name="cs_irr_no_covered_fields" text="No fields covered by this system."/>
 
     <!-- ========== CONSULTANT RECOMMENDATIONS (dynamic, format strings) ========== -->
-    <text name="cs_rec_urgent"          text="URGENT: Field %d at %.0f%% moisture â€” irrigate immediately!"/>
-    <text name="cs_rec_warning"         text="Field %d at %.0f%% moisture â€” irrigation recommended within 24h."/>
+    <text name="cs_rec_urgent"          text="URGENT: Field %d at %.0f%% moisture - irrigate immediately!"/>
+    <text name="cs_rec_warning"         text="Field %d at %.0f%% moisture - irrigation recommended within 24h."/>
     <text name="cs_rec_ok"              text="All fields within acceptable moisture range."/>
     <text name="cs_rec_forecast"        text="Forecast: ~ D+1 %.0f%%  D+2 %.0f%%  D+3 %.0f%%"/>
     <text name="cs_rec_systems_running" text="%d irrigation system(s) currently running."/>
@@ -190,14 +190,14 @@
     <text name="helpLine_cs_p6_npc_title"      text="Optional Integrations"/>
     <text name="helpLine_cs_p6_npc_text"       text="[EN] Other mods plug in when present. NPC Favor: the agronomist's favors unlock early drought warnings and irrigation advice. Soil and Fertilizer: high organic matter holds water, acid soil (pH under 6.0) stresses crops earlier; Crop Stress reads the soil manager through the mission handle. UsedPlus: irrigation running costs and wear. CoursePlay and AutoDrive: vehicle counts and water destinations in the alerts."/>
 
-    <!-- Settings: Page 1 â€” General Settings -->
+    <!-- Settings: Page 1 - General Settings -->
     <text name="helpLine_cs_s1_title"          text="General Settings"/>
     <text name="helpLine_cs_s1_gen_title"      text="Enabling the Mod"/>
     <text name="helpLine_cs_s1_gen_text"       text="[EN] ESC &gt; Settings &gt; Seasonal Crop Stress. Enable Mod switches the whole system on or off without touching your irrigation placeables. Difficulty scales how fast stress builds and how fast fields dry: Easy 0.5x stress and 0.7x drying, Normal 1.0x, Hard 1.5x stress and 1.4x drying."/>
     <text name="helpLine_cs_s1_evap_title"     text="Evapotranspiration Rate"/>
     <text name="helpLine_cs_s1_evap_text"      text="[EN] Evapotranspiration Rate scales drying on top of difficulty. Slow keeps moisture in the ground and makes rain go further. Fast can dry a field within a game day in hot weather, so scheduled irrigation becomes essential."/>
 
-    <!-- Settings: Page 2 â€” Advanced Settings -->
+    <!-- Settings: Page 2 - Advanced Settings -->
     <text name="helpLine_cs_s2_title"          text="Advanced Settings"/>
     <text name="helpLine_cs_s2_yield_title"    text="Yield Loss &amp; Stress Threshold"/>
     <text name="helpLine_cs_s2_yield_text"     text="[EN] Max Yield Loss caps the share of the harvest that stress can take. The factory value is 30%, so a fully stressed field still yields 70%; it can be raised as far as 75%. Critical Threshold (factory 25%, 15% to 35%) is the moisture level where the red Critical band and its alerts begin; each crop's own need still decides when stress builds."/>
@@ -215,28 +215,28 @@
     <text name="helpLine_cs_p4_keys_title"     text="Keyboard Shortcuts"/>
     <text name="helpLine_cs_p4_keys_text"      text="[EN] Toggle Moisture HUD: factory Right Shift+M. Edit/Move Moisture HUD: factory Right Shift+N. Open Irrigation Manager, Open Crop Consultant and Open Crop Stress Settings have no factory key: bind them under Options &gt; Controls &gt; Seasonal Crop Stress. The Esc page Realistic Farming &gt; Crop Stress has a Help footer that opens the two-column guide."/>
 
-    <!-- Tips & Tricks: Page 2 â€” Farming Strategies -->
+    <!-- Tips & Tricks: Page 2 - Farming Strategies -->
     <text name="helpLine_cs_t2_title"          text="Farming Strategies"/>
     <text name="helpLine_cs_t2_sandy_title"    text="Prioritise Sandy Fields"/>
     <text name="helpLine_cs_t2_sandy_text"     text="[EN] Sandy soil dries 1.4 times faster than loamy and twice as fast as clay. If you farm mixed soils, put the first pivot on the sandy fields. A pivot over a large sandy area is often a better buy than one on a small clay field that holds water on its own."/>
     <text name="helpLine_cs_t2_forecast_title" text="Use the Forecast"/>
     <text name="helpLine_cs_t2_forecast_text"  text="[EN] The forecast strip shows whether moisture is heading up or down. If rain is a day or two away and the field is only in the yellow band, wait and save the running cost. Act early when several dry days line up with a thirsty growth window, especially on sandy fields."/>
 
-    <!-- Mod Information: Page 1 â€” About -->
+    <!-- Mod Information: Page 1 - About -->
     <text name="helpLine_cs_i1_title"           text="About This Mod"/>
     <text name="helpLine_cs_i1_about_title"     text="[EN] Seasonal Crop Stress"/>
     <text name="helpLine_cs_i1_about_text"      text="[EN] Created by TisonK. Adds soil moisture per field, crop stress in thirsty growth windows, a harvest cut capped at 30% by default, and irrigation placeables with schedules, all inside Farming Simulator 25. Every field, every season, every decision counts."/>
     <text name="helpLine_cs_i1_community_title" text="Community &amp; Support"/>
     <text name="helpLine_cs_i1_community_text"  text="Find this mod on Github and KingMods. For questions, bug reports, and updates please visit the github repository."/>
 
-    <!-- Mod Information: Page 2 â€” Optional Integrations detail -->
+    <!-- Mod Information: Page 2 - Optional Integrations detail -->
     <text name="helpLine_cs_i2_title"          text="Optional Integrations"/>
     <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor &amp; FS25_SoilFertilizer"/>
     <text name="helpLine_cs_i2_npc_text"       text="[EN] With NPC Favor installed, the agronomist's favors unlock early drought warnings and specialist irrigation advice. With Soil and Fertilizer installed, each field's organic matter and pH change how fast it dries: high organic matter holds water, acid soil below pH 6.0 stresses crops earlier. Crop Stress reads the soil manager through the mission handle, so the two mods load in any order."/>
     <text name="helpLine_cs_i2_vehicle_title"  text="[EN] Vehicles and Multiplayer"/>
     <text name="helpLine_cs_i2_vehicle_text"   text="[EN] With CoursePlay active, the number of vehicles working a stressed field appears in that field's alert. With AutoDrive, critical alerts include water destination counts. With UsedPlus, hourly irrigation running costs and equipment wear are tracked. Multiplayer: the server runs moisture, stress and irrigation and sends the results to every client; the HUD layout is saved per player."/>
 
-    <!-- Tips & Tricks: Page 3 â€” Sprayers & Watering -->
+    <!-- Tips & Tricks: Page 3 - Sprayers & Watering -->
     <text name="helpLine_cs_t3_title"          text="Sprayers &amp; Watering"/>
     <text name="helpLine_cs_t3_sprayer_title"  text="Using Sprayers as Irrigation"/>
     <text name="helpLine_cs_t3_sprayer_text"   text="[EN] A vehicle sprayer filled with WATER is a manual irrigation tool: every area you spray gets an immediate moisture boost. Use it on small fields, on a corner a pivot does not reach, or as a stopgap until a pump and a pivot are affordable."/>
@@ -283,20 +283,20 @@
     <text name="cs_pda_no_fields"             text="No field data yet. Fields appear once the simulation has run for one in-game hour."/>
 
     <!-- Esc RF PDA guest module -->
-    <text name="cs_rf_pda_module_title"        text="ÃœrÃ¼n stresi"/>
-    <text name="cs_rf_pda_blurb"               text="Tarla nemi, stres ve sulama kapsamÄ±. Sulama programlarÄ± ve Ã¼rÃ¼n danÄ±ÅŸmanÄ± iÃ§in Farm Tablet'i aÃ§Ä±n."/>
-    <text name="cs_rf_pda_empty"               text="HenÃ¼z Ã¼rÃ¼n stresi verisi yok. Alanlar simÃ¼lasyon Ã§alÄ±ÅŸtÄ±ktan sonra gÃ¶rÃ¼nÃ¼r."/>
+    <text name="cs_rf_pda_module_title"        text="Ürün stresi"/>
+    <text name="cs_rf_pda_blurb"               text="Tarla nemi, stres ve sulama kapsamı. Sulama programları ve ürün danışmanı için Farm Tablet'i açın."/>
+    <text name="cs_rf_pda_empty"               text="Henüz ürün stresi verisi yok. Alanlar simülasyon çalıştıktan sonra görünür."/>
 
     
     <!-- Esc RF PDA content table columns -->
     <text name="cs_rf_pda_col_field" text="Tarla"/>
-    <text name="cs_rf_pda_col_crop" text="ÃœrÃ¼n"/>
+    <text name="cs_rf_pda_col_crop" text="Ürün"/>
     <text name="cs_rf_pda_col_moisture" text="Nem"/>
     <text name="cs_rf_pda_col_stress" text="Stres"/>
     <text name="cs_rf_pda_col_irrigated" text="Sulanan"/>
     <text name="cs_rf_pda_col_status" text="Durum"/>
-    <text name="cs_rf_pda_detail_title" text="Tarla detayÄ±"/>
-    <text name="cs_rf_pda_select_field" text="Detaylar iÃ§in tablodan bir tarla seÃ§in."/>
+    <text name="cs_rf_pda_detail_title" text="Tarla detayı"/>
+    <text name="cs_rf_pda_select_field" text="Detaylar için tablodan bir tarla seçin."/>
 <!-- ========== MAP OVERLAY ========== -->
     <text name="cs_map_page_title"            text="Crop Moisture"/>
     <text name="cs_map_sidebar_title"         text="MOISTURE LEGEND"/>
@@ -329,7 +329,7 @@
     <text name="cs_ad_water_hint"    text="AutoDrive: %d water destination(s) available - consider a hauling route"/>
     <text name="cs_ad_destinations"  text="AutoDrive: %d destination(s) configured"/>
 
-        <text name="rf_pda_side_info_crop_stress" text="[EN] Crop Stress&#10;&#10;This table lists every field you own. One row = one field.&#10;&#10;Columns: Field # / Crop, Moisture (how wet the soil is), Stress (how hard the crop is fighting dry spells), Irrigation (water help covering this field), Status (Healthy / Warning / Critical).&#10;&#10;Click a row. The strip below names the field, then Next says what to do first:&#10;- Critical or Warning Moisture â†’ water that field (turn on irrigation if covered, or spray WATER / place coverage)&#10;- High Stress or a sensitive growth window â†’ protect now; stress today cuts harvest later&#10;- Looking fine â†’ recheck later; worse fields first&#10;&#10;Irrigation: Yes means a system can cover this field. Schedules and running systems live deeper on Farm Tablet / Crop Consultant when you need them.&#10;&#10;If Soil Fertilizer is also loaded, check nutrients there too. Dry soil drains faster when soil health is poor.&#10;&#10;Start with Critical Status, follow Next, then work up the list."/>
+        <text name="rf_pda_side_info_crop_stress" text="[EN] Crop Stress&#10;&#10;This table lists every field you own. One row = one field.&#10;&#10;Columns: Field # / Crop, Moisture (how wet the soil is), Stress (how hard the crop is fighting dry spells), Irrigation (water help covering this field), Status (Healthy / Warning / Critical).&#10;&#10;Click a row. The strip below names the field, then Next says what to do first:&#10;- Critical or Warning Moisture → water that field (turn on irrigation if covered, or spray WATER / place coverage)&#10;- High Stress or a sensitive growth window → protect now; stress today cuts harvest later&#10;- Looking fine → recheck later; worse fields first&#10;&#10;Irrigation: Yes means a system can cover this field. Schedules and running systems live deeper on Farm Tablet / Crop Consultant when you need them.&#10;&#10;If Soil Fertilizer is also loaded, check nutrients there too. Dry soil drains faster when soil health is poor.&#10;&#10;Start with Critical Status, follow Next, then work up the list."/>
     <text name="cs_rf_pda_next" text="[EN] Next: %s"/>
     <text name="cs_rf_pda_next_no_crop" text="[EN] No crop on this field - nothing to stress; pick another row."/>
     <text name="cs_rf_pda_next_critical_watering" text="[EN] Moisture critical - irrigation is on; wait for moisture to recover, then recheck."/>
@@ -429,9 +429,9 @@
     <text name="cs_rf_pda_agro_rec_header" text="[EN] Recommendations"/>
     <text name="cs_rf_pda_agro_empty" text="[EN] No field data yet - fields appear once the simulation runs."/>
         <!-- BUILD 11:27 F155 Esc RF button labels -->
-        <text name="wc_rf_pda_open_manager" text="Ä°ÅŸÃ§i yÃ¶neticisini aÃ§" />
-        <text name="sf_pda_btn_rotation_planner" text="Ekim nÃ¶beti planlayÄ±cÄ±" />
-        <text name="sf_pda_btn_field_detail" text="Tarla detayÄ±" />
+        <text name="wc_rf_pda_open_manager" text="İşçi yöneticisini aç" />
+        <text name="sf_pda_btn_rotation_planner" text="Ekim nöbeti planlayıcı" />
+        <text name="sf_pda_btn_field_detail" text="Tarla detayı" />
     <!-- ========== REINKE A22 PIVOT (vendored) ========== -->
     <text name="reinke_pivot_3_name"      text="Reinke A22 Center Pivot - 3 Tower (~115m)"/>
     <text name="reinke_pivot_5_name"      text="Reinke A22 Center Pivot - 5 Tower (~188m)"/>
