@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Find, and optionally repair, double-encoded lines in this mod's l10n files.
+"""Find, and optionally repair, double-encoded lines in this mod's l10n files
+(translations/translation_*.xml, and modDesc.xml for the mod's title and description).
 
     py tools/l10n_encoding_check.py          report only; exit 1 on any finding
     py tools/l10n_encoding_check.py --fix    repair every double-encoded line in place
+
+Run it from the repo root. A run that finds no translation file, or no modDesc.xml,
+reports UNREAD and exits 1, so a wrong working directory cannot pass as clean.
 
 Ported from FertilizerDepot's tools/l10n_encoding_check.py (#74, #76), with two
 changes for this repo, both measured at a6ebb1c (MAINTENANCE row 115):
@@ -34,12 +38,24 @@ against lines WRITTEN and re-reads the files from disk before it reports.
 
 EM DASHES. Every em dash in these files was double-encoded (the ones that looked
 literal were the second byte of a mojibaked character, such as U+00D1 U+2014 for
-Ukrainian U+0457). The repair restores them spaced, " — ", and --fix writes
-" - " in their place, because the office does not ship em dashes. A literal em dash
-in a translation file is reported as a finding.
+Ukrainian U+0457). The repair restores them spaced (U+2014 with a space before it
+and a space or the line's end after it), and --fix writes a hyphen in their place,
+" - " (or " -" at a line's end), because the office does not ship em dashes. A
+literal em dash in a scanned file is reported as a finding.
+
+MODDESC.XML, ENCODED TWICE OVER (MAINTENANCE row 128). The mod's title and
+description carry the same damage applied twice, measured at 6d81554a: 109 lines
+(first :8, last :345), each needing TWO decodes ("BewÃƒÂ¤sserung" decodes once to
+"BewÃ¤sserung" and only a second time to "Bewässerung"). So --fix repeats the
+per-character repair on a line until the line stops changing, capped at
+MAX_PASSES (two), and counts the lines each pass count took. The report is the
+bar for it: it fails on any line that ONE more decode would still change, so a
+line left half repaired is a finding, whatever the cap. The reach check for
+modDesc.xml is its <title> and <description> language entries.
 """
 import glob
 import io
+import os
 import re
 import sys
 
@@ -48,9 +64,15 @@ try:
 except Exception:
     pass
 
-EM = "—"
+EM = "\u2014"
+MAX_PASSES = 2
+SPACED_EM = re.compile(" " + EM + r"(?= |\r?\n|$)")
 ELEMENT = re.compile(r'<text name="|<e k="')
 VALUE = re.compile(r'<text name="[^"]+"\s*text="[^"]*"|<e k="[^"]+"\s*v="[^"]*"')
+MODDESC = "modDesc.xml"
+MODDESC_BLOCK = re.compile(r"<(title|description)>(.*?)</\1>", re.S)
+LANG_OPEN = re.compile(r"^\s*<([a-z]{2})>", re.M)
+LANG_ENTRY = re.compile(r"^\s*<([a-z]{2})>.*?</\1>", re.S | re.M)
 
 BYTE = {}
 for _b in range(256):
@@ -86,7 +108,17 @@ def redecode(s, codec=None):
 
 
 def files():
-    return sorted(glob.glob("translations/translation_*.xml"))
+    """The translation files, then modDesc.xml, which is listed even when absent so the
+    report can name it UNREAD."""
+    return sorted(glob.glob("translations/translation_*.xml")) + [MODDESC]
+
+
+def reach(path, text):
+    """(elements the file holds, elements the scan read whole)."""
+    if path == MODDESC:
+        blocks = "".join(body for _, body in MODDESC_BLOCK.findall(text))
+        return len(LANG_OPEN.findall(blocks)), len(LANG_ENTRY.findall(blocks))
+    return len(ELEMENT.findall(text)), len(VALUE.findall(text))
 
 
 def lines_of(path):
@@ -103,9 +135,14 @@ def report():
     em = elements = reached = 0
     unreached = []
     per_file = []
+    if len(files()) == 1:
+        unreached.append(("translations/translation_*.xml", 0, 0))
     for p in files():
+        if not os.path.isfile(p):
+            unreached.append((p, 0, 0))
+            continue
         text = "".join(lines_of(p))
-        e, v = len(ELEMENT.findall(text)), len(VALUE.findall(text))
+        e, v = reach(p, text)
         elements += e
         reached += v
         if e != v or e == 0:
@@ -136,23 +173,35 @@ def report():
 
 def fix():
     attempted = written = dashes = 0
+    took = [0] * (MAX_PASSES + 1)
     for p in files():
+        if not os.path.isfile(p):
+            continue
         lines = lines_of(p)
         out = []
         for line in lines:
-            fixed = redecode(line)
-            if fixed is None:
+            fixed, passes = line, 0
+            while passes < MAX_PASSES:
+                again = redecode(fixed)
+                if again is None:
+                    break
+                fixed, passes = again, passes + 1
+            if passes == 0:
                 out.append(line)
                 continue
             attempted += 1
-            dashes += fixed.count(" " + EM + " ")
-            fixed = fixed.replace(" " + EM + " ", " - ")
+            took[passes] += 1
+            dashes += len(SPACED_EM.findall(fixed))
+            fixed = SPACED_EM.sub(" -", fixed)
             if redecode(fixed) is None:
                 written += 1
             out.append(fixed)
         if out != lines:
             io.open(p, "wb").write("".join(out).encode("utf-8"))
-    print("attempted %d, written %d, spaced em dashes written as a hyphen: %d" % (attempted, written, dashes))
+    print("attempted %d, written %d (%s), spaced em dashes written as a hyphen: %d"
+          % (attempted, written,
+             ", ".join("%d pass%s %d" % (n, "" if n == 1 else "es", took[n]) for n in range(1, MAX_PASSES + 1)),
+             dashes))
     if attempted != written:
         print("GAP: %d line(s) attempted but not written clean" % (attempted - written))
     return attempted - written
