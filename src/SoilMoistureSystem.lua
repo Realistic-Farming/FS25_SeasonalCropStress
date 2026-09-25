@@ -301,6 +301,9 @@ function SoilMoistureSystem.new(manager)
     -- relief-scan guard so the one-time materialisation pass runs once per field.
     self._cellSize = nil
     self._reliefScanned = {}   -- fieldId -> true once the relief pass ran
+    -- MAINTENANCE row 91: fieldId -> true while a relief pass was asked for but the
+    -- parcel's collection was refused or partial; it runs when the collection completes.
+    self._reliefPending = {}
 
     -- SCS-018 daily settle: registered with Time Guard when present (server),
     -- otherwise driven by the fallback day-change hook inside hourlyUpdate.
@@ -580,6 +583,18 @@ function SoilMoistureSystem:_collectAndCacheGeometry(fieldId)
         self._fieldVerts[fieldId] = { polys = polys }
     end
     self:_onGeometryCollected(fieldId)
+    -- MAINTENANCE row 91: a relief pass the field-ready updater asked for while this
+    -- parcel's collection was refused or partial runs now, once, on THIS machine.
+    -- Every machine runs its own updater and its own relief (the cells never travel:
+    -- CropStressMoistureInitEvent carries each field's scalar, not its cells), and
+    -- every machine completes its own collection here: door B on any machine (a
+    -- positional read proves membership first, so a client's own read completes it
+    -- before it reads a cell), or door C on the server, which re-collects a pending
+    -- field as soon as it drops the entry. So no machine waits on another's retry and
+    -- no sync is needed.
+    if self._reliefPending ~= nil and self._reliefPending[fieldId] then
+        self:materialiseRelief(fieldId)
+    end
     return polys
 end
 
@@ -613,6 +628,12 @@ function SoilMoistureSystem:_retryRefusedGeometry(hourKey)
     for _, fieldId in ipairs(ids) do
         self._fieldVerts[fieldId] = nil
         self._geometryRetryHour[fieldId] = hourKey
+        -- MAINTENANCE row 91: a field whose relief pass waits on this collection is
+        -- re-collected now, so the pass completes on the server's hourly retry; the
+        -- zone store (the only store relief runs on) has no other hourly lookup.
+        if self._reliefPending ~= nil and self._reliefPending[fieldId] then
+            self:_getFieldPolygons(fieldId)
+        end
     end
     return #ids
 end
@@ -1663,14 +1684,25 @@ end
 function SoilMoistureSystem:materialiseRelief(fieldId)
     local d = self.fieldData[fieldId]
     if d == nil or d.reliefScan then return end
+
+    -- MAINTENANCE row 91: the COMPLETE collection (the moisture brief's parcel domain,
+    -- as the comment on _getCompleteFieldPolygons says), and the latch only after it
+    -- is in hand. A refused or partial collection used to latch the pass for the
+    -- mission before collecting, so a field whose first walk failed never had relief;
+    -- now the pass is kept pending and _collectAndCacheGeometry runs it when the
+    -- collection completes.
+    local polys = self:_getCompleteFieldPolygons(fieldId)
+    if polys == nil then
+        self._reliefPending = self._reliefPending or {}
+        self._reliefPending[fieldId] = true
+        return
+    end
+    if self._reliefPending ~= nil then self._reliefPending[fieldId] = nil end
     d.reliefScan = true
     if d.cells == nil then d.cells = {} end
     if d.cellCount == nil then d.cellCount = 0 end
     if d.cellSum == nil then d.cellSum = 0 end
     self._reliefScanned[fieldId] = true
-
-    local polys = self:_getFieldPolygons(fieldId)
-    if polys == nil then return end
 
     local cs = self:getCellSize()
     -- Parcel bounding box over the complete collection, never a first match.
