@@ -431,7 +431,7 @@
         <!-- BUILD 11:27 F155 Esc RF button labels -->
         <text name="wc_rf_pda_open_manager" text="작업자 관리자 열기" />
         <text name="sf_pda_btn_rotation_planner" text="윤작 계획기" />
-        <text name="sf_pda_btn_field_detail" text="밯 상세" />
+        <text name="sf_pda_btn_field_detail" text="필드 상세" />
     <!-- ========== REINKE A22 PIVOT (vendored) ========== -->
     <text name="reinke_pivot_3_name"      text="Reinke A22 Center Pivot - 3 Tower (~115m)"/>
     <text name="reinke_pivot_5_name"      text="Reinke A22 Center Pivot - 5 Tower (~188m)"/>
