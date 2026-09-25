@@ -1151,7 +1151,7 @@ function SoilMoistureSystem:hourlyUpdate(weather, elapsedHours, rainHours, posit
                 local polys = self:_getCompleteFieldPolygons(fieldId)
                 if polys == nil then
                     data.mapPending = pending
-                elseif polys ~= nil then
+                else
                     local moved = self.valueMap:applyDeltaToPolygons(polys, applied)
                     if moved == 0 then
                         -- The engine refused the add path. Give the delta back to

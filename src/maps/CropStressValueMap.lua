@@ -778,6 +778,21 @@ function CropStressValueMap:_ensureUnionMask()
     return true
 end
 
+--- Bind an axis-aligned world box to a modifier the way the engine binds a box
+--- (DensityMapParallelogram:applyToModifier, densityMaps/DensityMapParallelogram.lua
+--- :70-75): clear the polygon points, then the four corners in order, start, width,
+--- the fourth corner (width + height - start) and height. Every region the union ops
+--- set on these modifiers is then a polygon, so no bind has to replace another kind of
+--- region (MAINTENANCE row 90: setParallelogramWorldCoords after clearPolygonPoints
+--- left open whether the parallelogram replaces the points).
+local function bindBox(mod, x0, z0, x1, z1)
+    mod:clearPolygonPoints()
+    mod:addPolygonPointWorldCoords(x0, z0)
+    mod:addPolygonPointWorldCoords(x1, z0)
+    mod:addPolygonPointWorldCoords(x1, z1)
+    mod:addPolygonPointWorldCoords(x0, z1)
+end
+
 --- Bind the union of two or more polygons: paint the work set, bind the moisture
 --- modifier to the union's box, arm the mask filter. Returns true, or false and
 --- a typed reason ("INVALID_FIELD_GEOMETRY" | "PROVIDER_REFUSAL").
@@ -793,10 +808,9 @@ function CropStressValueMap:_bindUnion(polys)
     self._unionBox = { x0, z0, x1, z1 }
     local ok = pcall(function()
         -- Clear the box first: nothing a failed release left behind joins this parcel.
-        -- Polygon points are cleared before each box bind so the box is the only
-        -- region on either modifier.
-        mm:clearPolygonPoints()
-        mm:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)
+        -- The box is bound as polygon points (bindBox), so it is the only region on
+        -- either modifier.
+        bindBox(mm, x0, z0, x1, z1)
         mm:executeSet(0)
         for pi = 1, #polys do
             local p = polys[pi]
@@ -806,8 +820,7 @@ function CropStressValueMap:_bindUnion(polys)
             end
             mm:executeSet(1)
         end
-        self.modifier:clearPolygonPoints()
-        self.modifier:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)
+        bindBox(self.modifier, x0, z0, x1, z1)
         self.maskFilter:setValueCompareParams(DensityValueCompareType.EQUAL, 1)
     end)
     if not ok then
@@ -825,8 +838,7 @@ function CropStressValueMap:_releaseUnion()
     local mm = self.maskModifier
     if box == nil or mm == nil then return end
     pcall(function()
-        mm:clearPolygonPoints()
-        mm:setParallelogramWorldCoords(box[1], box[2], box[3], box[2], box[1], box[4], DensityCoordType.POINT_POINT_POINT)
+        bindBox(mm, box[1], box[2], box[3], box[4])
         mm:executeSet(0)
     end)
 end

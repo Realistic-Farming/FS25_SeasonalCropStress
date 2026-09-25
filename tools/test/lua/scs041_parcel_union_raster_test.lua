@@ -19,6 +19,12 @@
 --      one polygon unchanged, refusals, a stale work set, a thrown add
 --   E  the entry-point bar over a two-field parcel
 --   D  relief and drainage per polygon on a sloped parcel
+--   K  MAINTENANCE row 90: every union box is bound as the engine binds a box, clear
+--      plus four polygon points (DensityMapParallelogram.lua:70-75), never through
+--      setParallelogramWorldCoords
+--   P  MAINTENANCE row 90: the daily settle, entered through the accrual the moisture
+--      owner registers with Time Guard, drains nothing on a partial parcel (and the
+--      same parcel complete drains, so the bar can see drainage)
 --!load: src/maps/CropStressValueMap.lua, tools/test/lua/f245_harness.lua, src/integrations/OptionScalingResolver.lua, src/ReleaseGate.lua, src/SoilMoistureSystem.lua, src/SoilMoistureGround.lua
 
 local SQ = F245H.square
@@ -303,5 +309,110 @@ group("D", function()
 
     getTerrainHeightAtWorldPos = savedHeight
     g_terrainNode = savedNode
+    g_fieldManager = nil
+end)
+
+-- ══════════════════════════════════════════════════════════════
+-- K. THE UNION BOX IS BOUND AS THE ENGINE BINDS A BOX (MAINTENANCE row 90)
+-- ══════════════════════════════════════════════════════════════
+group("K", function()
+    g_fieldManager = { fields = { F245H.engineField(1, A), F245H.engineField(1, B) } }
+    g_server = {}
+    local sys, vm, grid = F245H.newSystem({ ready = false })
+    sys:enumerateFields()
+    sys:seedMapFromStore()   -- the first union op builds the work set and its modifier
+    local log = {}
+    local function watch(mod, name)
+        local clear, add, para = mod.clearPolygonPoints, mod.addPolygonPointWorldCoords, mod.setParallelogramWorldCoords
+        mod.clearPolygonPoints = function(self) log[#log + 1] = name .. ":clear" return clear(self) end
+        mod.addPolygonPointWorldCoords = function(self, x, z) log[#log + 1] = name .. ":add(" .. x .. "," .. z .. ")" return add(self, x, z) end
+        mod.setParallelogramWorldCoords = function(self, ...) log[#log + 1] = name .. ":para" return para(self, ...) end
+    end
+    watch(vm.maskModifier, "mask")
+    watch(vm.modifier, "map")
+    -- The whole-field replacement (the csSetMoisture and sprayer door): bind, paint, release.
+    local receipt = sys:setMoisture(1, 0.3)
+    local paras = 0
+    for _, e in ipairs(log) do if e:find(":para", 1, true) then paras = paras + 1 end end
+    T.eq("K1 a union op binds no box through setParallelogramWorldCoords, on either modifier",
+        tostring(receipt) .. ":" .. paras, "true:0")
+    -- The union box with one grain of margin, as the bind computes it.
+    local g = vm:getGrainMetres() or 2
+    local x0, z0, x1, z1 = math.min(A.vx[1], B.vx[1]) - g, math.min(A.vz[1], B.vz[1]) - g,
+                           math.max(A.vx[2], B.vx[2]) + g, math.max(A.vz[3], B.vz[3]) + g
+    local function box(name)
+        return name .. ":clear " .. name .. ":add(" .. x0 .. "," .. z0 .. ") " .. name .. ":add(" .. x1 .. "," .. z0 .. ") "
+            .. name .. ":add(" .. x1 .. "," .. z1 .. ") " .. name .. ":add(" .. x0 .. "," .. z1 .. ")"
+    end
+    local joined = table.concat(log, " ")
+    T.eq("K2 the work set's box is cleared and bound as four points, start, width, the fourth corner, height",
+        joined:sub(1, #box("mask")), box("mask"))
+    local function occurrences(hay, needle)
+        local n, i = 0, 1
+        while true do
+            local s = hay:find(needle, i, true)
+            if s == nil then return n end
+            n, i = n + 1, s + 1
+        end
+    end
+    T.eq("K3 the moisture modifier's box is the same four points, and so is the release's (the work set bound twice)",
+        occurrences(joined, box("map")) .. ":" .. occurrences(joined, box("mask")), "1:2")
+    T.eq("K4 and the paint still covers the union once and never the deed gap",
+        F245H.count(grid, rawOf(0.3)) .. ":" .. raw(grid, 19.5, 5.5), "180:0")
+    g_fieldManager = nil
+end)
+
+-- ══════════════════════════════════════════════════════════════
+-- P. DRAINAGE THROUGH THE REGISTERED DAILY SETTLE, FENCED ON A PARTIAL PARCEL
+-- ══════════════════════════════════════════════════════════════
+group("P", function()
+    -- D's sloped parcel (A3 west, C3 east, ground 20 m west of x -40 and 8 m
+    -- elsewhere); C3's node walk throws and it has no engine polygon, so the parcel's
+    -- collection is PARTIAL until the retry door expires the entry.
+    local A3 = SQ(-60, -60, -8, -24)
+    local brokenC3 = { farmland = { id = 1 }, polygonPoints = {
+        { x = -30, z = -60, throw = true }, { x = 6, z = -60 }, { x = 6, z = -24 }, { x = -30, z = -24 } } }
+    g_fieldManager = { fields = { F245H.engineField(1, A3), brokenC3 } }
+    g_server = {}
+    g_currentMission.time = 1000
+    local savedNode, savedHeight, savedTg = g_terrainNode, getTerrainHeightAtWorldPos, g_currentMission.timeGuard
+    g_terrainNode = 1
+    getTerrainHeightAtWorldPos = function(_node, x, _y, _z) if x < -40 then return 20 end return 8 end
+    local registered = {}
+    g_currentMission.timeGuard = { flowClasses = { simulation = true },
+        registerAccrual = function(_, id, spec) registered[id] = spec return true end }
+    local sys, vm, grid = F245H.newSystem({ ready = false, size = 128 })
+    sys:enumerateFields()
+    local polys = sys:_getFieldPolygons(1)
+    T.eq("P0 [reached] the settle is registered with Time Guard as production registers it, and the parcel's collection is partial",
+        tostring(sys:registerDailyAccrual()) .. ":" .. tostring(registered[SoilMoistureSystem.DAILY_ACCURAL_ID] ~= nil)
+            .. ":" .. #polys .. ":" .. tostring(sys._fieldVerts[1].partial), "true:true:1:true")
+    -- The ground as the save left it: the parcel's box at one moisture (the harness
+    -- paints world state, as group E does).
+    F245H.paint(grid, -60, -60, 6, -24, rawOf(0.5))
+    local before = {}
+    for k, v in pairs(grid.raw) do before[k] = v end
+    local function moved()
+        local n = 0
+        for k, v in pairs(grid.raw) do if before[k] ~= v then n = n + 1 end end
+        for k, v in pairs(before) do if grid.raw[k] == nil and v ~= 0 then n = n + 1 end end
+        return n
+    end
+    sys._lastFieldBlocks = nil
+    registered[SoilMoistureSystem.DAILY_ACCURAL_ID].onSettle({ boundariesCrossed = 1 })
+    T.eq("P1 the settle drains nothing on a partial parcel: no pixel moved and no block sampled (its known field would settle while the missing one waits)",
+        moved() .. ":" .. tostring(sys._lastFieldBlocks), "0:nil")
+    -- The walk recovers and the retry door expires the partial entry: the same settle
+    -- door now drains, so the bar above could have seen drainage.
+    brokenC3.polygonPoints[1].throw = nil
+    g_currentMission.time = 1000 + SoilMoistureSystem.GEOMETRY_RETRY_MS
+    sys:_getFieldPolygons(1)
+    registered[SoilMoistureSystem.DAILY_ACCURAL_ID].onSettle({ boundariesCrossed = 1 })
+    T.ok("P2 once the collection is complete the same door drains the parcel (" .. moved() .. " pixels, " .. tostring(sys._lastFieldBlocks) .. " blocks)",
+        moved() > 0 and sys._lastFieldBlocks == 8)
+    getTerrainHeightAtWorldPos = savedHeight
+    g_terrainNode = savedNode
+    g_currentMission.timeGuard = savedTg
+    g_currentMission.time = 1000
     g_fieldManager = nil
 end)
