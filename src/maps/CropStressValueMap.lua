@@ -698,10 +698,13 @@ end
 -- g_farmlandManager.localMap, and :196-197 stack that mask filter with others in
 -- one executeGet. So one executeSet, executeAdd or executeGet touches each union
 -- cell exactly once. The references bind a modifier by polygon points or by a
--- parallelogram, never one modifier switching between the two, so the polygon
--- points are cleared before every box bind here: the box is the only region
--- either way (the same assumption writeValueAtWorld has always made after a
--- polygon op; the TESTING row carries its in-game falsifier).
+-- parallelogram, never one modifier switching between the two, so every union box
+-- here is bound as polygon points: clear, then four points, as
+-- DensityMapParallelogram:applyToModifier does (DensityMapParallelogram.lua:70-75),
+-- and the union never binds a parallelogram after a polygon op. Only _setRegion
+-- (the writeValueAtWorld and stamp path) still binds a parallelogram after polygon
+-- ops; that is what the #204 TESTING row's part 5 falsifier watches (MAINTENANCE
+-- row 122).
 -- The mask is cleared over the box afterwards, and cleared again over the next
 -- box before that union is painted, so a failed clear can never lend a stale
 -- cell to another parcel. The mask is machinery: never saved, never synced,
