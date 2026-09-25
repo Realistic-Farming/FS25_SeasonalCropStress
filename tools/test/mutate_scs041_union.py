@@ -21,14 +21,13 @@
 #     "once per covered cell" wording of the return, and that row is the kill;
 #   - a delta of zero raw steps: the caller quantises through quantiseDelta first,
 #     as the one-polygon op already requires;
-#   - the polygon points cleared before a box bind: the harness models a
-#     parallelogram bind as replacing the polygon points (f245_harness.lua), the
-#     same assumption writeValueAtWorld has always made, so removing the clear
-#     changes nothing on the bench; the TESTING row carries the in-game falsifier
-#     (two deeds with overlapping boxes painted in turn);
-#   - the drainage fence on a partial collection: drainage needs terrain, and the
-#     partial bar (group F) runs without a terrain node, so the settle's drain
-#     returns before geometry either way; the re-derive fence (F6) is the kill.
+#   - (MAINTENANCE row 90) the box binds no longer use setParallelogramWorldCoords:
+#     each is clear plus four polygon points as the engine binds a box, which row K
+#     pins by recording the calls (M1-M4 below); the parallelogram-replaces-points
+#     question is gone rather than assumed;
+#   - (MAINTENANCE row 90) the drainage fence on a partial collection now has its
+#     own bar, group P, with terrain and through the registered daily settle; M5
+#     below is its kill.
 #
 # Anchors are written with "\n"; in a CRLF file they are matched as "\r\n".
 #
@@ -65,7 +64,7 @@ MUTATIONS = [
   [("    self:_releaseUnion()\n    return ok\nend", "    return ok\nend", 1)],
   "the work set keeps the last parcel's cells after a paint"),
  ("U6-no-preclear-of-the-box", VM,
-  [("        mm:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)\n        mm:executeSet(0)\n        for pi = 1, #polys do",
+  [("        bindBox(mm, x0, z0, x1, z1)\n        mm:executeSet(0)\n        for pi = 1, #polys do",
     "        for pi = 1, #polys do", 1)],
   "a stale work-set cell joins the next parcel"),
  ("U7-single-polygon-takes-the-union-path", VM,
@@ -99,8 +98,8 @@ MUTATIONS = [
     "partial collection is not seeded (brief :28); the retry doors re-collect it.\n    local polys = self:_getFieldPolygons(fieldId)", 1)],
   "the seed paints a partial parcel's known fields"),
  ("F3-hourly-unfenced", SMS,
-  [("                local polys = self:_getCompleteFieldPolygons(fieldId)\n                if polys == nil then\n                    data.mapPending = pending\n                elseif polys ~= nil then",
-    "                local polys = self:_getFieldPolygons(fieldId)\n                if false then\n                elseif polys ~= nil then", 1)],
+  [("                local polys = self:_getCompleteFieldPolygons(fieldId)\n                if polys == nil then\n                    data.mapPending = pending\n                else",
+    "                local polys = self:_getFieldPolygons(fieldId)\n                if false then\n                else", 1)],
   "the hourly weather shifts a partial parcel and forgets the rest"),
  ("F4-refresh-unfenced", SMS,
   [("        local polys = self:_getCompleteFieldPolygons(fieldId)\n        if polys == nil then\n            outcome = \"INVALID_FIELD_GEOMETRY\"",
@@ -153,6 +152,26 @@ MUTATIONS = [
     "        local bx, bz, bh, bm = self._dbx or {}, self._dbz or {}, self._dbh or {}, self._dbm or {}\n        local count = self._dcount or 0\n        local x = minX + half\n        while x <= maxX and total + count < limit do", 1),
    ("        total = total + count\n", "        total = count\n        self._dbx, self._dbz, self._dbh, self._dbm, self._dcount = bx, bz, bh, bm, count\n", 1)],
   "one block set over the whole parcel: water levels between its fields"),
+ # ── MAINTENANCE row 90 (targeted battery of that PR: run with the prefix M) ──
+ ("M1-map-box-bound-as-parallelogram", VM,
+  [("        bindBox(self.modifier, x0, z0, x1, z1)\n",
+    "        self.modifier:clearPolygonPoints()\n        self.modifier:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)\n", 1)],
+  "the moisture modifier's union box is bound through setParallelogramWorldCoords again"),
+ ("M2-mask-box-bound-as-parallelogram", VM,
+  [("        bindBox(mm, x0, z0, x1, z1)\n        mm:executeSet(0)\n",
+    "        mm:clearPolygonPoints()\n        mm:setParallelogramWorldCoords(x0, z0, x1, z0, x0, z1, DensityCoordType.POINT_POINT_POINT)\n        mm:executeSet(0)\n", 1)],
+  "the work set's box is cleared through setParallelogramWorldCoords again"),
+ ("M3-release-bound-as-parallelogram", VM,
+  [("        bindBox(mm, box[1], box[2], box[3], box[4])\n",
+    "        mm:clearPolygonPoints()\n        mm:setParallelogramWorldCoords(box[1], box[2], box[3], box[2], box[1], box[4], DensityCoordType.POINT_POINT_POINT)\n", 1)],
+  "the release clears its box through setParallelogramWorldCoords again"),
+ ("M4-box-fourth-corner-wrong", VM,
+  [("    mod:addPolygonPointWorldCoords(x1, z1)\n", "    mod:addPolygonPointWorldCoords(x0, z1)\n", 1)],
+  "the box's fourth corner is the height corner: a degenerate outline, not the box"),
+ ("M5-drainage-unfenced", SMS,
+  [("    -- overwrite the earlier field's within 8 m of the seam, exactly as one field's\n    -- squares already reach 8 m beyond its outline today.\n    local polys = self:_getCompleteFieldPolygons(fieldId)\n",
+    "    -- overwrite the earlier field's within 8 m of the seam, exactly as one field's\n    -- squares already reach 8 m beyond its outline today.\n    local polys = self:_getFieldPolygons(fieldId)\n", 1)],
+  "the daily drainage runs on a partial parcel: its known field settles while the missing one waits"),
 ]
 
 
