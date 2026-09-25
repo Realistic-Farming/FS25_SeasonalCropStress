@@ -283,20 +283,20 @@
     <text name="cs_pda_no_fields"             text="No field data yet. Fields appear once the simulation has run for one in-game hour."/>
 
     <!-- Esc RF PDA guest module -->
-    <text name="cs_rf_pda_module_title"        text="作物压力"/>
-    <text name="cs_rf_pda_blurb"               text="田间湿度、压力与灌溉覆盖。请打开 Farm Tablet 查看灌溉计划和作物顾问。"/>
-    <text name="cs_rf_pda_empty"               text="尚无作物压力数据。模拟运行后会显示田地。"/>
+    <text name="cs_rf_pda_module_title"        text="Stress des cultures"/>
+    <text name="cs_rf_pda_blurb"               text="Bureau des champs : humidité, stress, irrigation et commandes des pivots, sur une seule page."/>
+    <text name="cs_rf_pda_empty"               text="Aucune donnée de stress des cultures pour l'instant. Les champs apparaissent quand la simulation tourne."/>
 
     
     <!-- Esc RF PDA content table columns -->
-    <text name="cs_rf_pda_col_field" text="田地"/>
-    <text name="cs_rf_pda_col_crop" text="作物"/>
-    <text name="cs_rf_pda_col_moisture" text="湿度"/>
-    <text name="cs_rf_pda_col_stress" text="压力"/>
-    <text name="cs_rf_pda_col_irrigated" text="灌溉"/>
-    <text name="cs_rf_pda_col_status" text="状态"/>
-    <text name="cs_rf_pda_detail_title" text="田地详情"/>
-    <text name="cs_rf_pda_select_field" text="在表格中选择田地以查看详情。"/>
+    <text name="cs_rf_pda_col_field" text="Champ"/>
+    <text name="cs_rf_pda_col_crop" text="Culture"/>
+    <text name="cs_rf_pda_col_moisture" text="Humidité"/>
+    <text name="cs_rf_pda_col_stress" text="Stress hydrique"/>
+    <text name="cs_rf_pda_col_irrigated" text="Irrigué"/>
+    <text name="cs_rf_pda_col_status" text="État"/>
+    <text name="cs_rf_pda_detail_title" text="Détail du champ"/>
+    <text name="cs_rf_pda_select_field" text="Sélectionnez un champ dans le tableau pour en voir le détail."/>
 <!-- ========== MAP OVERLAY ========== -->
     <text name="cs_map_page_title"            text="Crop Moisture"/>
     <text name="cs_map_sidebar_title"         text="MOISTURE LEGEND"/>
@@ -383,12 +383,12 @@
 <text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s - covers %s of this block"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="臂杆 %.0f deg"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="扫描起点 %.0f deg"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="扫描终点 %.0f deg"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="臂杆 -"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="扫描起点 -"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="扫描终点 -"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="Bras %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="Debut balayage %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="Fin balayage %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="Bras -"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="Debut balayage -"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="Fin balayage -"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
@@ -451,20 +451,20 @@
     <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
     <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
     <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
-    <text name="cs_rf_pda_rk_suffix" text="  -  雨量传感器 %s / %.1f mm 模拟" />
-    <text name="cs_rf_pda_rk_unknown" text="未知" />
-    <text name="cs_rf_pda_rk_warn_tripped" text="雨量传感器已触发" />
-    <text name="cs_rf_pda_rk_warn_tripped_in" text="传感器已触发, %d 分钟后干燥重置" />
-    <text name="cs_rf_pda_rk_warn_noinput" text="雨量传感器无法读取天气" />
-    <text name="cs_rf_pda_rk_btn_fit" text="安装" />
-    <text name="cs_rf_pda_rk_btn_remove" text="移除" />
-    <text name="cs_rf_pda_rk_btn_trip_minus" text="阈值-" />
-    <text name="cs_rf_pda_rk_btn_trip_plus" text="阈值+" />
+    <text name="cs_rf_pda_rk_suffix" text="  -  capteur de pluie %s / %.1f mm modelises" />
+    <text name="cs_rf_pda_rk_unknown" text="inconnu" />
+    <text name="cs_rf_pda_rk_warn_tripped" text="Capteur de pluie declenche" />
+    <text name="cs_rf_pda_rk_warn_tripped_in" text="Capteur declenche, reinitialisation dans %d min" />
+    <text name="cs_rf_pda_rk_warn_noinput" text="Le capteur ne peut pas lire la meteo" />
+    <text name="cs_rf_pda_rk_btn_fit" text="Poser" />
+    <text name="cs_rf_pda_rk_btn_remove" text="Retirer" />
+    <text name="cs_rf_pda_rk_btn_trip_minus" text="Seuil-" />
+    <text name="cs_rf_pda_rk_btn_trip_plus" text="Seuil+" />
     <text name="cs_rf_pda_rk_trip_label" text="%.1fmm" />
-        <text name="cs_rf_pda_pivot_watering_rain" text="灌溉: 因雨暂停" />
-        <text name="cs_rf_pda_cap_sweep_start" text="扫描起点" />
-        <text name="cs_rf_pda_cap_sweep_end" text="扫描终点" />
-        <text name="cs_rf_pda_cap_rain_key" text="雨量传感器" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Arrosage: pause pluie" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Debut balayage" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Fin balayage" />
+        <text name="cs_rf_pda_cap_rain_key" text="Capteur pluie" />
     <text name="cs_release_irrigation_absorption_name" text="Thirsty ground (irrigation absorption)" />
     <text name="cs_release_irrigation_absorption_status" text="new; awaiting live observation, truthful surface, defect closure and balance" />
     <!-- RSF-F357: consultant identity (host pairing) -->
