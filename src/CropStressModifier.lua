@@ -264,16 +264,59 @@ function CropStressModifier:processFieldStress(field, fieldId, moisture, elapsed
     -- drought side, where the deficit model already runs.
 end
 
+--- [SF-73] The availability base from Soil's crop-relative FIELD_REPORT
+--- (SoilFertilitySystem:getCropNutrientRelationship(fieldId), no coordinates):
+--- three BELOW keep 0.70, one or two BELOW keep 0.85, an APPROACHING nutrient
+--- interpolates from 1 at its lower edge to 0.85 one window below, IDEAL and ABOVE
+--- contribute 1. Returns nil for anything but a COMPLETE field report (a missing
+--- getter, another scope, a missing nutrient, UNDETERMINED, an unusable distance),
+--- so the caller takes the whole legacy path rather than mixing scopes. A vehicle
+--- footprint (scope FOOTPRINT) never reaches this: only FIELD_REPORT is accepted.
+---@return number|nil
+function CropStressModifier.relationshipAvailability(rel)
+    if type(rel) ~= "table" or rel.scope ~= "FIELD_REPORT" or type(rel.nutrients) ~= "table" then return nil end
+    local below, approach = 0, 1.0
+    for _, n in ipairs({ "N", "P", "K" }) do
+        local x = rel.nutrients[n]
+        if type(x) ~= "table" then return nil end
+        local kind = x.relationship
+        if kind == "BELOW" then
+            below = below + 1
+        elseif kind == "APPROACHING" then
+            local d, w = x.approachingDistance, x.approachingWidth
+            if type(d) ~= "number" or type(w) ~= "number" or d ~= d or w ~= w or w <= 0 then return nil end
+            local fraction = math.max(0, math.min(1, d / w))
+            approach = math.min(approach, 1 - 0.15 * fraction)
+        elseif kind ~= "IDEAL" and kind ~= "ABOVE" then
+            return nil
+        end
+    end
+    if below == 3 then return 0.70 end
+    if below > 0 then return 0.85 end
+    return approach
+end
+
 -- The effective nutrient-availability factor for a field, 0.5..1.0 (neutral 1.0).
 -- The soil-moisture coupling: at moisture extremes (drought < 30%, waterlog >
--- 90%) uptake is reduced, and a field whose SF nutrient status is Poor is hit
--- harder. A pull-only read of SF's getFieldInfo; SF absent or a nil read is
--- neutral, and this never writes SF (the single-writer firewall).
+-- 90%) uptake is reduced, and a field whose SF nutrients sit below the crop's
+-- window is hit harder. A pull-only read of SF; SF absent or a nil read is
+-- neutral, and this never writes SF (the single-writer firewall). [SF-73] A
+-- complete crop-relative FIELD_REPORT decides the base; without one, the whole
+-- legacy Poor count of getFieldInfo does, unchanged.
 function CropStressModifier:_nutrientAvailability(fieldId, moisture)
     local availability = 1.0
     pcall(function()
         local sf = g_currentMission ~= nil and g_currentMission.soilFertilityManager
-        if sf == nil or sf.soilSystem == nil or sf.soilSystem.getFieldInfo == nil then return end
+        if sf == nil or sf.soilSystem == nil then return end
+        if type(sf.soilSystem.getCropNutrientRelationship) == "function" then
+            local okRel, rel = pcall(sf.soilSystem.getCropNutrientRelationship, sf.soilSystem, fieldId)
+            local fromReport = okRel and CropStressModifier.relationshipAvailability(rel) or nil
+            if fromReport ~= nil then
+                availability = fromReport
+                return
+            end
+        end
+        if sf.soilSystem.getFieldInfo == nil then return end
         local info = sf.soilSystem:getFieldInfo(fieldId)
         if info == nil then return end
         local poor = 0
