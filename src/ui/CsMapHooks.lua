@@ -33,8 +33,31 @@ local function getCsOverlay(frame)
     return g_cropStressManager and g_cropStressManager.moistureMapOverlay
 end
 
+--- Is the map frame the page the player is actually looking at?
+--- The selector state below is the map frame's REMEMBERED sub-page and it survives
+--- leaving the map entirely, so on its own it says "the moisture layer is the one the
+--- map will show next time", not "the map is on screen now". The shared mouse chain
+--- runs every handler before the engine's own mouseEvent, where the visibility check
+--- lives (GuiElement.lua:502), so a map frame that is not displayed still sees clicks,
+--- and the overlay's onSideBarClick matches its buttonRects on screen coordinates
+--- alone: a click on another Esc page could open the Crop Stress PDA or change the
+--- overlay density. TabbedMenu sets currentPage before the page opens
+--- (TabbedMenu.lua:363, :377) and clears it on close (:105). Same guard as
+--- SoilFertilizer's SoilMapHooks (#1035), copied because each mod's hooks are its own.
+--- Undeterminable stays permissive, so a build where the menu cannot be resolved
+--- behaves exactly as before.
+local function isMapFrameCurrentPage(frame)
+    if g_gui == nil or InGameMenu == nil then return true end
+    local inGameMenu = g_gui.screenControllers ~= nil and g_gui.screenControllers[InGameMenu] or g_inGameMenu
+    if inGameMenu == nil or inGameMenu.currentPage == nil then return true end
+    return inGameMenu.currentPage == frame
+end
+
 local function isCsPageActive(frame)
     if frame == nil or frame.csMoisturePageIndex == nil or frame.mapOverviewSelector == nil then
+        return false
+    end
+    if not isMapFrameCurrentPage(frame) then
         return false
     end
     return frame.mapOverviewSelector:getState() == frame.csMoisturePageIndex
