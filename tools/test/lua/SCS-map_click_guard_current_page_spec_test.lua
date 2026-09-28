@@ -16,8 +16,10 @@
 -- THE ENTRY-POINT BAR IS GROUP S. The engine's map frame is modelled (SCS-map_frame_model.lua)
 -- and CsMapHooks' own install block wraps it at file load; every click goes through
 -- InGameMenuMapFrame.mouseEvent, the chain production installs. The overlay is the real
--- CsMoistureMapOverlay. Its buttonRects are set as its HUD draw lays them out, because that
--- draw needs the renderer; nothing else about the click path is supplied.
+-- CsMoistureMapOverlay. Its buttonRects are hand-set, a stand-in for the two rects
+-- onDrawHud lays out (CsMoistureMapOverlay.lua:809-923: cycleDensity at :911, openPDA at
+-- :921), because that draw needs the renderer, and onDrawHud itself is replaced by a
+-- counter for group D. Nothing else about the click path is supplied.
 --
 -- Groups:
 --   S  the entry-point bar: on the moisture layer, the map frame NOT on screen declines
