@@ -1821,10 +1821,11 @@ function CropStressManager:onHeatResult(accepted, code, days)
     return text
 end
 
+--- Console command. It prints its own line and returns nothing, like this mod's
+--- other console commands, so the console has no status word to echo.
 function CropStressManager:consoleSimulateHeat(daysStr)
-    local status, text = self:requestHeatWave(daysStr, "console")
+    local _, text = self:requestHeatWave(daysStr, "console")
     print(text)
-    return status
 end
 
 --- Server: run the heat-wave simulation for a validated day count, then push the

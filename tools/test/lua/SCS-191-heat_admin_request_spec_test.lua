@@ -130,12 +130,12 @@ group("C client", function()
     g_server = nil
     g_client = { getServerConnection = function() return toServer end }
 
-    local status
-    local printed = withPrint(function() status = mgr:consoleSimulateHeat("3") end)
+    local ret
+    local printed = withPrint(function() ret = mgr:consoleSimulateHeat("3") end)
     T.eq("C1a NAMED: the client console sends exactly one request", #toServer.sent, 1)
     T.eq("C1b for 3 days", toServer.sent[1] and toServer.sent[1].days, 3)
     T.eq("C1c and says only that it was sent", printed[#printed], "Heat wave request sent to the server.")
-    T.eq("C1d status SENT, no local simulation", tostring(status) .. ":" .. (counts.soil + counts.stress), "SENT:0")
+    T.eq("C1d no status word returned for the console to echo, and no local simulation", tostring(ret) .. ":" .. (counts.soil + counts.stress), "nil:0")
 
     toServer.sent = {}
     local panel = mgr.settingsPanel
