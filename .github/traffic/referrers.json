@@ -4966,21 +4966,16 @@
     {
       "referrer": "github.com",
       "count": 101,
-      "uniques": 61
+      "uniques": 59
     },
     {
       "referrer": "Google",
-      "count": 44,
-      "uniques": 26
+      "count": 40,
+      "uniques": 25
     },
     {
       "referrer": "Bing",
       "count": 5,
-      "uniques": 4
-    },
-    {
-      "referrer": "realisticfarming.com",
-      "count": 4,
       "uniques": 4
     },
     {
@@ -4989,13 +4984,18 @@
       "uniques": 3
     },
     {
-      "referrer": "patreon.com",
-      "count": 2,
-      "uniques": 2
+      "referrer": "realisticfarming.com",
+      "count": 3,
+      "uniques": 3
     },
     {
       "referrer": "Yahoo",
       "count": 2,
+      "uniques": 1
+    },
+    {
+      "referrer": "patreon.com",
+      "count": 1,
       "uniques": 1
     },
     {
