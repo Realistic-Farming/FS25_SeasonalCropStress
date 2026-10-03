@@ -526,14 +526,14 @@
     <!-- Kiss seam: X=404 left edge via pivot X 0; Y vanilla bottom-up via pivot Y 0 (round 2 D1:
          pivotTopLeft's pivot Y 1 multiplied the 192 absOff into a +192 lift and beheaded the title). -->
     <Profile name="RF_MainColShell" extends="fs25_menuContentContainer" with="anchorStretchingYLeft pivotBottomLeft">
-        <position value="410px 40px"/>
+        <position value="404px 40px"/>
         <absoluteSizeOffset value="178px 192px"/>
     </Profile>
 
     <!-- Nest surface narrowed to the 404 seam. Keeps vanilla texture slices:
          blank.png + noSlice on a ThreePartBitmap paints the raw gui atlas (2026-08-04 lesson). -->
     <Profile name="RF_SubCategoryContainerBg" extends="fs25_subCategoryContainerBg">
-        <width value="463px"/>
+        <width value="404px"/>
     </Profile>
 
     <!-- BUILD 22:25: RF-prefixed clones of MapFrame-local fs25_mapList* (~56px pitch). -->
@@ -643,9 +643,8 @@
          extends baseReference = gui atlas + engine white; NO blank.png, NO imageColor (vanilla tone is
          baked in the atlas pixels, zero tint). anchorStretchingYLeft -> x 0..404, full column height. -->
     <Profile name="RF_SideColUnderlay" extends="baseReference" with="anchorStretchingYLeft">
-        <width value="410px"/>
-        <filename value="$dataS/menu/blank.png"/>
-        <imageColor value="0 0 0 0"/>
+        <width value="404px"/>
+        <imageSliceId value="gui.animalScreen_left"/>
         <handleFocus value="false"/>
     </Profile>
 
@@ -923,6 +922,42 @@
     <!-- WC blank.png pattern: color Bitmap must have a filename or GuiOverlay returns nil (purple) -->
     <Profile name="RF_InfoBoxBg" extends="baseReference" with="anchorStretchingYStretchingX">
         <filename value="$dataS/menu/blank.png"/>
-        <imageColor value="0 0 0 0"/>
+        <imageColor value="0 0 0 0.35"/>
+    </Profile>
+
+    <!-- REPAIR-217: the F166 herd-advisory panel's profiles. The panel's elements come into
+         RfPdaMenuPage.xml in this same build, and without these they would fall back to the base
+         reference profile and log "Could not retrieve GUI profile". -->
+    <Profile name="RF_DairyAdvisoryDetailItem" extends="RF_ListRow">
+        <height value="22px"/>
+    </Profile>
+    <Profile name="RF_DairyAdvisoryDetailLine" extends="RF_FwListCell">
+        <textSize value="15px"/>
+        <textBold value="false"/>
+        <textMaxNumLines value="1"/>
+        <textVerticalAlignment value="middle"/>
+    </Profile>
+    <Profile name="RF_DairyAdvisoryDetailList" extends="RF_SmoothList">
+        <size value="1090px 440px"/>
+        <handleFocus value="false"/>
+    </Profile>
+    <Profile name="RF_DairyAdvisoryItem" extends="RF_ListRow">
+        <height value="40px"/>
+    </Profile>
+    <Profile name="RF_DairyAdvisoryLabel" extends="RF_FwListCell">
+        <textSize value="16px"/>
+        <textBold value="false"/>
+        <textMaxNumLines value="1"/>
+        <textVerticalAlignment value="middle"/>
+    </Profile>
+    <Profile name="RF_DairyAdvisoryList" extends="RF_SmoothList">
+        <size value="1090px 200px"/>
+        <handleFocus value="false"/>
+    </Profile>
+    <Profile name="RF_DairyAdvisoryReason" extends="RF_FwListCell">
+        <textSize value="15px"/>
+        <textBold value="false"/>
+        <textMaxNumLines value="1"/>
+        <textVerticalAlignment value="middle"/>
     </Profile>
 </GUIProfiles>
