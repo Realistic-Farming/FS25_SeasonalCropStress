@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-10-02T18:52:40Z
-**Days tracked:** 150 | **Download snapshots:** 892 (hourly)
+**Last updated:** 2026-10-03T12:56:19Z
+**Days tracked:** 151 | **Download snapshots:** 894 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 289 | 113 |
-| Git Clones | 599 | 272 |
+| Page Views | 285 | 115 |
+| Git Clones | 610 | 276 |
 
-> **Engagement:** 2.5 pages per visitor (14-day avg)
+> **Engagement:** 2.4 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 1548 of 113 visitors cloned or downloaded (**1369.9%**)
+> **14-day conversion:** 1557 of 115 visitors cloned or downloaded (**1353.9%**)
 >
-> Unique cloners: 272 | Release downloads: 1276
+> Unique cloners: 276 | Release downloads: 1281
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 1276 |
-| Git Clones (14-day) | 599 |
-| **Total Acquisitions** | **1875** |
+| Zip Downloads | 1281 |
+| Git Clones (14-day) | 610 |
+| **Total Acquisitions** | **1891** |
 
 ---
 
@@ -54,10 +54,10 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 101 | 59 |
-| Google | 40 | 25 |
-| Bing | 5 | 4 |
-| kingmods.net | 4 | 3 |
+| github.com | 96 | 59 |
+| Google | 39 | 25 |
+| Bing | 7 | 6 |
+| kingmods.net | 5 | 3 |
 | realisticfarming.com | 3 | 3 |
 | Yahoo | 2 | 1 |
 | patreon.com | 1 | 1 |
@@ -81,10 +81,10 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_SeasonalCropStress` | 160 | 91 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.5.0` | 34 | 24 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases` | 24 | 17 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/tree/development` | 14 | 3 |
+| `/Realistic-Farming/FS25_SeasonalCropStress` | 157 | 91 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.5.0` | 35 | 24 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases` | 25 | 19 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/tree/development` | 11 | 3 |
 | `/Realistic-Farming/FS25_SeasonalCropStress/issues` | 10 | 7 |
 | `/Realistic-Farming/FS25_SeasonalCropStress/tree/v1.2.5.0` | 5 | 1 |
 | `/realistic-farming/fs25_seasonalcropstress/blob/HEAD/README.md` | 4 | 2 |
