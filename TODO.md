@@ -122,3 +122,8 @@
 ## SCS-041 field-boundary parcel-union (2026-09-09, decidable core of NEXT ACTION #3)
 - [x] Geometry cache retains the complete parcel polygon collection (`_getFieldPolygons`), membership point-in-ANY (`_pointInParcel`); `materialiseRelief`, `fieldGeometryFingerprint`, `_uniqueFieldOwnerAt`/re-key and the runoff source-polygon fence now use the collection. Commit 780738c; `scs041_parcel_union_test.lua` 23/0; suite 1967/0.
 - [ ] SDS remainder routed back: native-map region-op union (paint/delta/read-average over the collection, area-weighted mean, once-per-cell on touching/overlapping polygons). Needs the SDS + in-game observation before implementation.
+
+## 2026-10-04 (Fred): the shared RF Esc door (Wizard, #220)
+
+- [x] The four shared door files at the suite's STOCK page set, byte-same in all ten door mods; StockGuard's STOCK page chrome inert without StockGuard; the herd-advisory panel hidden. Four of its own side-panel profiles take the suite's variant (declared in the PR body).
+- [~] In game (owed): TESTING row 418.
