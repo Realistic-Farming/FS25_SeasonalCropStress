@@ -1672,7 +1672,10 @@ function HUDOverlay:onCriticalThreshold(data)
         self.firstRunShown = true
         if g_currentMission ~= nil then
             local msg = (g_i18n ~= nil and g_i18n:getText("cs_hud_first_run"))
-                or "Crop Moisture Monitor active. Press Shift+M to toggle the HUD."
+                or "Crop Moisture Monitor active. Open the moisture HUD with the Toggle Moisture HUD action."
+            if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.relabel ~= nil then
+                msg = CsLiveKeyLabel.relabel(msg, "CS_TOGGLE_HUD", "M")
+            end
             g_currentMission:showBlinkingWarning(msg, 6000)
         end
     end

@@ -1414,9 +1414,20 @@ function CropStressManager:detectOptionalMods()
 
     -- FS25_MoistureSystem (by Ozz) detection
     -- We check for the mod name and its likely global/manager.
-    -- Ozz's mod also uses Shift+M, so we log a warning for the user.
+    -- Both mods ship a moisture feature. We log our own binding only;
+    -- this mod cannot read another mod's bindings.
     if g_modIsLoaded ~= nil and g_modIsLoaded["FS25_MoistureSystem"] then
-        csLog("FS25_MoistureSystem (Ozz) detected — WARNING: Keybind conflict detected (Shift+M). You may need to rebind your keys in the options menu.")
+        -- This states OUR OWN live binding and nothing about theirs. The previous
+        -- wording asserted a specific conflicting chord on their behalf, which a
+        -- mod cannot read, and which did not match our binding either before or
+        -- after KEYBINDS-R220-20261006. No claim is made here about another author's
+        -- keys or policy; the player is pointed at Controls to judge for himself.
+        local ours = "the Toggle Moisture HUD action"
+        if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.get ~= nil then
+            local c = CsLiveKeyLabel.get("CS_TOGGLE_HUD")
+            if type(c) == "string" and c ~= "" then ours = c end
+        end
+        csLog("FS25_MoistureSystem (Ozz) detected. Both mods provide a moisture feature. Our Toggle Moisture HUD is bound to " .. ours .. ". If both respond to the same key on this save, rebind one under Options, Controls.")
         -- If it also provides a moisture system, we should ideally sync with it,
         -- but since we don't have its API yet, we at least warn the user.
     end

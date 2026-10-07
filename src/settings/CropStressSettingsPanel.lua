@@ -487,7 +487,16 @@ function CropStressSettingsPanel:drawInfoBar()
         self:drawText(bbX + bbW * 0.5, bbY + bbH * 0.18, TS_SMALL, "< Back", C.white, RenderText.ALIGN_CENTER, false)
         self:registerClick("back", bbX, bbY, bbW, bbH)
     else
-        self:drawText(PX + PW - PAD, textY, TS_SMALL, "SHIFT+S to close", C.hint, RenderText.ALIGN_RIGHT, false)
+        -- Live chord, not the old invented "SHIFT+S": this action had no
+        -- binding at all in the shipped modDesc.
+        local closeHint = "Close"
+        if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.get ~= nil then
+            local c = CsLiveKeyLabel.get("CS_OPEN_SETTINGS")
+            if type(c) == "string" and c ~= "" then
+                closeHint = c .. " to close"
+            end
+        end
+        self:drawText(PX + PW - PAD, textY, TS_SMALL, closeHint, C.hint, RenderText.ALIGN_RIGHT, false)
     end
 end
 
