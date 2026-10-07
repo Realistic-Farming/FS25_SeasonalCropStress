@@ -59,6 +59,12 @@ function SeasonalSettingsHubBridge.register(mgr)
         hub:registerModule("SeasonalCropStress", {
             adminSettings = defs,
             onChange      = function(key, value, playerId) applyChange(key, value) end,
+            -- [MAINTENANCE row 257] The settings object above is the source of truth and this a
+            -- display mirror (header), which is the hub's selfPersisted contract: the hub then never
+            -- restores its stored copy over SCS's own loaded values and never calls onChange on a
+            -- client, where display state arrives only through SCS's settings event (SCS-023 v2.3
+            -- SDS 4, CropStressManager.lua:515-520).
+            selfPersisted = true,
         })
     end)
 

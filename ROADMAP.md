@@ -49,6 +49,9 @@
 - Any Precision Farming compatibility: never. Detect-to-stand-down only.
 
 
+## 2026-10-07 (Fred): SettingsHub keeps SCS's own settings as the truth (MAINTENANCE row 257)
+- [x] The SettingsHub bridge says its own settings object, with its own save, stays the source of truth and the hub only mirrors it for display, but it registered without SettingsHub's `selfPersisted` flag. That changed nothing while SettingsHub never bound StateLedger or NetworkSync; its row 241 fix binds them, and an unflagged module then has the hub's stored copy put back over SCS's own loaded settings on every load (undoing a change made in SCS's own panel), and its change handler called on every client, where SCS-023's rule is that clients take display state only through SCS's settings event. The registration now carries `selfPersisted = true`. It must land before SettingsHub's row 241 fix merges.
+
 ## 2026-09-15 (Fred): issue #69 re-checked against the shipped source (doc only, no new intent)
 Issue #69 was the GitHub tracker for the v1.2.0 gaps. Every track is compared with the source and the release history at 1.2.5.143; nothing here adds intent.
 - [x] Track 1, 3D asset replacement: the center pivot ships as real geometry, placeables/reinkeA22 (Reinke_Pivot_3, _5 and _10 i3d with their .shapes companions and store icons, 2026-09-06) with its scripts folder; the water pump ships as placeables/waterPump (i3d, xml, lua). The drip irrigation line has no placeable in the repo at all: not shipped and not tracked anywhere else, so it is UNCLEAR whether it was dropped or is still owed; it stays listed as open until Design or Antler22 says.
