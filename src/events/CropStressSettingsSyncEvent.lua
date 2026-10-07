@@ -227,12 +227,12 @@ function CropStressSettingsSyncEvent:applySingleSetting(key, value, connection)
             mgr.settings[key] = value
             mgr.settings:validateSettings()
             mgr:applySettings()
+            -- Without the owner, this path broadcasts itself, as before.
+            g_server:broadcastEvent(CropStressSettingsSyncEvent.newSingle(key, value), false)
         end
 
+        -- [MAINTENANCE row 259] The owner broadcast the change to every client, once.
         csLog("Setting applied: " .. key .. " = " .. tostring(value))
-
-        -- Broadcast to all clients (including the sender) so everyone stays in sync
-        g_server:broadcastEvent(CropStressSettingsSyncEvent.newSingle(key, value), false)
 
     else
         -- Client: apply setting directly (already validated by server)

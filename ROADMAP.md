@@ -49,6 +49,9 @@
 - Any Precision Farming compatibility: never. Detect-to-stand-down only.
 
 
+## 2026-10-07 (Fred): a setting changed through SettingsHub reaches every client (MAINTENANCE row 259)
+- [x] SCS-023 v2.3 build brief :117 makes `applyAuthoritativeSettingChange` the one settings owner that "broadcasts once on the server". It never broadcast: SCS's own panel and settings event broadcast after calling it, and the SettingsHub bridge did not, so a change made through SettingsHub on the server (a host's Tablet, or a client admin's once SettingsHub binds NetworkSync) reached no client until it rejoined. The owner now sends the validated value to every client once, whatever started the change, and the panel's and the event's own broadcasts are gone where the owner runs, so a panel or event change still goes out once.
+
 ## 2026-10-07 (Fred): SettingsHub keeps SCS's own settings as the truth (MAINTENANCE row 257)
 - [x] The SettingsHub bridge says its own settings object, with its own save, stays the source of truth and the hub only mirrors it for display, but it registered without SettingsHub's `selfPersisted` flag. That changed nothing while SettingsHub never bound StateLedger or NetworkSync; its row 241 fix binds them, and an unflagged module then has the hub's stored copy put back over SCS's own loaded settings on every load (undoing a change made in SCS's own panel), and its change handler called on every client, where SCS-023's rule is that clients take display state only through SCS's settings event. The registration now carries `selfPersisted = true`. It must land before SettingsHub's row 241 fix merges.
 

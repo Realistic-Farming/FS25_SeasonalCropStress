@@ -518,6 +518,10 @@ end
 --- fill-once active-to-inactive edge). The panel, the settings sync event and
 --- SettingsHub route through this owner; clients apply display state only via
 --- the settings event. Returns false for an unknown key.
+--- [MAINTENANCE row 259] It also broadcasts once on the server, for every origin
+--- (SCS-023 v2.3 build brief :117: "broadcasts once on the server"). Before, only the
+--- panel and the settings event broadcast, after calling here, so a change through
+--- SettingsHub reached no client until it rejoined.
 function CropStressManager:applyAuthoritativeSettingChange(key, value, origin)
     if self.settings == nil or key == nil then return false end
     if self.settings[key] == nil then return false end
@@ -529,6 +533,10 @@ function CropStressManager:applyAuthoritativeSettingChange(key, value, origin)
     self:applySettings()
     if self.irrigationManager ~= nil and self.irrigationManager.handleFiniteWaterModeEdge ~= nil then
         self.irrigationManager:handleFiniteWaterModeEdge()
+    end
+    -- The validated value, to every client (not this host: sendLocal false, Server.lua:542-553).
+    if g_server ~= nil and CropStressSettingsSyncEvent ~= nil then
+        g_server:broadcastEvent(CropStressSettingsSyncEvent.newSingle(key, self.settings[key]), false)
     end
     return true
 end
