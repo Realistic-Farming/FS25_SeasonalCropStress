@@ -12,7 +12,7 @@
 # killed only by a Lua error: a weak kill, a failure.
 #
 # NOT RUN, and why: the bare-global fallback kept after the mission read (nil in a game, so removing it
-# changes nothing a game reaches); comments.
+# changes nothing a game reaches); the settings snapshot line (every gate mutant reads through it); comments.
 #
 # Usage (from the repo root):
 #        py tools/test/mutate_maint247.py <id>        one mutant (prefix match must be unique)
@@ -47,26 +47,42 @@ FILTER_TO = ('const testFiles = readdirSync(LUA_DIR).filter((f) => f.endsWith("_
              'process.env.MUTATE_SELECTED.split(",").includes(f)).sort();')
 
 MUTATIONS = [
- ("M01-bare-global", HUD,
-  [("            local sfm = (g_currentMission ~= nil and g_currentMission.soilFertilityManager) or g_SoilFertilityManager\n",
-    "            local sfm = g_SoilFertilityManager\n", 1)],
-  "the HUD reads Soil only through the bare global, nil in a game: no strip (E2, E3)"),
- ("M02-weed-old-scale", HUD,
-  [('        if (sf.weedPressure    or 0) > 15 then table.insert(icons, "W") end\n',
-    '        if (sf.weedPressure    or 0) > 0.15 then table.insert(icons, "W") end\n', 1)],
+ ('M01-bare-global', HUD,
+  [('            local sfm = (g_currentMission ~= nil and g_currentMission.soilFertilityManager) or g_SoilFertilityManager\n',
+    '            local sfm = g_SoilFertilityManager\n', 1)],
+  'the HUD reads Soil only through the bare global, nil in a game: no strip (E2, E3)'),
+ ('M02-weed-old-scale', HUD,
+  [('        if on.weedPressure and (sf.weedPressure or 0) > 15 then table.insert(icons, "W") end\n',
+    '        if on.weedPressure and (sf.weedPressure or 0) > 0.15 then table.insert(icons, "W") end\n', 1)],
   "W back on the 0 to 1 threshold: field 8's weeds at 10 light it (E3)"),
- ("M03-pest-old-scale", HUD,
-  [('        if (sf.pestPressure    or 0) > 15 then table.insert(icons, "P") end\n',
-    '        if (sf.pestPressure    or 0) > 0.15 then table.insert(icons, "P") end\n', 1)],
+ ('M03-pest-old-scale', HUD,
+  [('        if on.pestPressure and (sf.pestPressure or 0) > 15 then table.insert(icons, "P") end\n',
+    '        if on.pestPressure and (sf.pestPressure or 0) > 0.15 then table.insert(icons, "P") end\n', 1)],
   "P back on the 0 to 1 threshold: field 8's pests at 5 light it (E3)"),
- ("M04-disease-old-scale", HUD,
-  [('        if (sf.shownDiseasePressure or 0) > 15 then table.insert(icons, "D") end\n',
-    '        if (sf.shownDiseasePressure or 0) > 0.15 then table.insert(icons, "D") end\n', 1)],
+ ('M04-disease-old-scale', HUD,
+  [('        if on.diseasePressure and (sf.shownDiseasePressure or 0) > 15 then table.insert(icons, "D") end\n',
+    '        if on.diseasePressure and (sf.shownDiseasePressure or 0) > 0.15 then table.insert(icons, "D") end\n', 1)],
   "D back on the 0 to 1 threshold: field 8's scouted disease at 3 lights it (E3)"),
- ("M05-raw-disease", HUD,
-  [('        if (sf.shownDiseasePressure or 0) > 15 then table.insert(icons, "D") end\n',
-    '        if (sf.diseasePressure or 0) > 15 then table.insert(icons, "D") end\n', 1)],
+ ('M05-raw-disease', HUD,
+  [('        if on.diseasePressure and (sf.shownDiseasePressure or 0) > 15 then table.insert(icons, "D") end\n',
+    '        if on.diseasePressure and (sf.diseasePressure or 0) > 15 then table.insert(icons, "D") end\n', 1)],
   "D reads the raw pressure: field 9's unscouted infection shows before Soil reveals it (E3)"),
+ ('M06-weed-switch-ignored', HUD,
+  [('        if on.weedPressure and (sf.weedPressure or 0) > 15 then table.insert(icons, "W") end\n',
+    '        if (sf.weedPressure or 0) > 15 then table.insert(icons, "W") end\n', 1)],
+  "W ignores Soil's weed switch: a switched-off field keeps showing W (E5)"),
+ ('M07-pest-switch-ignored', HUD,
+  [('        if on.pestPressure and (sf.pestPressure or 0) > 15 then table.insert(icons, "P") end\n',
+    '        if (sf.pestPressure or 0) > 15 then table.insert(icons, "P") end\n', 1)],
+  "P ignores Soil's pest switch (E5)"),
+ ('M08-disease-switch-ignored', HUD,
+  [('        if on.diseasePressure and (sf.shownDiseasePressure or 0) > 15 then table.insert(icons, "D") end\n',
+    '        if (sf.shownDiseasePressure or 0) > 15 then table.insert(icons, "D") end\n', 1)],
+  "D ignores Soil's disease switch: with it off Soil returns the raw value and D shows (E5)"),
+ ('M09-simdisabled-ignored', HUD,
+  [('    if row.sfInfo ~= nil and not row.sfInfo.simDisabled then\n',
+    '    if row.sfInfo ~= nil then\n', 1)],
+  'a field whose sim Soil disabled still shows its strip (E5)'),
 ]
 
 

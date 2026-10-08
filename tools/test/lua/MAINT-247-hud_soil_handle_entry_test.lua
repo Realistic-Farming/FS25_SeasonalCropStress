@@ -12,6 +12,10 @@
 -- Row 263: D read the raw diseasePressure, so it would show an infection Soil has not revealed yet.
 -- It now reads getFieldInfo's shownDiseasePressure, nil until the field is scouted
 -- (SoilFertilitySystem.lua:8398-8399), as Soil's own HUD does (SoilHUD.lua:1036).
+-- Bob's review of #228: Soil stops growing and reducing a pressure while its system is off, so a
+-- switched-off system keeps its last value. The strip now honours Soil's on/off switches as Soil's
+-- own HUD rows do (SoilHUD.lua:433-444): W, P and D only while that system is on, and nothing for
+-- a field whose sim Soil has disabled (getFieldInfo's simDisabled).
 --
 -- THE ENTRY-POINT BAR IS GROUP E. main.lua itself runs (maint165_main_world.lua, the load list of
 -- MAINTENANCE row 259's bench with src/SoilFertilizerIntegration.lua added, so the integration is
@@ -19,8 +23,8 @@
 -- built as dataS mods.lua:482-520 builds one (__index = _G, _G the env itself, getfenv(0) mapped to
 -- it); its load puts the manager into that environment and onto the mission (main.lua:758, :761),
 -- and its getFieldInfo returns the keys the strip reads from per-field state, on Soil's 0 to 100
--- scale, with shownDiseasePressure gated as SoilFertilitySystem.lua:8398-8399 gates it (the disease
--- setting on). The engine side is three fields in g_fieldManager.fields (farmlands 7, 8 and 9, the
+-- scale, with shownDiseasePressure gated as SoilFertilitySystem.lua:8398-8399 gates it, and simDisabled;
+-- the manager carries Soil's settings (weedPressure, pestPressure, diseasePressure), all on at start. The engine side is three fields in g_fieldManager.fields (farmlands 7, 8 and 9, the
 -- ids SCS enumerates by) owned by farm 1, and the render primitives, with renderText recorded.
 -- Mission00.load and loadMission00Finished build the manager, its HUD and its Soil integration;
 -- the player's HUD key (CropStressManager:onToggleHUD) shows the HUD; FSBaseMission.update runs
@@ -30,10 +34,13 @@
 --   E0  the world: SCS's environment has no g_SoilFertilityManager; Soil's has it
 --   E1  main.lua built the manager, its HUD and an active Soil integration
 --   E2  after main.lua's update, each field's HUD row carries Soil's reading for that field
---   E3  main.lua's draw shows "W D" on field 7 (weeds 50, scouted disease 20), no letters on field 8
+--   E3  main.lua's draw shows "W P D" on field 7 (weeds 50, pests 30, scouted disease 20), none on field 8
 --       (weeds 10, pests 5, disease 3: all under 15, each above the old 0.15, so each letter's
 --       threshold is pinned by its own row), and no D on field 9 (disease 60, not yet scouted)
 --   E4  once Soil reveals field 9's infection, the next rebuild and draw show its D
+--   E5  Soil's switches: with weeds off field 7 shows "P D", with pests off "W D", with disease off
+--       "W P" and field 9 no D (Soil then returns the raw value), and with field 7's sim disabled
+--       field 7 shows nothing
 
 local function group(name, fn)
     local ok, err = pcall(fn)
@@ -80,24 +87,28 @@ local SOIL_LOAD = [==[
 local mission = ...
 -- Per-field state on Soil's own 0 to 100 scale (SoilNetworkSyncBridge.lua:74).
 local FIELDS = {
-    [7] = { weedPressure = 50, pestPressure = 0, diseasePressure = 20, diseaseDiscovered = true },
+    [7] = { weedPressure = 50, pestPressure = 30, diseasePressure = 20, diseaseDiscovered = true },
     [8] = { weedPressure = 10, pestPressure = 5, diseasePressure = 3,  diseaseDiscovered = true },
     [9] = { weedPressure = 0,  pestPressure = 0, diseasePressure = 60, diseaseDiscovered = false },
 }
-local settings = { diseasePressure = true }   -- Soil's disease system on
-local sfm = { soilSystem = { calls = 0 } }
+-- Soil's on/off switches (SoilHUD.lua:437-442 reads them as mgr.settings.*), all on at start.
+local settings = { weedPressure = true, pestPressure = true, diseasePressure = true }
+local sfm = { soilSystem = { calls = 0 }, settings = settings }
 function sfm.soilSystem:getFieldInfo(fieldId)
     self.calls = self.calls + 1
     local f = FIELDS[fieldId]
     if f == nil then return nil end
     return { weedPressure = f.weedPressure, pestPressure = f.pestPressure,
              diseasePressure = f.diseasePressure, needsFertilization = false,
+             simDisabled = f.simDisabled == true,
              -- SoilFertilitySystem.lua:8398-8399: nil until scouted while the disease system is on.
              shownDiseasePressure = (f.diseaseDiscovered or not settings.diseasePressure)
                  and f.diseasePressure or nil }
 end
 -- Soil's scouting reveal: the field's diseaseDiscovered flag turns on.
 function sfm.reveal(fieldId) FIELDS[fieldId].diseaseDiscovered = true end
+-- Soil's FieldSentry state for a field (getFieldInfo's simDisabled).
+function sfm.setSimDisabled(fieldId, v) FIELDS[fieldId].simDisabled = v end
 -- main.lua:758 and :761 at 437ca320.
 getfenv(0)["g_SoilFertilityManager"] = sfm
 mission.soilFertilityManager = sfm
@@ -158,7 +169,7 @@ group("E3", function()
     quiet(function() FSBaseMission.draw(mission) end)
     local by, n = stripsByField()
     T.eq("E3 main.lua's draw shows one Soil strip", n, 1)
-    T.eq("E3 field 7 shows W (weeds 50) and D (scouted disease 20), not P (pests 0)", by[7], "W D")
+    T.eq("E3 field 7 shows W (weeds 50), P (pests 30) and D (scouted disease 20)", by[7], "W P D")
     T.eq("E3 field 8 shows no letters (weeds 10, pests 5, disease 3: all under 15)", by[8], nil)
     T.eq("E3 field 9's unscouted disease 60 shows no D (Soil's reveal gate)", by[9], nil)
 end)
@@ -171,5 +182,38 @@ group("E4", function()
     quiet(function() FSBaseMission.draw(mission) end)
     local by = stripsByField()
     T.eq("E4 once Soil reveals field 9's infection, its row shows D", by[9], "D")
-    T.eq("E4 field 7's strip is unchanged", by[7], "W D")
+    T.eq("E4 field 7's strip is unchanged", by[7], "W P D")
+end)
+
+--- Rebuild and draw as production does after a change: two updates (the throttled rebuild), then the draw.
+local function redraw()
+    quiet(function() FSBaseMission.update(mission, 1000) end)
+    quiet(function() FSBaseMission.update(mission, 1000) end)
+    TEXT = {}
+    quiet(function() FSBaseMission.draw(mission) end)
+    return stripsByField()
+end
+
+group("E5", function()
+    local s = sfm.settings
+    s.weedPressure = false
+    local by = redraw()
+    T.eq("E5 weeds switched off: field 7 shows P and D, not its last weed value", by[7], "P D")
+    s.weedPressure = true
+    s.pestPressure = false
+    by = redraw()
+    T.eq("E5 pests switched off: field 7 shows W and D", by[7], "W D")
+    s.pestPressure = true
+    s.diseasePressure = false
+    by = redraw()
+    T.eq("E5 disease switched off: field 7 shows W and P, no D", by[7], "W P")
+    T.eq("E5 disease switched off: field 9 shows no D (Soil returns the raw value then)", by[9], nil)
+    s.diseasePressure = true
+    sfm.setSimDisabled(7, true)
+    by = redraw()
+    T.eq("E5 field 7's sim disabled by Soil: no strip on field 7", by[7], nil)
+    T.eq("E5 and field 9's revealed D still shows", by[9], "D")
+    sfm.setSimDisabled(7, false)
+    by = redraw()
+    T.eq("E5 every switch back on: field 7 shows W P D again", by[7], "W P D")
 end)

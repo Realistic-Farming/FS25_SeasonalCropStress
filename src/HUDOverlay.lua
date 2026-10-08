@@ -1168,15 +1168,19 @@ function HUDOverlay:drawFieldRow(row, px, rowY, s)
     -- Each is only shown when the value is above a meaningful threshold (15%).
     -- [MAINTENANCE row 262] Soil's pressures run 0 to 100 (SoilNetworkSyncBridge.lua:74), so the
     -- threshold is 15 on that scale; 0.15 lit every field with any pressure at all.
-    if row.sfInfo ~= nil then
+    -- Soil's on/off switches gate each letter as they gate Soil's own HUD rows (SoilHUD.lua:433-444):
+    -- a switched-off system keeps its last pressure (Soil stops growing and reducing it), so W, P
+    -- and D show only while that system is on, and a field whose sim Soil has disabled shows none.
+    if row.sfInfo ~= nil and not row.sfInfo.simDisabled then
         local sf      = row.sfInfo
+        local on      = row.sfSettings or {}
         local icons   = {}
-        if (sf.weedPressure    or 0) > 15 then table.insert(icons, "W") end
-        if (sf.pestPressure    or 0) > 15 then table.insert(icons, "P") end
+        if on.weedPressure and (sf.weedPressure or 0) > 15 then table.insert(icons, "W") end
+        if on.pestPressure and (sf.pestPressure or 0) > 15 then table.insert(icons, "P") end
         -- [MAINTENANCE row 263] D reads Soil's gated value, nil until the field is scouted
         -- (SoilFertilitySystem:getFieldInfo's shownDiseasePressure), as Soil's own HUD does: an
         -- unscouted infection counts as 0 and never leaks (the per-consumer reveal gate).
-        if (sf.shownDiseasePressure or 0) > 15 then table.insert(icons, "D") end
+        if on.diseasePressure and (sf.shownDiseasePressure or 0) > 15 then table.insert(icons, "D") end
         if sf.needsFertilization           then table.insert(icons, "F") end
         if #icons > 0 then
             -- Dim orange tint so it's visible but subordinate to moisture bar
@@ -1518,7 +1522,7 @@ function HUDOverlay:rebuildDisplayRows()
 
         -- Collect SoilFertilizer per-field data if the integration is active.
         -- Reads from the SF mod's soilSystem directly (pcall-wrapped — zero cost when absent).
-        local sfInfo = nil
+        local sfInfo, sfSettings = nil, nil
         if self.manager ~= nil
         and self.manager.soilFertilizerIntegration ~= nil
         and self.manager.soilFertilizerIntegration:isActive() then
@@ -1529,7 +1533,7 @@ function HUDOverlay:rebuildDisplayRows()
             local sfSys = sfm and sfm.soilSystem
             if sfSys ~= nil then
                 local ok, info = pcall(function() return sfSys:getFieldInfo(entry.fieldId) end)
-                if ok and info ~= nil then sfInfo = info end
+                if ok and info ~= nil then sfInfo, sfSettings = info, sfm.settings end
             end
         end
 
@@ -1541,6 +1545,7 @@ function HUDOverlay:rebuildDisplayRows()
             growthStage    = growthStage,
             inStressWindow = inStressWindow,
             sfInfo         = sfInfo,   -- nil when SoilFertilizer is absent
+            sfSettings     = sfSettings,   -- Soil's on/off switches, read with the info
         })
     end
 
