@@ -31,6 +31,16 @@ local function applyChange(key, value)
     end
 end
 
+-- [MAINTENANCE row 258] The hub asks for the live value (SettingsHub's read, row 258), so a change made in
+-- SCS's own settings panel (requestChange, through the settings owner or straight onto the settings for a
+-- local key), its console or its settings event shows in the Tablet without telling the hub. It reads the
+-- object applyChange routes through.
+local function readValue(key)
+    local mgr = g_cropStressManager
+    if mgr == nil or mgr.settings == nil then return nil end
+    return mgr.settings[key]
+end
+
 function SeasonalSettingsHubBridge.register(mgr)
     -- The reliable cross-mod handle is g_currentMission.settingsHub (the same one
     -- FarmTablet reads). The bare g_settingsHub global is only visible inside
@@ -65,6 +75,7 @@ function SeasonalSettingsHubBridge.register(mgr)
             -- client, where display state arrives only through SCS's settings event (SCS-023 v2.3
             -- SDS 4, CropStressManager.lua:515-520).
             selfPersisted = true,
+            read          = readValue,
         })
     end)
 
