@@ -58,13 +58,16 @@ group("E", function()
 
     quiet(function() mgr.settingsPanel:requestChange("difficulty", newDifficulty) end)
     quiet(function() mgr.settingsPanel:requestChange("irrigationCosts", false) end)
-    T.eq("E1 [entry point] NAMED (row 258): after SCS's own panel changed difficulty and switched irrigation costs off, the reader answers both",
-        tostring(SPEC.read("difficulty")) .. "/" .. tostring(SPEC.read("irrigationCosts")), newDifficulty .. "/false")
+    -- Typed, not through tostring: a string "false" would pass a tostring compare, and the hub would refuse it.
+    T.ok("E1 [entry point] NAMED (row 258): after SCS's own panel changed difficulty and switched irrigation costs off, the reader answers both, typed",
+        SPEC.read("difficulty") == newDifficulty and SPEC.read("irrigationCosts") == false,
+        tostring(SPEC.read("difficulty")) .. "/" .. tostring(SPEC.read("irrigationCosts")) .. " (" .. type(SPEC.read("irrigationCosts")) .. ")")
     T.eq("E1 while the values SCS registered are still the old ones (what the hub showed before)",
         tostring(registered.difficulty) .. "/" .. tostring(registered.irrigationCosts), tostring(oldDifficulty) .. "/" .. tostring(oldCosts))
 
     quiet(function() mgr.settingsPanel:requestChange("hudVisible", false) end)
-    T.eq("E2 after the panel hides the HUD (a client-local key), the reader answers false", tostring(SPEC.read("hudVisible")), "false")
+    T.ok("E2 after the panel hides the HUD (a client-local key), the reader answers false, a boolean",
+        SPEC.read("hudVisible") == false, tostring(SPEC.read("hudVisible")) .. " (" .. type(SPEC.read("hudVisible")) .. ")")
 
     local all, mismatch = 0, {}
     for _, def in ipairs(SPEC.adminSettings) do
