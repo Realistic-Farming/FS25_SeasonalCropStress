@@ -163,3 +163,8 @@ Issue #69 was the GitHub tracker for the v1.2.0 gaps. Every track is compared wi
 
 - [x] SCS registers with SettingsHub as selfPersisted, so the hub showed the values SCS registered with, and a change made in SCS's own settings panel, its console or its settings event never reached the Tablet. The registration now passes SettingsHub a reader that answers SCS's live settings, so such a change shows in the Tablet at once on the host (and on every client within a second, for admin settings). Needs SettingsHub's row 258 reader support (SettingsHub #26); with an older SettingsHub the reader is ignored. Design origin none.
 - The in-game check is TESTING row 520.
+
+## 2026-10-08 (Fred): the moisture store's Time Guard version-skew guard fires (MAINTENANCE row 268)
+
+- [x] The guard that keeps the daily moisture settle off a Time Guard without the simulation flow class could never fire: it read `tg.flowClasses`, which Time Guard never publishes, and the `TimeGuardScheduler` global, which lives in Time Guard's own mod environment. On Time Guard v1.0.0.0 (no simulation class; it first shipped in v1.0.1.0, not 1.0.0.0 as the old comment said) the settle registered and Time Guard filed it under calendar. It now reads the class list through the instance, `tg.scheduler.FLOW_CLASSES`, nil-safe, so on v1.0.0.0 the store keeps its fallback day hook. Design origin: MOISTURE-STORE brief 3.4, DEVIATES (DESIGN-CHECK row 250): the brief names the bare global and a check after registering; the store refuses before registering.
+- The in-game check is TESTING row 517.

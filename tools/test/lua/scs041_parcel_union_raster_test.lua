@@ -379,7 +379,9 @@ group("P", function()
     g_terrainNode = 1
     getTerrainHeightAtWorldPos = function(_node, x, _y, _z) if x < -40 then return 20 end return 8 end
     local registered = {}
-    g_currentMission.timeGuard = { flowClasses = { simulation = true },
+    -- [MAINTENANCE row 268] Time Guard's real shape: no published flow-class field; the class list is
+    -- its scheduler's (TimeGuard.lua:38, TimeGuardScheduler.lua:29), not an invented tg.flowClasses.
+    g_currentMission.timeGuard = { scheduler = { FLOW_CLASSES = { calendar = true, usage = true, event = true, simulation = true } },
         registerAccrual = function(_, id, spec) registered[id] = spec return true end }
     local sys, vm, grid = F245H.newSystem({ ready = false, size = 128 })
     sys:enumerateFields()
