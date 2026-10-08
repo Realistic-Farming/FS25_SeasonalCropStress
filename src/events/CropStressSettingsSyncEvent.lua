@@ -46,7 +46,11 @@ CropStressSettingsSyncEvent.TYPE_BULK = 2
 -- If you add or remove a synced setting, update this constant and the
 -- writeSetting() calls in writeStream() together.
 -- SCS-023: BULK_COUNT is 11 -> 12 (finiteWater joins the synced set).
-CropStressSettingsSyncEvent.BULK_COUNT = 12
+-- [MAINTENANCE row 289] 12 -> 9: hudVisible, alertsEnabled and alertCooldown are per player (Tyson, 2026-10-08), so
+-- the bulk event (the join, and the reply to a rejected change) no longer carries them, and a host's choices never
+-- overwrite a client's. The bulk apply also skips them on any machine, whatever a sender writes.
+CropStressSettingsSyncEvent.BULK_COUNT = 9
+CropStressSettingsSyncEvent.PER_PLAYER = { hudVisible = true, alertsEnabled = true, alertCooldown = true }
 
 -- Value type constants for serialization
 CropStressSettingsSyncEvent.VALUE_TYPE_BOOL = 1
@@ -88,13 +92,10 @@ function CropStressSettingsSyncEvent:writeStream(streamId, connection)
         -- Write each setting with type tagging
         self:writeSetting(streamId, "enabled",            settings.enabled)
         self:writeSetting(streamId, "difficulty",         settings.difficulty)
-        self:writeSetting(streamId, "hudVisible",         settings.hudVisible)
         self:writeSetting(streamId, "evapotranspiration", settings.evapotranspiration)
         self:writeSetting(streamId, "maxYieldLoss",       settings.maxYieldLoss)
         self:writeSetting(streamId, "criticalThreshold",  settings.criticalThreshold)
         self:writeSetting(streamId, "irrigationCosts",    settings.irrigationCosts)
-        self:writeSetting(streamId, "alertsEnabled",      settings.alertsEnabled)
-        self:writeSetting(streamId, "alertCooldown",      settings.alertCooldown)
         self:writeSetting(streamId, "debugMode",          settings.debugMode)
         self:writeSetting(streamId, "finiteWater",        settings.finiteWater)
         self:writeSetting(streamId, "experimentalSystems", settings.experimentalSystems)
@@ -200,6 +201,9 @@ end
 -- SETTING APPLICATION
 -- ============================================================
 function CropStressSettingsSyncEvent:applySingleSetting(key, value, connection)
+    -- [MAINTENANCE row 289] A per-player key never applies from the wire, on any machine: each player's own
+    -- choice stays theirs (Bob's backstop; no sender writes one since this row).
+    if CropStressSettingsSyncEvent.PER_PLAYER[key] then return end
     if g_server ~= nil then
         -- Server: verify master rights before applying
         if not self:senderHasMasterRights(connection) then
@@ -253,9 +257,11 @@ function CropStressSettingsSyncEvent:applyBulkSettings(settingsTable, connection
         end
     end
     
-    -- Apply all settings
+    -- Apply all settings except the per-player ones (MAINTENANCE row 289): each machine keeps its own
     for key, value in pairs(settingsTable) do
-        g_cropStressManager.settings[key] = value
+        if not CropStressSettingsSyncEvent.PER_PLAYER[key] then
+            g_cropStressManager.settings[key] = value
+        end
     end
     
     g_cropStressManager.settings:validateSettings()

@@ -157,10 +157,12 @@ local SETTINGS_META = {
         stype     = "bool",
         localOnly = true,
     },
+    -- [MAINTENANCE row 289] Per player (Tyson, 2026-10-08): applied on this machine only, never broadcast.
     alertsEnabled = {
         label = "Crop Alerts",
         desc  = "Show blinking warnings when fields reach critical moisture",
         stype = "bool",
+        localOnly = true,
     },
     alertCooldown = {
         label = "Alert Cooldown",
@@ -168,6 +170,7 @@ local SETTINGS_META = {
         stype = "multi",
         opts  = { "4h", "8h", "12h", "24h" },
         vals  = { 4, 8, 12, 24 },
+        localOnly = true,   -- [MAINTENANCE row 289] per player
     },
     debugMode = {
         label = "Debug Mode",

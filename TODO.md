@@ -159,3 +159,8 @@
 
 - [x] `src/SoilMoistureSystem.lua` `registerDailyAccrual`: the class list read through `tg.scheduler.FLOW_CLASSES`, nil-safe; the two dead reads gone; the comment's release corrected to v1.0.1.0. `scs041_parcel_union_raster_test.lua`'s fixture models `scheduler`. Bar `MAINT-268-timeguard_skew_guard_entry_test.lua`; battery `tools/test/mutate_maint268.py`, 4 of 4.
 - [~] In game (owed): TESTING row 517.
+
+## 2026-10-08 (Fred): per-player settings stay per player (MAINTENANCE row 289)
+
+- [x] `src/settings/SettingsHubBridge.lua`: `LOCAL_KEYS` from the registration's player-local defs; `applyChange` applies a player-local key on this machine (the panel's local branch); alertsEnabled and alertCooldown player-local, debugMode adminOnly. `src/settings/CropStressSettingsPanel.lua`: alertsEnabled and alertCooldown `localOnly`. `src/events/CropStressSettingsSyncEvent.lua`: `BULK_COUNT` 9, `PER_PLAYER`, the bulk write drops the three, the bulk and single applies skip them. Bar `MAINT-289-per_player_settings_stay_local_entry_test.lua`; battery `tools/test/mutate_maint289.py`, 8 of 8.
+- [~] In game (owed): TESTING row 522.
