@@ -149,3 +149,8 @@
 
 - [x] `src/CropStressManager.lua`: `isSwitchedOff()`; getMoisture, getStress, getYieldKeepFactor, getRainOutlook, getCriticalAlertHint, getTemperature and getEvaporativeDemand answer nil while off; csStatus prints no stress while off. `src/CropStressModifier.lua`: the harvest hook stands down while off. `src/ui/CsRfPdaGuest.lua`, `src/HUDOverlay.lua`, `src/ui/CsMoistureMapOverlay.lua`: direct store reads gated to the no-reading state; `src/CropConsultant.lua` and the HUD take a nil stress as 0. Bar `MAINT-269-switch_off_reads_absent_entry_test.lua`; battery `tools/test/mutate_maint269.py`, 14 of 14.
 - [~] In game (owed): TESTING row 515.
+
+## 2026-10-08 (Fred): SettingsHub reader (MAINTENANCE row 258)
+
+- [x] `src/settings/SettingsHubBridge.lua`: `readValue` (the settings object `applyChange` routes through), passed as `read` in the registration. Bar `MAINT-258-hub_reader_entry_test.lua` (main.lua's own hooks, SCS's own panel); battery `tools/test/mutate_maint258.py`, 2 of 2.
+- [~] In game (owed): TESTING row 520.

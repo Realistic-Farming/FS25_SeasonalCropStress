@@ -158,3 +158,8 @@ Issue #69 was the GitHub tracker for the v1.2.0 gaps. Every track is compared wi
 
 - [x] The master switch stopped the hourly simulation but nothing else: the companion read facade kept answering the frozen moisture, stress and weather, so Soil (once its #1109 lands), the drilling advisory and FarmTablet kept acting on them, and the harvest hook kept cutting yield from the stress it froze at. While SCS is switched off, the facade's simulated and weather getters now answer nil (the answer a reader already takes as SCS absent), the harvest hook takes no cut, and SCS's own PDA lists, HUD list and moisture map show their existing no-reading states. Bob's R-15; Desk confirmed the harvest hook extension. Design origin none, except getRainOutlook: CARRIES the drilling-window advisory brief B5 (DESIGN-CHECK row 248).
 - The in-game check is TESTING row 515.
+
+## 2026-10-08 (Fred): the Tablet shows SCS's own settings changes (MAINTENANCE row 258)
+
+- [x] SCS registers with SettingsHub as selfPersisted, so the hub showed the values SCS registered with, and a change made in SCS's own settings panel, its console or its settings event never reached the Tablet. The registration now passes SettingsHub a reader that answers SCS's live settings, so such a change shows in the Tablet at once on the host (and on every client within a second, for admin settings). Needs SettingsHub's row 258 reader support (SettingsHub #26); with an older SettingsHub the reader is ignored. Design origin none.
+- The in-game check is TESTING row 520.
