@@ -167,9 +167,12 @@ function CsRfPdaGuest.computeGlanceStats()
         soilSystem:refreshForPublication()
     end
     local withReading = 0
+    -- [MAINTENANCE row 269] Switched off, the store holds frozen moisture and stress: every field
+    -- stays tracked with no reading, and no stress is counted.
+    local off = mgr.isSwitchedOff ~= nil and mgr:isSwitchedOff()
     for fid, entry in pairs(soilSystem.fieldData) do
         totalTracked = totalTracked + 1
-        if entry.aggregateState ~= "UNAVAILABLE" and type(entry.moisture) == "number" then
+        if not off and entry.aggregateState ~= "UNAVAILABLE" and type(entry.moisture) == "number" then
             local m = entry.moisture
             withReading = withReading + 1
             sumMoisture = sumMoisture + m
@@ -182,7 +185,7 @@ function CsRfPdaGuest.computeGlanceStats()
             end
         end
 
-        local s = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
+        local s = (not off and stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
         sumStress = sumStress + s
 
         if coveredFields[fid] then
@@ -533,8 +536,13 @@ function CsRfPdaGuest.buildFieldRows()
         end
     end
 
+    -- [MAINTENANCE row 269] Switched off, the store holds frozen moisture and stress: every row
+    -- shows no reading and no stress.
+    local off = mgr.isSwitchedOff ~= nil and mgr:isSwitchedOff()
+
     -- RSF-F245 item 6: nil, not 0, when neither the entry nor getMoisture gives a number.
     local function moistureFor(fid, entry)
+        if off then return nil end
         local moisture = nil
         if entry ~= nil and entry.aggregateState ~= "UNAVAILABLE" and type(entry.moisture) == "number" then
             moisture = entry.moisture
@@ -560,7 +568,7 @@ function CsRfPdaGuest.buildFieldRows()
             if moisture ~= nil and (minMoist == nil or moisture < minMoist) then
                 minMoist = moisture
             end
-            local stress = (stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
+            local stress = (not off and stressMod and stressMod.fieldStress and stressMod.fieldStress[fid]) or 0
             if type(mgr.getStress) == "function" then
                 local okS, sv = pcall(function() return mgr:getStress(fid) end)
                 if okS and type(sv) == "number" then stress = sv end

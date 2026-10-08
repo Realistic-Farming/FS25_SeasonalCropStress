@@ -153,3 +153,8 @@ Issue #69 was the GitHub tracker for the v1.2.0 gaps. Every track is compared wi
 
 - [x] `resolveFiniteWaterDrawScale` read a mission field no mod assigns, with the wrong call shape, so the scale was always 1.0. It is now the SCS-023 build brief's section 5 call as written: the bundled OptionScalingResolver, the profile from the mission's SettingsHub, the `finiteWaterDrawScale` declaration on the agronomy dial. On finite-water sessions harder Agronomy draws water faster (1.2x Realistic, 1.4x Punishing) and Relaxed slower (0.7x); Standard is unchanged. Design origin SCS-023 v2.3 section 5, CARRIES (Bob's R-15).
 - The in-game check is TESTING row 511.
+
+## 2026-10-08 (Fred): switching SCS off reads as SCS absent (MAINTENANCE row 269)
+
+- [x] The master switch stopped the hourly simulation but nothing else: the companion read facade kept answering the frozen moisture, stress and weather, so Soil (once its #1109 lands), the drilling advisory and FarmTablet kept acting on them, and the harvest hook kept cutting yield from the stress it froze at. While SCS is switched off, the facade's simulated and weather getters now answer nil (the answer a reader already takes as SCS absent), the harvest hook takes no cut, and SCS's own PDA lists, HUD list and moisture map show their existing no-reading states. Bob's R-15; Desk confirmed the harvest hook extension. Design origin none, except getRainOutlook: CARRIES the drilling-window advisory brief B5 (DESIGN-CHECK row 248).
+- The in-game check is TESTING row 515.

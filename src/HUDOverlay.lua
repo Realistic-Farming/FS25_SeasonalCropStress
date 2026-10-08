@@ -1382,6 +1382,16 @@ function HUDOverlay:rebuildDisplayRows()
 
     local sortedFields = self.manager.soilSystem:getFieldsSortedByMoisture()
     if sortedFields == nil then return end
+    -- [MAINTENANCE row 269] Switched off, the store holds frozen moisture: every row keeps its
+    -- field and shows the no-reading state (RSF-F245 item 6), never a frozen percent.
+    if self.manager.isSwitchedOff ~= nil and self.manager:isSwitchedOff() then
+        local blank = {}
+        for _, e in ipairs(sortedFields) do
+            blank[#blank + 1] = { fieldId = e.fieldId, moisture = nil, soilType = e.soilType, unavailable = true }
+        end
+        table.sort(blank, function(a, b) return a.fieldId < b.fieldId end)
+        sortedFields = blank
+    end
 
     -- Use the manager's pre-built fieldId→field map (O(1) per lookup, correct on all maps).
     -- getFieldByIndex(n) returns fields[n] by array position, NOT the field with fieldId==n
@@ -1464,7 +1474,7 @@ function HUDOverlay:rebuildDisplayRows()
         local growthStage = nil
 
         if self.manager.stressModifier ~= nil then
-            stress = self.manager:getStress(entry.fieldId)
+            stress = self.manager:getStress(entry.fieldId) or 0   -- nil while switched off (row 269)
         end
 
         local field = fieldById[entry.fieldId]
