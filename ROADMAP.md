@@ -148,3 +148,8 @@ Issue #69 was the GitHub tracker for the v1.2.0 gaps. Every track is compared wi
 - [x] D now reads Soil's revealed disease value (`shownDiseasePressure`, nil until the field is scouted), as Soil's own HUD does, so the strip never shows an infection the player has not scouted. Design origin none; 263 applies Baseline v4 :329's reveal gate (FAST TRACK, Bob's R-15).
 - [x] W, P and D honour Soil's on/off switches as Soil's own HUD rows do (Bob's review): a switched-off system keeps its last pressure, so its letter shows only while the system is on, and a field whose sim Soil has disabled shows no strip.
 - The in-game check is TESTING row 508.
+
+## 2026-10-08 (Fred): the Agronomy dial scales finite irrigation water draw (MAINTENANCE row 250)
+
+- [x] `resolveFiniteWaterDrawScale` read a mission field no mod assigns, with the wrong call shape, so the scale was always 1.0. It is now the SCS-023 build brief's section 5 call as written: the bundled OptionScalingResolver, the profile from the mission's SettingsHub, the `finiteWaterDrawScale` declaration on the agronomy dial. On finite-water sessions harder Agronomy draws water faster (1.2x Realistic, 1.4x Punishing) and Relaxed slower (0.7x); Standard is unchanged. Design origin SCS-023 v2.3 section 5, CARRIES (Bob's R-15).
+- The in-game check is TESTING row 511.

@@ -277,17 +277,25 @@ function IrrigationManager:handleFiniteWaterModeEdge()
 end
 
 --- Resolve the OptionScaling finiteWaterDrawScale once per hourly act.
+-- [MAINTENANCE row 250] SCS-023 build brief section 5 (:126-136), as written: the bundled
+-- OptionScalingResolver (main.lua:66), called statically as SoilMoistureSystem does (:2538-2540), with
+-- the profile read from the mission's SettingsHub. The old read used g_currentMission.optionScalingResolver,
+-- a field no mod assigns, with colon calls, an "AGRO" key and the wrong argument order, so the scale
+-- was always 1.0. Missing SettingsHub, missing profile or the Agronomy dial switched off yields 1.0.
 function IrrigationManager:resolveFiniteWaterDrawScale()
-    -- Agronomy declaration, base/neutral 1.0. Delegate-when-present.
-    local resolver = g_currentMission ~= nil and g_currentMission.optionScalingResolver or nil
-    if resolver == nil then return 1.0 end
-    if type(resolver.readProfile) == "function" and type(resolver.resolve) == "function" then
-        local profile = resolver:readProfile()
-        if profile ~= nil then
-            local v = resolver:resolve(profile, "AGRO", "finiteWaterDrawScale")
-            if type(v) == "number" and v > 0 then return v end
-        end
+    if OptionScalingResolver == nil or type(OptionScalingResolver.readProfile) ~= "function"
+        or type(OptionScalingResolver.resolve) ~= "function" then
+        return 1.0
     end
+    local settingsHub = g_currentMission ~= nil and g_currentMission.settingsHub or nil
+    local profile = OptionScalingResolver.readProfile(settingsHub)
+    local v = OptionScalingResolver.resolve({
+        id = "finiteWaterDrawScale",
+        dial = "agronomy",
+        base = 1.0,
+        neutral = 1.0,
+    }, profile)
+    if type(v) == "number" and v > 0 then return v end
     return 1.0
 end
 
