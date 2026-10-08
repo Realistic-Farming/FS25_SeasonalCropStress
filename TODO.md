@@ -134,3 +134,8 @@
 
 - [x] The side info boxes start clear of the selected tab; text bodies 352 and 348 px wide after #223, so line length and the right edge are unchanged; byte-same in all ten door mods.
 - [~] In game (owed): TESTING row 448.
+
+## 2026-10-08 (Fred): HUD Soil strip (MAINTENANCE rows 247, 262 and 263)
+
+- [x] `src/HUDOverlay.lua`: Soil's system through the mission first; W, P and D above 15 on Soil's 0 to 100 scale; D from `shownDiseasePressure` (the reveal gate). Bar `MAINT-247-hud_soil_handle_entry_test.lua`, battery `tools/test/mutate_maint247.py`.
+- [~] In game (owed): TESTING row 508.

@@ -140,3 +140,10 @@ Issue #69 was the GitHub tracker for the v1.2.0 gaps. Every track is compared wi
 
 - [x] The shared Esc door file `xml/gui/RfPdaMenuPage.xml` (Wizard, #222, merged at ff3edebf at its first head, and its follow-up #223, merged at 1b01478d): the side info boxes (`rfSideInfoShell`, `wcSideInfoShell`, `mdSideInfoShell`, `csSideInfoShell`) take an explicit position and size, 16 px further right and 16 px narrower (384 to 368 px), so the dark box starts clear of the selected tab's lime edge and its right edge stays where it was. #222 narrowed the side text bodies to 320 px; #223 sets them to 352 px (the main side text, from 368) and 348 px (the Worker Costs and Market Dynamics side help, from 364), so the text starts 16 px further right and each line ends where it did. The door file is byte-same in all ten door mods again.
 - The in-game check is TESTING row 448, which covers #222 and names #223 as its follow-up. Docs by Fred's catch-up, on Tyson's word of 2026-10-05.
+
+## 2026-10-08 (Fred): the HUD shows Soil's field pressures in a game (MAINTENANCE rows 247, 262 and 263)
+
+- [x] The HUD's Soil strip read Soil through the bare global `g_SoilFertilityManager`, which Soil sets only in its own mod environment, so the strip never drew. `rebuildDisplayRows` now reads `g_currentMission.soilFertilityManager` first, as the Soil integration already did.
+- [x] The strip's thresholds were written for a 0 to 1 scale (`> 0.15`), but Soil's weed, pest and disease pressures run 0 to 100, so with the handle fixed every field with any pressure would light. The threshold is now 15 on Soil's scale (the comment's 15%).
+- [x] D now reads Soil's revealed disease value (`shownDiseasePressure`, nil until the field is scouted), as Soil's own HUD does, so the strip never shows an infection the player has not scouted. Design origin none; 263 applies Baseline v4 :329's reveal gate (FAST TRACK, Bob's R-15).
+- The in-game check is TESTING row 508.
