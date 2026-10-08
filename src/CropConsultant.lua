@@ -163,7 +163,7 @@ function CropConsultant:hourlyEvaluate()
                 -- Only alert if stress is actively accumulating (crop in critical window)
                 local stress = 0
                 if self.manager.stressModifier ~= nil then
-                    stress = self.manager:getStress(fieldId)
+                    stress = self.manager:getStress(fieldId) or 0   -- nil while switched off (row 269)
                 end
 
                 if stress > 0.01 then
