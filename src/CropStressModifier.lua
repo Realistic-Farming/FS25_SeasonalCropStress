@@ -455,6 +455,12 @@ function CropStressModifier.installHarvestHook()
                 diag("manager not initialized", nil, nil)
                 return lastArea, totalArea
             end
+            -- [MAINTENANCE row 269] The master switch: off stops the stress simulation, so a cut
+            -- taken while SCS is switched off gets no SCS reduction from the stress it froze at.
+            if g_cropStressManager.isSwitchedOff ~= nil and g_cropStressManager:isSwitchedOff() then
+                diag("SCS switched off", nil, nil)
+                return lastArea, totalArea
+            end
 
             local stressModifier = g_cropStressManager.stressModifier
 

@@ -303,6 +303,8 @@ function CsMoistureMapOverlay:_pdaCollectFieldPolygons()
     local mgr = self.manager
     local soilSystem = mgr and mgr.soilSystem
     if soilSystem == nil or soilSystem.fieldData == nil then return out end
+    -- [MAINTENANCE row 269] Switched off, the store holds frozen moisture: no field is painted.
+    if mgr.isSwitchedOff ~= nil and mgr:isSwitchedOff() then return out end
 
     local moistCache = {}
     for _, f in ipairs(g_fieldManager.fields) do
@@ -420,8 +422,11 @@ function CsMoistureMapOverlay:_pdaKickBuild()
     -- fine state answers not-current, so the overlay falls to the aggregate
     -- fallback instead of drawing non-current bytes as current ground.
     local soilSystem = self.manager and self.manager.soilSystem
+    -- [MAINTENANCE row 269] Switched off, the live map holds frozen moisture: skip it; the
+    -- fallback below then paints no field (_pdaCollectFieldPolygons answers none).
+    local switchedOff = self.manager ~= nil and self.manager.isSwitchedOff ~= nil and self.manager:isSwitchedOff()
     local valueMap = nil
-    if soilSystem ~= nil and soilSystem.isMoistureMapCurrent ~= nil
+    if not switchedOff and soilSystem ~= nil and soilSystem.isMoistureMapCurrent ~= nil
        and soilSystem.getMoistureDisplayMap ~= nil
        and soilSystem:isMoistureMapCurrent() then
         valueMap = soilSystem:getMoistureDisplayMap()
@@ -650,6 +655,12 @@ function CsMoistureMapOverlay:updateSamplePoints(force)
     local mgr = self.manager
     local soilSystem = mgr and mgr.soilSystem
     if soilSystem == nil then return end
+    -- [MAINTENANCE row 269] Switched off, the store holds frozen moisture: no field has a reading,
+    -- so the sheet is empty and the panel counts none.
+    if mgr.isSwitchedOff ~= nil and mgr:isSwitchedOff() then
+        self.stats = {dry = 0, good = 0, wet = 0, avg = nil, fields = 0}
+        return
+    end
 
     local terrainSize = (g_currentMission and g_currentMission.terrainSize) or 2048
     local mapScale    = math.max(1.0, terrainSize / 2048.0)

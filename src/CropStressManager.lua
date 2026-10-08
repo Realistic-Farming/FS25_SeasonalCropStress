@@ -1114,10 +1114,22 @@ end
 -- without breaking readers. Mirrors SoilFertilizer's getFieldInfo read contract.
 -- ============================================================
 
+-- [MAINTENANCE row 269] The master switch. Off stops the hourly simulation (onHourlyTick returns
+-- at its first line), so moisture, stress and the weather reads freeze with it
+-- (WeatherIntegration:update runs only from that tick). While it is off, every getter below that
+-- reports simulated or weather state answers nil, the answer a reader already takes as "SCS
+-- absent", so no reader acts on frozen state. Not gated: the irrigation getters (irrigation stops
+-- on the switch at its own gates in IrrigationManager) and getFieldSoilType (a fixed property of
+-- the field). A manager with no settings table counts as on.
+function CropStressManager:isSwitchedOff()
+    return self.settings ~= nil and not self.settings.enabled
+end
+
 -- Moisture (0.0-1.0) for a field, or nil if the field is not tracked.
 -- With a world position (fieldId, x, z) returns the per-cell moisture where a
 -- cell exists, else the field aggregate (SCS-018 positional read; never nil).
 function CropStressManager:getMoisture(fieldId, x, z)
+    if self:isSwitchedOff() then return nil end   -- [MAINTENANCE row 269]
     if self.soilSystem == nil then return nil end
     return self.soilSystem:getMoisture(fieldId, x, z)
 end
@@ -1129,6 +1141,7 @@ end
 -- Heat-driven consumers (SCS-010 market heat, SCS-013 livestock heat) must read
 -- getTemperature/getEvaporativeDemand below, never getStress, for heat.
 function CropStressManager:getStress(fieldId)
+    if self:isSwitchedOff() then return nil end   -- [MAINTENANCE row 269]
     if self.stressModifier == nil then return 0.0 end
     return self.stressModifier:getStress(fieldId)
 end
@@ -1147,6 +1160,7 @@ end
 -- -- in RW mode our Cutter.processCutterArea reduction steps aside entirely and
 -- FS25_RealisticWeather owns the yield penalty, so SCS contributes nothing to fold.
 function CropStressManager:getYieldKeepFactor(fieldId)
+    if self:isSwitchedOff() then return nil end   -- [MAINTENANCE row 269]
     local sm = self.stressModifier
     if sm == nil then return 1.0 end
     if sm.rwModeActive then return 1.0 end
@@ -1161,6 +1175,7 @@ end
 -- rain duration for days 1-2, season priors beyond). ALWAYS approximate: the
 -- result carries `approximate = true` and every consumer must hedge.
 function CropStressManager:getRainOutlook(daysAhead)
+    if self:isSwitchedOff() then return nil end   -- [MAINTENANCE row 269]
     if self.weatherIntegration == nil or self.weatherIntegration.getRainOutlook == nil then
         return { likelihood = 0.5, approximate = true }
     end
@@ -1305,6 +1320,7 @@ end
 -- Short localised critical-stress hint (e.g. an AutoDrive water-hauling
 -- suggestion), or nil when no advisory applies. Read-only.
 function CropStressManager:getCriticalAlertHint()
+    if self:isSwitchedOff() then return nil end   -- [MAINTENANCE row 269]
     if self.autoDriveIntegration == nil then return nil end
     return self.autoDriveIntegration:getCriticalAlertHint()
 end
@@ -1317,6 +1333,7 @@ end
 -- Current ambient temperature in °C (weather-driven). Neutral 15.0 without
 -- weather data.
 function CropStressManager:getTemperature()
+    if self:isSwitchedOff() then return nil end   -- [MAINTENANCE row 269]
     if self.weatherIntegration == nil then return 15.0 end
     return self.weatherIntegration:getCurrentTemp() or 15.0
 end
@@ -1326,6 +1343,7 @@ end
 -- raining). The map-wide heat/drought pressure signal for SCS-010/013 to
 -- compose their own response from. Neutral 1.0 without weather data.
 function CropStressManager:getEvaporativeDemand()
+    if self:isSwitchedOff() then return nil end   -- [MAINTENANCE row 269]
     if self.weatherIntegration == nil then return 1.0 end
     return self.weatherIntegration:getHourlyEvapMultiplier() or 1.0
 end
@@ -1586,9 +1604,10 @@ function CropStressManager:consoleStatus()
         if printed >= 5 then break end
         local f = sorted[i]
         if type(f.moisture) == "number" then
+            -- [MAINTENANCE row 269] getStress answers nil while SCS is switched off.
             local stress = self:getStress(f.fieldId)
-            print(string.format("    Field %d: %.1f%% moisture, stress %.2f",
-                f.fieldId, f.moisture * 100, stress))
+            print(string.format("    Field %d: %.1f%% moisture, stress %s",
+                f.fieldId, f.moisture * 100, stress ~= nil and string.format("%.2f", stress) or "n/a (switched off)"))
             printed = printed + 1
         end
     end

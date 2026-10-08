@@ -144,3 +144,8 @@
 
 - [x] `src/IrrigationManager.lua` `resolveFiniteWaterDrawScale`: the brief's static resolver call. Bar `MAINT-250-agronomy_draw_scale_spec_test.lua`, battery `tools/test/mutate_maint250.py`, 2 of 2.
 - [~] In game (owed): TESTING row 511.
+
+## 2026-10-08 (Fred): the master switch reads as SCS absent (MAINTENANCE row 269)
+
+- [x] `src/CropStressManager.lua`: `isSwitchedOff()`; getMoisture, getStress, getYieldKeepFactor, getRainOutlook, getCriticalAlertHint, getTemperature and getEvaporativeDemand answer nil while off; csStatus prints no stress while off. `src/CropStressModifier.lua`: the harvest hook stands down while off. `src/ui/CsRfPdaGuest.lua`, `src/HUDOverlay.lua`, `src/ui/CsMoistureMapOverlay.lua`: direct store reads gated to the no-reading state; `src/CropConsultant.lua` and the HUD take a nil stress as 0. Bar `MAINT-269-switch_off_reads_absent_entry_test.lua`; battery `tools/test/mutate_maint269.py`, 14 of 14.
+- [~] In game (owed): TESTING row 515.
