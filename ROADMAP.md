@@ -163,3 +163,8 @@ Issue #69 was the GitHub tracker for the v1.2.0 gaps. Every track is compared wi
 
 - [x] SCS registers with SettingsHub as selfPersisted, so the hub showed the values SCS registered with, and a change made in SCS's own settings panel, its console or its settings event never reached the Tablet. The registration now passes SettingsHub a reader that answers SCS's live settings, so such a change shows in the Tablet at once on the host (and on every client within a second, for admin settings). Needs SettingsHub's row 258 reader support (SettingsHub #26); with an older SettingsHub the reader is ignored. Design origin none.
 - The in-game check is TESTING row 520.
+
+## 2026-10-08 (Fred): each player's HUD, alert and cooldown choices stay their own (MAINTENANCE row 289)
+
+- [x] Show Moisture HUD, Crop Alerts and Alert Cooldown are per player (Tyson, 2026-10-08). A host's change to them in the Tablet went through the settings owner and was broadcast to every client (a regression from #226), SCS's own panel broadcast the two alert settings, and the settings event's bulk write carried all three, so a join overwrote each player's own. Now the Tablet and the panel apply them on the player's own machine only, the bulk write drops them, and the settings event never applies them from the wire. Debug Mode stays a server setting, as the panel has it, and the Tablet now shows it as one. Design origin SCS-023 v2.3 :117, DEVIATES (DESIGN-CHECK row 251).
+- The in-game check is TESTING row 522.

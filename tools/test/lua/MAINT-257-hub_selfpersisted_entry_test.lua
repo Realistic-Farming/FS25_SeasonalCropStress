@@ -47,5 +47,6 @@ group("E entry", function()
         tostring(spec and spec.selfPersisted), "true")
     local admin = 0
     for _, d in ipairs(spec and spec.adminSettings or {}) do if d.adminOnly then admin = admin + 1 end end
-    T.eq("E3 and it is otherwise the registration it was: its eight admin settings and its onChange", admin .. "/" .. type(spec and spec.onChange), "8/function")
+    -- [MAINTENANCE row 289] Nine since debugMode became a server setting in the hub, as SCS's panel has it.
+    T.eq("E3 and it is otherwise the registration it was: its nine admin settings and its onChange", admin .. "/" .. type(spec and spec.onChange), "9/function")
 end)
