@@ -144,3 +144,8 @@
 
 - [x] `src/IrrigationManager.lua` `resolveFiniteWaterDrawScale`: the brief's static resolver call. Bar `MAINT-250-agronomy_draw_scale_spec_test.lua`, battery `tools/test/mutate_maint250.py`, 2 of 2.
 - [~] In game (owed): TESTING row 511.
+
+## 2026-10-08 (Fred): Time Guard skew guard (MAINTENANCE row 268)
+
+- [x] `src/SoilMoistureSystem.lua` `registerDailyAccrual`: the class list read through `tg.scheduler.FLOW_CLASSES`, nil-safe; the two dead reads gone; the comment's release corrected to v1.0.1.0. `scs041_parcel_union_raster_test.lua`'s fixture models `scheduler`. Bar `MAINT-268-timeguard_skew_guard_entry_test.lua`; battery `tools/test/mutate_maint268.py`, 4 of 4.
+- [~] In game (owed): TESTING row 517.

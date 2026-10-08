@@ -153,3 +153,8 @@ Issue #69 was the GitHub tracker for the v1.2.0 gaps. Every track is compared wi
 
 - [x] `resolveFiniteWaterDrawScale` read a mission field no mod assigns, with the wrong call shape, so the scale was always 1.0. It is now the SCS-023 build brief's section 5 call as written: the bundled OptionScalingResolver, the profile from the mission's SettingsHub, the `finiteWaterDrawScale` declaration on the agronomy dial. On finite-water sessions harder Agronomy draws water faster (1.2x Realistic, 1.4x Punishing) and Relaxed slower (0.7x); Standard is unchanged. Design origin SCS-023 v2.3 section 5, CARRIES (Bob's R-15).
 - The in-game check is TESTING row 511.
+
+## 2026-10-08 (Fred): the moisture store's Time Guard version-skew guard fires (MAINTENANCE row 268)
+
+- [x] The guard that keeps the daily moisture settle off a Time Guard without the simulation flow class could never fire: it read `tg.flowClasses`, which Time Guard never publishes, and the `TimeGuardScheduler` global, which lives in Time Guard's own mod environment. On Time Guard v1.0.0.0 (no simulation class; it first shipped in v1.0.1.0, not 1.0.0.0 as the old comment said) the settle registered and Time Guard filed it under calendar. It now reads the class list through the instance, `tg.scheduler.FLOW_CLASSES`, nil-safe, so on v1.0.0.0 the store keeps its fallback day hook. Design origin: MOISTURE-STORE brief 3.4, DEVIATES (DESIGN-CHECK row 250): the brief names the bare global and a check after registering; the store refuses before registering.
+- The in-game check is TESTING row 517.

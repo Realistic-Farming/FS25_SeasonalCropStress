@@ -3148,15 +3148,20 @@ function SoilMoistureSystem:registerDailyAccrual()
         return false
     end
     -- Version-skew guard (brief 3.4): an old Time Guard silently coerces an
-    -- unknown flowClass to calendar. The simulation class shipped in TimeGuard
-    -- 1.0.0.0; if it is absent, do not register against a mislabelled flow.
-    if tg.flowClasses ~= nil and tg.flowClasses.simulation ~= true then
+    -- unknown flowClass to calendar. The simulation class first shipped in Time
+    -- Guard v1.0.1.0 (v1.0.0.0 lacks it); if it is absent, do not register
+    -- against a mislabelled flow.
+    -- [MAINTENANCE row 268] Read the class list through the instance. Time Guard
+    -- publishes no flow-class field (the old tg.flowClasses read was always nil),
+    -- and TimeGuardScheduler is a global in Time Guard's own mod environment,
+    -- never ours, so this reads its internal scheduler: TimeGuard.lua:38 sets
+    -- tg.scheduler in every version, and the class table resolves through its
+    -- metatable. Brief 3.4 names TimeGuardScheduler.FLOW_CLASSES itself and asks
+    -- for a check after registering; this refuses before registering instead
+    -- (DESIGN-CHECK: DEVIATES on both counts).
+    local fc = type(tg.scheduler) == "table" and tg.scheduler.FLOW_CLASSES or nil
+    if type(fc) == "table" and fc.simulation ~= true then
         csLog("Moisture store: Time Guard has no 'simulation' flow class; using fallback day hook")
-        return false
-    end
-    if TimeGuardScheduler ~= nil and TimeGuardScheduler.FLOW_CLASSES ~= nil
-        and TimeGuardScheduler.FLOW_CLASSES.simulation ~= true then
-        csLog("Moisture store: TimeGuardScheduler has no 'simulation' flow class; using fallback day hook")
         return false
     end
     local ok, err = pcall(function()
