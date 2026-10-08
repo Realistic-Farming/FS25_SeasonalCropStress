@@ -139,3 +139,8 @@
 
 - [x] `src/HUDOverlay.lua`: Soil's system through the mission first; W, P and D above 15 on Soil's 0 to 100 scale; D from `shownDiseasePressure` (the reveal gate); W, P and D only while Soil's switch for each is on, none when `simDisabled`. Bar `MAINT-247-hud_soil_handle_entry_test.lua`, battery `tools/test/mutate_maint247.py`.
 - [~] In game (owed): TESTING row 508.
+
+## 2026-10-08 (Fred): Agronomy draw scale (MAINTENANCE row 250)
+
+- [x] `src/IrrigationManager.lua` `resolveFiniteWaterDrawScale`: the brief's static resolver call. Bar `MAINT-250-agronomy_draw_scale_spec_test.lua`, battery `tools/test/mutate_maint250.py`, 2 of 2.
+- [~] In game (owed): TESTING row 511.
