@@ -39,6 +39,9 @@ SeasonalCropStressModName = SeasonalCropStressModName or g_currentModName or "FS
 local modDir = SeasonalCropStressModDirectory
 
 -- Weather bridge
+-- Live Controls chord for an InputAction, so hints show the real
+-- binding rather than a factory default (KEYBINDS-R220-20261006).
+source(modDir .. "src/utils/CsLiveKeyLabel.lua")
 source(modDir .. "src/WeatherIntegration.lua")
 
 -- Value-map substrate (SCS-039): loads BEFORE SoilMoistureSystem, which

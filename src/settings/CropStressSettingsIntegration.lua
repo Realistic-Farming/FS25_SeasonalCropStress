@@ -1,7 +1,8 @@
 -- ============================================================
 -- CropStressSettingsIntegration.lua
 -- Injects a minimal hint into ESC > Settings > Game Settings.
--- Full settings live in the custom panel (SHIFT+S).
+-- Full settings live in the custom panel, opened by the Open Crop Stress
+-- Settings action. The chord is never hardcoded here; it is read live.
 -- ============================================================
 
 local function csLog(msg)
@@ -10,6 +11,21 @@ local function csLog(msg)
 end
 
 -- ── Frame open hook ───────────────────────────────────────────
+-- The settings hint is injected once per frame (cropstress_hintDone), so the
+-- label has to be rebuilt when a binding changes rather than cached. Returns the
+-- header with the live chord, or the bare name when no chord can be resolved:
+-- a factory default is never presented as if it were the live binding.
+local function csHeaderText()
+    local base = "Seasonal Crop Stress"
+    if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.get ~= nil then
+        local chord = CsLiveKeyLabel.get("CS_OPEN_SETTINGS")
+        if type(chord) == "string" and chord ~= "" then
+            return base .. "  (" .. chord .. " for full settings)"
+        end
+    end
+    return base
+end
+
 local function onFrameOpen(frame)
     if frame.cropstress_hintDone then return end
 
@@ -27,7 +43,12 @@ local function onFrameOpen(frame)
         local profile = g_gui:getProfile("fs25_settingsSectionHeader")
         textElement.name = "sectionHeader"
         textElement:loadProfile(profile, true)
-        textElement:setText("Seasonal Crop Stress  (SHIFT+S for full settings)")
+        textElement:setText(csHeaderText())
+        if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.subscribe ~= nil then
+            CsLiveKeyLabel.subscribe(textElement, function()
+                pcall(function() textElement:setText(csHeaderText()) end)
+            end)
+        end
         frame.gameSettingsLayout:addElement(textElement)
         textElement:onGuiSetupFinished()
 
@@ -42,7 +63,7 @@ local function onFrameOpen(frame)
     if not ok then
         csLog("WARNING: ESC settings hint injection failed: " .. tostring(err))
     else
-        csLog("ESC menu: Seasonal Crop Stress hint injected (SHIFT+S)")
+        csLog("ESC menu: Seasonal Crop Stress hint injected")
     end
 end
 

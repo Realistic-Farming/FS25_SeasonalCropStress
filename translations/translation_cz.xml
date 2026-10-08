@@ -8,7 +8,7 @@
     <text name="cs_hud_critical"      text="KRITICKÉ - Zavlažte okamžitě!"/>
     <text name="cs_hud_no_crop"       text="Žádná plodina"/>
     <text name="cs_hud_forecast"      text="5denní předpověď"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 načten. Stiskněte Alt+M pro otevření HUD vlhkosti. Jste v modu noví? Otevřete menu Nápověda (ESC → Nápověda) a najděte Seasonal Crop Stress, abyste se dozvěděli, jak vše funguje."/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 načten. Stiskněte Right Ctrl+M pro otevření HUD vlhkosti. Jste v modu noví? Otevřete menu Nápověda (ESC → Nápověda) a najděte Seasonal Crop Stress, abyste se dozvěděli, jak vše funguje."/>
     <text name="cs_hud_click_forecast" text="Klikněte na řádek pro 5denní předpověď"/>
     <text name="cs_hud_vehicle_disabled" text="Překrytí vypnuto ve vozidle"/>
 
@@ -158,7 +158,7 @@
     <text name="helpLine_cs_p1_intro_title"    text="Co tento mod přidává"/>
     <text name="helpLine_cs_p1_intro_text"     text="[EN] Seasonal Crop Stress gives every field its own soil moisture, from 0% (bone dry) to 100% (saturated). Rain fills it, heat and time dry it, and irrigation lets you put water back. While a crop is in its thirsty growth window and the field is drier than that crop needs, drought stress builds, and at harvest that stress takes a share of the yield. The Esc page lists the fields you own."/>
     <text name="helpLine_cs_p1_start_title"    text="Začínáme"/>
-    <text name="helpLine_cs_p1_start_text"     text="[EN] Open the moisture HUD with the Controls action Toggle Moisture HUD (factory Right Shift+M; if nothing happens, look under Options &gt; Controls &gt; Seasonal Crop Stress, it may be bound to another key). Green fields are fine, yellow need water soon, red are losing yield. The Esc menu page Realistic Farming &gt; Crop Stress lists your fields with moisture, stress and irrigation; click a row for the detail card. Build a Water Pump first, then a Center Pivot within 500 m of it."/>
+    <text name="helpLine_cs_p1_start_text"     text="[EN] Open the moisture HUD with the Controls action Toggle Moisture HUD (factory Right Ctrl+M; if nothing happens, look under Options &gt; Controls &gt; Seasonal Crop Stress, it may be bound to another key). Green fields are fine, yellow need water soon, red are losing yield. The Esc menu page Realistic Farming &gt; Crop Stress lists your fields with moisture, stress and irrigation; click a row for the detail card. Build a Water Pump first, then a Center Pivot within 500 m of it."/>
 
     <!-- Overview: Page 2 -->
    <text name="helpLine_cs_p2_title"          text="Vlhkost půdy"/>
@@ -207,13 +207,13 @@
     <!-- Tips & Tricks: Page 1 (HUD & Controls) -->
     <text name="helpLine_cs_p4_title"          text="HUD a ovládání"/>
     <text name="helpLine_cs_p4_hud_title"      text="Překrytí HUD vlhkosti"/>
-    <text name="helpLine_cs_p4_hud_text"       text="[EN] The moisture HUD (Controls action Toggle Moisture HUD, factory Right Shift+M) lists every tracked field with crop, growth stage, a colour bar and the moisture percentage, with the forecast strip above it. Edit mode (Controls action Edit/Move Moisture HUD, factory Right Shift+N) lets you drag and resize the panes; the layout is saved per player."/>
+    <text name="helpLine_cs_p4_hud_text"       text="[EN] The moisture HUD (Controls action Toggle Moisture HUD, factory Right Ctrl+M) lists every tracked field with crop, growth stage, a colour bar and the moisture percentage, with the forecast strip above it. Edit mode (Controls action Edit/Move Moisture HUD, factory Right Shift+N) lets you drag and resize the panes; the layout is saved per player."/>
     <text name="helpLine_cs_p4_reading_title"  text="Čtení řádku pole"/>
     <text name="helpLine_cs_p4_reading_text"   text="[EN] Each row shows the field number, the crop, its growth stage, the moisture bar and the percentage. An exclamation mark at the end means that field is already building drought stress. Only crops that can suffer drought stress are listed."/>
     <text name="helpLine_cs_p4_status_title"   text="Barvy stavu"/>
     <text name="helpLine_cs_p4_status_text"    text="[EN] Green is Healthy: 40% moisture and up, nothing to do. Yellow is Warning: 25% to 40%, plan water. Red is Critical: below 25%, yield loss can start, water now. The same bands colour the Esc Crop Stress page."/>
     <text name="helpLine_cs_p4_keys_title"     text="Klávesové zkratky"/>
-    <text name="helpLine_cs_p4_keys_text"      text="[EN] Toggle Moisture HUD: factory Right Shift+M. Edit/Move Moisture HUD: factory Right Shift+N. Open Irrigation Manager, Open Crop Consultant and Open Crop Stress Settings have no factory key: bind them under Options &gt; Controls &gt; Seasonal Crop Stress. The Esc page Realistic Farming &gt; Crop Stress has a Help footer that opens the two-column guide."/>
+    <text name="helpLine_cs_p4_keys_text"      text="[EN] Toggle Moisture HUD: factory Right Ctrl+M. Edit/Move Moisture HUD: factory Right Shift+N. Open Irrigation Manager, Open Crop Consultant and Open Crop Stress Settings have no factory key: bind them under Options &gt; Controls &gt; Seasonal Crop Stress. The Esc page Realistic Farming &gt; Crop Stress has a Help footer that opens the two-column guide."/>
 
     <!-- Tips & Tricks: Page 2 - Farming Strategies -->
     <text name="helpLine_cs_t2_title"          text="Farmářské strategie"/>
@@ -508,5 +508,8 @@
     <text name="cs_consultant_conflict" text="Uloženo více než jedna Alex Chen; její důvěru nelze propojit"/>
     <text name="cs_consultant_legacy_trust_held" text="Starou důvěru Alex Chen nebylo možné bezpečně propojit s touto sousedkou; je odložena, nepoužita"/>
     <text name="cs_consultant_legacy_trust_held_short" text="(stará důvěra odložena)"/>
+    <text name="rf_live_key_unbound" text="Nepřiřazeno"/>
+    <text name="rf_live_key_keyboard_unbound" text="Klávesnice neprirazena"/>
+    <text name="rf_live_key_unavailable" text="nedostupné"/>
 </texts>
 </l10n>
