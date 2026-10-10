@@ -48125,26 +48125,26 @@
     "watchers": 3
   },
   {
-    "timestamp": "2026-10-10T06:35:43Z",
+    "timestamp": "2026-10-10T18:09:33Z",
     "date": "2026-10-10",
     "views": {
-      "count": 308,
-      "uniques": 143
+      "count": 316,
+      "uniques": 145
     },
     "clones": {
-      "count": 568,
-      "uniques": 243
+      "count": 930,
+      "uniques": 315
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 74,
-        "uniques": 63
+        "count": 73,
+        "uniques": 62
       },
       {
         "referrer": "Google",
-        "count": 47,
-        "uniques": 36
+        "count": 48,
+        "uniques": 37
       },
       {
         "referrer": "kingmods.net",
@@ -48158,8 +48158,8 @@
       },
       {
         "referrer": "realisticfarming.com",
-        "count": 5,
-        "uniques": 2
+        "count": 6,
+        "uniques": 3
       },
       {
         "referrer": "yandex.ru",
@@ -48186,20 +48186,20 @@
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress",
         "title": "Overview",
-        "count": 170,
-        "uniques": 116
+        "count": 171,
+        "uniques": 117
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/releases",
         "title": "/releases",
-        "count": 54,
-        "uniques": 33
+        "count": 57,
+        "uniques": 35
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.5.0",
         "title": "/releases/tag/v1.2.5.0",
-        "count": 36,
-        "uniques": 31
+        "count": 40,
+        "uniques": 34
       },
       {
         "path": "/Realistic-Farming/FS25_SeasonalCropStress/issues",
@@ -48248,7 +48248,7 @@
       {
         "assets": [
           {
-            "downloads": 66,
+            "downloads": 67,
             "name": "FS25_SeasonalCropStress.zip"
           }
         ],
@@ -48257,7 +48257,7 @@
       {
         "assets": [
           {
-            "downloads": 328,
+            "downloads": 329,
             "name": "FS25_SeasonalCropStress.zip"
           }
         ],
