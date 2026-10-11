@@ -1,3 +1,5 @@
+CropStressSettingsIntegration = CropStressSettingsIntegration or {}
+
 -- ============================================================
 -- CropStressSettingsIntegration.lua
 -- Injects a minimal hint into ESC > Settings > Game Settings.
@@ -15,15 +17,32 @@ end
 -- label has to be rebuilt when a binding changes rather than cached. Returns the
 -- header with the live chord, or the bare name when no chord can be resolved:
 -- a factory default is never presented as if it were the live binding.
-local function csHeaderText()
+function CropStressSettingsIntegration.headerText()
     local base = "Seasonal Crop Stress"
-    if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.get ~= nil then
-        local chord = CsLiveKeyLabel.get("CS_OPEN_SETTINGS")
-        if type(chord) == "string" and chord ~= "" then
+    -- get() returns a localized status word when nothing is bound, so the old
+    -- form read "(Unbound for full settings)". Only a live chord earns the
+    -- parenthetical; every other kind leaves the bare section name.
+    if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.resolve ~= nil then
+        local chord, kind = CsLiveKeyLabel.resolve("CS_OPEN_SETTINGS")
+        if kind == "live" and type(chord) == "string" and chord ~= "" then
             return base .. "  (" .. chord .. " for full settings)"
         end
     end
     return base
+end
+
+-- The hint is injected once per frame open, and the global message centre lives
+-- for the whole game session without deduping subscribers, so subscribing here
+-- unconditionally added one closure over a dead text element per mission load.
+-- At most one subscription is held: the previous is released before a new one
+-- is taken, and teardown releases it.
+local csHeaderUnsubscribe = nil
+
+local function csReleaseHeaderSubscription()
+    if csHeaderUnsubscribe ~= nil then
+        pcall(csHeaderUnsubscribe)
+        csHeaderUnsubscribe = nil
+    end
 end
 
 local function onFrameOpen(frame)
@@ -43,10 +62,11 @@ local function onFrameOpen(frame)
         local profile = g_gui:getProfile("fs25_settingsSectionHeader")
         textElement.name = "sectionHeader"
         textElement:loadProfile(profile, true)
-        textElement:setText(csHeaderText())
+        textElement:setText(CropStressSettingsIntegration.headerText())
         if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.subscribe ~= nil then
-            CsLiveKeyLabel.subscribe(textElement, function()
-                pcall(function() textElement:setText(csHeaderText()) end)
+            csReleaseHeaderSubscription()
+            csHeaderUnsubscribe = CsLiveKeyLabel.subscribe(textElement, function()
+                pcall(function() textElement:setText(CropStressSettingsIntegration.headerText()) end)
             end)
         end
         frame.gameSettingsLayout:addElement(textElement)
@@ -93,3 +113,11 @@ Mission00.loadMission00Finished = Utils.appendedFunction(
         initHooks()
     end
 )
+
+-- Release the binding-change subscription with the mission, so a second mission
+-- in one session cannot inherit the first mission's text element.
+if FSBaseMission ~= nil and Utils ~= nil and Utils.prependedFunction ~= nil then
+    FSBaseMission.delete = Utils.prependedFunction(FSBaseMission.delete, function()
+        csReleaseHeaderSubscription()
+    end)
+end

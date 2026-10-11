@@ -213,7 +213,7 @@
     <text name="helpLine_cs_p4_status_title"   text="Status Colours"/>
     <text name="helpLine_cs_p4_status_text"    text="[EN] Green is Healthy: 40% moisture and up, nothing to do. Yellow is Warning: 25% to 40%, plan water. Red is Critical: below 25%, yield loss can start, water now. The same bands colour the Esc Crop Stress page."/>
     <text name="helpLine_cs_p4_keys_title"     text="Keyboard Shortcuts"/>
-    <text name="helpLine_cs_p4_keys_text"      text="[EN] Toggle Moisture HUD: factory Right Ctrl+M. Edit/Move Moisture HUD: factory Right Shift+N. Open Irrigation Manager, Open Crop Consultant and Open Crop Stress Settings have no factory key: bind them under Options &gt; Controls &gt; Seasonal Crop Stress. The Esc page Realistic Farming &gt; Crop Stress has a Help footer that opens the two-column guide."/>
+    <text name="helpLine_cs_p4_keys_text"      text="[EN] Toggle Moisture HUD: factory Right Ctrl+M. Edit/Move Moisture HUD: factory Right Shift+N. Open Irrigation Manager: factory Right Ctrl+R. Open Crop Consultant: factory Right Ctrl+C. Open Crop Stress Settings: factory Right Ctrl+B. Any of them can be rebound under Options &gt; Controls &gt; Seasonal Crop Stress. The Esc page Realistic Farming &gt; Crop Stress has a Help footer that opens the two-column guide."/>
 
     <!-- Tips & Tricks: Page 2 - Farming Strategies -->
     <text name="helpLine_cs_t2_title"          text="Farming Strategies"/>
@@ -474,7 +474,7 @@
     <text name="cs_consultant_legacy_trust_held" text="Alex Chenin vanhaa luottamusta ei voitu yhdistää turvallisesti tähän naapuriin; se on pantu syrjään, ei käytetty"/>
     <text name="cs_consultant_legacy_trust_held_short" text="(vanha luottamus syrjässä)"/>
     <text name="rf_live_key_unbound" text="Ei sidottu"/>
-    <text name="rf_live_key_keyboard_unbound" text="Nappaimisto ei sidottu"/>
+    <text name="rf_live_key_keyboard_unbound" text="Näppäimistö ei sidottu"/>
     <text name="rf_live_key_unavailable" text="ei saatavilla"/>
 </texts>
 </l10n>

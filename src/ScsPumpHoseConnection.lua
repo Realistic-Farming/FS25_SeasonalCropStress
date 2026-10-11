@@ -644,7 +644,7 @@ function ScsPumpHoseConnection.transferWater(pump, dt)
 end
 
 -- ------------------------------------------------------------
--- Reel toggle (N) on the pump side.
+-- Reel toggle (RWSM53_REEL_TOGGLE) on the pump side.
 --
 -- The vendored RWSM53AutoReel used to hand N to "the pump" whenever the hose was
 -- connected, but nothing on this side ever claimed it, so connecting the hose

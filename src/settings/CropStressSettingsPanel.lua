@@ -461,6 +461,22 @@ function CropStressSettingsPanel:drawTitleBar()
 end
 
 -- ── Info bar ──────────────────────────────────────────────────
+--- Text for the panel's close hint.
+--- get() hands back a localized STATUS WORD when the action has no keyboard
+--- binding, so appending " to close" to it produced "Unbound to close". The
+--- imperative is gated on resolver kind "live" and nothing else; any other
+--- kind, and an absent helper, keep the plain control name.
+---@return string
+function CropStressSettingsPanel.closeHintText()
+    if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.resolve ~= nil then
+        local c, kind = CsLiveKeyLabel.resolve("CS_OPEN_SETTINGS")
+        if kind == "live" and type(c) == "string" and c ~= "" then
+            return c .. " to close"
+        end
+    end
+    return "Close"
+end
+
 function CropStressSettingsPanel:drawInfoBar()
     local iy = PY
     self:drawRect(PX, iy, PW, IB_H, C.info_bg)
@@ -489,13 +505,11 @@ function CropStressSettingsPanel:drawInfoBar()
     else
         -- Live chord, not the old invented "SHIFT+S": this action had no
         -- binding at all in the shipped modDesc.
-        local closeHint = "Close"
-        if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.get ~= nil then
-            local c = CsLiveKeyLabel.get("CS_OPEN_SETTINGS")
-            if type(c) == "string" and c ~= "" then
-                closeHint = c .. " to close"
-            end
-        end
+        -- get() hands back a localized STATUS WORD when the action has no
+        -- keyboard binding, so appending " to close" to it produced
+        -- "Unbound to close". The imperative is gated on resolver kind "live"
+        -- and nothing else; any other kind keeps the plain control name.
+        local closeHint = CropStressSettingsPanel.closeHintText()
         self:drawText(PX + PW - PAD, textY, TS_SMALL, closeHint, C.hint, RenderText.ALIGN_RIGHT, false)
     end
 end
