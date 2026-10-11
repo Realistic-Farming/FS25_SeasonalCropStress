@@ -62,9 +62,9 @@ FONCTIONNALITÉS :
 • Modificateurs de type de sol : Sableux sèche vite, Argileux retient l'humidité
 • Périodes critiques de croissance propres à chaque culture (blé, maïs, orge, colza, etc.)
 • Réduction de rendement à la récolte - jusqu'à 60 % de perte au stress maximal
-• Overlay HUD d'humidité du sol avec prévisions 5 jours (Maj+M pour afficher/masquer)
+• Overlay HUD d'humidité du sol avec prévisions 5 jours
 • Pivot central et goutte-à-goutte avec infrastructure de pompe à eau
-• Programme d'irrigation - définissez les jours actifs et la plage horaire (Maj+I)
+• Programme d'irrigation - définissez les jours actifs et la plage horaire
 • Dialogue Conseiller cultural avec résumé des risques et recommandations (Maj+C)
 • Intégration optionnelle avec FS25_NPCFavor (Alex Chen, agronome PNJ)
 • Intégration optionnelle avec FS25_UsedPlus (marché de matériel d'occasion)
@@ -199,14 +199,20 @@ FUNKTIONER:
         <!-- BUILD 06:43 (Sam DESIGN 06:42): seat-locked non-Function defaults so a
              fresh save can drive the Moisture HUD out of the box - Alt+M toggles,
              Shift+Alt+M edits/moves. The other actions stay player-assigned. -->
-        <actionBinding action="CS_OPEN_IRRIGATION" />
-        <actionBinding action="CS_OPEN_CONSULTANT" />
-        <actionBinding action="CS_OPEN_SETTINGS" />
+        <actionBinding action="CS_OPEN_IRRIGATION">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rctrl KEY_r" />
+        </actionBinding>
+        <actionBinding action="CS_OPEN_CONSULTANT">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rctrl KEY_c" />
+        </actionBinding>
+        <actionBinding action="CS_OPEN_SETTINGS">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rctrl KEY_b" />
+        </actionBinding>
         <actionBinding action="RWSM53_REEL_TOGGLE">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_n" axisComponent="+" inputComponent="+" index="1"/>
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rctrl KEY_g" axisComponent="+" inputComponent="+" index="1"/>
         </actionBinding>
         <actionBinding action="CS_TOGGLE_HUD">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_m" />
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rctrl KEY_m" />
         </actionBinding>
         <actionBinding action="CS_EDIT_HUD">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_n" />

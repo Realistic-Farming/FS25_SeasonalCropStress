@@ -76,12 +76,12 @@ CsHelpDialog.PAGE1 = {
 CsHelpDialog.PAGE2 = {
     { t="H", v="THE MOISTURE HUD" },
     { t="B", v="Toggle it with the Controls action Toggle" },
-    { t="B", v="Moisture HUD. The factory key is Right Shift+M." },
+    { t="B", v="Moisture HUD. The current key is {CS_TOGGLE_HUD}." },
     { t="B", v="If nothing happens, look under Options," },
     { t="B", v="Controls, Seasonal Crop Stress: the key may" },
     { t="B", v="have been rebound on this save." },
     { t="B", v="Edit and move the panel with the Edit/Move" },
-    { t="B", v="Moisture HUD action, factory Right Shift+N." },
+    { t="B", v="Moisture HUD action, currently {CS_EDIT_HUD}." },
     { t="B", v="The layout is remembered for each player." },
     { t="S", v=" " },
     { t="H", v="READING A ROW" },
@@ -332,7 +332,14 @@ function CsHelpDialog:_buildContent(pageNum)
             if profile ~= nil then
                 local el = TextElement.new()
                 el:loadProfile(profile, true)
-                el:setText(row.v or "")
+                local rowText = row.v or ""
+                -- Resolve the chord placeholders here rather than in the PAGE tables:
+                -- those are built once at load, so a chord baked into them would survive
+                -- a remap. _buildContent runs on every page select, so this is current.
+                if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.expand ~= nil then
+                    rowText = CsLiveKeyLabel.expand(rowText)
+                end
+                el:setText(rowText)
                 currentBox:addElement(el)
                 el:onGuiSetupFinished()
                 table.insert(self._contentLineEls, { box = currentBox, el = el })
