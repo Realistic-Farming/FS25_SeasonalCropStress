@@ -139,7 +139,9 @@ do
   T.eq("inert.readIsNil", (m:readValueAtWorld(0, 0)), nil)
   T.eq("inert.writeRefuses", m:writeValueAtWorld(0, 0, 0.5, 2), false)
   T.eq("inert.deltaAppliesNothing", m:applyDeltaToPolygon(nil, nil, 0, 0.5), 0)
-  T.eq("inert.averageIsNil", (m:readAverageOfPolygon(nil, nil, 0)), nil)
+  local inertOutcome, inertMean = m:readAverageOfPolygon(nil, nil, 0)
+  T.eq("inert.averageInvalidGeometry", inertOutcome, "INVALID_FIELD_GEOMETRY")
+  T.eq("inert.averageMeanIsNil", inertMean, nil)
   T.eq("inert.saveRefuses", m:saveToSavegame("/nowhere"), false)
 end
 

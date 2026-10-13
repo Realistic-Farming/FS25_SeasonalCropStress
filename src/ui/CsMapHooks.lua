@@ -9,7 +9,7 @@
 -- custom page indices do not hit vanilla MAP_HOTSPOTS <= state fruit path.
 -- =========================================================
 
-CsMapHooks = {}
+CsMapHooks = CsMapHooks or {}
 
 local LOG_PREFIX = "[CropStress] CsMapHooks: "
 
@@ -33,8 +33,31 @@ local function getCsOverlay(frame)
     return g_cropStressManager and g_cropStressManager.moistureMapOverlay
 end
 
+--- Is the map frame the page the player is actually looking at?
+--- The selector state below is the map frame's REMEMBERED sub-page and it survives
+--- leaving the map entirely, so on its own it says "the moisture layer is the one the
+--- map will show next time", not "the map is on screen now". The shared mouse chain
+--- runs every handler before the engine's own mouseEvent, where the visibility check
+--- lives (GuiElement.lua:502), so a map frame that is not displayed still sees clicks,
+--- and the overlay's onSideBarClick matches its buttonRects on screen coordinates
+--- alone: a click on another Esc page could open the Crop Stress PDA or change the
+--- overlay density. TabbedMenu sets currentPage before the page opens
+--- (TabbedMenu.lua:363, :377) and clears it on close (:105). Same guard as
+--- SoilFertilizer's SoilMapHooks (#1035), copied because each mod's hooks are its own.
+--- Undeterminable stays permissive, so a build where the menu cannot be resolved
+--- behaves exactly as before.
+local function isMapFrameCurrentPage(frame)
+    if g_gui == nil or InGameMenu == nil then return true end
+    local inGameMenu = g_gui.screenControllers ~= nil and g_gui.screenControllers[InGameMenu] or g_inGameMenu
+    if inGameMenu == nil or inGameMenu.currentPage == nil then return true end
+    return inGameMenu.currentPage == frame
+end
+
 local function isCsPageActive(frame)
     if frame == nil or frame.csMoisturePageIndex == nil or frame.mapOverviewSelector == nil then
+        return false
+    end
+    if not isMapFrameCurrentPage(frame) then
         return false
     end
     return frame.mapOverviewSelector:getState() == frame.csMoisturePageIndex
@@ -591,4 +614,76 @@ if IngameMapElement ~= nil then
     print(LOG_PREFIX .. "IngameMapElement.draw hook installed")
 else
     print(LOG_PREFIX .. "WARNING — IngameMapElement not available — map dots will not draw")
+end
+
+-- =========================================================
+-- BUILD 09:19 (PB-12): keep the Growth-map field drawer inside the visible frame.
+-- =========================================================
+-- Twin of the same patch in FS25_SoilFertilizer/src/hooks/SoilMapHooks.lua; the long-form
+-- reasoning lives there. Short version: vanilla InGameMenuMapUtil places the field info
+-- drawer left of the cursor with `posX = posX - fieldInfoBox.size[1]` and never clamps that
+-- to the screen, and getFieldInfoBoxOrientation only flips for right/top overflow, so at the
+-- map's left edge the box runs off-screen and the player reads label tails ("...ds lime")
+-- instead of labels.
+--
+-- Vanilla still chooses the side and the anchor. This appended pass only pulls the finished
+-- box back inside the safe frame when it ended up outside, so away from the edges it is a
+-- no-op and nothing about the normal placement changes.
+--
+-- Soil and Crop Stress both carry it and share one install flag on InGameMenuMapUtil, so
+-- whichever loads first installs and the drawer is fixed whether or not both are present.
+
+local function clampFieldInfoBoxInsideFrame(fieldInfoBox)
+    if fieldInfoBox == nil then
+        return
+    end
+    local ap = fieldInfoBox.absPosition
+    local as = fieldInfoBox.absSize
+    if type(ap) ~= "table" or type(as) ~= "table" then
+        return
+    end
+    local px, py = ap[1], ap[2]
+    local w, h = as[1], as[2]
+    if type(px) ~= "number" or type(py) ~= "number"
+        or type(w) ~= "number" or type(h) ~= "number" then
+        return
+    end
+
+    -- Same margins the vanilla HUD keeps off the screen edge (IngameMap:getMapPosition
+    -- returns g_safeFrameOffsetX, g_safeFrameOffsetY), not a number invented here.
+    local marginX = (type(g_safeFrameOffsetX) == "number") and g_safeFrameOffsetX or 0
+    local marginY = (type(g_safeFrameOffsetY) == "number") and g_safeFrameOffsetY or 0
+
+    -- Left wins if the box cannot satisfy both edges: the left edge is where label text
+    -- starts, and a lost first character is the defect being fixed.
+    local maxX = 1 - marginX - w
+    local newX = px
+    if newX > maxX then newX = maxX end
+    if newX < marginX then newX = marginX end
+
+    local maxY = 1 - marginY - h
+    local newY = py
+    if newY > maxY then newY = maxY end
+    if newY < marginY then newY = marginY end
+
+    if newX ~= px or newY ~= py then
+        if type(fieldInfoBox.setAbsolutePosition) == "function" then
+            fieldInfoBox:setAbsolutePosition(newX, newY)
+        end
+    end
+end
+
+if InGameMenuMapUtil ~= nil
+    and type(InGameMenuMapUtil.updateFieldInfoBoxPosition) == "function"
+    and InGameMenuMapUtil._rfFieldInfoBoxClampInstalled ~= true then
+
+    InGameMenuMapUtil._rfFieldInfoBoxClampInstalled = true
+    InGameMenuMapUtil.updateFieldInfoBoxPosition = Utils.appendedFunction(
+        InGameMenuMapUtil.updateFieldInfoBoxPosition,
+        function(fieldInfoBox)
+            clampFieldInfoBoxInsideFrame(fieldInfoBox)
+        end)
+    print(LOG_PREFIX .. "field info drawer clamped inside the safe frame (PB-12)")
+elseif InGameMenuMapUtil == nil then
+    print(LOG_PREFIX .. "WARNING - InGameMenuMapUtil not available - field info drawer clamp not installed")
 end

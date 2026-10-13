@@ -4,7 +4,7 @@
 -- Intercepts Sprayer:processSprayerArea to add moisture.
 -- ============================================================
 
-SprayerIntegration = {}
+SprayerIntegration = SprayerIntegration or {}
 SprayerIntegration.__index = SprayerIntegration
 
 -- Scaling factor: how much 1 liter of water adds to 1 sqm of moisture fraction.
@@ -44,8 +44,7 @@ function SprayerIntegration.overwrittenProcessSprayerArea(self, superFunc, workA
     -- IrrigatorSectorIntegration, which models the real pie sector. Letting the
     -- rectangle work area ALSO credit moisture would double-count the same water.
     if IrrigatorSectorIntegration ~= nil
-            and self.typeName ~= nil
-            and IrrigatorSectorIntegration.VEHICLE_TYPES[self.typeName] == true then
+            and IrrigatorSectorIntegration.matchesType(self.typeName) then
         return changedArea, totalArea
     end
 

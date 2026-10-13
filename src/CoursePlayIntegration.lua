@@ -27,7 +27,7 @@ local function csLog(msg)
     else print("[CropStress] " .. tostring(msg)) end
 end
 
-CoursePlayIntegration = {}
+CoursePlayIntegration = CoursePlayIntegration or {}
 CoursePlayIntegration.__index = CoursePlayIntegration
 
 -- Radius (metres) used to associate a vehicle with a field when

@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Reinke A22 — 3-tower variant (~115 m radius).
+    Bound to the FS25_ReinkeA22 mod's reinkeIrrigationPivot placeable type.
+-->
+<placeable type="reinkeIrrigationPivot" descVersion="105">
+
+    <storeData>
+        <name>$l10n_reinke_pivot_3_name</name>
+        <image>placeables/reinkeA22/store_Reinke3.dds</image>
+        <functions>
+            <function>$l10n_reinke_pivot_function</function>
+        </functions>
+        <price>1</price>
+        <dailyUpkeep>15</dailyUpkeep>
+        <canBeSold>true</canBeSold>
+        <showInStore>true</showInStore>
+        <lifetime>1000</lifetime>
+        <rotation>0</rotation>
+        <brand>NONE</brand>
+        <species>PLACEABLE</species>
+        <category>placeableMisc</category>
+        <brush>
+            <type>placeable</type>
+            <category>buildings</category>
+            <tab>tools</tab>
+        </brush>
+    </storeData>
+
+    <base>
+        <filename>placeables/reinkeA22/Reinke_Pivot_3.i3d</filename>
+        <canBeRenamed>true</canBeRenamed>
+        <boughtWithFarmland>true</boughtWithFarmland>
+    </base>
+
+    <placement useRandomYRotation="false" useManualYRotation="true">
+        <sounds>
+            <place file="$data/sounds/placeables/placeImpacts/placeLargeImpact_01.ogg" innerRadius="5" outerRadius="25" volumeScale="0.80" />
+        </sounds>
+        <!-- TODO(GE): add a "TestArea" TransformGroup under XML (index 2, alongside
+             AIupdate=0 and Leveling=1) with Start/End child nodes, then point these at it. -->
+        <testAreas>
+            <testArea startNode="0>3|2|0" endNode="0>3|2|1" />
+        </testAreas>
+    </placement>
+
+    <!-- clearAreas covers the center tower base (concrete pad footprint only).
+         Nodes 0>3|1|0/1/2 must be positioned tightly around the base in GE —
+         if the stripe reappears, check those node world positions in GE. -->
+    <clearAreas>
+        <clearArea startNode="0>3|1|0" widthNode="0>3|1|1" heightNode="0>3|1|2" />
+    </clearAreas>
+
+    <indoorAreas />
+
+    <ai>
+        <updateAreas>
+            <updateArea startNode="0>3|0|0" endNode="0>3|0|1" />
+        </updateAreas>
+    </ai>
+
+    <!-- <leveling requireLeveling="true" maxSlope="20" realignAfterLeveling="true" maxEdgeAngle="20" maxSmoothDistance="3" > -->
+    <leveling>
+        <paintAreas>
+            <!-- <paintArea startNode="0>3|1|0"
+                heightNode="0>3|1|2"
+                groundType="string"
+                widthNode="0>3|1|1"
+            /> -->
+        </paintAreas>
+        <levelAreas>
+            <levelArea heightNode="0>3|1|2"
+                widthNode="0>3|1|1"
+                startNode="0>3|1|0"
+                groundType="DIRT"
+            />
+        </levelAreas>
+    </leveling>
+
+    <!--
+        effectNode paths point to umbrella mesh nodes (direct children of effectsTG — no TG wrapper).
+        worldSpace="true"  = particles fall straight down in world space regardless of arm rotation.
+        emitCountScale     = tune spray density in-game; lower = fewer particles, higher = more.
+    -->
+    <effects>
+        <!-- ═══ Tower 1 — 37 nozzles (indices 0–36 under 0>0|8|0|2) ═══ -->
+         <!-- spriteScale="0.5" spriteGainScale="2.0" lifespan="1" alphaScale="0.75" -->
+        <effectNode effectNode="0>0|1|0|2|0"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|1"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|2"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|3"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|4"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|5"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|6"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|7"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|8"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|9"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|10" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|11" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|12" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|13" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|14" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|15" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|16" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|17" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|18" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|19" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|20" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|21" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|22" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|23" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|24" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|25" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|26" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|27" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|28" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|29" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|30" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|31" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|32" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|33" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|34" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|35" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|2|36" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+
+        <!-- ═══ Tower 2 — 34 nozzles (indices 0–33 under 0>0|8|0|4|1|0|3) ═══ -->
+        <effectNode effectNode="0>0|1|0|4|1|0|3|0"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|1"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|2"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|3"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|4"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|5"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|6"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|7"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|8"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|9"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|10" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|11" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|12" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|13" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|14" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|15" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|16" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|17" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|18" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|19" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|20" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|21" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|22" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|23" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|24" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|25" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|26" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|27" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|28" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|29" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|30" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|31" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|32" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|0|3|33" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+
+        <!-- ═══ Tower 3 — 35 nozzles split into 7 test groups of 5 ═══ -->
+        <!-- GROUP A (0–4): BASELINE — current production values, control group -->
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|0"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|1"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|2"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|3"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|4"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <!-- GROUP B (5–9): LARGE SPRITES — bigger droplets, everything else baseline -->
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|5"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|6"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true" />
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|7"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|8"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true" />
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|9"  effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <!-- GROUP C (10–14): LONG LIFESPAN — particles fall further before disappearing -->
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|10" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|11" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|12" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|13" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|14" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <!-- GROUP D (15–19): HIGH ARC — faster velocity + stronger upFactor for taller spray -->
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|15" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|16" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|17" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|18" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|19" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <!-- GROUP E (20–24): GROWING DROPS — small start, large finish via spriteGainScale -->
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|20" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true" />
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|21" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true" />
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|22" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true" />
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|23" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true" />
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|24" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true" />
+        <!-- GROUP F (25–29): GHOST DROPS — large but semi-transparent, misty look -->
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|25" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|26" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|27" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|28" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|29" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <!-- GROUP G (30–34): KITCHEN SINK — best-guess realistic combo for umbrella feel -->
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|30" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|31" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|32" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|33" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|3|34" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+
+        <effectNode effectNode="0>0|1|0|4|1|2|0|2|0|4|0" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|2|0|4|1" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="0.5" velocityScale="0.25" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+
+        <!-- ═══ End gun ═══ -->
+        <!-- Constant spray mesh: emits continuously while spray is active -->
+        <effectNode effectNode="0>0|1|0|4|1|2|0|2|0|5|2|1|0" effectClass="ParticleEffect" particleType="WASHER_WATER" extraDistance="200" emitCountScale="0.5" velocityScale="1.5" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|2|0|5|2|1|1" effectClass="ParticleEffect" particleType="WASHER_WATER" extraDistance="200" emitCountScale="0.5" velocityScale="1.5" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|2|0|5|2|1|2" effectClass="ParticleEffect" particleType="WASHER_WATER" extraDistance="200" emitCountScale="0.5" velocityScale="1.5" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <effectNode effectNode="0>0|1|0|4|1|2|0|2|0|5|2|1|3" effectClass="ParticleEffect" particleType="WASHER_WATER" extraDistance="200" emitCountScale="0.5" velocityScale="1.5" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+        <!-- Burst mesh: EffectManager holds it visible when spray is on; the burst animation
+             flashes it on/off on top. World-space particles continue from this position
+             between flashes, reinforcing the burst visual rather than fighting it. -->
+        <effectNode effectNode="0>0|1|0|4|1|2|0|2|0|5|2|0|0" effectClass="ParticleEffect" particleType="WASHER_WATER" emitCountScale="1.5" velocityScale="1.5" upFactor="2.75" fadeInTime="5" fadeOutTime="5" worldSpace="true"/>
+
+    </effects>
+
+    <irrigationConfig
+        radius="115"
+        flowRatePerHour="0.018"
+        operationalCostPerHour="10"
+        defaultStartHour="6"
+        defaultEndHour="10"
+        defaultActiveDays="1,1,1,1,1,0,0"
+        rotationRevPerGameHour="2.0"
+        sweepMode="full"
+        sweepMinAngleDeg="0"
+        sweepMaxAngleDeg="360"
+        parkAngleDeg="0"
+        forceAlwaysActive="false"
+        enableSCS="true"
+        terrainTiltAxis="AUTO"
+        effectMode="visibility"
+        wheelRotAxis="NX"
+    />
+    <!--
+        terrainTiltAxis="Z" — apply pitch theta to local Z axis.
+        Correct when the section boom runs along the section TG's local X.
+        In right-hand coords: +Z rotation takes +X toward +Y (boom tip rises).
+        If wheels tilt laterally (one up, one down), try terrainTiltAxis="X".
+    -->
+
+    <sounds>
+        <motorLoop      file="$data/sounds/placeables/generators/objElectricGenerator_01.ogg" innerRadius="5"  outerRadius="80"  volumeScale="0.55" />
+        <rotationLoop   file="$data/sounds/vehicles/shared/tracksLoop.ogg"                    innerRadius="5"  outerRadius="60"  volumeScale="0.30" />
+        <sprayLoop      file="$data/sounds/placeables/generators/riceFieldPumpWater.ogg"      innerRadius="8"  outerRadius="70"  volumeScale="0.65" />
+        <pumpLoop       file="$data/sounds/placeables/generators/riceFieldPumpEngine.ogg"     innerRadius="5"  outerRadius="50"  volumeScale="0.45" />
+        <switchPress    file="$data/sounds/vehicles/switch/vehSwitchPress_01.ogg"             innerRadius="2"  outerRadius="10"  volumeScale="0.80" />
+        <sprayToggle    file="$data/sounds/vehicles/switch/vehSwitchPress_01.ogg"             innerRadius="2"  outerRadius="10"  volumeScale="0.70" />
+        <buttonClick    file="$data/sounds/ui/uiClick.ogg"                                    innerRadius="2"  outerRadius="10"  volumeScale="0.65" />
+        <hydraulicOpen  file="$data/sounds/animations/hinges/aniHingeSmall_02.ogg"             innerRadius="3"  outerRadius="20"  volumeScale="0.70" />
+        <hydraulicClose file="$data/sounds/animations/hinges/aniHingeSmall_02.ogg"            innerRadius="3"  outerRadius="20"  volumeScale="0.70" />
+        <endGunToggle   file="$data/sounds/ui/uiClick.ogg"                                    innerRadius="2"  outerRadius="10"  volumeScale="0.60" />
+        <speedClick     file="$data/sounds/ui/uiClick.ogg"                                    innerRadius="2"  outerRadius="10"  volumeScale="0.55" />
+    </sounds>
+</placeable>

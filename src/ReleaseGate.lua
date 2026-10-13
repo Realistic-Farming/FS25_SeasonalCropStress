@@ -23,7 +23,7 @@ local function csLog(msg)
     end
 end
 
-ReleaseGate = {}
+ReleaseGate = ReleaseGate or {}
 
 -- The certified experimental (LOCKED) set. Each entry: [systemId] = { name, status }.
 -- `status` is a SHORT player-facing note on what is not working or implemented yet.
@@ -44,6 +44,29 @@ ReleaseGate.EXPERIMENTAL = {
     cs_grid_concordance = {
         name = "Moisture on the 2m grid",
         status = "new; awaiting the in-game layer look",
+    },
+    -- SCS-046 RAIN KEY. LOCKED until all four named observations pass: runtime
+    -- trip/reset, both player surfaces, dedicated-server activity transport and
+    -- balance observation. The feature is inert (unfitted pivots) until released.
+    rain_key_pause = {
+        name = "Center-pivot rain key",
+        status = "new; awaiting runtime trip/reset, surfaces, dedi transport and balance",
+    },
+    -- SCS-023 FINITE IRRIGATION WATER. LOCKED at merge. Unlock requires all five
+    -- named observations (built in a real save, both surfaces, save/load + dedi
+    -- source equality, HIGH-defect closure, and the balance call). The feature is
+    -- inert (settings.finiteWater false) until released.
+    finite_irrigation_water = {
+        name = "Finite irrigation water",
+        status = "new; awaiting real-save build, surfaces, dedi equality, defects and balance",
+    },
+    -- SCS-041 THIRSTY GROUND absorption. LOCKED at merge. Until released and
+    -- opted in the mission freezes absorptionMode = UNCAPPED, so every positional
+    -- water route keeps its post-SCS-039 behaviour. Unlock gates on live
+    -- observation, a truthful moisture surface, HIGH-defect closure and balance.
+    irrigation_absorption = {
+        name = "Thirsty ground (irrigation absorption)",
+        status = "new; awaiting live observation, truthful surface, defect closure and balance",
     },
 }
 

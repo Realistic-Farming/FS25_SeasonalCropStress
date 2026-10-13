@@ -27,7 +27,7 @@
 -- with cropStressSettings.xml as their own sidecar fallback.
 -- =========================================================
 
-CropStressStateLedgerBridge = {}
+CropStressStateLedgerBridge = CropStressStateLedgerBridge or {}
 
 -- Provisional module id. This is the persistence KEY inside the master file, so it
 -- must be locked with Claude(A) before any release (a later rename orphans saved
@@ -87,8 +87,13 @@ function CropStressStateLedgerBridge.register(mgr)
     end
     if mgr == nil then return end
 
+    -- RSF-F244 (F250 item 2): active only when the pcall succeeded AND
+    -- registerModule returned EXACTLY true, as the NetworkSync bridge requires.
+    -- StateLedger returns false without storing the hooks for a bad name or hook
+    -- table, and a non-throwing refusal was previously logged as registered.
+    local registered = false
     local ok, err = pcall(function()
-        ledger:registerModule(CropStressStateLedgerBridge.MODULE_ID, {
+        registered = ledger:registerModule(CropStressStateLedgerBridge.MODULE_ID, {
             serialize = function()
                 return CropStressStateLedgerBridge.buildState(mgr)
             end,
@@ -99,11 +104,14 @@ function CropStressStateLedgerBridge.register(mgr)
         })
     end)
 
-    if ok then
+    if ok and registered == true then
         CropStressStateLedgerBridge.active = true
         print(string.format("[CropStress] Registered with StateLedger as '%s' (careerSavegame.xml kept as safety copy)",
             CropStressStateLedgerBridge.MODULE_ID))
     else
-        print(string.format("[CropStress] StateLedger registration failed: %s (falling back to careerSavegame.xml)", tostring(err)))
+        CropStressStateLedgerBridge.active = false
+        local why = ok and ("registerModule returned " .. tostring(registered)) or tostring(err)
+        print(string.format("[CropStress] StateLedger registration failed or refused: %s (falling back to careerSavegame.xml)",
+            why))
     end
 end

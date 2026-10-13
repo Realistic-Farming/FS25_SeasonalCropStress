@@ -1,3 +1,17 @@
+-- 2026-08-22 (Wizard): with MasterHUD installed this mod's own moisture HUD hide/move keys
+-- must not merely be inert, they must not REGISTER at all - that is what removes their rows
+-- from the F1 legend and the Controls list. Probed on TaxMod first. Only CS_TOGGLE_HUD and
+-- CS_EDIT_HUD are gated; irrigation, consultant and settings register as always.
+-- Passed through a function rather than "cond and nil or x": in Lua nil is falsy, so that
+-- idiom would hand back the action every time and silently do nothing.
+local function __rfMhOwnsHudKeys()
+    return ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil
+end
+local function __rfHudAct(actionId)
+    if __rfMhOwnsHudKeys() then return nil end
+    return actionId
+end
+
 -- ============================================================
 -- FS25_SeasonalCropStress — main.lua
 -- Entry point. Loads all modules via source() in strict dependency
@@ -15,9 +29,19 @@
 --   9. Central coordinator (depends on everything above)
 -- ============================================================
 
-local modDir = g_currentModDirectory
+-- Hot-reload latch (FuelCosts reference): g_currentModDirectory and
+-- g_currentModName are nil on a live re-source, so they are latched into
+-- module globals on first load, with a g_modsDirectory loose-folder fallback.
+SeasonalCropStressModDirectory = SeasonalCropStressModDirectory
+    or g_currentModDirectory
+    or (g_modsDirectory ~= nil and (g_modsDirectory .. "FS25_SeasonalCropStress/") or nil)
+SeasonalCropStressModName = SeasonalCropStressModName or g_currentModName or "FS25_SeasonalCropStress"
+local modDir = SeasonalCropStressModDirectory
 
 -- Weather bridge
+-- Live Controls chord for an InputAction, so hints show the real
+-- binding rather than a factory default (KEYBINDS-R220-20261006).
+source(modDir .. "src/utils/CsLiveKeyLabel.lua")
 source(modDir .. "src/WeatherIntegration.lua")
 
 -- Value-map substrate (SCS-039): loads BEFORE SoilMoistureSystem, which
@@ -25,10 +49,24 @@ source(modDir .. "src/WeatherIntegration.lua")
 -- cell store when it is not.
 source(modDir .. "src/maps/CropStressValueMap.lua")
 
+-- Client fine-snapshot currentness (SCS-039 / SDS 3.7): engine-free staging
+-- and semantic currentness for the row/delta delivery. SoilMoistureSystem
+-- instantiates it at construction, so it must load before first use.
+source(modDir .. "src/SoilFineSnapshot.lua")
+
 -- Core simulation
 source(modDir .. "src/SoilMoistureSystem.lua")
+-- RSF-F247: the parcel probe, fill, ground check and member anchor (adds methods
+-- to SoilMoistureSystem, so it loads right after it).
+source(modDir .. "src/SoilMoistureGround.lua")
 source(modDir .. "src/CropStressModifier.lua")
 source(modDir .. "src/IrrigationManager.lua")
+-- SCS-042 one-hop runoff: after IrrigationManager, before CropStressManager, which
+-- constructs it beside the moisture owner.
+source(modDir .. "src/RunoffSystem.lua")
+
+-- Option-Scaling Spine (pure library, vendored from SettingsHub)
+source(modDir .. "src/integrations/OptionScalingResolver.lua")
 
 -- Settings
 source(modDir .. "src/ReleaseGate.lua")
@@ -60,8 +98,20 @@ source(modDir .. "src/integrations/CropStressMasterHUDBridge.lua")
 source(modDir .. "src/events/CropStressSettingsSyncEvent.lua")
 source(modDir .. "src/events/CropStressMoistureInitEvent.lua")
 source(modDir .. "src/events/CropStressIrrigateNowEvent.lua")
+source(modDir .. "src/events/CropStressIrrigateNowResultEvent.lua")
+source(modDir .. "src/events/CropStressIrrigationStateEvent.lua")
 source(modDir .. "src/events/CropStressMoistureRowEvent.lua")
+source(modDir .. "src/events/CropStressMoistureControlEvent.lua")
+source(modDir .. "src/events/CropStressMoistureDeltaEvent.lua")
 source(modDir .. "src/events/CropStressPivotRemoteEvent.lua")
+-- [BUILD 00:33] schedule + Auto/Manual sync (dialog Save -> server -> clients)
+source(modDir .. "src/events/CropStressScheduleSyncEvent.lua")
+-- SCS-046 rain-key command + result events (server-authoritative rain-key controls)
+source(modDir .. "src/events/CropStressRainKeyCommandEvent.lua")
+source(modDir .. "src/events/CropStressRainKeyResultEvent.lua")
+-- SCS #191 follow-up: a client admin's Simulate Heat Wave request + server result
+source(modDir .. "src/events/CropStressHeatRequestEvent.lua")
+source(modDir .. "src/events/CropStressHeatResultEvent.lua")
 
 -- Persistence
 source(modDir .. "src/SaveLoadHandler.lua")
@@ -102,9 +152,40 @@ source(modDir .. "src/CropStressManager.lua")
 -- g_inputBinding:registerActionEvent directly in loadMission00Finished
 -- is not inside the player input context and silently does nothing.
 -- ============================================================
+-- BUILD 04:34 (Wizard ruling, supersedes the BUILD 22:13 removal): the moisture HUD
+-- callbacks are restored WITH their surface - CropStressManager constructs the real
+-- HUDOverlay again instead of the noop stub, which is what made these rows
+-- lit-but-dead in the first place (PB-H05). The 22:13 principle stands satisfied the
+-- other way around: the actions now drive a HUD that exists.
 local function csToggleHUDCallback(_, _, inputValue)
+    -- 2026-08-22 (Wizard): MasterHUD takeover. When MasterHUD is installed it owns the
+    -- suite-wide hide/move binds, so this mod's own per-mod key is deliberately inert:
+    -- one surface, one way to reach it. Standalone (no MasterHUD) this runs normally.
+    -- Canonical presence check, the same expression the suite's MasterHUD bridges use.
+    if ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil then
+        return
+    end
     if (inputValue or 0) <= 0 then return end
     if g_cropStressManager ~= nil then g_cropStressManager:onToggleHUD() end
+end
+
+local function csEditHUDCallback(_, _, inputValue)
+    -- 2026-08-22 (Wizard): MasterHUD takeover. When MasterHUD is installed it owns the
+    -- suite-wide hide/move binds, so this mod's own per-mod key is deliberately inert:
+    -- one surface, one way to reach it. Standalone (no MasterHUD) this runs normally.
+    -- Canonical presence check, the same expression the suite's MasterHUD bridges use.
+    if ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil then
+        return
+    end
+    if (inputValue or 0) <= 0 then return end
+    if g_cropStressManager ~= nil and g_cropStressManager.hudOverlay ~= nil then
+        local hud = g_cropStressManager.hudOverlay
+        if hud.editMode then
+            hud:exitEditMode()
+        elseif hud.isVisible then
+            hud:enterEditMode()
+        end
+    end
 end
 
 local function csOpenIrrigationCallback(_, _, inputValue)
@@ -115,18 +196,6 @@ end
 local function csOpenConsultantCallback(_, _, inputValue)
     if (inputValue or 0) <= 0 then return end
     if g_cropStressManager ~= nil then g_cropStressManager:onOpenConsultantDialog() end
-end
-
-local function csEditHUDCallback(_, _, inputValue)
-    if (inputValue or 0) <= 0 then return end
-    if g_cropStressManager ~= nil and g_cropStressManager.hudOverlay ~= nil then
-        local hud = g_cropStressManager.hudOverlay
-        if hud.editMode then
-            hud:exitEditMode()
-        elseif hud.isVisible then
-            hud:enterEditMode()
-        end
-    end
 end
 
 local function csOpenSettingsCallback(_, _, inputValue)
@@ -156,10 +225,10 @@ do
                     end
                 end
 
-                reg(InputAction.CS_TOGGLE_HUD,      csToggleHUDCallback,      "input_CS_TOGGLE_HUD",      "Toggle Moisture HUD")
+                reg(__rfHudAct(InputAction.CS_TOGGLE_HUD),      csToggleHUDCallback,      "input_CS_TOGGLE_HUD",      "Toggle Moisture HUD")
                 reg(InputAction.CS_OPEN_IRRIGATION, csOpenIrrigationCallback, "input_CS_OPEN_IRRIGATION", "Open Irrigation Manager")
                 reg(InputAction.CS_OPEN_CONSULTANT, csOpenConsultantCallback, "input_CS_OPEN_CONSULTANT", "Open Crop Consultant")
-                reg(InputAction.CS_EDIT_HUD,        csEditHUDCallback,        "input_CS_EDIT_HUD",        "Edit/Move Moisture HUD")
+                reg(__rfHudAct(InputAction.CS_EDIT_HUD),        csEditHUDCallback,        "input_CS_EDIT_HUD",        "Edit/Move Moisture HUD")
                 reg(InputAction.CS_OPEN_SETTINGS,   csOpenSettingsCallback,   "input_CS_OPEN_SETTINGS",   "Open Crop Stress Settings")
 
                 g_inputBinding:endActionEventsModification()
@@ -173,9 +242,10 @@ end
 
 -- ============================================================
 -- VEHICLE INPUT HOOK
--- Register CS_TOGGLE_HUD and CS_EDIT_HUD in the vehicle input context so
--- Shift+M and Shift+H work while driving (PlayerInputComponent context is
+-- Register CS_TOGGLE_HUD, CS_EDIT_HUD and CS_OPEN_SETTINGS in the vehicle input
+-- context so the HUD keys work while driving (PlayerInputComponent context is
 -- on-foot only; vehicles require a separate registration via Vehicle).
+-- BUILD 04:34: the two moisture HUD actions are back with their restored HUD.
 -- ============================================================
 do
     if Vehicle ~= nil and type(Vehicle.registerActionEvents) == "function" then
@@ -193,8 +263,8 @@ do
                     )
                 end
 
-                regV(InputAction.CS_TOGGLE_HUD,    csToggleHUDCallback)
-                regV(InputAction.CS_EDIT_HUD,      csEditHUDCallback)
+                regV(__rfHudAct(InputAction.CS_TOGGLE_HUD),    csToggleHUDCallback)
+                regV(__rfHudAct(InputAction.CS_EDIT_HUD),      csEditHUDCallback)
                 regV(InputAction.CS_OPEN_SETTINGS, csOpenSettingsCallback)
             end
         )
@@ -276,6 +346,8 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
         addConsoleCommand("csConsultant",  "Open the Crop Consultant dialog",                              "consoleConsultant",  g_csManager)
         addConsoleCommand("csRelease",     "Release gate: show STABLE vs experimental-LOCKED systems",     "consoleRelease",     g_csManager)
         addConsoleCommand("csMapStats",    "Moisture value map: grain, settle cost, sync progress",       "consoleMapStats",    g_csManager)
+        addConsoleCommand("csRainKeyCheck","SCS-046 rain key: state of one system (csRainKeyCheck <id>)", "consoleRainKeyCheck",g_csManager)
+        addConsoleCommand("csWaterStatus","SCS-023 finite water: sources + mode (csWaterStatus <farmId>)","consoleWaterStatus", g_csManager)
     end
 end)
 
@@ -301,6 +373,14 @@ end)
 -- drawStack, so the two paths can never diverge.
 FSBaseMission.draw = Utils.appendedFunction(FSBaseMission.draw, function(self)
     if CropStressMasterHUDBridge ~= nil and CropStressMasterHUDBridge.active then return end
+    -- BUILD 21:53 (PB-H03, George TASK 21:39): the suite hide-all must govern this
+    -- fallback too. When MasterHUD is present but the bridge registration failed or
+    -- has not run yet, this hook is the path that draws - and before this gate it
+    -- drew straight through the player's hide-all. Registered draws are gated inside
+    -- MasterHUD itself; this closes the only RF-side leak. MasterHUD absent means
+    -- there is no suite hide state to honor and the gate passes through.
+    local suiteHud = (g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD
+    if suiteHud ~= nil and suiteHud.hudsHidden == true then return end
     if CropStressMasterHUDBridge ~= nil then
         CropStressMasterHUDBridge.drawStack()
     elseif g_csManager ~= nil then
@@ -332,6 +412,9 @@ FSBaseMission.delete = Utils.appendedFunction(FSBaseMission.delete, function(sel
             removeConsoleCommand("csDebug")
             removeConsoleCommand("csConsultant")
             removeConsoleCommand("csRelease")
+            removeConsoleCommand("csMapStats")
+            removeConsoleCommand("csRainKeyCheck")
+            removeConsoleCommand("csWaterStatus")
         end
     end
 end)
@@ -375,6 +458,12 @@ Mission00.onStartMission = Utils.appendedFunction(Mission00.onStartMission, func
     if self.missionInfo ~= nil then
         g_csManager.settings:load(self.missionInfo)
         g_csManager:applySettings()
+    end
+    -- SCS-041 SDS 5.1: persisted settings are now loaded (defaults when no file);
+    -- the restore barrier waits on this fact alongside compact data, fields and
+    -- the provider decision.
+    if g_csManager.markSettingsLoaded ~= nil then
+        g_csManager:markSettingsLoaded()
     end
 
     -- Install the self-removing frame updater that waits for g_fieldManager.fields
@@ -448,3 +537,71 @@ addModEventListener({
         g_csManager.hudOverlay:onMouseEvent(posX, posY, isDown, isUp, button)
     end
 })
+
+-- ---------------------------------------------------------
+-- Realistic Farming Control Center: publish runnable delegates.
+--
+-- CS_EDIT_HUD stays button-less: moving the panel needs the in-world drag, not a
+-- dialog button. CS_TOGGLE_HUD now grows a hide/show button below (tison, 2026-08-27,
+-- reversing the earlier "no CC button" call): the moisture HUD is hidden by default
+-- and its physical key is suppressed under MasterHUD, which left MasterHUD players
+-- unable to open it at all - the Control Center button restores that per-mod access.
+-- __rfHudAct still gates the physical key; only the "no button" half is reversed.
+-- ---------------------------------------------------------
+local function registerControlCenterActions()
+    local registry = g_currentMission ~= nil and g_currentMission.rfActionRegistry or nil
+    if registry == nil then return end
+
+    registry.registerAction({
+        action     = "CS_OPEN_IRRIGATION",
+        button     = "Open",
+        order      = 1,
+        closeFirst = true,
+        run = function()
+            if g_cropStressManager ~= nil then g_cropStressManager:onOpenIrrigationDialog() end
+        end,
+    })
+
+    registry.registerAction({
+        action     = "CS_OPEN_CONSULTANT",
+        button     = "Open",
+        order      = 2,
+        closeFirst = true,
+        run = function()
+            if g_cropStressManager ~= nil then g_cropStressManager:onOpenConsultantDialog() end
+        end,
+    })
+
+    registry.registerAction({
+        action     = "CS_OPEN_SETTINGS",
+        button     = "Open",
+        order      = 3,
+        closeFirst = true,
+        run = function()
+            if g_cropStressManager ~= nil then g_cropStressManager:onToggleSettings() end
+        end,
+    })
+
+    -- Per-mod moisture HUD hide/show. onToggleHUD flips hudOverlay.isVisible and
+    -- syncs settings.hudVisible; it is not MasterHUD-gated (only its key is), and
+    -- HUDOverlay:draw honours isVisible under both draw paths. Live caption.
+    registry.registerAction({
+        action = "CS_TOGGLE_HUD", order = 4,
+        button = function()
+            local mgr = g_cropStressManager
+            local hud = mgr ~= nil and mgr.hudOverlay or nil
+            return (hud ~= nil and hud.isVisible) and "Hide" or "Show"
+        end,
+        run = function()
+            local mgr = g_cropStressManager
+            if mgr ~= nil and mgr.onToggleHUD ~= nil then
+                mgr:onToggleHUD()
+                local hud = mgr.hudOverlay
+                return (hud ~= nil and hud.isVisible) and "Moisture HUD shown" or "Moisture HUD hidden"
+            end
+        end,
+    })
+end
+
+Mission00.loadMission00Finished = Utils.appendedFunction(
+    Mission00.loadMission00Finished, registerControlCenterActions)

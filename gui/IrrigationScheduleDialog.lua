@@ -26,7 +26,7 @@
 --   btnIrrigateNowBg/Hit/Text, btnSaveBg/Hit/Text
 -- ============================================================
 
-IrrigationScheduleDialog = {}
+IrrigationScheduleDialog = IrrigationScheduleDialog or {}
 local IrrigationScheduleDialog_mt = Class(IrrigationScheduleDialog, MessageDialog)
 
 -- Button color constants (NPCFavor pattern)
@@ -412,14 +412,17 @@ function IrrigationScheduleDialog:updateCoveredFields(system)
 
     local y = 0
     for _, fieldId in ipairs(system.coveredFields) do
-        local moisture = 0
+        local moisture = nil
         local stress   = 0
         if g_cropStressManager ~= nil then
-            if g_cropStressManager.soilSystem    ~= nil then moisture = g_cropStressManager:getMoisture(fieldId) or 0 end
+            if g_cropStressManager.soilSystem    ~= nil then moisture = g_cropStressManager:getMoisture(fieldId) end
             if g_cropStressManager.stressModifier ~= nil then stress  = g_cropStressManager:getStress(fieldId) or 0 end
         end
         local cropName = self:getCropName(fieldId)
-        local labelStr = string.format("Field %d · %s  %d%%", fieldId, cropName, math.floor(moisture * 100))
+        -- RSF-F245 item 6: no percent for a field with no current value.
+        local labelStr = type(moisture) == "number"
+            and string.format("Field %d · %s  %d%%", fieldId, cropName, math.floor(moisture * 100))
+            or string.format("Field %d · %s", fieldId, cropName)
         if stress > 0.2 then labelStr = labelStr .. " !" end
         makeTextRow(labelStr, y)
         y = y - 20
@@ -445,13 +448,18 @@ function IrrigationScheduleDialog:onIrrigateNow()
     local ok = false
     if g_cropStressManager ~= nil and g_cropStressManager.irrigationManager ~= nil then
         if g_server == nil and g_client ~= nil and CropStressIrrigateNowEvent ~= nil then
-            -- SCS-018 3.6: a client routes the request to the server; the server
-            -- applies the water through the single per-cell write path. Never
-            -- write local state and let the next broadcast erase it.
-            CropStressIrrigateNowEvent.sendToServer(self.systemId)
+            -- SCS-018 3.6 / SCS-023 v2.3 (SDS 6): a client routes the request to
+            -- the server through the ONE Irrigate Now chain; the server replies
+            -- with the direct result event. Never write local state and let the
+            -- next broadcast erase it. Unfitted systems expect revision -1.
+            CropStressIrrigateNowEvent.sendToServer(self.systemId, -1)
             ok = true
-        else
-            ok = g_cropStressManager.irrigationManager:applyOneTimeIrrigation(self.systemId)
+        elseif g_cropStressManager.irrigationManager.runIrrigateNowHost ~= nil then
+            -- Host (listen server / single player): run the same transaction
+            -- wrapper and handle the result locally. No public path calls
+            -- applyOneTimeIrrigation directly (F200).
+            local result = g_cropStressManager.irrigationManager:runIrrigateNowHost(self.systemId)
+            ok = result ~= nil and result.accepted == true
         end
     end
 
@@ -468,6 +476,17 @@ function IrrigationScheduleDialog:onIrrigateNow()
 end
 
 function IrrigationScheduleDialog:onSaveSchedule()
+    local system = self:getCurrentSystem()
+    if system ~= nil and CropStressScheduleSyncEvent ~= nil
+        and type(CropStressScheduleSyncEvent.sendToServer) == "function"
+        and system.schedule ~= nil then
+        CropStressScheduleSyncEvent.sendToServer(
+            system.id,
+            system.manualMode == true,
+            system.schedule.startHour,
+            system.schedule.endHour,
+            system.schedule.activeDays)
+    end
     if g_currentMission ~= nil then
         g_currentMission:showBlinkingWarning(
             (g_i18n ~= nil and g_i18n:getText("cs_schedule_saved")) or "Schedule saved.", 2000)

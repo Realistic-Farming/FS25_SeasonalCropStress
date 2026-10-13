@@ -63,6 +63,9 @@ do
   )
   local ok = dst:applyStateTable(snap)
   T.ok("roundtrip: applyStateTable returned true", ok == true)
+  -- SCS-039 SDS 3.8: field water stages on arrival and applies at the one
+  -- restore barrier; the bench runs that step directly.
+  dst:restoreMissionWater()
 
   local fd = dstMgr.soilSystem.fieldData
   T.near("roundtrip: field 1 moisture", fd[1].moisture, 0.42)
@@ -88,6 +91,7 @@ end
 do
   local dst, dstMgr = newHandler({ [2] = { moisture = 0.0, soilType = "loamy" } }, {})
   dst:applyStateTable({ fields = { [2] = { moisture = 1.9, stress = -0.5, soilType = "loamy" } } })
+  dst:restoreMissionWater()
   T.near("clamp: moisture capped at 1", dstMgr.soilSystem.fieldData[2].moisture, 1.0)
   T.near("clamp: stress floored at 0", dstMgr.stressModifier.fieldStress[2], 0.0)
 end
@@ -96,6 +100,7 @@ end
 do
   local dst, dstMgr = newHandler({ [3] = { moisture = 0.5, soilType = "loamy" } }, {})
   dst:applyStateTable({ fields = { [3] = { moisture = 0.5, soilType = "notarealtype" } } })
+  dst:restoreMissionWater()
   T.eq("guard: unknown soilType rejected", dstMgr.soilSystem.fieldData[3].soilType, "loamy")
 end
 
@@ -103,6 +108,7 @@ end
 do
   local dst, dstMgr = newHandler({}, {})
   dst:applyStateTable({ fields = { [9] = { moisture = 0.7, soilType = "loamy" } } })
+  dst:restoreMissionWater()
   T.ok("guard: unknown field not created", dstMgr.soilSystem.fieldData[9] == nil)
 end
 

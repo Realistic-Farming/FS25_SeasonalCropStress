@@ -61,7 +61,11 @@ for (const tf of testFiles) {
   const parts = [prelude];
   for (const d of deps) {
     try {
-      parts.push(`-- <<< ${d} >>>\n` + readFileSync(join(REPO_ROOT, d), "utf8"));
+      // Each declared module is its own block, as the engine loads each file as its own
+      // chunk: file-level locals stay file-level, and a long load list (RSF-F357 loads the
+      // vendored NPCFavor host beside this mod's files) cannot exceed Lua's 200 locals per
+      // function. Globals are unaffected.
+      parts.push(`-- <<< ${d} >>>\ndo\n` + readFileSync(join(REPO_ROOT, d), "utf8") + "\nend");
     } catch {
       console.log(c.red(`✗ ${tf}: cannot read declared dependency '${d}'`));
       hadError = true;
@@ -74,7 +78,21 @@ for (const tf of testFiles) {
 
   if (rc !== 0) {
     hadError = true;
-    console.log(c.red(`✗ ${c.bold(tf)} - Lua error while loading/running:`));
+    // Report what the file DID produce before it died, then the error.
+    //
+    // This branch used to `continue` immediately, discarding every ##TEST_PASS and
+    // ##TEST_FAIL the file had already emitted. A test that failed an assertion and
+    // then crashed reported only "Lua error", so the diagnosis it had already
+    // printed was thrown away by the reporter rather than never existing. That is
+    // the worst case to lose evidence in: a crash is exactly when you need to know
+    // which assertion went red first.
+    const crashPasses = [...out.matchAll(/^##TEST_PASS (.+)$/gm)].map((m) => m[1]);
+    const crashFails = [...out.matchAll(/^##TEST_FAIL (.+)$/gm)].map((m) => m[1]);
+    totalPass += crashPasses.length;
+    totalFail += crashFails.length;
+    console.log(c.red(`✗ ${c.bold(tf)} - Lua error while loading/running`) +
+      c.dim(` (${crashPasses.length} passed, ${crashFails.length} failed before the error)`));
+    for (const f of crashFails) console.log(`    ${c.red("FAIL")} ${f}`);
     console.log(`  ${c.red(errMsg || "(no message)")}`);
     continue;
   }

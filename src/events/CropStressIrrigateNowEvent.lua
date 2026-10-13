@@ -1,52 +1,66 @@
 -- ============================================================
 -- CropStressIrrigateNowEvent.lua
--- Server-authoritative "Irrigate Now" request. The dialog button chain was
--- ungated end to end: on a multiplayer client it wrote local state, showed
--- success, and the next server broadcast erased it (a ghost action). This
--- event routes the request to the server, which applies the water through the
--- single per-cell write path. Host behaviour is unchanged (server applies
--- directly). SCS-018 brief 3.6.
+-- Server-authoritative "Irrigate Now" request. Every host and client entry runs
+-- the one F200 chain: CropStressIrrigateNowEvent -> applyIrrigateNowTransaction
+-- -> CropStressIrrigateNowResultEvent, including mode off. The requester farm is
+-- resolved only through the engine's g_currentMission:getFarmId(connection); a
+-- listen host passes nil. No public path calls applyOneTimeIrrigation.
 -- ============================================================
 
-CropStressIrrigateNowEvent = {}
+CropStressIrrigateNowEvent = CropStressIrrigateNowEvent or {}
 CropStressIrrigateNowEvent_mt = Class(CropStressIrrigateNowEvent, Event)
 
 InitEventClass(CropStressIrrigateNowEvent, "CropStressIrrigateNowEvent")
 
 function CropStressIrrigateNowEvent.emptyNew()
-    return CropStressIrrigateNowEvent:new()
+    return Event.new(CropStressIrrigateNowEvent_mt)
 end
 
-function CropStressIrrigateNowEvent:new(systemId)
-    local self = setmetatable({}, CropStressIrrigateNowEvent_mt)
+---@param systemId number
+---@param expectedRainKeyRevision number  -1 for unfitted systems (F200)
+function CropStressIrrigateNowEvent.new(systemId, expectedRainKeyRevision)
+    local self = Event.new(CropStressIrrigateNowEvent_mt)
     self.systemId = systemId
+    self.expectedRainKeyRevision = expectedRainKeyRevision or -1
     return self
 end
 
 function CropStressIrrigateNowEvent:writeStream(streamId, connection)
     streamWriteInt32(streamId, self.systemId or 0)
+    streamWriteInt32(streamId, self.expectedRainKeyRevision or -1)
 end
 
 function CropStressIrrigateNowEvent:readStream(streamId, connection)
     self.systemId = streamReadInt32(streamId)
+    self.expectedRainKeyRevision = streamReadInt32(streamId)
+    self:run(connection)
 end
 
--- Server applies the water (server-only; clients never run applyOneTimeIrrigation).
+-- Server applies the water through the ONE transaction wrapper and sends the
+-- direct result back on the same connection.
 function CropStressIrrigateNowEvent:run(connection)
-    if g_cropStressManager == nil or g_cropStressManager.irrigationManager == nil then
+    if g_server == nil then return end
+    local mgr = g_cropStressManager
+    if mgr == nil or mgr.irrigationManager == nil then return end
+    -- SCS-041 SDS 5.1: Irrigate Now refuses simulation work until the one
+    -- restore barrier has applied the saved water state and enabled the routes.
+    if type(mgr.isMissionWaterReady) == "function" and not mgr:isMissionWaterReady() then
+        print("[CropStress] Irrigate Now refused: mission water not restored yet")
         return
     end
-    if g_server == nil then
-        return
-    end
-    g_cropStressManager.irrigationManager:applyOneTimeIrrigation(self.systemId)
+    local irrigationManager = mgr.irrigationManager
+    local farmId = irrigationManager:resolveRequesterFarmId(connection)
+    local result = irrigationManager:applyIrrigateNowTransaction(
+        self.systemId, farmId, self.expectedRainKeyRevision)
+    irrigationManager:dispatchIrrigateNowResult(self.systemId, result, connection, farmId)
 end
 
 -- Client helper: send the request to the server.
-function CropStressIrrigateNowEvent.sendToServer(systemId)
+function CropStressIrrigateNowEvent.sendToServer(systemId, expectedRainKeyRevision)
     if g_client == nil or g_client:getServerConnection() == nil then
         return false
     end
-    g_client:getServerConnection():sendEvent(CropStressIrrigateNowEvent.new(systemId))
+    g_client:getServerConnection():sendEvent(
+        CropStressIrrigateNowEvent.new(systemId, expectedRainKeyRevision or -1))
     return true
 end

@@ -19,7 +19,7 @@ end
 -- ============================================================
 -- EVENT CLASS DEFINITION
 -- ============================================================
-CropStressSettingsSyncEvent = {}
+CropStressSettingsSyncEvent = CropStressSettingsSyncEvent or {}
 CropStressSettingsSyncEvent_mt = Class(CropStressSettingsSyncEvent, Event)
 
 InitEventClass(CropStressSettingsSyncEvent, "CropStressSettingsSyncEvent")
@@ -45,7 +45,12 @@ CropStressSettingsSyncEvent.TYPE_BULK = 2
 -- display preferences and must NOT be overwritten by a server-pushed sync.
 -- If you add or remove a synced setting, update this constant and the
 -- writeSetting() calls in writeStream() together.
-CropStressSettingsSyncEvent.BULK_COUNT = 11
+-- SCS-023: BULK_COUNT is 11 -> 12 (finiteWater joins the synced set).
+-- [MAINTENANCE row 289] 12 -> 9: hudVisible, alertsEnabled and alertCooldown are per player (Tyson, 2026-10-08), so
+-- the bulk event (the join, and the reply to a rejected change) no longer carries them, and a host's choices never
+-- overwrite a client's. The bulk apply also skips them on any machine, whatever a sender writes.
+CropStressSettingsSyncEvent.BULK_COUNT = 9
+CropStressSettingsSyncEvent.PER_PLAYER = { hudVisible = true, alertsEnabled = true, alertCooldown = true }
 
 -- Value type constants for serialization
 CropStressSettingsSyncEvent.VALUE_TYPE_BOOL = 1
@@ -87,14 +92,12 @@ function CropStressSettingsSyncEvent:writeStream(streamId, connection)
         -- Write each setting with type tagging
         self:writeSetting(streamId, "enabled",            settings.enabled)
         self:writeSetting(streamId, "difficulty",         settings.difficulty)
-        self:writeSetting(streamId, "hudVisible",         settings.hudVisible)
         self:writeSetting(streamId, "evapotranspiration", settings.evapotranspiration)
         self:writeSetting(streamId, "maxYieldLoss",       settings.maxYieldLoss)
         self:writeSetting(streamId, "criticalThreshold",  settings.criticalThreshold)
         self:writeSetting(streamId, "irrigationCosts",    settings.irrigationCosts)
-        self:writeSetting(streamId, "alertsEnabled",      settings.alertsEnabled)
-        self:writeSetting(streamId, "alertCooldown",      settings.alertCooldown)
         self:writeSetting(streamId, "debugMode",          settings.debugMode)
+        self:writeSetting(streamId, "finiteWater",        settings.finiteWater)
         self:writeSetting(streamId, "experimentalSystems", settings.experimentalSystems)
     end
 end
@@ -198,6 +201,9 @@ end
 -- SETTING APPLICATION
 -- ============================================================
 function CropStressSettingsSyncEvent:applySingleSetting(key, value, connection)
+    -- [MAINTENANCE row 289] A per-player key never applies from the wire, on any machine: each player's own
+    -- choice stays theirs (Bob's backstop; no sender writes one since this row).
+    if CropStressSettingsSyncEvent.PER_PLAYER[key] then return end
     if g_server ~= nil then
         -- Server: verify master rights before applying
         if not self:senderHasMasterRights(connection) then
@@ -209,15 +215,28 @@ function CropStressSettingsSyncEvent:applySingleSetting(key, value, connection)
             return
         end
 
-        -- Apply setting and validate
-        g_cropStressManager.settings[key] = value
-        g_cropStressManager.settings:validateSettings()
-        g_cropStressManager:applySettings()
+        -- Apply setting through the ONE authoritative owner (SCS-023 v2.3,
+        -- SDS 4), which validates, re-applies to subsystems and fires the
+        -- finite-water fill-once edge. An unknown key is rejected.
+        local mgr = g_cropStressManager
+        if mgr.applyAuthoritativeSettingChange ~= nil then
+            if not mgr:applyAuthoritativeSettingChange(key, value, "sync") then
+                csLog("WARNING: rejecting unknown setting " .. tostring(key))
+                if connection ~= nil then
+                    CropStressSettingsSyncEvent.sendAllToConnection(connection)
+                end
+                return
+            end
+        else
+            mgr.settings[key] = value
+            mgr.settings:validateSettings()
+            mgr:applySettings()
+            -- Without the owner, this path broadcasts itself, as before.
+            g_server:broadcastEvent(CropStressSettingsSyncEvent.newSingle(key, value), false)
+        end
 
+        -- [MAINTENANCE row 259] The owner broadcast the change to every client, once.
         csLog("Setting applied: " .. key .. " = " .. tostring(value))
-
-        -- Broadcast to all clients (including the sender) so everyone stays in sync
-        g_server:broadcastEvent(CropStressSettingsSyncEvent.newSingle(key, value), false)
 
     else
         -- Client: apply setting directly (already validated by server)
@@ -238,9 +257,11 @@ function CropStressSettingsSyncEvent:applyBulkSettings(settingsTable, connection
         end
     end
     
-    -- Apply all settings
+    -- Apply all settings except the per-player ones (MAINTENANCE row 289): each machine keeps its own
     for key, value in pairs(settingsTable) do
-        g_cropStressManager.settings[key] = value
+        if not CropStressSettingsSyncEvent.PER_PLAYER[key] then
+            g_cropStressManager.settings[key] = value
+        end
     end
     
     g_cropStressManager.settings:validateSettings()

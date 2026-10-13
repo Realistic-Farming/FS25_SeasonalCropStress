@@ -1,0 +1,903 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<i3D name="Reinke_Pivot_5.i3d" version="1.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://i3d.giants.ch/schema/i3d-1.6.xsd">
+  <Asset>
+    <Export program="GIANTS Editor 64bit" version="10.0.13"/>
+  </Asset>
+
+  <Files>
+    <File fileId="50" filename="$data/maps/textures/shared/concreteGeneric_diffuse.dds"/>
+    <File fileId="51" filename="$data/maps/textures/shared/concreteGeneric_normal.dds"/>
+    <File fileId="52" filename="$data/maps/textures/shared/concreteGeneric_specular.dds"/>
+    <File fileId="44" filename="$data/shaders/decalShader.xml"/>
+    <File fileId="24" filename="$data/shaders/glowShader.xml"/>
+    <File fileId="4" filename="$data/shaders/vehicleShader.xml"/>
+    <File fileId="21" filename="$data/shared/clearGlass_diffuse.dds"/>
+    <File fileId="23" filename="$data/shared/clearPlastic_diffuse.dds"/>
+    <File fileId="2" filename="$data/shared/default_normal.dds"/>
+    <File fileId="22" filename="$data/shared/default_specular.dds"/>
+    <File fileId="29" filename="$data/shared/default_vmask.dds"/>
+    <File fileId="17" filename="$data/shared/detailLibrary/calibrated/calibratedPaint_diffuse.png"/>
+    <File fileId="16" filename="$data/shared/detailLibrary/calibrated/calibratedPaint_normal.png"/>
+    <File fileId="15" filename="$data/shared/detailLibrary/calibrated/calibratedPaint_specular.png"/>
+    <File fileId="33" filename="$data/shared/detailLibrary/calibrated/grainSmall_specular.png"/>
+    <File fileId="13" filename="$data/shared/detailLibrary/flat_normal.png"/>
+    <File fileId="34" filename="$data/shared/detailLibrary/metallic/clear_diffuse.png"/>
+    <File fileId="41" filename="$data/shared/detailLibrary/metallic/clear_specular.png"/>
+    <File fileId="7" filename="$data/shared/detailLibrary/metallic/metalGalvanized_diffuse.png"/>
+    <File fileId="6" filename="$data/shared/detailLibrary/metallic/metalGalvanized_normal.png"/>
+    <File fileId="5" filename="$data/shared/detailLibrary/metallic/metalGalvanized_specular.png"/>
+    <File fileId="26" filename="$data/shared/detailLibrary/metallic/silverScratched_diffuse.png"/>
+    <File fileId="25" filename="$data/shared/detailLibrary/metallic/silverScratched_specular.png"/>
+    <File fileId="31" filename="$data/shared/detailLibrary/nonMetallic/metal/metalPainted_diffuse.png"/>
+    <File fileId="30" filename="$data/shared/detailLibrary/nonMetallic/metal/metalPainted_specular.png"/>
+    <File fileId="54" filename="$data/shared/detailLibrary/nonMetallic/plastic/plasticGraniteGrainSmall_diffuse.dds"/>
+    <File fileId="53" filename="$data/shared/detailLibrary/nonMetallic/plastic/plasticGraniteGrainSmall_specular.dds"/>
+    <File fileId="14" filename="$data/shared/detailLibrary/nonMetallic/plastic/plasticPainted_diffuse.png"/>
+    <File fileId="12" filename="$data/shared/detailLibrary/nonMetallic/plastic/plasticPainted_specular.png"/>
+    <File fileId="20" filename="$data/shared/detailLibrary/nonMetallic/rubber/rubberBlack_diffuse.png"/>
+    <File fileId="19" filename="$data/shared/detailLibrary/nonMetallic/rubber/rubber_normal.png"/>
+    <File fileId="18" filename="$data/shared/detailLibrary/nonMetallic/rubber/rubber_specular.png"/>
+    <File fileId="36" filename="$data/shared/wheels/tires/michelin/agriBib/380_85R34.i3d"/>
+    <File fileId="1" filename="$data/shared/white_diffuse.dds"/>
+    <File fileId="47" filename="textures/ControlDecals.dds"/>
+    <File fileId="32" filename="textures/caution.dds"/>
+    <File fileId="43" filename="textures/guide.dds"/>
+    <File fileId="39" filename="textures/logo.dds"/>
+    <File fileId="3" filename="textures/pivotTower_vmask.dds"/>
+    <File fileId="46" filename="textures/warninglabel1.dds"/>
+  </Files>
+
+
+  <Materials>
+    <Material name="buttonDecal_mat" materialId="5" customShaderId="44">
+      <Texture fileId="47"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="22"/>
+    </Material>
+    <Material name="calibratedPaintMat" materialId="6" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <Custommap name="detailSpecular" fileId="15"/>
+      <Custommap name="detailNormal" fileId="16"/>
+      <Custommap name="detailDiffuse" fileId="17"/>
+      <CustomParameter name="colorScale" value="0 0.012 0.301"/>
+      <CustomParameter name="smoothnessScale" value="0.85"/>
+      <CustomParameter name="clearCoatIntensity" value="0.5"/>
+      <CustomParameter name="clearCoatSmoothness" value="0.85"/>
+    </Material>
+    <Material name="calibratedPaintMat" materialId="7" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <Custommap name="detailSpecular" fileId="15"/>
+      <Custommap name="detailNormal" fileId="16"/>
+      <Custommap name="detailDiffuse" fileId="17"/>
+      <CustomParameter name="colorScale" value="0.7 0.7 0.7"/>
+      <CustomParameter name="smoothnessScale" value="0.85"/>
+      <CustomParameter name="clearCoatIntensity" value="0.5"/>
+      <CustomParameter name="clearCoatSmoothness" value="0.85"/>
+    </Material>
+    <Material name="calibratedPaintMat" materialId="8" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <Custommap name="detailSpecular" fileId="15"/>
+      <Custommap name="detailNormal" fileId="16"/>
+      <Custommap name="detailDiffuse" fileId="17"/>
+      <CustomParameter name="colorScale" value="0.9 0.9 0.9"/>
+      <CustomParameter name="smoothnessScale" value="0.85"/>
+      <CustomParameter name="clearCoatIntensity" value="0.5"/>
+      <CustomParameter name="clearCoatSmoothness" value="0.85"/>
+    </Material>
+    <Material name="calibratedPaintMat" materialId="9" diffuseColor="0.8 0.8 0.8 1" specularColor="0.6 1 0" customShaderId="4">
+      <Custommap name="detailSpecular" fileId="15"/>
+      <Custommap name="detailNormal" fileId="16"/>
+      <Custommap name="detailDiffuse" fileId="17"/>
+      <CustomParameter name="colorScale" value="0 0.012 0.301"/>
+      <CustomParameter name="smoothnessScale" value="0.85"/>
+      <CustomParameter name="clearCoatIntensity" value="0.5"/>
+      <CustomParameter name="clearCoatSmoothness" value="0.85"/>
+    </Material>
+    <Material name="chromeMat" materialId="11" diffuseColor="0.8 0.8 0.8 1" specularColor="0.6 1 0" customShaderId="4">
+      <Custommap name="detailSpecular" fileId="41"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="34"/>
+    </Material>
+    <Material name="Collision_mat" materialId="12" diffuseColor="0 0 0 1" specularColor="0.501961 1 0">
+    </Material>
+    <Material name="Collision_mat" materialId="13" diffuseColor="0.8 0.8 0.8 1" specularColor="0.501961 1 0">
+    </Material>
+    <Material name="Collision_mat" materialId="14" diffuseColor="1 1 1 1">
+    </Material>
+    <Material name="Concrete_mat" materialId="15" customShaderId="4">
+      <Texture fileId="50"/>
+      <Normalmap fileId="51"/>
+      <Glossmap fileId="52"/>
+      <Custommap name="detailSpecular" fileId="53"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="54"/>
+    </Material>
+    <Material name="decalMat" materialId="16" customShaderId="4">
+      <Texture fileId="32"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <Custommap name="detailSpecular" fileId="33"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="34"/>
+    </Material>
+    <Material name="decalMat" materialId="17" customShaderId="4">
+      <Texture fileId="39"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <Custommap name="detailSpecular" fileId="33"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="34"/>
+    </Material>
+    <Material name="decalMat" materialId="18" diffuseColor="0.8 0.8 0.8 1" specularColor="0.6 1 0" customShaderId="4">
+      <Custommap name="detailSpecular" fileId="33"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="34"/>
+    </Material>
+    <Material name="default" materialId="19" diffuseColor="0.501961 0.501961 0.501961 1">
+    </Material>
+    <Material name="glassClear01Mat" materialId="20" alphaBlending="true">
+      <Texture fileId="21"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+    </Material>
+    <Material name="glassClear02Mat" materialId="21" alphaBlending="true" customShaderId="24">
+      <Texture fileId="23"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="22"/>
+      <CustomParameter name="lightControl" value="2"/>
+    </Material>
+    <Material name="glassClear02Mat" materialId="22" alphaBlending="true" customShaderId="24">
+      <Texture fileId="23"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <CustomParameter name="lightControl" value="2"/>
+    </Material>
+    <Material name="indicator1_mat" materialId="23" diffuseColor="0.329412 0.027451 0.0235294 1" specularColor="0.501961 1 0">
+    </Material>
+    <Material name="indicator2_mat" materialId="24" diffuseColor="0 0.305882 0 1" specularColor="0.501961 1 0">
+    </Material>
+    <Material name="KeybindsLabel" materialId="25" customShaderId="44">
+      <Texture fileId="43"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="22"/>
+    </Material>
+    <Material name="lightBlue_mat" materialId="26" diffuseColor="0.462745 0.615686 0.815686 1" specularColor="0.501961 1 0">
+    </Material>
+    <Material name="metalGalvanizedMat" materialId="27" specularColor="0.6 1 0" customShaderId="4">
+      <Texture fileId="1"/>
+      <Custommap name="detailSpecular" fileId="5"/>
+      <Custommap name="detailNormal" fileId="6"/>
+      <Custommap name="detailDiffuse" fileId="7"/>
+    </Material>
+    <Material name="metalGalvanizedMat" materialId="28" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <Custommap name="detailSpecular" fileId="5"/>
+      <Custommap name="detailNormal" fileId="6"/>
+      <Custommap name="detailDiffuse" fileId="7"/>
+    </Material>
+    <Material name="metalGalvanizedMat" materialId="29" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <Custommap name="detailSpecular" fileId="5"/>
+      <Custommap name="detailNormal" fileId="6"/>
+      <Custommap name="detailDiffuse" fileId="7"/>
+    </Material>
+    <Material name="metalGalvanizedMat" materialId="30" diffuseColor="0.8 0.8 0.8 1" specularColor="0.6 1 0" customShaderId="4">
+      <Custommap name="detailSpecular" fileId="5"/>
+      <Custommap name="detailNormal" fileId="6"/>
+      <Custommap name="detailDiffuse" fileId="7"/>
+    </Material>
+    <Material name="metalPaintedMat" materialId="31" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <Custommap name="detailSpecular" fileId="30"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="31"/>
+      <CustomParameter name="colorScale" value="0.4 0.4 0.4"/>
+    </Material>
+    <Material name="metalPaintedMat" materialId="32" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <Custommap name="detailSpecular" fileId="30"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="31"/>
+    </Material>
+    <Material name="metalPaintedMat" materialId="33" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <Custommap name="detailSpecular" fileId="30"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="31"/>
+      <CustomParameter name="colorScale" value="0.2 0.2 0.2"/>
+    </Material>
+    <Material name="plasticPaintedBlackMat" materialId="34" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="22"/>
+      <Custommap name="detailSpecular" fileId="15"/>
+      <Custommap name="detailNormal" fileId="16"/>
+      <Custommap name="detailDiffuse" fileId="17"/>
+      <CustomParameter name="colorScale" value="0.12 0.12 0.12"/>
+      <CustomParameter name="smoothnessScale" value="0.85"/>
+      <CustomParameter name="clearCoatIntensity" value="0.5"/>
+      <CustomParameter name="clearCoatSmoothness" value="0.85"/>
+    </Material>
+    <Material name="plasticPaintedBlackMat" materialId="35" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <Custommap name="detailSpecular" fileId="12"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="14"/>
+      <CustomParameter name="colorScale" value="0.012 0.012 0.012"/>
+    </Material>
+    <Material name="plasticPaintedBlackMat" materialId="36" diffuseColor="0.501961 0 0 1" customShaderId="24">
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <CustomParameter name="lightControl" value="2"/>
+    </Material>
+    <Material name="plasticPaintedBlackMat" materialId="38" diffuseColor="1 1 1 1" customShaderId="4">
+      <Custommap name="detailSpecular" fileId="12"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="14"/>
+      <CustomParameter name="colorScale" value="0 0 0"/>
+    </Material>
+    <Material name="plasticPaintedGrayMat" materialId="39" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <Custommap name="detailSpecular" fileId="12"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="14"/>
+      <CustomParameter name="colorScale" value="0.57 0.57 0.57"/>
+    </Material>
+    <Material name="plasticPaintedMat" materialId="40" specularColor="0.6 1 0" customShaderId="4">
+      <Texture fileId="1"/>
+      <Custommap name="detailSpecular" fileId="12"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="14"/>
+    </Material>
+    <Material name="plasticPaintedMat" materialId="41" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <Custommap name="detailSpecular" fileId="12"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="14"/>
+      <CustomParameter name="colorScale" value="0.3 0.3 0.3"/>
+    </Material>
+    <Material name="plasticPaintedMat" materialId="42" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <Custommap name="detailSpecular" fileId="12"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="14"/>
+    </Material>
+    <Material name="plasticPaintedMat" materialId="43" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <Custommap name="detailSpecular" fileId="12"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="14"/>
+    </Material>
+    <Material name="rubberBlackHosesMat" materialId="44" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <Custommap name="detailSpecular" fileId="18"/>
+      <Custommap name="detailNormal" fileId="19"/>
+      <Custommap name="detailDiffuse" fileId="20"/>
+      <CustomParameter name="colorScale" value="0.01 0.01 0.01"/>
+      <CustomParameter name="porosity" value="0.5"/>
+    </Material>
+    <Material name="rubberBlackHosesMat" materialId="45" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <Custommap name="detailSpecular" fileId="18"/>
+      <Custommap name="detailNormal" fileId="19"/>
+      <Custommap name="detailDiffuse" fileId="20"/>
+    </Material>
+    <Material name="rubberBlackHosesMat" materialId="46" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <Custommap name="detailSpecular" fileId="18"/>
+      <Custommap name="detailNormal" fileId="19"/>
+      <Custommap name="detailDiffuse" fileId="20"/>
+      <CustomParameter name="colorScale" value="0.01 0.01 0.01"/>
+      <CustomParameter name="porosity" value="0.5"/>
+    </Material>
+    <Material name="rubberBlackHosesMat" materialId="47" diffuseColor="0.8 0.8 0.8 1" specularColor="0.6 1 0" customShaderId="4">
+      <Custommap name="detailSpecular" fileId="18"/>
+      <Custommap name="detailNormal" fileId="19"/>
+      <Custommap name="detailDiffuse" fileId="20"/>
+      <CustomParameter name="colorScale" value="0.01 0.01 0.01"/>
+      <CustomParameter name="porosity" value="0.5"/>
+    </Material>
+    <Material name="silverScratchedMat" materialId="48">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="22"/>
+    </Material>
+    <Material name="silverScratchedMat" materialId="49" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="22"/>
+      <Custommap name="detailSpecular" fileId="25"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="26"/>
+    </Material>
+    <Material name="silverScratchedMat" materialId="50" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="29"/>
+      <Custommap name="detailSpecular" fileId="25"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="26"/>
+    </Material>
+    <Material name="silverScratchedMat" materialId="51" customShaderId="4">
+      <Texture fileId="1"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="3"/>
+      <Custommap name="detailSpecular" fileId="25"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="26"/>
+    </Material>
+    <Material name="silverScratchedMat" materialId="52" diffuseColor="0.8 0.8 0.8 1" specularColor="0.6 1 0" customShaderId="4">
+      <Custommap name="detailSpecular" fileId="25"/>
+      <Custommap name="detailNormal" fileId="13"/>
+      <Custommap name="detailDiffuse" fileId="26"/>
+    </Material>
+    <Material name="SprayArea_mat" materialId="54" alphaBlending="true" customShaderId="4">
+      <Texture fileId="23"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="22"/>
+      <CustomParameter name="colorScale" value="0 0 1"/>
+    </Material>
+    <Material name="SprayPlane_mat" materialId="55" specularColor="0.501961 1 0" alphaBlending="true" customShaderId="4">
+      <Texture fileId="23"/>
+      <Normalmap fileId="2"/>
+      <CustomParameter name="colorScale" value="1 0.5 0"/>
+    </Material>
+    <Material name="WarningLabel_mat" materialId="56" customShaderId="44">
+      <Texture fileId="46"/>
+      <Normalmap fileId="2"/>
+      <Glossmap fileId="22"/>
+    </Material>
+  </Materials>
+
+
+  <Shapes externalShapesFile="Reinke_Pivot_5.i3d.shapes">
+  </Shapes>
+
+  <Scene>
+    <TransformGroup name="CenterPivot" nodeId="131">
+      <TransformGroup name="pivotPoint" translation="3.53292e-10 3.64518 -1.94193e-07" rotation="-0 -90 0" nodeId="132">
+        <Shape name="Head" translation="-7.7696e-09 0 0" rotation="0 -2.81568e-06 1.22667e-05" shapeId="1" clipDistance="230" nodeId="133" castsShadows="true" receiveShadows="true" materialIds="29,29,39,6,46">
+          <TransformGroup name="ArmatureCenter" translation="9.19005e-05 0.3497 -0.587299" rotation="-0 90 0" nodeId="134">
+            <TransformGroup name="Tower" translation="-5.96046e-08 0 -7.27596e-12" rotation="2.50448e-06 -0 0" nodeId="135"/>
+          </TransformGroup>
+          <TransformGroup name="lights" translation="1.94193e-07 -3.64518 3.53275e-10" rotation="-0 90 0" nodeId="136">
+            <Shape name="LightGlass" translation="3.53292e-10 3.64518 -1.94193e-07" rotation="-0 -90 0" shapeId="2" clipDistance="30" nodeId="137" castsShadows="true" receiveShadows="true" materialIds="20">
+              <Shape name="LightBulbGlass" translation="-1.42417e-14 0 -2.77556e-17" shapeId="3" clipDistance="20" nodeId="138" castsShadows="true" receiveShadows="true" materialIds="48,21,49">
+                <Light name="LightBulbLight" translation="-0.0774436 0.85482 -0.359757" rotation="1.22667e-05 90 0" nodeId="139" type="point" color="1 0.95 0.8" emitDiffuse="true" emitSpecular="true" castShadowMap="true" depthMapBias="0.0012" depthMapSlopeScaleBias="2" depthMapSlopeClamp="0.0005" depthMapResolution="1024" shadowFarDistance="1000" shadowExtrusionDistance="200" softShadowsLightSize="0.5" softShadowsLightDistance="15" softShadowsDepthBiasFactor="1" softShadowsMaxPenumbraSize="0.5" range="6"/>
+              </Shape>
+            </Shape>
+          </TransformGroup>
+        </Shape>
+        <TransformGroup name="StructureCenter" translation="1.4285e-07 0.3497 -0.587301" rotation="-0 90 0" nodeId="140">
+          <Shape name="StructureCenterROTATE1" translation="5.96046e-08 0 9.17576e-05" shapeId="4" clipDistance="5840" nodeId="141" castsShadows="true" receiveShadows="true" materialIds="30">
+            <TransformGroup name="lights" translation="-0.587301 -3.99488 -9.17576e-05" nodeId="142">
+              <Shape name="LightGlass" translation="38.8639 4.76092 0.0673636" shapeId="5" clipDistance="180" nodeId="143" castsShadows="true" receiveShadows="true" materialIds="28">
+                <Shape name="LightBulbGlass" translation="0 0.24639 0.0870774" shapeId="6" clipDistance="20" nodeId="144" castsShadows="true" receiveShadows="true" materialIds="50,22,50">
+                  <Light name="LightBulbLight" translation="-6.85932e-09 -0.0320388 5.99661e-16" rotation="1.22667e-05 90 0" nodeId="145" type="point" color="1 0.95 0.8" emitDiffuse="true" emitSpecular="true" castShadowMap="true" depthMapBias="0.0012" depthMapSlopeScaleBias="2" depthMapSlopeClamp="0.0005" depthMapResolution="1024" shadowFarDistance="1000" shadowExtrusionDistance="200" softShadowsLightSize="0.5" softShadowsLightDistance="15" softShadowsDepthBiasFactor="1" softShadowsMaxPenumbraSize="0.5" range="6"/>
+                </Shape>
+              </Shape>
+            </TransformGroup>
+            <TransformGroup name="visuals" translation="-0.587301 -3.99488 -9.17576e-05" nodeId="146">
+              <Shape name="Drive" translation="39.4751 0.766896 0.0304919" shapeId="7" clipDistance="110" nodeId="147" castsShadows="true" receiveShadows="true" materialIds="28,32"/>
+              <Shape name="ElectricalBoxes" translation="21.1716 3.08911 -0.381114" shapeId="8" clipDistance="5510" nodeId="148" castsShadows="true" receiveShadows="true" materialIds="42,16,28"/>
+              <Shape name="HosesandWires" translation="20.7801 3.01623 0.673824" shapeId="9" clipDistance="5620" nodeId="149" castsShadows="true" receiveShadows="true" materialIds="44">
+                <Shape name="Nozzles" translation="-0.620699 -0.55364 -0.813551" shapeId="10" clipDistance="5420" nodeId="150" castsShadows="true" receiveShadows="true" materialIds="41,44"/>
+              </Shape>
+              <Shape name="SensorLH" translation="39.4577 0.74901 -2.0435" shapeId="11" clipDistance="50" nodeId="151" castsShadows="true" receiveShadows="true" materialIds="28"/>
+              <Shape name="SensorRH" translation="39.4579 0.748991 2.0436" shapeId="12" clipDistance="50" nodeId="152" castsShadows="true" receiveShadows="true" materialIds="28"/>
+              <Shape name="Shafts" translation="39.4548 0.628505 4.99608e-05" shapeId="13" clipDistance="590" nodeId="153" castsShadows="true" receiveShadows="true" materialIds="28"/>
+              <Shape name="ConnectorHose" translation="0.587299 3.99488 9.17577e-05" shapeId="14" clipDistance="50" nodeId="154" castsShadows="true" receiveShadows="true" skinBindNodeIds="156 135" materialIds="47,52">
+                <TransformGroup name="ArmatureCenter" translation="0.209078 0.0164001 -2.47019e-08" nodeId="155">
+                  <TransformGroup name="Pipe" rotation="2.50448e-06 -0 0" nodeId="156"/>
+                </TransformGroup>
+              </Shape>
+            </TransformGroup>
+            <TransformGroup name="effects" translation="37.5699 -1.90199 -0.15378" rotation="0 -0 -1.34349e-05" nodeId="157">
+              <Shape name="SprayPlaneCrossWide" translation="-35.9714 0.110383 0" shapeId="15" nodeId="158" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-35.9714 0.110383 0" shapeId="15" nodeId="159" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-34.7929 0.180734 0" shapeId="15" nodeId="160" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-33.7684 0.274924 0" shapeId="15" nodeId="161" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-32.759 0.337035 0" shapeId="15" nodeId="162" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-31.735 0.526582 0" shapeId="15" nodeId="163" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-30.7208 0.549697 0" shapeId="15" nodeId="164" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-29.6742 0.624039 0" shapeId="15" nodeId="165" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-28.6551 0.720542 0" shapeId="15" nodeId="166" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-27.6415 0.728022 0" shapeId="15" nodeId="167" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-26.607 0.774492 0" shapeId="15" nodeId="168" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-25.5807 0.774492 0" shapeId="15" nodeId="169" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-24.5602 0.860142 0" shapeId="15" nodeId="170" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-23.536 0.880552 0" shapeId="15" nodeId="171" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-22.5037 0.924412 0" shapeId="15" nodeId="172" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-21.4817 0.945352 0" shapeId="15" nodeId="173" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-20.4589 0.962552 0" shapeId="15" nodeId="174" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-19.4462 0.962552 0" shapeId="15" nodeId="175" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-18.4183 0.962552 0" shapeId="15" nodeId="176" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-17.3929 0.962552 0" shapeId="15" nodeId="177" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-16.3712 0.962552 0" shapeId="15" nodeId="178" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-15.3523 1.05891 0" shapeId="15" nodeId="179" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-14.3161 0.968892 0" shapeId="15" nodeId="180" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-13.3009 0.968892 0" shapeId="15" nodeId="181" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-12.2774 0.968892 0" shapeId="15" nodeId="182" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-11.2562 0.968892 0" shapeId="15" nodeId="183" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-10.2262 0.878682 0" shapeId="15" nodeId="184" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-9.22095 0.846322 0" shapeId="15" nodeId="185" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-8.18546 0.728572 0" shapeId="15" nodeId="186" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-7.15876 0.728572 0" shapeId="15" nodeId="187" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-6.12885 0.671595 0" shapeId="15" nodeId="188" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-5.10897 0.639205 0" shapeId="15" nodeId="189" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-4.08757 0.639205 0" shapeId="15" nodeId="190" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-3.07523 0.510425 0" shapeId="15" nodeId="191" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-2.03012 0.372279 0" shapeId="15" nodeId="192" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="-1.01917 0.309234 0" shapeId="15" nodeId="193" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+              <Shape name="SprayPlaneCrossWide" translation="1.53697e-07 0.309234 0" shapeId="15" nodeId="194" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+            </TransformGroup>
+            <TransformGroup name="TowerTerrainComp" translation="39.0023 -3.36705 0" rotation="-1.36604e-05 -0 0" nodeId="195">
+              <TransformGroup name="WheelLH" translation="0 5.36442e-07 -2.04364" rotation="90 -0 0" nodeId="196">
+                <Shape name="RimLH" translation="-0.036674 -5.48868e-08 0" shapeId="16" clipDistance="160" nodeId="197" castsShadows="true" receiveShadows="true" materialIds="31,28,50"/>
+                <ReferenceNode name="agriBib_380_85R34" translation="0 9.47728e-08 0" rotation="0 0 180" referenceId="36" nodeId="204"/>
+              </TransformGroup>
+              <TransformGroup name="WheelRH" translation="0 2.86102e-05 2.04389" rotation="89.9802 -0 0" nodeId="209">
+                <Shape name="RimLH" translation="-0.0366745 6.60511e-08 0" shapeId="16" clipDistance="160" nodeId="210" castsShadows="true" receiveShadows="true" materialIds="31,28,50"/>
+                <ReferenceNode name="agriBib_380_85R34" translation="0 9.47728e-08 0" referenceId="36" nodeId="211"/>
+              </TransformGroup>
+              <Shape name="CollisionTower1Ai" translation="-39.0023 3.36705 -9.09548e-05" rotation="1.36604e-05 -0 0" shapeId="17" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0x1000020" nodeId="216" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="27"/>
+              <Shape name="CollisionReal" translation="-20.1359 4.55386 1.06107e-06" rotation="1.36604e-05 -0 0" shapeId="18" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="217" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="19"/>
+              <Shape name="CollisionWheelTriangle" translation="-0.157902 1.30812 -0.000403673" rotation="1.36604e-05 -0 0" shapeId="19" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="218" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+            </TransformGroup>
+            <TransformGroup name="Center2" nodeId="219">
+              <TransformGroup name="ArmatureMiddle" translation="38.7489 0.13827 -0.000213575" nodeId="220">
+                <TransformGroup name="Tower" translation="-0.212196 -1.58664 0.000171587" rotation="2.50448e-06 -0 0" nodeId="221"/>
+              </TransformGroup>
+              <TransformGroup name="MiddleROTATE2" translation="38.7489 0.13827 -0.000213575" nodeId="222">
+                <Shape name="StructureEnd" translation="0 0 -0.000121817" shapeId="20" clipDistance="5520" nodeId="223" castsShadows="true" receiveShadows="true" materialIds="30">
+                  <TransformGroup name="TowerTerrainComp" translation="36.8294 -3.5053 0.000121817" nodeId="224">
+                    <TransformGroup name="WheelLH" translation="0 5.36442e-07 -2.04364" rotation="90 -0 0" nodeId="225">
+                      <Shape name="RimLH" translation="-0.036674 -5.48868e-08 0" shapeId="16" clipDistance="160" nodeId="226" castsShadows="true" receiveShadows="true" materialIds="31,28,50"/>
+                      <ReferenceNode name="agriBib_380_85R34" translation="0 9.47728e-08 0" rotation="0 0 180" referenceId="36" nodeId="227"/>
+                    </TransformGroup>
+                    <TransformGroup name="WheelRH" translation="0 2.86102e-05 2.04389" rotation="89.9802 -0 0" nodeId="232">
+                      <Shape name="RimLH" translation="-0.0366745 6.60511e-08 0" shapeId="16" clipDistance="160" nodeId="233" castsShadows="true" receiveShadows="true" materialIds="31,28,50"/>
+                      <ReferenceNode name="agriBib_380_85R34" translation="0 9.47728e-08 0" referenceId="36" nodeId="234"/>
+                    </TransformGroup>
+                    <Shape name="CollisionWheelTriangle" translation="-0.0424 1.4464 -0.000404" shapeId="19" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="239" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                    <Shape name="CollisionTower1Ai.001" translation="-36.8261 3.367 0.000122" shapeId="21" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0x1000020" nodeId="240" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                  </TransformGroup>
+                  <TransformGroup name="lights" translation="-39.3362 -4.13315 0.000243634" nodeId="241">
+                    <Shape name="LightGlass" translation="75.4464 4.76092 0.0673636" shapeId="22" clipDistance="180" nodeId="242" castsShadows="true" receiveShadows="true" materialIds="28">
+                      <Shape name="LightBulbGlass" translation="0 0.24639 0.0870774" shapeId="6" clipDistance="20" nodeId="243" castsShadows="true" receiveShadows="true" materialIds="50,22,50">
+                        <Light name="LightBulbLight" translation="0 -0.0320387 0" rotation="1.22667e-05 90 0" nodeId="244" type="point" color="1 0.95 0.8" emitDiffuse="true" emitSpecular="true" castShadowMap="true" depthMapBias="0.0012" depthMapSlopeScaleBias="2" depthMapSlopeClamp="0.0005" depthMapResolution="1024" shadowFarDistance="1000" shadowExtrusionDistance="200" softShadowsLightSize="0.5" softShadowsLightDistance="15" softShadowsDepthBiasFactor="1" softShadowsMaxPenumbraSize="0.5" range="6"/>
+                      </Shape>
+                    </Shape>
+                  </TransformGroup>
+                  <TransformGroup name="visuals" translation="-39.3362 -4.13315 0.000243634" nodeId="245">
+                    <Shape name="Drive.001" translation="76.0511 0.766896 0.0304919" shapeId="7" clipDistance="110" nodeId="246" castsShadows="true" receiveShadows="true" materialIds="28,32"/>
+                    <Shape name="ElectricalBoxes.002" translation="58.002 3.08911 -0.381114" shapeId="23" clipDistance="5320" nodeId="247" castsShadows="true" receiveShadows="true" materialIds="42,18,27"/>
+                    <Shape name="HosesandWires.002" translation="58.011 3.01641 0.673824" shapeId="24" clipDistance="5420" nodeId="248" castsShadows="true" receiveShadows="true" materialIds="45">
+                      <Shape name="Nozzles.001" translation="-0.425098 -0.50454 -0.813551" shapeId="25" clipDistance="5170" nodeId="249" castsShadows="true" receiveShadows="true" materialIds="41,44"/>
+                    </Shape>
+                    <Shape name="SensorLH.001" translation="76.0337 0.74901 -2.0435" shapeId="11" clipDistance="50" nodeId="250" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                    <Shape name="SensorRH.001" translation="76.0339 0.748991 2.0436" shapeId="12" clipDistance="50" nodeId="251" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                    <Shape name="Shafts.001" translation="76.0308 0.628505 4.99608e-05" shapeId="13" clipDistance="590" nodeId="252" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                    <Shape name="Gussets" translation="39.3362 4.13315 -0.000121817" shapeId="26" clipDistance="740" nodeId="253" castsShadows="true" receiveShadows="true" skinBindNodeIds="255 221" materialIds="30,47,52">
+                      <TransformGroup name="ArmatureMiddle" translation="1.8134 -0.91895 0.00027661" nodeId="254">
+                        <TransformGroup name="Pipe" rotation="2.50448e-06 -0 0" nodeId="255"/>
+                      </TransformGroup>
+                    </Shape>
+                  </TransformGroup>
+                  <TransformGroup name="effects" translation="35.4157 -2.04026 -0.153445" rotation="0 -0 -1.34349e-05" nodeId="256">
+                    <Shape name="SprayPlaneCrossWide" translation="-34.3058 0.283512 0" shapeId="15" nodeId="257" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-33.2957 0.447825 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="258" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-32.3004 0.509936 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="259" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-31.2907 0.699483 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="260" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-30.2907 0.722598 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="261" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-29.2587 0.79694 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="262" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-28.254 0.893444 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="263" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-27.2545 0.900923 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="264" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-26.2345 0.947392 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="265" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-25.2226 0.947392 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="266" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-24.2163 1.03304 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="267" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-23.2065 1.05345 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="268" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-22.1886 1.09731 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="269" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-21.181 1.11825 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="270" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-20.1725 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="271" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-19.1739 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="272" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-18.1605 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="273" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-17.1494 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="274" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-16.142 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="275" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-15.1374 1.23182 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="276" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-14.1157 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="277" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-13.1146 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="278" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-12.1055 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="279" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-11.0986 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="280" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-10.083 1.05158 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="281" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-9.09186 1.01922 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="282" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-8.07087 0.901471 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="283" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-7.05853 0.901471 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="284" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-6.04305 0.844496 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="285" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-5.03745 0.812106 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="286" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-4.03034 0.812106 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="287" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-3.03217 0.683326 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="288" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-2.00169 0.54518 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="289" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-1.00491 0.482135 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="290" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                    <Shape name="SprayPlaneCrossWide" translation="-0.0259399 0.482135 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="291" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                  </TransformGroup>
+                  <Shape name="CollisionReal.001" translation="17.5173 1.04854 0.000335367" shapeId="27" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="292" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                </Shape>
+                <TransformGroup name="Center3" nodeId="293">
+                  <TransformGroup name="ArmatureMiddle" translation="36.576 0 -0.000213575" nodeId="294">
+                    <TransformGroup name="Tower" translation="-0.212196 -1.58664 0.000171587" rotation="2.50448e-06 -0 0" nodeId="295"/>
+                  </TransformGroup>
+                  <TransformGroup name="MiddleROTATE3" translation="36.576 0 -0.000213575" nodeId="296">
+                    <Shape name="StructureMiddle" translation="0 0 -0.000121817" shapeId="20" clipDistance="5520" nodeId="297" castsShadows="true" receiveShadows="true" materialIds="30">
+                      <TransformGroup name="TowerTerrainComp" translation="36.8294 -3.5053 0.000121817" nodeId="298">
+                        <TransformGroup name="WheelLH" translation="0 5.36442e-07 -2.04364" rotation="90 -0 0" nodeId="299">
+                          <Shape name="RimLH" translation="-0.036674 -5.48868e-08 0" shapeId="16" clipDistance="160" nodeId="300" castsShadows="true" receiveShadows="true" materialIds="31,28,50"/>
+                          <ReferenceNode name="agriBib_380_85R34" translation="0 9.47728e-08 0" rotation="0 0 180" referenceId="36" nodeId="301"/>
+                        </TransformGroup>
+                        <TransformGroup name="WheelRH" translation="0 2.86102e-05 2.04389" rotation="89.9802 -0 0" nodeId="306">
+                          <Shape name="RimLH" translation="-0.0366745 6.60511e-08 0" shapeId="16" clipDistance="160" nodeId="307" castsShadows="true" receiveShadows="true" materialIds="31,28,50"/>
+                          <ReferenceNode name="agriBib_380_85R34" translation="0 9.47728e-08 0" referenceId="36" nodeId="308"/>
+                        </TransformGroup>
+                        <Shape name="CollisionWheelTriangle" translation="-0.0424 1.4464 -0.000404" shapeId="19" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="313" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                        <Shape name="CollisionTower1Ai.001" translation="-36.8261 3.367 0.000122" shapeId="21" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0x1000020" nodeId="314" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                      </TransformGroup>
+                      <Shape name="CollisionReal.001" translation="17.5173 1.04854 0.000335367" shapeId="27" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="315" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                      <TransformGroup name="lights" translation="-39.3362 -4.13315 0.000243634" nodeId="316">
+                        <Shape name="LightGlass" translation="75.4464 4.76092 0.0673636" shapeId="22" clipDistance="180" nodeId="317" castsShadows="true" receiveShadows="true" materialIds="28">
+                          <Shape name="LightBulbGlass" translation="0 0.24639 0.0870774" shapeId="6" clipDistance="20" nodeId="318" castsShadows="true" receiveShadows="true" materialIds="50,22,50">
+                            <Light name="LightBulbLight" translation="0 -0.0320387 0" rotation="1.22667e-05 90 0" nodeId="319" type="point" color="1 0.95 0.8" emitDiffuse="true" emitSpecular="true" castShadowMap="true" depthMapBias="0.0012" depthMapSlopeScaleBias="2" depthMapSlopeClamp="0.0005" depthMapResolution="1024" shadowFarDistance="1000" shadowExtrusionDistance="200" softShadowsLightSize="0.5" softShadowsLightDistance="15" softShadowsDepthBiasFactor="1" softShadowsMaxPenumbraSize="0.5" range="6"/>
+                          </Shape>
+                        </Shape>
+                      </TransformGroup>
+                      <TransformGroup name="visuals" translation="-39.3362 -4.13315 0.000243634" nodeId="320">
+                        <Shape name="Drive.001" translation="76.0511 0.766896 0.0304919" shapeId="7" clipDistance="110" nodeId="321" castsShadows="true" receiveShadows="true" materialIds="28,32"/>
+                        <Shape name="ElectricalBoxes.002" translation="58.002 3.08911 -0.381114" shapeId="23" clipDistance="5320" nodeId="322" castsShadows="true" receiveShadows="true" materialIds="42,18,27"/>
+                        <Shape name="HosesandWires.002" translation="58.011 3.01641 0.673824" shapeId="24" clipDistance="5420" nodeId="323" castsShadows="true" receiveShadows="true" materialIds="45">
+                          <Shape name="Nozzles.001" translation="-0.425293 -0.50454 -0.813551" shapeId="25" clipDistance="5170" nodeId="324" castsShadows="true" receiveShadows="true" materialIds="41,44"/>
+                        </Shape>
+                        <Shape name="SensorLH.001" translation="76.0337 0.74901 -2.0435" shapeId="11" clipDistance="50" nodeId="325" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                        <Shape name="SensorRH.001" translation="76.0339 0.748991 2.0436" shapeId="12" clipDistance="50" nodeId="326" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                        <Shape name="Shafts.001" translation="76.0308 0.628505 4.99608e-05" shapeId="13" clipDistance="590" nodeId="327" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                        <Shape name="Gussets" translation="39.3362 4.13315 -0.000121817" shapeId="26" clipDistance="740" nodeId="328" castsShadows="true" receiveShadows="true" skinBindNodeIds="330 295" materialIds="30,47,52">
+                          <TransformGroup name="ArmatureMiddle" translation="1.8134 -0.91895 0.00027661" nodeId="329">
+                            <TransformGroup name="Pipe" rotation="2.50448e-06 -0 0" nodeId="330"/>
+                          </TransformGroup>
+                        </Shape>
+                      </TransformGroup>
+                      <TransformGroup name="effects" translation="35.4157 -2.04026 -0.153445" rotation="0 -0 -1.34349e-05" nodeId="331">
+                        <Shape name="SprayPlaneCrossWide" translation="-34.3058 0.283512 0" shapeId="15" nodeId="332" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-33.2957 0.447825 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="333" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-32.3004 0.509936 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="334" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-31.2907 0.699483 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="335" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-30.2907 0.722598 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="336" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-29.2587 0.79694 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="337" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-28.254 0.893444 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="338" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-27.2545 0.900923 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="339" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-26.2345 0.947392 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="340" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-25.2226 0.947392 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="341" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-24.2163 1.03304 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="342" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-23.2065 1.05345 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="343" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-22.1886 1.09731 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="344" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-21.181 1.11825 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="345" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-20.1725 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="346" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-19.1739 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="347" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-18.1605 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="348" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-17.1494 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="349" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-16.142 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="350" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-15.1374 1.23182 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="351" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-14.1157 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="352" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-13.1146 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="353" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-12.1055 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="354" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-11.0986 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="355" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-10.083 1.05158 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="356" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-9.09186 1.01922 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="357" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-8.07087 0.901471 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="358" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-7.05853 0.901471 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="359" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-6.04305 0.844496 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="360" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-5.03745 0.812106 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="361" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-4.03034 0.812106 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="362" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-3.03217 0.683326 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="363" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-2.00169 0.54518 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="364" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-1.00491 0.482135 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="365" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                        <Shape name="SprayPlaneCrossWide" translation="-0.0259399 0.482135 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="366" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                      </TransformGroup>
+                    </Shape>
+                    <TransformGroup name="Center4" nodeId="367">
+                      <TransformGroup name="ArmatureMiddle" translation="36.576 0 -0.000213575" nodeId="368">
+                        <TransformGroup name="Tower" translation="-0.212196 -1.58664 0.000171587" rotation="2.50448e-06 -0 0" nodeId="369"/>
+                      </TransformGroup>
+                      <TransformGroup name="MiddleROTATE4" translation="36.576 0 -0.000213575" nodeId="370">
+                        <Shape name="StructureMiddle" translation="0 0 -0.000121817" shapeId="20" clipDistance="5520" nodeId="371" castsShadows="true" receiveShadows="true" materialIds="30">
+                          <TransformGroup name="TowerTerrainComp" translation="36.8294 -3.5053 0.000121817" nodeId="372">
+                            <TransformGroup name="WheelLH" translation="0 5.36442e-07 -2.04364" rotation="90 -0 0" nodeId="373">
+                              <Shape name="RimLH" translation="-0.036674 -5.48868e-08 0" shapeId="16" clipDistance="160" nodeId="374" castsShadows="true" receiveShadows="true" materialIds="31,28,50"/>
+                              <ReferenceNode name="agriBib_380_85R34" translation="0 9.47728e-08 0" rotation="0 0 180" referenceId="36" nodeId="375"/>
+                            </TransformGroup>
+                            <TransformGroup name="WheelRH" translation="0 2.86102e-05 2.04389" rotation="89.9802 -0 0" nodeId="380">
+                              <Shape name="RimLH" translation="-0.0366745 6.60511e-08 0" shapeId="16" clipDistance="160" nodeId="381" castsShadows="true" receiveShadows="true" materialIds="31,28,50"/>
+                              <ReferenceNode name="agriBib_380_85R34" translation="0 9.47728e-08 0" referenceId="36" nodeId="382"/>
+                            </TransformGroup>
+                            <Shape name="CollisionWheelTriangle" translation="-0.0424 1.4464 -0.000404" shapeId="19" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="387" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                            <Shape name="CollisionTower1Ai.001" translation="-36.8261 3.367 0.000122" shapeId="21" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0x1000020" nodeId="388" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                          </TransformGroup>
+                          <TransformGroup name="lights" translation="-39.3362 -4.13315 0.000243634" nodeId="389">
+                            <Shape name="LightGlass" translation="75.4464 4.76092 0.0673636" shapeId="22" clipDistance="180" nodeId="390" castsShadows="true" receiveShadows="true" materialIds="28">
+                              <Shape name="LightBulbGlass" translation="0 0.24639 0.0870774" shapeId="6" clipDistance="20" nodeId="391" castsShadows="true" receiveShadows="true" materialIds="50,22,50">
+                                <Light name="LightBulbLight" translation="0 -0.0320387 0" rotation="1.22667e-05 90 0" nodeId="392" type="point" color="1 0.95 0.8" emitDiffuse="true" emitSpecular="true" castShadowMap="true" depthMapBias="0.0012" depthMapSlopeScaleBias="2" depthMapSlopeClamp="0.0005" depthMapResolution="1024" shadowFarDistance="1000" shadowExtrusionDistance="200" softShadowsLightSize="0.5" softShadowsLightDistance="15" softShadowsDepthBiasFactor="1" softShadowsMaxPenumbraSize="0.5" range="6"/>
+                              </Shape>
+                            </Shape>
+                          </TransformGroup>
+                          <TransformGroup name="visuals" translation="-39.3362 -4.13315 0.000243634" nodeId="393">
+                            <Shape name="Drive.001" translation="76.0511 0.766896 0.0304919" shapeId="7" clipDistance="110" nodeId="394" castsShadows="true" receiveShadows="true" materialIds="28,32"/>
+                            <Shape name="ElectricalBoxes.002" translation="58.002 3.08911 -0.381114" shapeId="23" clipDistance="5320" nodeId="395" castsShadows="true" receiveShadows="true" materialIds="42,18,27"/>
+                            <Shape name="HosesandWires.002" translation="58.011 3.01641 0.673824" shapeId="24" clipDistance="5420" nodeId="396" castsShadows="true" receiveShadows="true" materialIds="45">
+                              <Shape name="Nozzles.001" translation="-0.425293 -0.50454 -0.813551" shapeId="25" clipDistance="5170" nodeId="397" castsShadows="true" receiveShadows="true" materialIds="41,44"/>
+                            </Shape>
+                            <Shape name="SensorLH.001" translation="76.0337 0.74901 -2.0435" shapeId="11" clipDistance="50" nodeId="398" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                            <Shape name="SensorRH.001" translation="76.0339 0.748991 2.0436" shapeId="12" clipDistance="50" nodeId="399" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                            <Shape name="Shafts.001" translation="76.0308 0.628505 4.99608e-05" shapeId="13" clipDistance="590" nodeId="400" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                            <Shape name="Gussets" translation="39.3362 4.13315 -0.000121817" shapeId="26" clipDistance="740" nodeId="401" castsShadows="true" receiveShadows="true" skinBindNodeIds="403 369" materialIds="30,47,52">
+                              <TransformGroup name="ArmatureMiddle" translation="1.8134 -0.91895 0.00027661" nodeId="402">
+                                <TransformGroup name="Pipe" rotation="2.50448e-06 -0 0" nodeId="403"/>
+                              </TransformGroup>
+                            </Shape>
+                          </TransformGroup>
+                          <TransformGroup name="effects" translation="35.4157 -2.04026 -0.153445" rotation="0 -0 -1.34349e-05" nodeId="404">
+                            <Shape name="SprayPlaneCrossWide" translation="-34.3058 0.283512 0" shapeId="15" nodeId="405" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-33.2957 0.447825 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="406" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-32.3004 0.509936 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="407" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-31.2907 0.699483 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="408" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-30.2907 0.722598 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="409" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-29.2587 0.79694 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="410" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-28.254 0.893444 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="411" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-27.2545 0.900923 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="412" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-26.2345 0.947392 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="413" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-25.2226 0.947392 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="414" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-24.2163 1.03304 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="415" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-23.2065 1.05345 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="416" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-22.1886 1.09731 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="417" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-21.181 1.11825 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="418" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-20.1725 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="419" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-19.1739 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="420" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-18.1605 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="421" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-17.1494 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="422" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-16.142 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="423" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-15.1374 1.23182 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="424" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-14.1157 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="425" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-13.1146 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="426" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-12.1055 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="427" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-11.0986 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="428" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-10.083 1.05158 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="429" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-9.09186 1.01922 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="430" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-8.07087 0.901471 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="431" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-7.05853 0.901471 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="432" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-6.04305 0.844496 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="433" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-5.03745 0.812106 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="434" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-4.03034 0.812106 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="435" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-3.03217 0.683326 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="436" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-2.00169 0.54518 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="437" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-1.00491 0.482135 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="438" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                            <Shape name="SprayPlaneCrossWide" translation="-0.0259399 0.482135 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="439" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                          </TransformGroup>
+                          <Shape name="CollisionReal.001" translation="17.5173 1.04854 0.000335367" shapeId="27" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="440" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                        </Shape>
+                        <TransformGroup name="Center5" nodeId="441">
+                          <TransformGroup name="ArmatureMiddle" translation="36.576 0 -0.000213575" nodeId="442">
+                            <TransformGroup name="Tower" translation="-0.212196 -1.58664 0.000171587" rotation="2.50448e-06 -0 0" nodeId="443"/>
+                          </TransformGroup>
+                          <TransformGroup name="MiddleROTATE5" translation="36.576 0 -0.000213575" nodeId="444">
+                            <Shape name="StructureEnd" translation="0 0 -0.000121817" shapeId="20" clipDistance="5520" nodeId="445" castsShadows="true" receiveShadows="true" materialIds="30">
+                              <TransformGroup name="TowerTerrainComp" translation="36.8294 -3.5053 0.000121817" nodeId="446">
+                                <TransformGroup name="WheelLH" translation="0 5.36442e-07 -2.04364" rotation="90 -0 0" nodeId="447">
+                                  <Shape name="RimLH" translation="-0.036674 -5.48868e-08 0" shapeId="16" clipDistance="160" nodeId="448" castsShadows="true" receiveShadows="true" materialIds="31,28,50"/>
+                                  <ReferenceNode name="agriBib_380_85R34" translation="0 9.47728e-08 0" rotation="0 0 180" referenceId="36" nodeId="449"/>
+                                </TransformGroup>
+                                <TransformGroup name="WheelRH" translation="0 2.86102e-05 2.04389" rotation="89.9802 -0 0" nodeId="454">
+                                  <Shape name="RimLH" translation="-0.0366745 6.60511e-08 0" shapeId="16" clipDistance="160" nodeId="455" castsShadows="true" receiveShadows="true" materialIds="31,28,50"/>
+                                  <ReferenceNode name="agriBib_380_85R34" translation="0 9.47728e-08 0" referenceId="36" nodeId="456"/>
+                                </TransformGroup>
+                                <Shape name="CollisionWheelTriangle" translation="-0.0424 1.4464 -0.000404" shapeId="19" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="461" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                                <Shape name="CollisionTower1Ai.001" translation="-36.8261 3.367 0.000122" shapeId="21" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0x1000020" nodeId="462" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                              </TransformGroup>
+                              <TransformGroup name="lights" translation="-39.3362 -4.13315 0.000243634" nodeId="463">
+                                <Shape name="LightGlass" translation="75.4464 4.76092 0.0673636" shapeId="22" clipDistance="180" nodeId="464" castsShadows="true" receiveShadows="true" materialIds="28">
+                                  <Shape name="LightBulbGlass" translation="0 0.24639 0.0870774" shapeId="6" clipDistance="20" nodeId="465" castsShadows="true" receiveShadows="true" materialIds="50,22,50">
+                                    <Light name="LightBulbLight" translation="0 -0.0320387 0" rotation="1.22667e-05 90 0" nodeId="466" type="point" color="1 0.95 0.8" emitDiffuse="true" emitSpecular="true" castShadowMap="true" depthMapBias="0.0012" depthMapSlopeScaleBias="2" depthMapSlopeClamp="0.0005" depthMapResolution="1024" shadowFarDistance="1000" shadowExtrusionDistance="200" softShadowsLightSize="0.5" softShadowsLightDistance="15" softShadowsDepthBiasFactor="1" softShadowsMaxPenumbraSize="0.5" range="6"/>
+                                  </Shape>
+                                </Shape>
+                              </TransformGroup>
+                              <TransformGroup name="visuals" translation="-39.3362 -4.13315 0.000243634" nodeId="467">
+                                <Shape name="Extension" translation="75.4012 4.48163 4.96699e-05" shapeId="28" clipDistance="970" nodeId="468" castsShadows="true" receiveShadows="true" materialIds="28">
+                                  <Shape name="ExtensionNozzles" translation="1.721 -2.51074 -0.153647" shapeId="29" clipDistance="190" nodeId="469" castsShadows="true" receiveShadows="true" materialIds="41,44"/>
+                                  <Shape name="ExtensionHoses" translation="1.72501 -1.27559 -0.173676" shapeId="30" clipDistance="390" nodeId="470" castsShadows="true" receiveShadows="true" materialIds="44"/>
+                                  <Shape name="ExtensionSign" translation="1.746 -0.73144 -0.000930123" shapeId="31" clipDistance="150" nodeId="471" castsShadows="true" receiveShadows="true" materialIds="17"/>
+                                  <Shape name="ExtensionSprinkler" translation="3.05901 0.17005 0.00110798" shapeId="32" clipDistance="70" nodeId="472" castsShadows="true" receiveShadows="true" materialIds="30"/>
+                                  <TransformGroup name="effects" translation="2.22716 -2.52719 -0.153738" rotation="0 -0 -1.34349e-05" nodeId="473">
+                                    <Shape name="SprayPlaneCrossWide" translation="-1.00491 0.181781 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="474" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                    <Shape name="SprayPlaneCrossWide" translation="-5.99173e-15 0.374452 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="475" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                  </TransformGroup>
+                                </Shape>
+                                <Shape name="Drive.001" translation="76.0511 0.766896 0.0304919" shapeId="7" clipDistance="110" nodeId="491" castsShadows="true" receiveShadows="true" materialIds="28,32"/>
+                                <Shape name="ElectricalBoxes.002" translation="58.002 3.08911 -0.381114" shapeId="23" clipDistance="5320" nodeId="492" castsShadows="true" receiveShadows="true" materialIds="42,18,27"/>
+                                <Shape name="HosesandWires.002" translation="58.011 3.01641 0.673824" shapeId="24" clipDistance="5420" nodeId="493" castsShadows="true" receiveShadows="true" materialIds="45">
+                                  <Shape name="Nozzles.001" translation="-0.425293 -0.50454 -0.813551" shapeId="25" clipDistance="5170" nodeId="494" castsShadows="true" receiveShadows="true" materialIds="41,44"/>
+                                </Shape>
+                                <Shape name="SensorLH.001" translation="76.0337 0.74901 -2.0435" shapeId="11" clipDistance="50" nodeId="495" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                                <Shape name="SensorRH.001" translation="76.0339 0.748991 2.0436" shapeId="12" clipDistance="50" nodeId="496" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                                <Shape name="Shafts.001" translation="76.0308 0.628505 4.99608e-05" shapeId="13" clipDistance="590" nodeId="497" castsShadows="true" receiveShadows="true" materialIds="28"/>
+                                <Shape name="Gussets" translation="39.3362 4.13315 -0.000121817" shapeId="26" clipDistance="740" nodeId="498" castsShadows="true" receiveShadows="true" skinBindNodeIds="500 443" materialIds="30,47,52">
+                                  <TransformGroup name="ArmatureMiddle" translation="1.8134 -0.91895 0.00027661" nodeId="499">
+                                    <TransformGroup name="Pipe" rotation="2.50448e-06 -0 0" nodeId="500"/>
+                                  </TransformGroup>
+                                </Shape>
+                                <Shape name="StopArms" translation="75.9038 2.28239 -0.0684229" shapeId="33" clipDistance="790" nodeId="501" castsShadows="true" receiveShadows="true" materialIds="27">
+                                  <Shape name="HosesandWires.003" translation="-0.202702 0.6695 0.624029" shapeId="34" clipDistance="370" nodeId="502" castsShadows="true" receiveShadows="true" materialIds="45"/>
+                                  <Shape name="ElectricalBoxesExport.001" translation="0.0522995 0.20998 -0.695729" shapeId="35" clipDistance="60" nodeId="503" castsShadows="true" receiveShadows="true" materialIds="40,18,27"/>
+                                </Shape>
+                              </TransformGroup>
+                              <TransformGroup name="effects" translation="35.4157 -2.04026 -0.153445" rotation="0 -0 -1.34349e-05" nodeId="504">
+                                <Shape name="SprayPlaneCrossWide" translation="-34.3058 0.283512 0" shapeId="15" nodeId="505" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-33.2957 0.447825 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="506" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-32.3004 0.509936 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="507" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-31.2907 0.699483 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="508" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-30.2907 0.722598 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="509" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-29.2587 0.79694 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="510" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-28.254 0.893444 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="511" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-27.2545 0.900923 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="512" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-26.2345 0.947392 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="513" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-25.2226 0.947392 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="514" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-24.2163 1.03304 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="515" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-23.2065 1.05345 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="516" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-22.1886 1.09731 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="517" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-21.181 1.11825 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="518" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-20.1725 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="519" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-19.1739 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="520" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-18.1605 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="521" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-17.1494 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="522" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-16.142 1.13546 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="523" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-15.1374 1.23182 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="524" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-14.1157 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="525" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-13.1146 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="526" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-12.1055 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="527" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-11.0986 1.14179 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="528" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-10.083 1.05158 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="529" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-9.09186 1.01922 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="530" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-8.07087 0.901471 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="531" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-7.05853 0.901471 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="532" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-6.04305 0.844496 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="533" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-5.03745 0.812106 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="534" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-4.03034 0.812106 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="535" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-3.03217 0.683326 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="536" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-2.00169 0.54518 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="537" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-1.00491 0.482135 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="538" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                                <Shape name="SprayPlaneCrossWide" translation="-0.0259399 0.482135 0" rotation="0 -0 -8.14222e-13" shapeId="15" nodeId="539" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="13"/>
+                              </TransformGroup>
+                              <Shape name="CollisionReal.001" translation="17.5173 1.04854 0.000335367" shapeId="27" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="540" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                              <Shape name="CollisionRealTip" translation="37.967 0.18813 0.000335367" shapeId="36" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="541" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="19"/>
+                              <Shape name="CollisionTower1Ai.002" translation="38.169 -0.13827 0.000243634" shapeId="37" kinematic="true" collisionFilterGroup="0x103c" collisionFilterMask="0x1000020" nodeId="542" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+                            </Shape>
+                          </TransformGroup>
+                        </TransformGroup>
+                      </TransformGroup>
+                    </TransformGroup>
+                  </TransformGroup>
+                </TransformGroup>
+              </TransformGroup>
+            </TransformGroup>
+          </Shape>
+        </TransformGroup>
+        <TransformGroup name="WorkArea" translation="0 -3.645 0" nodeId="543">
+          <TransformGroup name="Start" translation="-3 0 -2" nodeId="544"/>
+          <TransformGroup name="Width" translation="3 0 -2" nodeId="545"/>
+          <TransformGroup name="Height" translation="-3 0 -280" nodeId="546"/>
+        </TransformGroup>
+      </TransformGroup>
+      <TransformGroup name="animated" nodeId="547">
+        <Shape name="ControlBox" translation="-0.70868 1.56537 -0.387863" rotation="0 45 0" shapeId="38" clipDistance="140" nodeId="548" castsShadows="true" receiveShadows="true" materialIds="6,51,39">
+          <Shape name="ControlBoxInside" shapeId="39" clipDistance="130" nodeId="549" castsShadows="true" receiveShadows="true" materialIds="9,26,11,38">
+            <TransformGroup name="ControlBoxDoorROT" translation="-0.101265 0.39174 -0.210447" nodeId="550">
+              <Shape name="ControlBoxDoor" shapeId="40" clipDistance="130" nodeId="551" castsShadows="true" receiveShadows="true" materialIds="6">
+                <Shape name="ControlBoxDoorInside" shapeId="41" clipDistance="130" nodeId="552" castsShadows="true" receiveShadows="true" materialIds="6">
+                  <Shape name="KeybindsLabel" translation="0.0190243 0 -0.22" shapeId="42" clipDistance="70" nodeId="553" castsShadows="false" receiveShadows="false" distanceBlending="false" materialIds="25"/>
+                </Shape>
+              </Shape>
+            </TransformGroup>
+            <TransformGroup name="Button1" translation="-0.032464 0.49761 0.011139" nodeId="554">
+              <Shape name="Button1" shapeId="43" clipDistance="10" nodeId="555" castsShadows="true" receiveShadows="true" materialIds="36"/>
+            </TransformGroup>
+            <TransformGroup name="KnobSystemPower" translation="-0.0343202 0.49119 -0.0706258" rotation="-45 -0 0" nodeId="556">
+              <Shape name="Knob1" shapeId="44" clipDistance="10" nodeId="557" castsShadows="true" receiveShadows="true" materialIds="35"/>
+            </TransformGroup>
+            <TransformGroup name="KnobWaterSupply" translation="-0.0343202 0.41874 -0.0706258" rotation="-45 -0 0" nodeId="558">
+              <Shape name="Knob2" shapeId="45" clipDistance="10" nodeId="559" castsShadows="true" receiveShadows="true" materialIds="35"/>
+            </TransformGroup>
+            <TransformGroup name="KnobPressureByPass" translation="-0.0343202 0.27635 -0.0494352" rotation="-45 -0 0" nodeId="560">
+              <Shape name="Knob3" translation="5.96046e-08 0 -5.96046e-08" shapeId="46" clipDistance="10" nodeId="561" castsShadows="true" receiveShadows="true" materialIds="35"/>
+            </TransformGroup>
+            <TransformGroup name="KnobAutoManual" translation="-0.0343194 0.49118 0.0929047" rotation="-45 -0 0" nodeId="562">
+              <Shape name="Knob4" translation="0 0 2.98023e-08" shapeId="47" clipDistance="10" nodeId="563" castsShadows="true" receiveShadows="true" materialIds="35"/>
+            </TransformGroup>
+            <TransformGroup name="KnobSpeed" translation="-0.0343193 0.418686 0.0899604" rotation="-45 -0 0" nodeId="564">
+              <Shape name="Knob4" translation="0 0 2.98023e-08" shapeId="47" clipDistance="10" nodeId="565" castsShadows="true" receiveShadows="true" materialIds="35"/>
+            </TransformGroup>
+            <TransformGroup name="KnobEndGun" translation="-0.0347069 0.346607 -0.0702391" rotation="-45 -0 0" nodeId="566">
+              <Shape name="Knob2" shapeId="45" clipDistance="10" nodeId="567" castsShadows="true" receiveShadows="true" materialIds="35"/>
+            </TransformGroup>
+            <Shape name="WarningLabel1" translation="-0.0213725 0.552558 0.0114264" shapeId="48" clipDistance="20" nodeId="568" castsShadows="false" receiveShadows="false" distanceBlending="false" materialIds="56"/>
+            <Shape name="Labels" translation="-0.0178446 0.4093 0.0126615" rotation="180 -0 2.03556e-13" shapeId="49" clipDistance="50" nodeId="569" castsShadows="true" receiveShadows="true" materialIds="5"/>
+            <Shape name="PivotCurrent" translation="-0.0178446 0.36854 0.0111058" shapeId="50" clipDistance="10" nodeId="570" castsShadows="true" receiveShadows="true" materialIds="34,11"/>
+            <Shape name="LimitA" translation="-0.0178446 0.36854 0.0111058" shapeId="51" clipDistance="10" nodeId="571" castsShadows="true" receiveShadows="true" materialIds="34,24"/>
+            <Shape name="LimitB" translation="-0.0178446 0.36854 0.0111058" shapeId="52" clipDistance="10" nodeId="572" castsShadows="true" receiveShadows="true" materialIds="34,23"/>
+          </Shape>
+        </Shape>
+        <Shape name="PressureGuage" translation="-0.00466176 2.23061 0.161702" rotation="90 -0 0" shapeId="53" clipDistance="40" nodeId="573" castsShadows="true" receiveShadows="true" materialIds="51,35,43">
+          <TransformGroup name="PressureGaugeNeedleROT" translation="9.16198e-05 -0.00656402 -0.09058" nodeId="574">
+            <Shape name="PressureGuageNeedle" translation="0 5.69136e-09 0" shapeId="54" clipDistance="10" nodeId="575" castsShadows="true" receiveShadows="true" materialIds="35"/>
+          </TransformGroup>
+        </Shape>
+      </TransformGroup>
+      <TransformGroup name="visuals" nodeId="576">
+        <Shape name="Tower" translation="0 2.08124 0" shapeId="55" clipDistance="840" nodeId="577" castsShadows="true" receiveShadows="true" materialIds="29,51,46"/>
+        <Shape name="Cables" translation="-0.817529 1.56728 -0.494052" shapeId="56" clipDistance="400" nodeId="578" castsShadows="true" receiveShadows="true" materialIds="46"/>
+        <Shape name="ConcretePad" shapeId="57" clipDistance="660" nodeId="579" castsShadows="true" receiveShadows="true" materialIds="15"/>
+        <Shape name="ElectricalBox" translation="-0.401118 0.59893 -1.34651" shapeId="58" clipDistance="180" nodeId="580" castsShadows="true" receiveShadows="true" materialIds="7,39,8,33"/>
+        <TransformGroup name="Collisions" nodeId="581">
+          <Shape name="CollisionBase" translation="0 2.02276 0" rotation="90 -0 0" shapeId="59" static="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="582" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+          <Shape name="AiCollisonBase" scale="5 5 5" shapeId="60" static="true" collisionFilterGroup="0x103c" collisionFilterMask="0x1000020" nodeId="583" castsShadows="false" receiveShadows="false" nonRenderable="true" distanceBlending="false" materialIds="14"/>
+          <Shape name="CollisionStep" shapeId="61" static="true" collisionFilterGroup="0x103c" collisionFilterMask="0xfffffbff" nodeId="584" castsShadows="true" receiveShadows="true" nonRenderable="true" materialIds="12"/>
+        </TransformGroup>
+        <Shape name="CircleFence" scale="1.61 1 1.61" shapeId="62" clipDistance="40950" nodeId="585" castsShadows="false" receiveShadows="false" doubleSided="true" materialIds="54"/>
+        <Shape name="SquareFence" translation="0 -7.62 0" scale="1.63 1 1.63" shapeId="63" clipDistance="49370" nodeId="586" castsShadows="false" receiveShadows="false" doubleSided="true" materialIds="55"/>
+      </TransformGroup>
+      <TransformGroup name="XML" nodeId="587">
+        <TransformGroup name="AIupdate" nodeId="588">
+          <TransformGroup name="Start" translation="-3 0 -3" nodeId="589"/>
+          <TransformGroup name="End" translation="3 0 3" nodeId="590"/>
+        </TransformGroup>
+        <TransformGroup name="Leveling" nodeId="591">
+          <TransformGroup name="Start" translation="-3 0 -3" nodeId="592"/>
+          <TransformGroup name="Width" translation="-3 0 3" nodeId="593"/>
+          <TransformGroup name="Height" translation="3 0 -3" nodeId="594"/>
+        </TransformGroup>
+        <TransformGroup name="TestArea" nodeId="595">
+          <TransformGroup name="Start" translation="-3 0 -3" nodeId="596"/>
+          <TransformGroup name="Width" translation="3 0 3" nodeId="597"/>
+        </TransformGroup>
+      </TransformGroup>
+    </TransformGroup>
+  </Scene>
+
+</i3D>

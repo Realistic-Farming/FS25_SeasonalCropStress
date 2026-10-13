@@ -15,6 +15,8 @@
 - [x] `getIrrigationCostsEnabled` getter (212ceaa): a nil-safe read of the irrigation-costs-enabled flag, added to the facade for TaxMod's SCS-011 deductible-expense mirror (the first B3.2b consumer, in-game verified).
 
 ## Bugs
+- [x] A SettingsHub-path setting change reaches clients (MAINTENANCE row 259, 2026-10-07; SCS-023 v2.3 build brief :117): `CropStressManager:applyAuthoritativeSettingChange` broadcasts the validated value once on the server; the panel's and the settings event's own broadcasts go where the owner runs. Bar `tools/test/lua/MAINT-259-owner_broadcast_entry_test.lua` (the hub, event and panel paths from main.lua's own hooks); battery `tools/test/mutate_maint259.py`.
+- [x] Map sidebar missing l10n strings (2026-08-18): the legend, average card and info box drew 16 `cs_map_*` keys that existed in no translation file, so the raw key leaked through the overlay's permissive `tr` helper. Fix: all 16 keys (`cs_map_status_*`, `cs_map_density*`, `cs_map_legend_dry/good/wet`, `cs_map_avg_*`, `cs_map_info_*`) added to all 26 language files, and the helper now rejects unresolved keys the engine can hand back (raw key, `$l10n_` literal, "MISSING ..." variants) so a missing key always falls back to English. The legend / average card / info box are also separated by a dedicated 18px card gap.
 - [x] F93 CRITICAL: the temperature read was a permanent 15.0. `getTemperatureFromWeather()` probed `env.weatherSystem:getTemperature()`, but there is no WeatherSystem class in FS25 (Environment.weather is a Weather instance), so every probe missed and every heat-driven behaviour was inert while looking healthy. Fix: WeatherGuard first (`g_currentMission.weatherGuard:getCurrentSky().temperature`, the certified temperatureUpdater route), then the certified vanilla `Weather:getCurrentTemperature()` (exists, certified at VehicleSystem.lua:158 + decompile Weather.lua:671-672). Test: `tools/test/lua/weather_temp_f93_test.lua` (8 assertions).
 - [x] CRITICAL: the harvest yield penalty had NEVER run. `CropStressModifier.installHarvestHook()` was invoked from `FSBaseMission.onAllVehiclesLoaded`, which does not fire (and is in no reference doc; the old comment citing NPCFavor and CoursePlay as witnesses was false, neither uses it). `Cutter.processCutterArea` was never wrapped, so stress accumulated, displayed and persisted while taking nothing. Certified in-game 2026-07-30 on savegame14: with `csForceStress` at 1.0, litres per area held flat at 0.4 L/m2 before and after. Moved to `Mission00.onStartMission` (the point SoilFertilizer proves works for `Combine`/`FillUnit`/`Mower` spec hooks) plus a readiness-guarded per-frame backstop in `FSBaseMission.update`.
 - [ ] **RELEASE GATE (do not ship without it):** the fix above switches ON a yield penalty that has been inert since the mod shipped, so **drop-time messaging is part of the fix, not optional** (Arissani ruling 2026-07-30). Release notes must say, in plain words, that drought now actually costs yield and that the cap ships deliberately gentle for this season. Suggested wording: *"Fixed: drought stress never actually reduced your harvest. It does now. Because this has been inactive since release, the maximum loss ships at the gentle end (30%) rather than the old 60% default, so existing farms are not punished mid-season. Saves still on the old default are migrated to 30% automatically; if you had deliberately set your own value it is left alone. The full figure will be revisited in the suite-wide balance pass."*
@@ -22,19 +24,25 @@
 - [x] CRITICAL (house rule): PF integration mode active on detection - RESOLVED. No PF code path remains after 77b3064; nothing left to stand down.
 - [x] SCS-001: created overlay handle in `initialize()`, replaced bare `drawFilledRect` calls (fixed, merged to main).
 - [x] SCS-002 / SCS-003: additional SeasonalCropStress bugs fixed in 2026-07-26 bug sweep, merged to main.
+- [x] MP join d.cells nil crash (PR #140, 2026-08-16): SoilMoistureSystem.lua d.cells/d.cellCount/d.cellSum nil when field data arrives via MP sync events before initFieldData builds the full structure. Nil-init guards in materialiseRelief and _writeCell. Wizard diagnosed the exact bug shape in the ledger.
 
 ## Features / enhancements
+- [~] SCS-046 rain key (2026-09-01): optional per-pivot rain-key pause. Engine half: per-pivot state (fitted, trip mm 0.5-10.0 in 0.5 steps, accumulated mm, dry minutes, latch, input state, revision), WeatherGuard-first current-rain read (`getCurrentSky` under pcall, base-game fallback, UNAVAILABLE on both-fail, nil never zero/dry), continuous sensor in CropStressManager:update before the hour branch (effective rain = isRaining + rainScale >= 0.05, 5.0 mm/hr at full scale, trip once, 30 dry game min reset without starting), the one gate in activateSystem + hourlyScheduleCheck (fitted tripped/input-unavailable refuses every start), fractional active-hour settle (fitted pivots excluded from legacy gain + chargeHourlyCosts), getIrrigationSystems snapshot expansion (rainKeyState/activityState/pauseReason/nextWakeKind/stateRevision), server FIT/REMOVE/SET_TRIP_MM command + result events, csRainKeyCheck diagnostic, release-gate row rain_key_pause LOCKED. 47 assertions in SCS-046-pivot-rain-key_spec_test.lua. Release token waits for runtime trip/reset, both player surfaces, dedicated-server transport and balance observations.
+- [~] SCS-023 finite irrigation water (2026-09-01): engine half. Finite/unlimited source state (setSourceWaterRemaining clamps + derives hasWater, capacity <= 0 Unlimited), split binding (findNearestWaterSource farm/requireWater; registration binds dry), bounded planFiniteWater (group scheduled by source, pressure-scaled draw, rain refill, served per system-hour, never area-multiplied), collectScheduledHours inactive mode, applyGainToSystemCoverage positional write, getIrrigationSystemsRows/getIrrigationWaterSources farm-filtered with stopReason, Irrigate Now fixed-1.0 transaction (six codes, committedHours, applyWaterAtCell accepted-true), pump lifecycle (onLoad/loadFromXMLFile/saveToXMLFile/onFinalizePlacement/onOwnerChanged/onWriteStream/onReadStream), finiteWater setting in defaults/load/save/validate/panel/MP bulk sync/SettingsHub, WeatherGuard-first getRainFromWeather, ReleaseGate row finite_irrigation_water LOCKED, csWaterStatus diagnostic. 34 assertions in SCS-023-finite-irrigation-water_spec_test.lua. FarmTablet readout is Wizard's half.
+- [x] Moisture map DMV render (2026-08-18): `CsMoistureMapOverlay` renders the map's Crop Moisture page through the engine density-map visualization overlay (Soil PDA pattern) instead of a sampled tile grid. A dedicated display bitvector (`CS_PDA_MoistureDisplay`, 8 channels, band-painted per field polygon with the farmland moisture scalar) feeds a double-buffered DMV overlay; state 0 stays transparent for off-field and bands 1..15 follow the shared ramp, so bone-dry fields stay visible. The band map is deliberately separate from `CropStressValueMap`: no sim data encoding changes and no save format impact. The DMV path computes the sidebar band counts itself, and the sampled tile grid is retained as the engine-absent fallback.
 - [x] Release gate (2026-08-04): `ReleaseGate.lua` with the `cs_89_rebuild` and `moisture_coupling` rows, both noted "not built yet; locks when it lands" (Arissani 2026-08-03). F93 ships stable and is not in the registry. `experimentalSystems` opt-in (default false, orthogonal to difficulty) through `CropStressSettings` defaults/load/save/validate, the MP bulk sync (count 10 to 11), the SettingsHub mirror and a settings-panel row. `csRelease` status command. 23 assertions in release_gate_test.lua.
 - [x] Short-month weather tune (e6a4fce): `SEASON_RAIN_PROB` reshaped to match SoilFertilizer's Normal climate shape, so SCS moisture and SF's #740 short-month rain fill agree on wet/dry seasonality. Shape-matched, not a raw copy (a day-vs-hour unit gap remains for a later retune with Arissani).
 - [x] Bedrock migration per Point 1-4: all four now BUILT. SettingsHub was already live; StateLedger + NetworkSync + MasterHUD (B3.4) were built this session against the SoilFertilizer reference, delegate-when-present. Not shipped until the SCS module-ids are locked with Claude(A) + a single-host in-game smoke passes.
 
 ## Cross-mod integration
+- [x] SettingsHub registration carries `selfPersisted = true` (MAINTENANCE row 257, 2026-10-07; ahead of SettingsHub row 241): `src/settings/SettingsHubBridge.lua`. Bar `tools/test/lua/MAINT-257-hub_selfpersisted_entry_test.lua` (main.lua's own hooks register the bridge with a SettingsHub stand-in on the mission only); battery `tools/test/mutate_maint257.py`.
 - [x] StateLedger / NetworkSync / MasterHUD bridges - BUILT (`src/integrations/CropStress*Bridge.lua`) against the SoilFertilizer reference, delegate-when-present, each mission-bound (`g_currentMission.<handle>`). New self-test harness added (`tools/test/`, mirrors SF): Lua 5.1 syntax + NetworkSync + StateLedger round-trip tests (38 assertions green). SCS module ids LOCKED by Claude(A) 2026-07-16 (ledger fab67d6): `SeasonalCropStress_State` (SCHEMA 1) + `SeasonalCropStress_Sync`; the client-local HUD id was renamed to the full-token `SeasonalCropStress_StressOverlay` for naming-convention consistency (was `SCS_StressOverlay`).
 - Carry forward two verified contracts (do not regress): coverage detection uses the real field polygon, never a label-point box; `system.coveredFields` is an ARRAY of farmland ids - consumers must `ipairs` it.
 - [ ] Reads RandomWorldEvents (`randomWorldEvents`); optional external FS25_MoistureSystem.
 - [ ] Read by CropDisease (moisture), RandomWorldEvents (stress), MarketDynamics, FarmTablet.
 
 ## Docs / localization
+- [x] SCS PDA localization completeness (2026-08-18): every `cs_pda_*` / `cs_rf_pda_*` key now exists in all 26 language files. English gained `cs_rf_pda_crop_mixed` + `cs_rf_pda_pivot_switch` (used only as fallbacks before); the 17 languages missing the whole Esc `cs_rf_pda_*` block were filled with `[EN]` placeholder values, matching the existing convention, so no PDA string can render as a raw key in any language. The hardcoded CROP CONSULTANT text on the legacy PDA now reads `cs_pda_btn_consultant`.
 - [ ] Keep all 26 languages in step for any new setting.
 - [ ] Update README/version on each release.
 
@@ -100,3 +108,59 @@
 ## Crop Moisture heat sheet + hose log-flood fix (2026-08-15, Wizard)
 - [x] Moisture heat-sheet overlay (#138) and the hose-peer liveness/log-flood fix (#137), both merged; 1.2.5.77.
 - [~] In-game: the heat sheet paints the wet patch where an irrigator just ran; a sold hose partner clears the prompt and the log goes quiet.
+
+## Moisture map + Rainstar UI (2026-08-25, PRs #157 #158)
+- [x] Per-pixel irrigator accumulation, load seeding, relief variation, Rainstar presence detection and the PIVOT Stop all built and deployed.
+- [~] Release cs_grid_concordance (the 2m value map) so the per-pixel map is the default; decision owed by Tyson after the in-game layer look.
+- [~] Smooth the relief variation (currently 8m blocks) if the map reads too blocky.
+- [~] Watch for Arissani's SCS-24 brief and check overlap with the moisture map and Rainstar surfaces.
+- [~] DMV availability robustness: gate _pdaDMVAvailable only on the two DMV overlays, not the display bitvector.
+
+## SCS-041 §8 schema-3 absorption persistence (2026-09-09, slices 9a/9b)
+- [x] Slice 9a (83cd1e6): pure pack/load port. `packAbsorptionWindow` (canonical sorted rows, Adler-32) + `loadAbsorptionWindow` (replace-not-add, provider/grain/age/adler/row-count validation, schema-2 migration, stand-down marker persistence and normalization) + `pruneAbsorptionMissingFields`. Mirror test `scs041_persistence_test.lua` 87/0; suite 1918/0.
+- [x] Slice 9b (be44970): absorption leaf nested in the SCS-039 provider envelope core (capture carries it CAPPED-only, digest binds it, PENDING_ONLY recovery keeps it, `selectedAbsorptionLeaf` = Group M replace-not-add). Mirror test `scs041_envelope_leaf_test.lua` 26/0; suite 1944/0 across 52 files.
+- [x] SDS §8 on-disk carrier for the leaf: built as the SCS-039 save view / restore barrier (feat/SCS-039-save-view-restore-barrier). `ensureMissionWaterSaveCut`, full-view own XML and ledger mirrors, candidate validation, one readiness barrier feeding `loadAbsorptionWindow`. Bench `scs039_save_view_restore_test.lua` 187/0. Still owed in game: career save/reload, save interruption, disk growth (no generation-file cleanup yet), dedicated server.
+
+## SCS-041 field-boundary parcel-union (2026-09-09, decidable core of NEXT ACTION #3)
+- [x] Geometry cache retains the complete parcel polygon collection (`_getFieldPolygons`), membership point-in-ANY (`_pointInParcel`); `materialiseRelief`, `fieldGeometryFingerprint`, `_uniqueFieldOwnerAt`/re-key and the runoff source-polygon fence now use the collection. Commit 780738c; `scs041_parcel_union_test.lua` 23/0; suite 1967/0.
+- [ ] SDS remainder routed back: native-map region-op union (paint/delta/read-average over the collection, area-weighted mean, once-per-cell on touching/overlapping polygons). Needs the SDS + in-game observation before implementation.
+
+## 2026-10-04 (Fred): the shared RF Esc door (Wizard, #220)
+
+- [x] The four shared door files at the suite's STOCK page set, byte-same in all ten door mods; StockGuard's STOCK page chrome inert without StockGuard; the herd-advisory panel hidden. Four of its own side-panel profiles take the suite's variant (declared in the PR body).
+- [~] In game (owed): TESTING row 418.
+
+## 2026-10-05 (Fred): the Esc side panel's info box (Wizard, #222 and #223)
+
+- [x] The side info boxes start clear of the selected tab; text bodies 352 and 348 px wide after #223, so line length and the right edge are unchanged; byte-same in all ten door mods.
+- [~] In game (owed): TESTING row 448.
+
+## 2026-10-08 (Fred): HUD Soil strip (MAINTENANCE rows 247, 262 and 263)
+
+- [x] `src/HUDOverlay.lua`: Soil's system through the mission first; W, P and D above 15 on Soil's 0 to 100 scale; D from `shownDiseasePressure` (the reveal gate); W, P and D only while Soil's switch for each is on, none when `simDisabled`. Bar `MAINT-247-hud_soil_handle_entry_test.lua`, battery `tools/test/mutate_maint247.py`.
+- [~] In game (owed): TESTING row 508.
+
+## 2026-10-08 (Fred): Agronomy draw scale (MAINTENANCE row 250)
+
+- [x] `src/IrrigationManager.lua` `resolveFiniteWaterDrawScale`: the brief's static resolver call. Bar `MAINT-250-agronomy_draw_scale_spec_test.lua`, battery `tools/test/mutate_maint250.py`, 2 of 2.
+- [~] In game (owed): TESTING row 511.
+
+## 2026-10-08 (Fred): the master switch reads as SCS absent (MAINTENANCE row 269)
+
+- [x] `src/CropStressManager.lua`: `isSwitchedOff()`; getMoisture, getStress, getYieldKeepFactor, getRainOutlook, getCriticalAlertHint, getTemperature and getEvaporativeDemand answer nil while off; csStatus prints no stress while off. `src/CropStressModifier.lua`: the harvest hook stands down while off. `src/ui/CsRfPdaGuest.lua`, `src/HUDOverlay.lua`, `src/ui/CsMoistureMapOverlay.lua`: direct store reads gated to the no-reading state; `src/CropConsultant.lua` and the HUD take a nil stress as 0. Bar `MAINT-269-switch_off_reads_absent_entry_test.lua`; battery `tools/test/mutate_maint269.py`, 14 of 14.
+- [~] In game (owed): TESTING row 515.
+
+## 2026-10-08 (Fred): SettingsHub reader (MAINTENANCE row 258)
+
+- [x] `src/settings/SettingsHubBridge.lua`: `readValue` (the settings object `applyChange` routes through), passed as `read` in the registration. Bar `MAINT-258-hub_reader_entry_test.lua` (main.lua's own hooks, SCS's own panel); battery `tools/test/mutate_maint258.py`, 2 of 2.
+- [~] In game (owed): TESTING row 520.
+
+## 2026-10-08 (Fred): Time Guard skew guard (MAINTENANCE row 268)
+
+- [x] `src/SoilMoistureSystem.lua` `registerDailyAccrual`: the class list read through `tg.scheduler.FLOW_CLASSES`, nil-safe; the two dead reads gone; the comment's release corrected to v1.0.1.0. `scs041_parcel_union_raster_test.lua`'s fixture models `scheduler`. Bar `MAINT-268-timeguard_skew_guard_entry_test.lua`; battery `tools/test/mutate_maint268.py`, 4 of 4.
+- [~] In game (owed): TESTING row 517.
+
+## 2026-10-08 (Fred): per-player settings stay per player (MAINTENANCE row 289)
+
+- [x] `src/settings/SettingsHubBridge.lua`: `LOCAL_KEYS` from the registration's player-local defs; `applyChange` applies a player-local key on this machine (the panel's local branch); alertsEnabled and alertCooldown player-local, debugMode adminOnly. `src/settings/CropStressSettingsPanel.lua`: alertsEnabled and alertCooldown `localOnly`. `src/events/CropStressSettingsSyncEvent.lua`: `BULK_COUNT` 9, `PER_PLAYER`, the bulk write drops the three, the bulk and single applies skip them. Bar `MAINT-289-per_player_settings_stay_local_entry_test.lua`; battery `tools/test/mutate_maint289.py`, 8 of 8.
+- [~] In game (owed): TESTING row 522.

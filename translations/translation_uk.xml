@@ -1,14 +1,14 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <l10n>
     <texts>
     <!-- ========== HUD OVERLAY ========== -->
     <text name="cs_hud_title"         text="ВОЛОГІСТЬ ҐРУНТУ"/>
     <text name="cs_hud_healthy"       text="Здорові"/>
     <text name="cs_hud_warning"       text="Посухова напруга"/>
-    <text name="cs_hud_critical"      text="КРИТИЧНО — Поливайте зараз!"/>
+    <text name="cs_hud_critical"      text="КРИТИЧНО - Поливайте зараз!"/>
     <text name="cs_hud_no_crop"       text="Немає культури"/>
     <text name="cs_hud_forecast"      text="Прогноз на 5 днів"/>
-    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 завантажено. Натисніть Shift+M, щоб відкрити HUD вологості. Вперше? Відкрийте меню Довідки (ESC → Довідка) і знайдіть Seasonal Crop Stress."/>
+    <text name="cs_hud_first_run"      text="Seasonal Crop Stress v1.0.5.0 завантажено. Натисніть Right Ctrl+M, щоб відкрити HUD вологості. Вперше? Відкрийте меню Довідки (ESC → Довідка) і знайдіть Seasonal Crop Stress."/>
     <text name="cs_hud_click_forecast" text="Натисніть рядок для прогнозу на 5 днів"/>
     <text name="cs_hud_vehicle_disabled" text="Накладка вимкнена в транспортному засобі"/>
 
@@ -26,12 +26,12 @@
     <text name="cs_soil_clay"   text="Глинистий"/>
 
     <!-- ========== ALERTS ========== -->
-    <text name="cs_alert_info"     text="Поле %d: вологість %s знижується — стежте за умовами."/>
-    <text name="cs_alert_warning"  text="Поле %d: вологість %s низька — рекомендується зрошення."/>
-    <text name="cs_alert_critical" text="Поле %d: %s на порозі посухової напруги — зрошуйте ЗАРАЗ!"/>
+    <text name="cs_alert_info"     text="Поле %d: вологість %s знижується - стежте за умовами."/>
+    <text name="cs_alert_warning"  text="Поле %d: вологість %s низька - рекомендується зрошення."/>
+    <text name="cs_alert_critical" text="Поле %d: %s на порозі посухової напруги - зрошуйте ЗАРАЗ!"/>
 
     <!-- ========== IRRIGATION ========== -->
-    <text name="cs_irr_title"          text="Система зрошення — %s"/>
+    <text name="cs_irr_title"          text="Система зрошення - %s"/>
     <text name="cs_irr_water_source"   text="Джерело води"/>
     <text name="cs_irr_connected"      text="Підключено"/>
     <text name="cs_irr_disconnected"   text="Відключено"/>
@@ -94,8 +94,8 @@
     <text name="cs_irr_no_covered_fields" text="Немає полів під покриттям цієї системи."/>
 
     <!-- ========== CONSULTANT RECOMMENDATIONS (dynamic, format strings) ========== -->
-    <text name="cs_rec_urgent"          text="ТЕРМІНОВО: Поле %d — вологість %.0f%% — поливайте негайно!"/>
-    <text name="cs_rec_warning"         text="Поле %d — вологість %.0f%% — рекомендується полив протягом 24 год."/>
+    <text name="cs_rec_urgent"          text="ТЕРМІНОВО: Поле %d - вологість %.0f%% - поливайте негайно!"/>
+    <text name="cs_rec_warning"         text="Поле %d - вологість %.0f%% - рекомендується полив протягом 24 год."/>
     <text name="cs_rec_ok"              text="Всі поля мають прийнятний рівень вологості."/>
     <text name="cs_rec_forecast"        text="Прогноз: Д+1 %.0f%%  Д+2 %.0f%%  Д+3 %.0f%%"/>
     <text name="cs_rec_systems_running" text="%d система(и) зрошення наразі працює(ють)."/>
@@ -153,79 +153,79 @@
 
     <text name="helpLine_cs_p1_title"          text="Огляд"/>
     <text name="helpLine_cs_p1_intro_title"    text="Що додає цей мод"/>
-    <text name="helpLine_cs_p1_intro_text"     text="Seasonal Crop Stress додає симуляцію вологості ґрунту для кожного поля. Культурам потрібна вода під час ключових фаз росту. Якщо її не вистачає — врожай буде меншим. Системи зрошення дозволяють контролювати водопостачання полів."/>
+    <text name="helpLine_cs_p1_intro_text"     text="[EN] Seasonal Crop Stress gives every field its own soil moisture, from 0% (bone dry) to 100% (saturated). Rain fills it, heat and time dry it, and irrigation lets you put water back. While a crop is in its thirsty growth window and the field is drier than that crop needs, drought stress builds, and at harvest that stress takes a share of the yield. The Esc page lists the fields you own."/>
     <text name="helpLine_cs_p1_start_title"    text="Початок роботи"/>
-    <text name="helpLine_cs_p1_start_text"     text="Натисніть Shift+M, щоб відкрити HUD вологості і побачити всі поля одразу. Поля, виділені червоним, терміново потребують води. Зелені поля в гарному стані. Натисніть Shift+C, щоб відкрити агрономічного консультанта з детальними порадами."/>
+    <text name="helpLine_cs_p1_start_text"     text="[EN] Open the moisture HUD with the Controls action Toggle Moisture HUD (factory Right Ctrl+M; if nothing happens, look under Options &gt; Controls &gt; Seasonal Crop Stress, it may be bound to another key). Green fields are fine, yellow need water soon, red are losing yield. The Esc menu page Realistic Farming &gt; Crop Stress lists your fields with moisture, stress and irrigation; click a row for the detail card. Build a Water Pump first, then a Center Pivot within 500 m of it."/>
 
     <text name="helpLine_cs_p2_title"          text="Вологість ґрунту"/>
     <text name="helpLine_cs_p2_how_title"      text="Як працює вологість"/>
-    <text name="helpLine_cs_p2_how_text"       text="Дощ наповнює ґрунт, а спека його висушує. Кожне поле відстежує власний рівень вологості від 0% (абсолютно сухий) до 100% (насичений). Швидкість висихання залежить від погоди, сезону і типу ґрунту."/>
+    <text name="helpLine_cs_p2_how_text"       text="[EN] Every in-game hour each field loses about 0.4% moisture before modifiers. Hot weather and summer speed that up, cool weather and winter slow it down. Rain and a sprayer filled with water add moisture. The Difficulty setting scales drying (Easy 0.7x, Normal 1.0x, Hard 1.4x) and the Evapotranspiration setting scales it again. The ground also holds water unevenly: low spots stay wetter longer and the high, dry patches show first."/>
     <text name="helpLine_cs_p2_soil_title"     text="Типи ґрунту"/>
-    <text name="helpLine_cs_p2_soil_text"      text="Піщаний ґрунт швидко висихає і потребує частого поливу. Глинистий ґрунт довше утримує воду, але може перезволожуватися. Суглинок — середній варіант і найпростіший в управлінні. Тип ґрунту вашого поля відображається в HUD та консультанті."/>
+    <text name="helpLine_cs_p2_soil_text"      text="[EN] Sandy soil dries 1.4 times faster than loamy and soaks up rain 1.25 times faster, so it swings quickly both ways. Clay dries at 0.7 times and takes rain at 0.72 times, so it holds water longest. Loamy is the 1.0 reference and the easiest to manage. The soil type shows on the HUD row and on the Esc detail card."/>
 
     <text name="helpLine_cs_p3_title"          text="Напруга культур та врожай"/>
     <text name="helpLine_cs_p3_window_title"   text="Критичні вікна росту"/>
-    <text name="helpLine_cs_p3_window_text"    text="Кожна культура має період у своєму циклі росту, коли найбільше потребує води. Пшениця найбільш вразлива навесні, кукурудза страждає під час літньої спеки, ріпак чутливий восени. Низька вологість в цей період накопичує напругу на полі."/>
+    <text name="helpLine_cs_p3_window_text"    text="[EN] Each crop has a thirsty growth window and its own moisture need. Stress builds every hour the crop is in that window and the field sits below that need, and it does not heal when rain returns. Needs at a glance: wheat 35%, barley 30%, corn 40%, canola 45%, sunflower 30%, soybeans 40%, sugar beet 50%, potato 55%, rice 70%. Other crops have their own window and need in the same table."/>
     <text name="helpLine_cs_p3_yield_title"    text="Зниження врожаю під час збирання"/>
-    <text name="helpLine_cs_p3_yield_text"     text="Накопичена напруга зменшує врожай. Невелика напруга — невелика втрата врожаю. Сильна посуха може скоротити врожай до 60%. Консультант показує поточний ризик втрати врожаю по кожному полю, щоб ви могли розставити пріоритети."/>
+    <text name="helpLine_cs_p3_yield_text"     text="[EN] At harvest the yield is cut by the field's stress times your Max Yield Loss setting. The factory cap is 30%, so a fully stressed field still yields 70%; the setting can be raised as far as 75%. A new crop after harvest starts clean. The Esc page and the Crop Consultant show the yield risk per field, so water where it matters most."/>
 
     <text name="helpLine_cs_p5_title"          text="Зрошення"/>
     <text name="helpLine_cs_p5_types_title"    text="Типи зрошення"/>
-    <text name="helpLine_cs_p5_types_text"     text="У меню будівництва доступні три типи зрошення. Центральний зрошувач охоплює велику кругову площу. Крапельна лінія забезпечує точне покриття вздовж рядка поля. Водяний насос живить ваші системи зрошення і має бути розміщений поблизу джерела води."/>
+    <text name="helpLine_cs_p5_types_text"     text="[EN] Two placeables live in the build menu. The Water Pump feeds the pivots and must sit within 500 m of a system; pressure drops about 30% at that full range, so keep pumps close. A Center Pivot waters a circle and comes in three spans. A pivot with no pump in range shows Disconnected. The shop also sells the irrigator vehicles, and a sprayer filled with WATER raises moisture wherever you spray it, handy for a small field or a corner a pivot cannot reach."/>
     <text name="helpLine_cs_p5_schedule_title" text="Розклад та запуск"/>
-    <text name="helpLine_cs_p5_schedule_text"  text="Виберіть систему зрошення і натисніть Shift+I, щоб відкрити її розклад. Виберіть дні тижня для поливу та встановіть час початку і завершення. Ви також можете натиснути 'Полити зараз' у діалозі, щоб одразу полити охоплені поля без очікування."/>
+    <text name="helpLine_cs_p5_schedule_text"  text="[EN] Open a system's Irrigation Manager with the Controls action Open Irrigation Manager, or with the Schedule chip on the pivot card of the Esc Crop Stress page when that system covers the selected field. Pick the days of the week, set a start and end hour, and Save. Irrigate Now waters the covered fields for one hour straight away. With Irrigation Costs on, a running system is charged per hour. Finite Water is off by default and is an experimental system: it takes effect only when both it and Experimental Systems are on. Then each pump carries a store in irrigation hours that runs consume and rain refills."/>
 
     <text name="helpLine_cs_p6_title"          text="Агрономічний консультант"/>
     <text name="helpLine_cs_p6_what_title"     text="Що показує консультант"/>
-    <text name="helpLine_cs_p6_what_text"      text="Натисніть Shift+C, щоб відкрити консультанта. Він показує 5 полів з найвищим ризиком, ранжованих за вологістю та рівнем напруги, разом з рекомендацією на 24 години і прогнозом вологості на 3 дні."/>
+    <text name="helpLine_cs_p6_what_text"      text="[EN] The Crop Consultant (Controls action Open Crop Consultant, no factory key) ranks your riskiest fields by moisture and stress, gives a plain recommendation for the next 24 hours and shows the moisture forecast. Healthy is 40% and up, Warning is 25% to 40%, Critical is below 25%."/>
     <text name="helpLine_cs_p6_act_title"      text="Дії за порадами"/>
-    <text name="helpLine_cs_p6_act_text"       text="Поля з позначкою КРИТИЧНО потребують поливу сьогодні, щоб запобігти втраті врожаю. Поля з позначкою УВАГА слід полити протягом одного-двох днів. Використовуйте кнопку 'Відкрити менеджер зрошення' всередині консультанта."/>
+    <text name="helpLine_cs_p6_act_text"       text="[EN] Critical fields need water today, before yield loss grows. Warning fields should be watered within a day or two, or left to forecast rain if it is close. A field already building stress shows an exclamation mark on the HUD. Use the consultant's Open Irrigation Manager control to schedule the worst field first."/>
     <text name="helpLine_cs_p6_npc_title"      text="Необов'язкові інтеграції"/>
-    <text name="helpLine_cs_p6_npc_text"       text="Кілька необов'язкових модів розширюють систему. FS25_NPCFavor: Олексій Чен з'являється як NPC-агроном. FS25_SoilFertilizer: pH ґрунту та вміст органіки змінюють евапотранспірацію. Precision Farming DLC: дані вологості ґрунту відображаються в накладці карти."/>
+    <text name="helpLine_cs_p6_npc_text"       text="[EN] Other mods plug in when present. NPC Favor: the agronomist's favors unlock early drought warnings and irrigation advice. Soil and Fertilizer: high organic matter holds water, acid soil (pH under 6.0) stresses crops earlier; Crop Stress reads the soil manager through the mission handle. UsedPlus: irrigation running costs and wear. CoursePlay and AutoDrive: vehicle counts and water destinations in the alerts."/>
 
     <text name="helpLine_cs_s1_title"          text="Загальні налаштування"/>
     <text name="helpLine_cs_s1_gen_title"      text="Увімкнення моду"/>
-    <text name="helpLine_cs_s1_gen_text"       text="Відкрийте налаштування гри (ESC → Налаштування → Seasonal Crop Stress). Використовуйте 'Увімкнути мод', щоб увімкнути або вимкнути всю систему. Параметр 'Складність' контролює швидкість накопичення напруги — Легко прощає помилки, Важко вимагає проактивного поливу."/>
+    <text name="helpLine_cs_s1_gen_text"       text="[EN] ESC &gt; Settings &gt; Seasonal Crop Stress. Enable Mod switches the whole system on or off without touching your irrigation placeables. Difficulty scales how fast stress builds and how fast fields dry: Easy 0.5x stress and 0.7x drying, Normal 1.0x, Hard 1.5x stress and 1.4x drying."/>
     <text name="helpLine_cs_s1_evap_title"     text="Швидкість евапотранспірації"/>
-    <text name="helpLine_cs_s1_evap_text"      text="Евапотранспірація контролює, наскільки швидко висихає ґрунт між дощами. Повільна означає, що поля довго утримують вологу. Швидка означає, що поля можуть висохнути за один ігровий день під час спеки — активне управління зрошенням стає необхідним."/>
+    <text name="helpLine_cs_s1_evap_text"      text="[EN] Evapotranspiration Rate scales drying on top of difficulty. Slow keeps moisture in the ground and makes rain go further. Fast can dry a field within a game day in hot weather, so scheduled irrigation becomes essential."/>
 
     <text name="helpLine_cs_s2_title"          text="Розширені налаштування"/>
     <text name="helpLine_cs_s2_yield_title"    text="Втрата врожаю та поріг напруги"/>
-    <text name="helpLine_cs_s2_yield_text"     text="Макс. втрата врожаю обмежує відсоток урожаю, який може знизити напруга від посухи. За замовчуванням 60% — повністю напружене поле все одно дасть 40% від нормального врожаю. Критичний поріг — рівень вологості, нижче якого починає накопичуватися напруга."/>
+    <text name="helpLine_cs_s2_yield_text"     text="[EN] Max Yield Loss caps the share of the harvest that stress can take. The factory value is 30%, so a fully stressed field still yields 70%; it can be raised as far as 75%. Critical Threshold (factory 25%, 15% to 35%) is the moisture level where the red Critical band and its alerts begin; each crop's own need still decides when stress builds."/>
     <text name="helpLine_cs_s2_alerts_title"   text="Витрати на зрошення та сповіщення"/>
-    <text name="helpLine_cs_s2_alerts_text"    text="'Витрати на зрошення' стягує погодинну плату за роботу систем. Вимкніть для простішого досвіду. 'Сповіщення увімкнені' показує попередження, коли полям потрібна вода. 'Затримка сповіщень' встановлює мінімальний час між повторними сповіщеннями для одного поля."/>
+    <text name="helpLine_cs_s2_alerts_text"    text="[EN] Irrigation Costs charges an hourly fee while a system runs; turn it off for a simpler game. Alerts Enabled shows a warning when a field needs water, and Alert Cooldown (factory 12 hours) is the minimum time before the same field alerts again. Finite Water is off by default and is an experimental system: it takes effect only when both it and Experimental Systems are on. Then each pump carries a store in irrigation hours that scheduled runs and Irrigate Now consume and rain refills."/>
 
     <text name="helpLine_cs_p4_title"          text="HUD та керування"/>
     <text name="helpLine_cs_p4_hud_title"      text="Накладка HUD вологості"/>
-    <text name="helpLine_cs_p4_hud_text"       text="Натисніть Shift+M, щоб переключити HUD вологості. Він перераховує всі поля з рівнем вологості, типом культури та статусом напруги. Прогноз на 5 днів показує, чи зростає або знижується вологість."/>
+    <text name="helpLine_cs_p4_hud_text"       text="[EN] The moisture HUD (Controls action Toggle Moisture HUD, factory Right Ctrl+M) lists every tracked field with crop, growth stage, a colour bar and the moisture percentage, with the forecast strip above it. Edit mode (Controls action Edit/Move Moisture HUD, factory Right Shift+N) lets you drag and resize the panes; the layout is saved per player."/>
     <text name="helpLine_cs_p4_reading_title"  text="Читання рядка поля"/>
-    <text name="helpLine_cs_p4_reading_text"   text="Кожен рядок показує: номер поля (П1), назву культури (Пшениця), поточну фазу росту (Фаза 3), кольоровий індикатор вологості та відсоток вологості. Якщо рядок закінчується знаком оклику (!), це поле вже накопичує напругу — поливайте негайно."/>
+    <text name="helpLine_cs_p4_reading_text"   text="[EN] Each row shows the field number, the crop, its growth stage, the moisture bar and the percentage. An exclamation mark at the end means that field is already building drought stress. Only crops that can suffer drought stress are listed."/>
     <text name="helpLine_cs_p4_status_title"   text="Кольори статусу"/>
-    <text name="helpLine_cs_p4_status_text"    text="Зелений — поле здорове, дій не потрібно. Жовтий — попередження: вологість знижується, рекомендується полив. Червоний — критично: культура під напругою від посухи і вже втрачає врожай — поливайте негайно."/>
+    <text name="helpLine_cs_p4_status_text"    text="[EN] Green is Healthy: 40% moisture and up, nothing to do. Yellow is Warning: 25% to 40%, plan water. Red is Critical: below 25%, yield loss can start, water now. The same bands colour the Esc Crop Stress page."/>
     <text name="helpLine_cs_p4_keys_title"     text="Гарячі клавіші"/>
-    <text name="helpLine_cs_p4_keys_text"      text="Shift+M — перемикає HUD вологості. Shift+I — відкриває менеджер зрошення для обраної системи. Shift+C — відкриває консультанта з зведенням ризиків і рекомендаціями."/>
+    <text name="helpLine_cs_p4_keys_text"      text="[EN] Toggle Moisture HUD: factory Right Ctrl+M. Edit/Move Moisture HUD: factory Right Shift+N. Open Irrigation Manager: factory Right Ctrl+R. Open Crop Consultant: factory Right Ctrl+C. Open Crop Stress Settings: factory Right Ctrl+B. Any of them can be rebound under Options &gt; Controls &gt; Seasonal Crop Stress. The Esc page Realistic Farming &gt; Crop Stress has a Help footer that opens the two-column guide."/>
 
     <text name="helpLine_cs_t2_title"          text="Стратегії фермерства"/>
     <text name="helpLine_cs_t2_sandy_title"    text="Пріоритет піщаним полям"/>
-    <text name="helpLine_cs_t2_sandy_text"     text="Піщаний ґрунт висихає вдвічі швидше за суглинок. Якщо у вас різні типи ґрунту, розміщуйте зрошення на піщаних полях насамперед. Центральний зрошувач на великій піщаній ділянці часто вигідніший за крапельну лінію на невеликому глинистому полі."/>
+    <text name="helpLine_cs_t2_sandy_text"     text="[EN] Sandy soil dries 1.4 times faster than loamy and twice as fast as clay. If you farm mixed soils, put the first pivot on the sandy fields. A pivot over a large sandy area is often a better buy than one on a small clay field that holds water on its own."/>
     <text name="helpLine_cs_t2_forecast_title" text="Використовуйте прогноз"/>
-    <text name="helpLine_cs_t2_forecast_text"  text="Прогноз на 5 днів у HUD показує, чи зростає або знижується вологість. Якщо дощ очікується через день-два і поля лише в зоні попередження — зачекайте дощу, заощадите кошти та зменшите знос обладнання. Дійте завчасно, якщо прогноз показує кілька сухих днів під час критичного вікна росту."/>
+    <text name="helpLine_cs_t2_forecast_text"  text="[EN] The forecast strip shows whether moisture is heading up or down. If rain is a day or two away and the field is only in the yellow band, wait and save the running cost. Act early when several dry days line up with a thirsty growth window, especially on sandy fields."/>
 
     <text name="helpLine_cs_i1_title"           text="Про цей мод"/>
-    <text name="helpLine_cs_i1_about_title"     text="Seasonal Crop Stress v1.0.5.0"/>
-    <text name="helpLine_cs_i1_about_text"      text="Автор: TisonK. Додає реалістичну симуляцію вологості ґрунту, сезонне накопичення стресу культур та управління зрошувальною інфраструктурою у Farming Simulator 25."/>
+    <text name="helpLine_cs_i1_about_title"     text="[EN] Seasonal Crop Stress"/>
+    <text name="helpLine_cs_i1_about_text"      text="[EN] Created by TisonK. Adds soil moisture per field, crop stress in thirsty growth windows, a harvest cut capped at 30% by default, and irrigation placeables with schedules, all inside Farming Simulator 25. Every field, every season, every decision counts."/>
     <text name="helpLine_cs_i1_community_title" text="Спільнота та підтримка"/>
     <text name="helpLine_cs_i1_community_text"  text="Знайдіть цей мод на Github та KingMods. Для питань, звітів про помилки та оновлень відвідайте репозиторій на github."/>
 
     <text name="helpLine_cs_i2_title"          text="Необов'язкові інтеграції"/>
     <text name="helpLine_cs_i2_npc_title"      text="FS25_NPCFavor та FS25_SoilFertilizer"/>
-    <text name="helpLine_cs_i2_npc_text"       text="З встановленим FS25_NPCFavor Олексій Чен з'являється як NPC-агроном на вашій фермі. Виконання завдань для Олексія розвиває стосунки та розблоковує ранні попередження про посуху. З FS25_SoilFertilizer pH ґрунту та вміст органіки кожного поля коригують евапотранспірацію."/>
-    <text name="helpLine_cs_i2_vehicle_title"  text="CoursePlay, AutoDrive та Precision Farming"/>
-    <text name="helpLine_cs_i2_vehicle_text"   text="Коли активний CoursePlay, кількість автономних транспортних засобів, що працюють на напруженому полі, відображається в сповіщенні. При виявленні AutoDrive критичні сповіщення про посуху включають кількість доступних водних пунктів призначення. З Precision Farming DLC дані вологості ґрунту відображаються прямо в накладці карти."/>
+    <text name="helpLine_cs_i2_npc_text"       text="[EN] With NPC Favor installed, the agronomist's favors unlock early drought warnings and specialist irrigation advice. With Soil and Fertilizer installed, each field's organic matter and pH change how fast it dries: high organic matter holds water, acid soil below pH 6.0 stresses crops earlier. Crop Stress reads the soil manager through the mission handle, so the two mods load in any order."/>
+    <text name="helpLine_cs_i2_vehicle_title"  text="[EN] Vehicles and Multiplayer"/>
+    <text name="helpLine_cs_i2_vehicle_text"   text="[EN] With CoursePlay active, the number of vehicles working a stressed field appears in that field's alert. With AutoDrive, critical alerts include water destination counts. With UsedPlus, hourly irrigation running costs and equipment wear are tracked. Multiplayer: the server runs moisture, stress and irrigation and sends the results to every client; the HUD layout is saved per player."/>
 
     <text name="helpLine_cs_t3_title"          text="Обприскувачі та полив"/>
     <text name="helpLine_cs_t3_sprayer_title"  text="Використання обприскувачів для зрошення"/>
-    <text name="helpLine_cs_t3_sprayer_text"   text="Звичайні обприскувачі можна використовувати як ручну альтернативу постійним системам зрошення. Якщо наповнити обприскувач ВОДОЮ, будь-яка оброблена ділянка отримає негайний приріст вологості. Корисно для невеликих полів або як тимчасовий захід до встановлення постійного зрошення."/>
+    <text name="helpLine_cs_t3_sprayer_text"   text="[EN] A vehicle sprayer filled with WATER is a manual irrigation tool: every area you spray gets an immediate moisture boost. Use it on small fields, on a corner a pivot does not reach, or as a stopgap until a pump and a pivot are affordable."/>
 
     <!-- ========== PDA SCREEN ========== -->
     <text name="cs_pda_screen_title"           text="Crop Moisture Monitor"/>
@@ -266,34 +266,31 @@
     <text name="cs_map_legend_warning"        text="Warning  25-40%"/>
     <text name="cs_map_legend_critical"       text="Critical  &lt;25%"/>
     <text name="cs_map_btn_open_pda"          text="Open Crop PDA"/>
+    <text name="cs_map_status_dry"            text="[EN] Dry fields"/>
+    <text name="cs_map_status_good"            text="[EN] Good fields"/>
+    <text name="cs_map_status_wet"            text="[EN] Wet fields"/>
+    <text name="cs_map_density"            text="[EN] Detail"/>
+    <text name="cs_map_density_low"            text="[EN] Low"/>
+    <text name="cs_map_density_med"            text="[EN] Medium"/>
+    <text name="cs_map_density_high"            text="[EN] High"/>
+    <text name="cs_map_legend_dry"            text="[EN] Dry"/>
+    <text name="cs_map_legend_good"            text="[EN] Good"/>
+    <text name="cs_map_legend_wet"            text="[EN] Wet"/>
+    <text name="cs_map_avg_title"            text="[EN] Average Field Moisture"/>
+    <text name="cs_map_avg_ok"            text="[EN] OK"/>
+    <text name="cs_map_avg_irrigate"            text="[EN] Irrigate"/>
+    <text name="cs_map_avg_toowet"            text="[EN] Too wet"/>
+    <text name="cs_map_info_title"            text="[EN] Crop Moisture"/>
+    <text name="cs_map_info_line"            text="[EN] Spot readings, not field averages. Detail sets the sample step."/>
 
     <!-- ========== OPTIONAL MOD INTEGRATIONS ========== -->
     <text name="cs_cp_vehicle_on_field"  text="CoursePlay: %d транспортний засіб працює на цьому полі"/>
     <text name="cs_cp_vehicles_on_field" text="CoursePlay: %d транспортних засоби працюють на цьому полі"/>
-    <text name="cs_ad_water_hint"    text="AutoDrive: %d водний пункт(и) призначення доступний — розгляньте маршрут доставки"/>
+    <text name="cs_ad_water_hint"    text="AutoDrive: %d водний пункт(и) призначення доступний - розгляньте маршрут доставки"/>
     <text name="cs_ad_destinations"  text="AutoDrive: %d пункт(и) призначення налаштовано"/>
 
     
     <!-- ========== HELP DIALOG ========== -->
-    <text name="cs_help_title"       text="Crop Moisture Monitor -- Help"/>
-    <text name="cs_help_ov_hdr"      text="How It Works"/>
-    <text name="cs_help_ov_1"        text="Tracks soil moisture for every field in the game."/>
-    <text name="cs_help_ov_2"        text="Rainfall raises moisture; heat and time reduce it."/>
-    <text name="cs_help_ov_3"        text="Use the filter button to focus on your own fields."/>
-    <text name="cs_help_status_hdr"  text="Moisture Levels"/>
-    <text name="cs_help_status_1"    text="Healthy  &gt;=40%   No action needed."/>
-    <text name="cs_help_status_2"    text="Warning  25-40%  Irrigate soon."/>
-    <text name="cs_help_status_3"    text="Critical &lt;25%   Irrigate now!"/>
-    <text name="cs_help_stress_hdr"  text="Crop Stress"/>
-    <text name="cs_help_stress_1"    text="Builds each hour moisture stays below 40% during growth."/>
-    <text name="cs_help_stress_2"    text="Up to 60% yield loss at max stress. Cannot be reversed."/>
-    <text name="cs_help_irr_hdr"     text="Irrigation"/>
-    <text name="cs_help_irr_1"       text="Place Center Pivots or Drip Lines from the build menu."/>
-    <text name="cs_help_irr_2"       text="Use Irrigation Schedule to set automatic run windows."/>
-    <text name="cs_help_keys_hdr"    text="Monitor Information"/>
-    <text name="cs_help_keys_1"      text="ESC (Pause Menu) -&gt; Crop Moisture Monitor"/>
-    <text name="cs_help_keys_2"      text="Tab 1 (Overview) -&gt;  Overall field status"/>
-    <text name="cs_help_keys_3"      text="Tab 2 (Irrigation) -&gt;  Irrigation management"/>
     <!-- ========== PDA SCREEN ========== -->
     <text name="cs_pda_btn_irrigation"         text="Irrigation Schedule"/>
     <text name="cs_pda_btn_consultant"         text="Crop Consultant"/>
@@ -357,37 +354,41 @@
     <text name="cs_rf_pda_next_covered_idle" text="[EN] Irrigation covers this field - confirm it is running when dry, then recheck Moisture."/>
     <text name="cs_rf_pda_next_looking_good" text="[EN] Looking good - recheck later; handle Critical fields first."/>
     <text name="cs_rf_pda_yield_keep" text="[EN] Yield keep: %d%%"/>
-    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0f°C, dry pull %.1f"/>
-    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %d–%d"/>
+    <text name="cs_rf_pda_heat_clause" text="[EN] Air %.0f deg C, dry pull %.1f"/>
+    <text name="cs_rf_pda_sched_hours" text="[EN] Sched %d-%d"/>
     <text name="cs_rf_pda_sched_daily" text=" daily"/>
     <text name="cs_rf_pda_sched_weekdays" text=" weekdays"/>
     <text name="cs_rf_pda_sched_none" text="[EN] no schedule"/>
-    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered · no schedule"/>
+    <text name="cs_rf_pda_covered_no_sched" text="[EN] Covered - no schedule"/>
     <text name="cs_rf_pda_no_coverage" text="[EN] No coverage"/>
     <text name="cs_rf_pda_rate_off" text="[EN] Rate off"/>
     <text name="cs_rf_pda_rate_on" text="[EN] Rate +%.2f/h"/>
     <text name="cs_rf_pda_alert_prefix" text="[EN] Alert: %s"/>
-    <text name="cs_rf_pda_next_alert_sep" text=" · %s"/>
-    <text name="cs_rf_pda_status_join" text="[EN] %s  ·  Status: %s"/>
+    <text name="cs_rf_pda_next_alert_sep" text=" - %s"/>
+    <text name="cs_rf_pda_status_join" text="[EN] %s  -  Status: %s"/>
     <!-- Esc CS PIVOT card (2026-08-09) -->
     <text name="cs_rf_pda_pivot_title" text="[EN] PIVOT"/>
     <text name="cs_rf_pda_pivot_title_irrig" text="[EN] IRRIGATION"/>
+<text name="cs_rf_pda_pivot_title_rainstar" text="RAINSTAR"/>
+<text name="cs_rf_pda_pivot_rainstar_label" text="[EN] Vehicle irrigator"/>
+<text name="cs_rf_pda_pivot_coverage_rainstar" text="[EN] Coverage: Rainstar spraying this field"/>
+<text name="cs_rf_pda_pivot_warn_rainstar" text="[EN] Vehicle irrigator"/>
     <text name="cs_rf_pda_pivot_drip_label" text="[EN] Drip line"/>
-    <text name="cs_rf_pda_pivot_dial_cur" text="[EN] Cur %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_min" text="[EN] Min %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_max" text="[EN] Max %.0f°"/>
-    <text name="cs_rf_pda_pivot_dial_empty" text="[EN] Cur —"/>
-    <text name="cs_rf_pda_pivot_dial_min_empty" text="[EN] Min —"/>
-    <text name="cs_rf_pda_pivot_dial_max_empty" text="[EN] Max —"/>
+    <text name="cs_rf_pda_pivot_dial_cur" text="Стріла %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_min" text="Початок сектора %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_max" text="Кінець сектора %.0f deg"/>
+    <text name="cs_rf_pda_pivot_dial_empty" text="Стріла -"/>
+    <text name="cs_rf_pda_pivot_dial_min_empty" text="Початок сектора -"/>
+    <text name="cs_rf_pda_pivot_dial_max_empty" text="Кінець сектора -"/>
     <text name="cs_rf_pda_pivot_coverage" text="[EN] Coverage: Fields %s"/>
     <text name="cs_rf_pda_pivot_coverage_none" text="[EN] Coverage: No fields covered"/>
     <text name="cs_rf_pda_pivot_watering_on" text="[EN] Watering now: On"/>
     <text name="cs_rf_pda_pivot_watering_off" text="[EN] Watering now: Off"/>
     <text name="cs_rf_pda_pivot_pressure" text="[EN] Pressure: %d%%"/>
-    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: —"/>
+    <text name="cs_rf_pda_pivot_pressure_na" text="[EN] Pressure: -"/>
     <text name="cs_rf_pda_pivot_rate" text="[EN] Rate: +%.3f/h"/>
-    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: —"/>
-    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00–%02d:00%s"/>
+    <text name="cs_rf_pda_pivot_rate_na" text="[EN] Rate: -"/>
+    <text name="cs_rf_pda_pivot_sched" text="[EN] Schedule: %02d:00-%02d:00%s"/>
     <text name="cs_rf_pda_pivot_sched_none" text="[EN] Schedule: No schedule"/>
     <text name="cs_rf_pda_pivot_warn_none" text="[EN] No pivot on this field"/>
     <text name="cs_rf_pda_pivot_warn_owner" text="[EN] Not your pivot"/>
@@ -401,12 +402,14 @@
     <text name="cs_rf_pda_pivot_btn_speed" text="[EN] Speed"/>
     <text name="cs_rf_pda_pivot_btn_start" text="[EN] Start"/>
     <text name="cs_rf_pda_pivot_btn_stop" text="[EN] Stop"/>
+    <text name="cs_rf_pda_pivot_btn_auto" text="Auto"/>
+    <text name="cs_rf_pda_pivot_btn_manual" text="Manual"/>
     <text name="cs_rf_pda_pivot_btn_min_up" text="[EN] Min+"/>
-    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Min−"/>
+    <text name="cs_rf_pda_pivot_btn_min_dn" text="[EN] Min-"/>
     <text name="cs_rf_pda_pivot_btn_max_up" text="[EN] Max+"/>
-    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Max−"/>
+    <text name="cs_rf_pda_pivot_btn_max_dn" text="[EN] Max-"/>
     <text name="cs_rf_pda_pivot_btn_arm_plus" text="[EN] Arm+"/>
-    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Arm−"/>
+    <text name="cs_rf_pda_pivot_btn_arm_minus" text="[EN] Arm-"/>
     <text name="cs_rf_pda_pivot_btn_schedule" text="[EN] Schedule"/>
     <text name="cs_rf_pda_page_fields" text="[EN] Fields"/>
     <text name="cs_rf_pda_page_pivot" text="[EN] Pivot"/>
@@ -442,9 +445,55 @@
     <text name="cs_rainstar_needs_pump" text="[EN] Connect the supply hose from the pump and start the pump. This reel runs on pump pressure, not a tractor."/>
     <text name="cs_playkit_pump_power_teach" text="[EN] The pump is the power. Hitch the reel only to tow it: to spray, run the hose from the pump, start the pump, then switch the reel on. Stop the pump or pull the hose and the spray stops."/>
     <text name="cs_rf_pda_pivot_dial_position" text="[EN] POSITION"/>
+    <text name="cs_rf_pda_crop_mixed" text="[EN] Mixed"/>
+    <text name="cs_rf_pda_pivot_switch" text="[EN] Pivot %s - covers %s of this block"/>
         <!-- BUILD 11:27 F155 Esc RF button labels -->
         <text name="wc_rf_pda_open_manager" text="Відкрити менеджер працівників" />
         <text name="sf_pda_btn_rotation_planner" text="Планувальник сівозміни" />
         <text name="sf_pda_btn_field_detail" text="Деталі поля" />
+    <!-- ========== REINKE A22 PIVOT (vendored) ========== -->
+    <text name="reinke_pivot_3_name"      text="Reinke A22 Center Pivot - 3 Tower (~115m)"/>
+    <text name="reinke_pivot_5_name"      text="Reinke A22 Center Pivot - 5 Tower (~188m)"/>
+    <text name="reinke_pivot_10_name"     text="Reinke A22 Center Pivot - 10 Tower (~369m)"/>
+    <text name="reinke_pivot_function"    text="Center pivot irrigation system"/>
+    <text name="reinke_pivot_open_dialog" text="Open Pivot Schedule"/>
+    <text name="reinke_pivot_toggle"      text="Toggle Pivot Rotation"/>
+    <text name="input_REINKE_DOOR_TOGGLE"           text="Open / Close Control Panel"/>
+    <text name="input_REINKE_MASTER_POWER"          text="Master Power On / Off"/>
+    <text name="input_REINKE_PIVOT_INTERACT"        text="Toggle Auto Rotation"/>
+    <text name="input_REINKE_PIVOT_ANGLE_PLUS"      text="Step Arm +10 deg (Manual)"/>
+    <text name="input_REINKE_PIVOT_ANGLE_MINUS"     text="Step Arm -10 deg (Manual)"/>
+    <text name="input_REINKE_PIVOT_AUTO_MIN_UP"     text="Raise Min Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SWEEP_MIN_DN"    text="Lower Min Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_AUTO_MAX_UP"     text="Raise Max Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SWEEP_MAX_DN"    text="Lower Max Sweep Bound"/>
+    <text name="input_REINKE_PIVOT_SPRAY"           text="Toggle Spray (KP5)"/>
+    <text name="input_REINKE_END_GUN"               text="Toggle End Gun (KP0)"/>
+    <text name="input_REINKE_SPEED_CYCLE"           text="Cycle Speed 1X/2X/3X/4X"/>
+    <text name="cs_rf_pda_rk_suffix" text="  -  датчик дощу %s / %.1f мм розрахункових" />
+    <text name="cs_rf_pda_rk_unknown" text="невідомо" />
+    <text name="cs_rf_pda_rk_warn_tripped" text="Датчик дощу спрацював" />
+    <text name="cs_rf_pda_rk_warn_tripped_in" text="Датчик спрацював, сухе скидання через %d хв" />
+    <text name="cs_rf_pda_rk_warn_noinput" text="Датчик не читає погоду" />
+    <text name="cs_rf_pda_rk_btn_fit" text="Вст." />
+    <text name="cs_rf_pda_rk_btn_remove" text="Зняти" />
+    <text name="cs_rf_pda_rk_btn_trip_minus" text="Поріг-" />
+    <text name="cs_rf_pda_rk_btn_trip_plus" text="Поріг+" />
+    <text name="cs_rf_pda_rk_trip_label" text="%.1fмм" />
+        <text name="cs_rf_pda_pivot_watering_rain" text="Полив: пауза через дощ" />
+        <text name="cs_rf_pda_cap_sweep_start" text="Початок сектора" />
+        <text name="cs_rf_pda_cap_sweep_end" text="Кінець сектора" />
+        <text name="cs_rf_pda_cap_rain_key" text="Датчик дощу" />
+    <text name="cs_release_irrigation_absorption_name" text="Thirsty ground (irrigation absorption)" />
+    <text name="cs_release_irrigation_absorption_status" text="new; awaiting live observation, truthful surface, defect closure and balance" />
+    <!-- RSF-F357: consultant identity (host pairing) -->
+    <text name="cs_consultant_waiting" text="Алекс Чен ще не пов'язана; очікування завантаження сусідів"/>
+    <text name="cs_consultant_host_old" text="NPC Favor надто старий, щоб пов'язати Алекс Чен; оновіть його"/>
+    <text name="cs_consultant_conflict" text="Збережено більше однієї Алекс Чен; її довіру пов'язати неможливо"/>
+    <text name="cs_consultant_legacy_trust_held" text="Давню довіру Алекс Чен не вдалося безпечно пов'язати з цією сусідкою; вона відкладена, не застосована"/>
+    <text name="cs_consultant_legacy_trust_held_short" text="(давня довіра відкладена)"/>
+    <text name="rf_live_key_unbound" text="Не призначено"/>
+    <text name="rf_live_key_keyboard_unbound" text="Клавіатура не призначена"/>
+    <text name="rf_live_key_unavailable" text="недоступно"/>
 </texts>
 </l10n>

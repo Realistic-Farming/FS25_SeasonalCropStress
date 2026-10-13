@@ -70,14 +70,13 @@
              Labels left-anchored (x=10), values right-anchored (x=730).
              Sections: Fields | Moisture | Stress | Irrigation
              Y negative = down from container top. Row spacing: 30px. -->
-        <GuiElement id="overviewContent" position="0px 0px" width="1000px" height="660px">
+        <GuiElement id="overviewContent" position="0px 0px" width="1000px" height="668px">
 
           <Text profile="cs_sectionHeader"
                 text="$l10n_cs_pda_section_farm_overview"
                 position="0px 650px"/>
           <Text profile="cs_helpLinkBtn" onClick="onClickCropConsultant"
-                position="730px 648px" size="230px 24px" text="CROP CONSULTANT"/>
-
+                position="730px 648px" size="230px 24px" text="$l10n_cs_pda_btn_consultant"/>
           <ThreePartBitmap width="960px" height="590px" position="0px 30px">
             <GuiElement profile="fs25_subCategoryContainer" width="920px">
 
@@ -164,13 +163,13 @@
 
         <!-- ── TAB 2: IRRIGATION ─────────────────────────────
              Hidden by default. Column widths spread across 960px. -->
-        <GuiElement id="irrigationContent" position="0px 0px" width="1000px" height="660px" visible="false">
+        <GuiElement id="irrigationContent" position="0px 0px" width="1000px" height="668px" visible="false">
 
           <Text profile="cs_sectionHeader"
                 text="$l10n_cs_pda_section_irrigation_plan"
                 position="0px 650px"/>
           <Text profile="cs_helpLinkBtn" onClick="onClickCropConsultant"
-                position="730px 648px" size="230px 24px" text="CROP CONSULTANT"/>
+                position="730px 648px" size="230px 24px" text="$l10n_cs_pda_btn_consultant"/>
 
           <!-- Column headers -->
           <Text profile="cs_colHeader" text="$l10n_cs_pda_col_field"
@@ -214,7 +213,7 @@
         <!-- ── Tab bar — LAST for mouse event priority (MDM pattern) ──
              FS25 processes mouse events in reverse XML order.
              Tab bar must be last so it gets click priority over content panels. -->
-        <GuiElement id="tabBar" profile="emptyPanel" position="0px 660px" width="1000px" height="30px">
+        <GuiElement id="tabBar" profile="emptyPanel" position="0px 668px" width="1000px" height="58px">
           <!-- Invisible hit areas -->
           <Button profile="cs_tabBtnHit" onClick="onClickTabOverview"
                   position="0px 0px" size="490px 28px"/>
@@ -223,23 +222,23 @@
           <!-- Visible labels (color driven by Lua) -->
           <Text profile="cs_tabLabel" id="tabLabelOverview"
                 text="$l10n_cs_pda_tab_overview"
-                position="0px 28px" size="490px 28px"
+                position="0px 30px" size="490px 28px"
                 onClick="onClickTabOverview"/>
           <Text profile="cs_tabLabel" id="tabLabelIrrigation"
                 text="$l10n_cs_pda_tab_irrigation"
-                position="510px 28px" size="490px 28px"
+                position="510px 30px" size="490px 28px"
                 onClick="onClickTabIrrigation"/>
           <!-- Always-visible dim underlines (inactive-state affordance) -->
-          <Bitmap profile="cs_tabUnderlineDim" position="0px 0px" size="490px 2px"/>
-          <Bitmap profile="cs_tabUnderlineDim" position="510px 0px" size="490px 2px"/>
+          <Bitmap profile="cs_tabUnderlineDim" position="0px 28px" size="490px 2px"/>
+          <Bitmap profile="cs_tabUnderlineDim" position="510px 28px" size="490px 2px"/>
           <!-- Active underlines (toggled by Lua) — render on top of dim -->
           <Bitmap profile="cs_tabUnderline" id="tabUnderlineOverview"
-                  position="0px 0px" size="490px 2px"/>
+                  position="0px 28px" size="490px 2px"/>
           <Bitmap profile="cs_tabUnderline" id="tabUnderlineIrrigation"
-                  position="510px 0px" size="490px 2px" visible="false"/>
+                  position="510px 28px" size="490px 2px" visible="false"/>
         </GuiElement>
 
-        <Bitmap profile="cs_tabDivider" position="0px 658px" size="1000px 2px"/>
+        <Bitmap profile="cs_tabDivider" position="0px 666px" size="1000px 2px"/>
 
       </GuiElement><!-- /rightPanel -->
 

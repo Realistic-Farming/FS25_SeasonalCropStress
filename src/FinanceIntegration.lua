@@ -23,7 +23,7 @@ local function csLog(msg)
     else print("[CropStress] " .. tostring(msg)) end
 end
 
-FinanceIntegration = {}
+FinanceIntegration = FinanceIntegration or {}
 FinanceIntegration.__index = FinanceIntegration
 
 function FinanceIntegration.new(manager)
@@ -45,7 +45,20 @@ end
 --- moisture path already multiplied irrigation GAIN by the elapsed count, so
 --- leaving the charge at one hour would hand a player 72 hours of free water.
 ---@param elapsedHours number|nil
-function FinanceIntegration:chargeHourlyCosts(elapsedHours)
+--- SCS-037: `elapsedHours` is how many in-game hours this tick stands for. The
+--- pump ran for all of them, so the running cost is charged for all of them.
+--- Defaults to 1, which is arithmetically identical to what shipped.
+---
+--- THE WATER AND THE MONEY ARE NOW ON THE SAME CLOCK, which is the point: the
+--- moisture path already multiplied irrigation GAIN by the elapsed count, so
+--- leaving the charge at one hour would hand a player 72 hours of free water.
+---@param elapsedHours number|nil
+---@param planOrServed table|nil  SCS-023 v2.3 (SDS 5.3/7): when the FINITE-WATER
+---   plan is present (it carries financeRows), debit the FROZEN rows and ignore
+---   endpoint isActive. A nil plan keeps the pre-feature isActive * hours
+---   fallback. A served-hours map (legacy) charges served hours per system even
+---   if the endpoint schedule left the system inactive.
+function FinanceIntegration:chargeHourlyCosts(elapsedHours, planOrServed)
     if not self.isInitialized then return end
     local irrMgr = self.manager.irrigationManager
     if irrMgr == nil then return end
@@ -56,8 +69,31 @@ function FinanceIntegration:chargeHourlyCosts(elapsedHours)
     -- nil means the flag was never set (default = costs enabled); only skip on explicit false.
     if irrMgr.costsEnabled == false then return end
 
+    -- SCS-023 v2.3 (SDS 5.3/7): plan mode reads frozen finance rows. costsEnabled,
+    -- a missing farm, the spectator farm or an invalid farm debit zero without
+    -- rolling back scheduled source service.
+    if type(planOrServed) == "table" and type(planOrServed.financeRows) == "table" then
+        for _systemId, row in pairs(planOrServed.financeRows) do
+            if row ~= nil and row.farmId ~= nil and row.farmId ~= 0 then
+                self:deductFundsVanilla(row.amount or 0, row.farmId)
+            end
+        end
+        return
+    end
+
+    local servedHoursBySystem = planOrServed
     for _, system in pairs(irrMgr.systems) do
-        if system.isActive then
+        -- SCS-046: fitted pivots settle water AND cost through the fractional
+        -- active-hour path (settleFittedSystem), never this legacy whole-hour
+        -- pass. Unfitted systems keep the exact incumbent behaviour.
+        -- SCS-023: charge from the served-hours map when present, even for a
+        -- system the endpoint schedule left inactive this hour.
+        if system.isActive and not (system.rainKeyFitted == true) then
+            local servedHours = nil
+            if servedHoursBySystem ~= nil then
+                servedHours = servedHoursBySystem[system.id]
+            end
+            local chargeHours = servedHours ~= nil and servedHours or hours
             -- [SCS-038] Deduct the PRICED draw: the effective cost varies with
             -- the water actually drawn (base / pressure, plus the neutral LIFT
             -- term). Falls back to the flat per-hour number when the getter is
@@ -78,7 +114,7 @@ function FinanceIntegration:chargeHourlyCosts(elapsedHours)
                 farmId = system.placeable:getOwnerFarmId()
             end
             if farmId and farmId ~= 0 then
-                self:deductFundsVanilla((effCost or (system.operationalCostPerHour or 0)) * hours, farmId)
+                self:deductFundsVanilla((effCost or (system.operationalCostPerHour or 0)) * chargeHours, farmId)
             end
         end
     end

@@ -31,7 +31,7 @@
 -- is order-independent.
 -- =========================================================
 
-CropStressNetworkSyncBridge = {}
+CropStressNetworkSyncBridge = CropStressNetworkSyncBridge or {}
 
 -- Provisional module id. This is the network CHANNEL and the join-snapshot key, so
 -- it must be locked with Claude(A) before release (a later rename desyncs a mixed
@@ -58,27 +58,41 @@ end
 -- Pure serialize / deserialize (server writes, client reads)
 -- =========================================================
 
+-- SCS-046 A (F200): the public irrigation animation row appended after the
+-- moisture prefix, behind a sentinel so an older payload without it reads
+-- neutral-absent. Codes are numeric and public only (no owner or source).
+CropStressNetworkSyncBridge.IRR_MARKER = "__SCS_IRR__"
+CropStressNetworkSyncBridge.IRR_ACTIVITY = { OFF = 0, RUNNING = 1, RAIN_PAUSED = 2 }
+CropStressNetworkSyncBridge.IRR_PAUSE    = { NONE = 0, RAIN_KEY_TRIPPED = 1, INPUT_UNAVAILABLE = 2 }
+CropStressNetworkSyncBridge.IRR_NEXT     = { NONE = 0, DRY_RESET = 1, PLAYER_ACTION = 2 }
+
 -- Flatten moisture/stress into one primitive array (the shape NetworkSync expects).
 -- arr[1] = field count, then per field: fieldId, moisture, stress.
 function CropStressNetworkSyncBridge.serializeFields(fieldData, fieldStress)
     local arr = { 0 }   -- slot 1 reserved for the count
     local n = 0
     for fieldId, entry in pairs(fieldData or {}) do
-        n = n + 1
-        arr[#arr + 1] = fieldId
-        arr[#arr + 1] = (entry and entry.moisture) or 0.0
-        arr[#arr + 1] = (fieldStress and fieldStress[fieldId]) or 0.0
+        -- RSF-F245 item 5: an unavailable field's row is left out entirely, never
+        -- sent as 0.0 (client truth for it is RSF-F249's).
+        if entry ~= nil and entry.aggregateState ~= "UNAVAILABLE" and type(entry.moisture) == "number" then
+            n = n + 1
+            arr[#arr + 1] = fieldId
+            arr[#arr + 1] = entry.moisture
+            arr[#arr + 1] = (fieldStress and fieldStress[fieldId]) or 0.0
+        end
     end
     arr[1] = n
     return arr
 end
 
 -- Rebuild moisture + stress maps from the flat array. Pure: no live apply. Never
--- crashes on a short or malformed array.
+-- crashes on a short or malformed array. Returns a third value, the parsed public
+-- irrigation rows (nil when the payload carries none).
 function CropStressNetworkSyncBridge.deserializeFields(arr)
     local fieldData   = {}
     local fieldStress = {}
-    if type(arr) ~= "table" then return fieldData, fieldStress end
+    local irrigation  = nil
+    if type(arr) ~= "table" then return fieldData, fieldStress, irrigation end
 
     local i = 1
     local count = tonumber(arr[i]) or 0
@@ -92,38 +106,123 @@ function CropStressNetworkSyncBridge.deserializeFields(arr)
         fieldData[fieldId]   = { moisture = moisture }
         fieldStress[fieldId] = stress
     end
-    return fieldData, fieldStress
+
+    -- Optional public irrigation block behind the sentinel.
+    if arr[i] == CropStressNetworkSyncBridge.IRR_MARKER then
+        i = i + 1
+        local n = tonumber(arr[i]) or 0
+        i = i + 1
+        irrigation = {}
+        for _ = 1, n do
+            local systemId = arr[i]; i = i + 1
+            if systemId == nil then break end
+            local isActive = (arr[i] or 0) == 1; i = i + 1
+            local tripped  = (arr[i] or 0) == 1; i = i + 1
+            local activity = tonumber(arr[i]) or 0; i = i + 1
+            local pause    = tonumber(arr[i]) or 0; i = i + 1
+            local nextWake = tonumber(arr[i]) or 0; i = i + 1
+            local revision = tonumber(arr[i]) or 0; i = i + 1
+            irrigation[#irrigation + 1] = {
+                systemId = systemId, isActive = isActive, tripped = tripped,
+                activityStateCode = activity, pauseReasonCode = pause,
+                nextWakeKindCode = nextWake, stateRevision = revision,
+            }
+        end
+    end
+    return fieldData, fieldStress, irrigation
+end
+
+-- Append the seven-field public irrigation rows to the moisture payload.
+function CropStressNetworkSyncBridge.serializeIrrigation(mgr)
+    local irr = mgr ~= nil and mgr.irrigationManager or nil
+    if irr == nil or irr.systems == nil then return {} end
+    local rows = {}
+    for id, sys in pairs(irr.systems) do
+        local fitted = sys.rainKeyFitted == true
+        local tripped = sys.rainKeyTripped == true
+        local inputOk = sys.rainKeyInputState == "OK"
+        local activity
+        if fitted and tripped then activity = CropStressNetworkSyncBridge.IRR_ACTIVITY.RAIN_PAUSED
+        elseif sys.isActive == true then activity = CropStressNetworkSyncBridge.IRR_ACTIVITY.RUNNING
+        else activity = CropStressNetworkSyncBridge.IRR_ACTIVITY.OFF end
+        local pause
+        if fitted and tripped then pause = CropStressNetworkSyncBridge.IRR_PAUSE.RAIN_KEY_TRIPPED
+        elseif fitted and not inputOk then pause = CropStressNetworkSyncBridge.IRR_PAUSE.INPUT_UNAVAILABLE
+        else pause = CropStressNetworkSyncBridge.IRR_PAUSE.NONE end
+        local nextWake
+        if fitted and tripped then nextWake = CropStressNetworkSyncBridge.IRR_NEXT.DRY_RESET
+        elseif fitted and not inputOk then nextWake = CropStressNetworkSyncBridge.IRR_NEXT.PLAYER_ACTION
+        else nextWake = CropStressNetworkSyncBridge.IRR_NEXT.NONE end
+        rows[#rows + 1] = {
+            id, sys.isActive == true and 1 or 0, tripped and 1 or 0,
+            activity, pause, nextWake, sys.rainKeyStateRevision or 0,
+        }
+    end
+    table.sort(rows, function(a, b) return a[1] < b[1] end)
+    local out = { CropStressNetworkSyncBridge.IRR_MARKER, #rows }
+    for r = 1, #rows do
+        for c = 1, #rows[r] do out[#out + 1] = rows[r][c] end
+    end
+    return out
 end
 
 -- =========================================================
 -- NetworkSync callbacks (plain functions - called with no self)
 -- =========================================================
 
--- Server: hand NetworkSync the whole moisture/stress map for the next batch.
+-- Server: hand NetworkSync the whole moisture/stress map for the next batch,
+-- followed by the public seven-field irrigation animation rows (SCS-046 A).
 function CropStressNetworkSyncBridge._onWriteState()
     local mgr = getManager()
     local soilSystem     = mgr and mgr.soilSystem
     local stressModifier = mgr and mgr.stressModifier
-    return CropStressNetworkSyncBridge.serializeFields(
+    -- RSF-F245 item 6: refresh before the snapshot reads the slots.
+    if soilSystem ~= nil and type(soilSystem.refreshForPublication) == "function" then
+        soilSystem:refreshForPublication()
+    end
+    local arr = CropStressNetworkSyncBridge.serializeFields(
         soilSystem and soilSystem.fieldData or {},
         stressModifier and stressModifier.fieldStress or {}
     )
+    local irrBlock = CropStressNetworkSyncBridge.serializeIrrigation(mgr)
+    for i = 1, #irrBlock do arr[#arr + 1] = irrBlock[i] end
+    return arr
 end
 
 -- Client: apply a received whole moisture/stress map. Mirrors
 -- CropStressMoistureInitEvent:run - update existing moisture, create a minimal
 -- entry for a not-yet-enumerated field, set stress, then rebuild the field map.
+-- SCS-039 v2.1 (SDS 3.8): the NetworkSync aggregate may update legacy scalars
+-- only while the SCS fine map is NOT the current authority. Once the SCS event
+-- barrier has published a current fine map (isMoistureMapCurrent), the mirror
+-- must not fight it; it can never seed fine staging or claim fine currentness.
 function CropStressNetworkSyncBridge._onReadState(arr)
     if g_server ~= nil then return end   -- server never applies its own state
 
     local mgr = getManager()
     if mgr == nil or mgr.soilSystem == nil or mgr.stressModifier == nil then return end
 
-    local fieldData, fieldStress = CropStressNetworkSyncBridge.deserializeFields(arr)
+    -- SCS-046 A: the public irrigation animation rows update on a pure client
+    -- regardless of the moisture fine-map barrier (they are not ground truth).
+    local fieldData, fieldStress, irrigation =
+        CropStressNetworkSyncBridge.deserializeFields(arr)
+    if mgr.irrigationManager ~= nil then
+        mgr.irrigationManager._publicAnimationStates = irrigation or {}
+    end
+
+    -- SCS-039 v2.1 (SDS 3.8): the NetworkSync aggregate may update legacy scalars
+    -- only while the SCS fine map is NOT the current authority. Once the SCS event
+    -- barrier has published a current fine map (isMoistureMapCurrent), the mirror
+    -- must not fight it; it can never seed fine staging or claim fine currentness.
+    if mgr.soilSystem.isMoistureMapCurrent ~= nil and mgr.soilSystem:isMoistureMapCurrent() then
+        return   -- a current SCS fine map owns the ground; the moisture mirror stands down
+    end
 
     for fieldId, entry in pairs(fieldData) do
         local existing = mgr.soilSystem.fieldData[fieldId]
-        if existing ~= nil then
+        if type(entry.moisture) ~= "number" then
+            -- RSF-F245: a receive never writes a non-number.
+        elseif existing ~= nil then
             existing.moisture = entry.moisture
         else
             -- [SCS-036] NO soilType key: an absent key is detectable and the
@@ -172,20 +271,25 @@ function CropStressNetworkSyncBridge.register(mgr)
         return
     end
 
+    -- SCS-039 v2.1 (SDS 3.8): the bridge is active only when the outer pcall
+    -- succeeds AND registerModule returns EXACTLY true. A non-throwing nil/false
+    -- return was previously misread as an active registration.
+    local registered = false
     local ok, err = pcall(function()
-        ns:registerModule(CropStressNetworkSyncBridge.MODULE_ID, {
+        registered = ns:registerModule(CropStressNetworkSyncBridge.MODULE_ID, {
             channel      = CropStressNetworkSyncBridge.CHANNEL,
             onWriteState = CropStressNetworkSyncBridge._onWriteState,
             onReadState  = CropStressNetworkSyncBridge._onReadState,
         })
     end)
 
-    if ok then
+    if ok and registered == true then
         CropStressNetworkSyncBridge.active = true
         print(string.format("[CropStress] Registered with NetworkSync as '%s' (hourly moisture broadcast now batches through NetworkSync)",
             CropStressNetworkSyncBridge.MODULE_ID))
     else
         CropStressNetworkSyncBridge.active = false
-        print(string.format("[CropStress] NetworkSync registration failed: %s (falling back to moisture event class)", tostring(err)))
+        print(string.format("[CropStress] NetworkSync registration failed or refused: %s (falling back to moisture event class)",
+            tostring(err)))
     end
 end

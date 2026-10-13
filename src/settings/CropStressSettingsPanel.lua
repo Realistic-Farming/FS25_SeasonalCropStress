@@ -6,7 +6,7 @@
 -- Modeled on FS25_SoilFertilizer SoilSettingsPanel.lua pattern.
 -- ============================================================
 
-CropStressSettingsPanel = {}
+CropStressSettingsPanel = CropStressSettingsPanel or {}
 local CropStressSettingsPanel_mt = Class(CropStressSettingsPanel)
 
 -- ── Panel geometry (normalized, Y=0 at bottom) ─────────────
@@ -87,7 +87,7 @@ local CATEGORIES = {
         sections = {
             { header = "Core Systems",       items = { "enabled", "difficulty", "evapotranspiration" } },
             { header = "Yield & Thresholds", items = { "maxYieldLoss", "criticalThreshold" } },
-            { header = "Finance",            items = { "irrigationCosts" } },
+            { header = "Finance",            items = { "irrigationCosts", "finiteWater" } },
         },
     },
     {
@@ -146,16 +146,23 @@ local SETTINGS_META = {
         desc  = "Charge hourly running costs for active irrigation systems",
         stype = "bool",
     },
+    finiteWater = {
+        label = "Finite Irrigation Water",
+        desc  = "Pumps carry a finite store in irrigation-hours, refilled by rain",
+        stype = "bool",
+    },
     hudVisible = {
         label     = "Show Moisture HUD",
         desc      = "Display the soil moisture overlay panel (client-local)",
         stype     = "bool",
         localOnly = true,
     },
+    -- [MAINTENANCE row 289] Per player (Tyson, 2026-10-08): applied on this machine only, never broadcast.
     alertsEnabled = {
         label = "Crop Alerts",
         desc  = "Show blinking warnings when fields reach critical moisture",
         stype = "bool",
+        localOnly = true,
     },
     alertCooldown = {
         label = "Alert Cooldown",
@@ -163,6 +170,7 @@ local SETTINGS_META = {
         stype = "multi",
         opts  = { "4h", "8h", "12h", "24h" },
         vals  = { 4, 8, 12, 24 },
+        localOnly = true,   -- [MAINTENANCE row 289] per player
     },
     debugMode = {
         label = "Debug Mode",
@@ -219,7 +227,7 @@ function CropStressSettingsPanel.new(manager)
     self.popupLines   = nil
     self.popupScroll  = 0
     self.savedCamRotX, self.savedCamRotY, self.savedCamRotZ = nil, nil, nil
-    local mod = g_modManager and g_modManager:getModByName(g_currentModName)
+    local mod = g_modManager and g_modManager:getModByName((SeasonalCropStressModName or g_currentModName))
     self.modVersion = "v" .. (mod and mod.version or "?")
     return self
 end
@@ -314,9 +322,11 @@ function CropStressSettingsPanel:isAdmin()
     local isMP = g_currentMission.missionDynamicInfo and
                  g_currentMission.missionDynamicInfo.isMultiplayer
     if not isMP then return true end
-    local user = g_currentMission.userManager and
-                 g_currentMission.userManager:getUserByUserId(g_currentMission.playerUserId)
-    return user and user:getIsAdmin() or false
+    -- Display only: the server re-checks master-user rights on every admin request.
+    -- A user has getIsMasterUser, not getIsAdmin (decompiled users/User.lua:93);
+    -- the mission's own flag is set for this player in FSBaseMission:onMasterUserAdded
+    -- (FSBaseMission.lua:2974-2976).
+    return g_currentMission.isMasterUser == true
 end
 
 function CropStressSettingsPanel:requestChange(id, value)
@@ -343,11 +353,21 @@ function CropStressSettingsPanel:requestChange(id, value)
     end
 
     if g_server ~= nil then
-        settings[id] = value
-        settings:validateSettings()
-        if self.manager then self.manager:applySettings() end
-        if CropStressSettingsSyncEvent ~= nil then
-            g_server:broadcastEvent(CropStressSettingsSyncEvent.newSingle(id, value), false)
+        -- SCS-023 v2.3 (SDS 4): the host panel routes through the ONE
+        -- authoritative settings owner (validates, re-applies, fires the
+        -- finite-water mode edge), which broadcasts to clients once (MAINTENANCE row 259).
+        if self.manager ~= nil and type(self.manager.applyAuthoritativeSettingChange) == "function" then
+            if not self.manager:applyAuthoritativeSettingChange(id, value, "panel") then
+                return
+            end
+        else
+            settings[id] = value
+            settings:validateSettings()
+            if self.manager then self.manager:applySettings() end
+            -- Without the owner, the panel broadcasts itself, as before.
+            if CropStressSettingsSyncEvent ~= nil then
+                g_server:broadcastEvent(CropStressSettingsSyncEvent.newSingle(id, value), false)
+            end
         end
     else
         if CropStressSettingsSyncEvent ~= nil then
@@ -444,6 +464,22 @@ function CropStressSettingsPanel:drawTitleBar()
 end
 
 -- ── Info bar ──────────────────────────────────────────────────
+--- Text for the panel's close hint.
+--- get() hands back a localized STATUS WORD when the action has no keyboard
+--- binding, so appending " to close" to it produced "Unbound to close". The
+--- imperative is gated on resolver kind "live" and nothing else; any other
+--- kind, and an absent helper, keep the plain control name.
+---@return string
+function CropStressSettingsPanel.closeHintText()
+    if CsLiveKeyLabel ~= nil and CsLiveKeyLabel.resolve ~= nil then
+        local c, kind = CsLiveKeyLabel.resolve("CS_OPEN_SETTINGS")
+        if kind == "live" and type(c) == "string" and c ~= "" then
+            return c .. " to close"
+        end
+    end
+    return "Close"
+end
+
 function CropStressSettingsPanel:drawInfoBar()
     local iy = PY
     self:drawRect(PX, iy, PW, IB_H, C.info_bg)
@@ -470,7 +506,14 @@ function CropStressSettingsPanel:drawInfoBar()
         self:drawText(bbX + bbW * 0.5, bbY + bbH * 0.18, TS_SMALL, "< Back", C.white, RenderText.ALIGN_CENTER, false)
         self:registerClick("back", bbX, bbY, bbW, bbH)
     else
-        self:drawText(PX + PW - PAD, textY, TS_SMALL, "SHIFT+S to close", C.hint, RenderText.ALIGN_RIGHT, false)
+        -- Live chord, not the old invented "SHIFT+S": this action had no
+        -- binding at all in the shipped modDesc.
+        -- get() hands back a localized STATUS WORD when the action has no
+        -- keyboard binding, so appending " to close" to it produced
+        -- "Unbound to close". The imperative is gated on resolver kind "live"
+        -- and nothing else; any other kind keeps the plain control name.
+        local closeHint = CropStressSettingsPanel.closeHintText()
+        self:drawText(PX + PW - PAD, textY, TS_SMALL, closeHint, C.hint, RenderText.ALIGN_RIGHT, false)
     end
 end
 
@@ -922,10 +965,12 @@ function CropStressSettingsPanel:handleClick(id, data)
             local msg = self:buildStatusString()
             self:showPopup(msg)
         elseif actionId == "admin_heat" then
-            local msg = "Simulating 3-day heat wave..."
+            local msg = "Heat wave simulation is not available."
             if g_cropStressManager then
-                g_cropStressManager:consoleSimulateHeat("3")
-                msg = "3-day heat wave simulated.\nCheck field moisture — stress may have increased."
+                -- On the host this runs and says so; on a client it only says the
+                -- request was sent, and the server's answer arrives as a new popup.
+                local _, text = g_cropStressManager:requestHeatWave("3", "panel")
+                msg = text
             end
             self:showPopup(msg)
         elseif actionId == "admin_reset" then
@@ -986,11 +1031,18 @@ function CropStressSettingsPanel:buildStatusString()
     local sorted = m.soilSystem and m.soilSystem:getFieldsSortedByMoisture()
     if sorted and #sorted > 0 then
         table.insert(lines, "  Driest fields:")
-        for i = 1, math.min(8, #sorted) do
+        -- RSF-F245 item 6: no percent for a field with no current value; those sort
+        -- last, so the eight driest fields with a reading are listed.
+        local listed = 0
+        for i = 1, #sorted do
+            if listed >= 8 then break end
             local f = sorted[i]
-            local stress = m:getStress(f.fieldId)
-            table.insert(lines, string.format("    Field %d: %d%% moisture  stress %.2f",
-                f.fieldId, math.floor((f.moisture or 0) * 100 + 0.5), stress))
+            if type(f.moisture) == "number" then
+                local stress = m:getStress(f.fieldId)
+                table.insert(lines, string.format("    Field %d: %d%% moisture  stress %.2f",
+                    f.fieldId, math.floor(f.moisture * 100 + 0.5), stress))
+                listed = listed + 1
+            end
         end
     end
 

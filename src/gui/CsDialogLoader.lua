@@ -14,7 +14,7 @@
 -- Dialogs are lazily loaded on first show() call.
 -- ============================================================
 
-CsDialogLoader = {}
+CsDialogLoader = CsDialogLoader or {}
 
 -- Registry: name -> { class, xmlPath, instance, loaded }
 CsDialogLoader.dialogs = {}

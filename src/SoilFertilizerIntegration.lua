@@ -30,7 +30,7 @@ local function csLog(msg)
     else print("[CropStress] " .. tostring(msg)) end
 end
 
-SoilFertilizerIntegration = {}
+SoilFertilizerIntegration = SoilFertilizerIntegration or {}
 SoilFertilizerIntegration.__index = SoilFertilizerIntegration
 
 -- Organic matter bands → evaporation multiplier

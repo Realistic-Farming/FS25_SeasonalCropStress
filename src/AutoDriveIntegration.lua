@@ -28,7 +28,7 @@ local function csLog(msg)
     else print("[CropStress] " .. tostring(msg)) end
 end
 
-AutoDriveIntegration = {}
+AutoDriveIntegration = AutoDriveIntegration or {}
 AutoDriveIntegration.__index = AutoDriveIntegration
 
 -- Cache TTL in in-game hours; destinations rarely change mid-session

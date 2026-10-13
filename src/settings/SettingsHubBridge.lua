@@ -14,15 +14,48 @@
 -- coordinates are intentionally not exposed.
 -- =========================================================
 
-SeasonalSettingsHubBridge = {}
+SeasonalSettingsHubBridge = SeasonalSettingsHubBridge or {}
+
+-- [MAINTENANCE row 289] The keys the hub registers player-local (adminOnly = false in register's defs), filled
+-- at registration: hudVisible, alertsEnabled and alertCooldown, the keys SCS's own panel marks localOnly
+-- (CropStressSettingsPanel.lua SETTINGS_META). Alerts and cooldown are per player (Tyson, 2026-10-08).
+local LOCAL_KEYS = {}
 
 local function applyChange(key, value)
     local mgr = g_cropStressManager
     if mgr == nil or mgr.settings == nil then return end
+    -- [MAINTENANCE row 289] A player-local key applies on this machine only, exactly as the panel's local
+    -- branch does (CropStressSettingsPanel.lua:335-341). Through the settings owner it was broadcast to
+    -- every client (CropStressManager.lua:539), so a host's Tablet toggle changed every player's HUD or alerts.
+    if LOCAL_KEYS[key] then
+        mgr.settings[key] = value
+        if type(mgr.applySettings) == "function" then mgr:applySettings() end
+        if g_currentMission ~= nil and g_currentMission.missionInfo ~= nil
+            and type(mgr.settings.saveToXMLFile) == "function" then
+            mgr.settings:saveToXMLFile(g_currentMission.missionInfo)
+        end
+        return
+    end
+    -- SCS-023 v2.3 (SDS 4): SettingsHub routes through the ONE authoritative
+    -- settings owner (validates, re-applies, fires the finite-water edge).
+    if type(mgr.applyAuthoritativeSettingChange) == "function" then
+        mgr:applyAuthoritativeSettingChange(key, value, "hub")
+        return
+    end
     mgr.settings[key] = value
     if type(mgr.settings.validateSettings) == "function" then
         mgr.settings:validateSettings()
     end
+end
+
+-- [MAINTENANCE row 258] The hub asks for the live value (SettingsHub's read, row 258), so a change made in
+-- SCS's own settings panel (requestChange, through the settings owner or straight onto the settings for a
+-- local key), its console or its settings event shows in the Tablet without telling the hub. It reads the
+-- object applyChange routes through.
+local function readValue(key)
+    local mgr = g_cropStressManager
+    if mgr == nil or mgr.settings == nil then return nil end
+    return mgr.settings[key]
 end
 
 function SeasonalSettingsHubBridge.register(mgr)
@@ -44,14 +77,28 @@ function SeasonalSettingsHubBridge.register(mgr)
         { id = "hudVisible",         type = "bool",  default = s.hudVisible,         adminOnly = false, label = "Show Moisture HUD" },
         { id = "alertsEnabled",      type = "bool",  default = s.alertsEnabled,      adminOnly = false, label = "Stress Alerts" },
         { id = "alertCooldown",      type = "int",   default = s.alertCooldown,      adminOnly = false, min = 4, max = 24, label = "Alert Cooldown (hours)" },
-        { id = "debugMode",          type = "bool",  default = s.debugMode,          adminOnly = false, label = "Debug Mode" },
+        -- [MAINTENANCE row 289] A server setting, as SCS's own panel treats it (Tyson ruled only alerts and cooldown per player).
+        { id = "debugMode",          type = "bool",  default = s.debugMode,          adminOnly = true,  label = "Debug Mode" },
+        { id = "finiteWater",        type = "bool",  default = s.finiteWater,        adminOnly = true,  label = "Finite Irrigation Water" },
         { id = "experimentalSystems", type = "bool", default = s.experimentalSystems, adminOnly = true, label = "Experimental Systems" },
     }
+
+    for k in pairs(LOCAL_KEYS) do LOCAL_KEYS[k] = nil end
+    for _, def in ipairs(defs) do
+        if not def.adminOnly then LOCAL_KEYS[def.id] = true end
+    end
 
     local ok, err = pcall(function()
         hub:registerModule("SeasonalCropStress", {
             adminSettings = defs,
             onChange      = function(key, value, playerId) applyChange(key, value) end,
+            -- [MAINTENANCE row 257] The settings object above is the source of truth and this a
+            -- display mirror (header), which is the hub's selfPersisted contract: the hub then never
+            -- restores its stored copy over SCS's own loaded values and never calls onChange on a
+            -- client, where display state arrives only through SCS's settings event (SCS-023 v2.3
+            -- SDS 4, CropStressManager.lua:515-520).
+            selfPersisted = true,
+            read          = readValue,
         })
     end)
 
