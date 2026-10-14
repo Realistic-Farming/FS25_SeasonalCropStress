@@ -96,6 +96,9 @@ HUDOverlay.FORECAST_TEXT_SZ  = 0.009
 HUDOverlay.MIN_SCALE          = 0.6
 HUDOverlay.MAX_SCALE          = 1.6
 HUDOverlay.RESIZE_HANDLE_SIZE = 0.008
+-- A press on the fields pane that stays within this distance (screen fraction, per
+-- axis) until release is a row click, not a drag (#234).
+HUDOverlay.CLICK_SLOP         = 0.004
 
 -- ── Width (edge-drag) ──────────────────────────────────────
 -- Wizard 2026-08-21: NPCFavor/Workplace pattern - dragging the left/right edge
@@ -352,12 +355,22 @@ end
 -- In that context we still unlock the cursor, but we must NOT freeze the
 -- vehicle camera — the vehicle's own camera controller owns those transforms.
 --
--- FS25 confirmed: when a player enters a vehicle, g_localPlayer becomes nil.
--- The authoritative check is g_currentMission.controlledVehicle.
--- Additional fallback: when on foot g_localPlayer is non-nil, so nil = in vehicle.
+-- FS25 1.24: a seated player stays g_localPlayer and reports the vehicle through
+-- getCurrentVehicle(), a state function of the player's state machine (Player.lua:979;
+-- nil on foot, PlayerOnFootStateMachine.lua:67; the vehicle when driving,
+-- PlayerStateDriving.lua:83). The base game reads it the same way (LoadTrigger.lua:329,
+-- VehicleSystem.lua:741). g_localPlayer is cleared only when the Player object is
+-- deleted (BaseMission.lua:272) and nothing sets mission.controlledVehicle, so the
+-- checks after Check 0 never saw a seated player (#234). They stay as fallbacks.
 function HUDOverlay:isPlayerInVehicle()
     local mission = g_currentMission
     if mission == nil then return false end
+
+    -- Check 0: the engine's own accessor.
+    if g_localPlayer ~= nil and type(g_localPlayer.getCurrentVehicle) == "function" then
+        local ok, vehicle = pcall(g_localPlayer.getCurrentVehicle, g_localPlayer)
+        if ok and vehicle ~= nil then return true end
+    end
 
     -- Check 1: controlledVehicle on mission — the authoritative FS25 in-vehicle flag.
     -- Set by BaseMission:setControlledVehicle() whenever the local player enters any vehicle.
@@ -744,6 +757,10 @@ function HUDOverlay:onMouseEvent(posX, posY, isDown, isUp, button)
             self.lmbDownOnHUD = true   -- may become a row-select if released without moving
             self.dragOffsetX = posX - self.panelX
             self.dragOffsetY = posY - self.panelY
+            -- Where the press began, so a release in place can count as a row click (#234)
+            self.pressX, self.pressY           = posX, posY
+            self.pressPanelX, self.pressPanelY = self.panelX, self.panelY
+            self.pressMoved                    = false
             csLog(string.format("HUD drag started — pos=%.3f,%.3f", self.panelX, self.panelY))
             -- Fall through so drag block below runs immediately
         elseif self:isPointerOverForecast(posX, posY) then
@@ -770,6 +787,13 @@ function HUDOverlay:onMouseEvent(posX, posY, isDown, isUp, button)
         local wasResizing  = self.resizing
         local wasEdge      = self.edgeDragging ~= nil
         local clickIntent  = self.lmbDownOnHUD
+        -- The fields-pane drag starts on the press, so the press alone already counts
+        -- as dragging. A release that never left CLICK_SLOP of the press is a click.
+        local inPlace      = self.dragTarget == "panel" and self.pressX ~= nil
+            and not self.pressMoved
+            and math.abs(posX - self.pressX) <= HUDOverlay.CLICK_SLOP
+            and math.abs(posY - self.pressY) <= HUDOverlay.CLICK_SLOP
+        local pressPanelX, pressPanelY = self.pressPanelX, self.pressPanelY
 
         self.dragging     = false
         self.dragTarget   = nil
@@ -777,8 +801,15 @@ function HUDOverlay:onMouseEvent(posX, posY, isDown, isUp, button)
         self.edgeDragging = nil
         self.edgeTarget   = nil
         self.lmbDownOnHUD = false
+        self.pressX, self.pressY, self.pressMoved = nil, nil, false
+        self.pressPanelX, self.pressPanelY        = nil, nil
 
-        if wasDragging or wasResizing or wasEdge then
+        if wasDragging and clickIntent and inPlace then
+            -- Row click (#234): put the pane back exactly where the press found it
+            -- (the press itself ran the drag block), then select the row under it.
+            self.panelX, self.panelY = pressPanelX, pressPanelY
+            self:selectRowAtPosition(posX, posY)
+        elseif wasDragging or wasResizing or wasEdge then
             self:clampPosition()
             self:persistLayout()
             csLog(string.format("HUD repositioned to %.3f,%.3f scale=%.2f forecast=%s,%s",
@@ -797,6 +828,11 @@ function HUDOverlay:onMouseEvent(posX, posY, isDown, isUp, button)
     -- Also runs on the isDown event (no early return above) for immediate response.
     if self.dragging then
         local s = self.scale
+        if self.pressX ~= nil and not self.pressMoved
+        and (math.abs(posX - self.pressX) > HUDOverlay.CLICK_SLOP
+          or math.abs(posY - self.pressY) > HUDOverlay.CLICK_SLOP) then
+            self.pressMoved = true   -- left the click slop once: a drag from here on
+        end
         if self.dragTarget == "forecast" then
             local fw = self:getForecastW()
             local fh = HUDOverlay.FORECAST_H * s
@@ -1082,12 +1118,9 @@ function HUDOverlay:draw()
         renderText(px + pad, py + pad, HUDOverlay.TEXT_SIZE * s * 0.85, editHint)
     elseif self.selectedFieldId == nil then
         setTextColor(unpack(HUDOverlay.COLOR_DIM_TEXT))
-        local hintText
-        if self:isPlayerInVehicle() then
-            hintText = "Click row to select • Edit/Move key = move"
-        else
-            hintText = (g_i18n ~= nil and g_i18n:getText("cs_hud_click_forecast")) or "RMB = select row / edit mode"
-        end
+        -- One translated hint in both contexts. The cab used to carry its own English-only
+        -- line, which never showed while isPlayerInVehicle missed a seated player (#234).
+        local hintText = (g_i18n ~= nil and g_i18n:getText("cs_hud_click_forecast")) or "RMB = select row / edit mode"
         renderText(px + pad, py + pad, 0.010 * s, hintText)
     end
 
