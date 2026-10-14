@@ -48496,7 +48496,7 @@
     "watchers": 3
   },
   {
-    "timestamp": "2026-10-14T06:58:08Z",
+    "timestamp": "2026-10-14T12:41:19Z",
     "date": "2026-10-14",
     "views": {
       "count": 355,
@@ -48619,7 +48619,16 @@
       {
         "assets": [
           {
-            "downloads": 37,
+            "downloads": 7,
+            "name": "FS25_SeasonalCropStress.zip"
+          }
+        ],
+        "tag": "v1.2.6.1"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 38,
             "name": "FS25_SeasonalCropStress.zip"
           }
         ],
@@ -48851,15 +48860,6 @@
           }
         ],
         "tag": "v1.0.2.0"
-      },
-      {
-        "assets": [
-          {
-            "downloads": 5,
-            "name": "FS25_SeasonalCropStress.zip"
-          }
-        ],
-        "tag": "v1.0.1.0"
       }
     ],
     "stars": 26,
