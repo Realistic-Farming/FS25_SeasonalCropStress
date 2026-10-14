@@ -169,3 +169,8 @@
 
 - [x] `src/HUDOverlay.lua`: `CLICK_SLOP`; the fields-pane press records where it began, the drag block latches `pressMoved`, and the release selects the row when the press never left the slop; `isPlayerInVehicle` asks `g_localPlayer:getCurrentVehicle()` first; the cab hint reads `cs_hud_click_forecast`. Bar `SCS-234-hud_row_select_entry_test.lua` from main.lua's own mouse listener, 27 of 27 (development fails 11); battery 7 of 8 killed by named rows, one equivalent.
 - [~] In game (owed): TESTING row 557.
+
+## 2026-10-14 (Fred (via Desk)): keyboard defaults (Wizard, #227)
+
+- [x] `modDesc.xml`: CS_TOGGLE_HUD on Right Ctrl + M, CS_OPEN_SETTINGS / CS_OPEN_IRRIGATION / CS_OPEN_CONSULTANT on Right Ctrl + B / R / C, RWSM53_REEL_TOGGLE on Right Ctrl + G; the settings integration, panel, help dialog, HUD overlay and manager read the live key through `src/utils/CsLiveKeyLabel.lua` (new, sourced in `main.lua`); the 26 translation files.
+- [~] In game (owed): TESTING row 538.
