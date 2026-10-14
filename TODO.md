@@ -164,3 +164,8 @@
 
 - [x] `src/settings/SettingsHubBridge.lua`: `LOCAL_KEYS` from the registration's player-local defs; `applyChange` applies a player-local key on this machine (the panel's local branch); alertsEnabled and alertCooldown player-local, debugMode adminOnly. `src/settings/CropStressSettingsPanel.lua`: alertsEnabled and alertCooldown `localOnly`. `src/events/CropStressSettingsSyncEvent.lua`: `BULK_COUNT` 9, `PER_PLAYER`, the bulk write drops the three, the bulk and single applies skip them. Bar `MAINT-289-per_player_settings_stay_local_entry_test.lua`; battery `tools/test/mutate_maint289.py`, 8 of 8.
 - [~] In game (owed): TESTING row 522.
+
+## 2026-10-14 (Fred (via Desk)): field-row select in the moisture HUD (#234)
+
+- [x] `src/HUDOverlay.lua`: `CLICK_SLOP`; the fields-pane press records where it began, the drag block latches `pressMoved`, and the release selects the row when the press never left the slop; `isPlayerInVehicle` asks `g_localPlayer:getCurrentVehicle()` first; the cab hint reads `cs_hud_click_forecast`. Bar `SCS-234-hud_row_select_entry_test.lua` from main.lua's own mouse listener, 27 of 27 (development fails 11); battery 7 of 8 killed by named rows, one equivalent.
+- [~] In game (owed): TESTING row 557.
