@@ -28,9 +28,11 @@ MODS_DIR = Path.home() / "Documents" / "My Games" / "FarmingSimulator2025" / "mo
 # shipped 27 junk entries (all of tools/, the stale _reference_esc_pre_greenfield
 # chrome tree, icon sources, LICENSE). Target zip shape = the clean 1.2.5.1
 # entry set (85 entries; .github templates stay, they were in that baseline).
-EXCLUDE_DIRS = {".git", ".claude", "__MACOSX", "node_modules", "tools", "_reference_esc_pre_greenfield"}
+EXCLUDE_DIRS = {".git", ".github", ".claude", "__MACOSX", "node_modules", "tools", "_reference_esc_pre_greenfield"}
 EXCLUDE_EXTS = {".sh", ".md", ".DS_Store", ".zip"}
-EXCLUDE_FILES = {".gitignore", "build.py", "icon_preview.png", "icon_source.png", "LICENSE"}
+# ".git" is a FILE, not a directory, in a git worktree (it points at the main
+# clone's git dir), so EXCLUDE_DIRS alone does not keep it out of the zip.
+EXCLUDE_FILES = {".git", ".gitignore", "build.py", "icon_preview.png", "icon_source.png", "LICENSE"}
 
 
 def read_version():

@@ -174,3 +174,9 @@
 
 - [x] `modDesc.xml`: CS_TOGGLE_HUD on Right Ctrl + M, CS_OPEN_SETTINGS / CS_OPEN_IRRIGATION / CS_OPEN_CONSULTANT on Right Ctrl + B / R / C, RWSM53_REEL_TOGGLE on Right Ctrl + G; the settings integration, panel, help dialog, HUD overlay and manager read the live key through `src/utils/CsLiveKeyLabel.lua` (new, sourced in `main.lua`); the 26 translation files.
 - [~] In game (owed): TESTING row 538.
+
+## 2026-10-14 (Fred (via Desk)): build packaging (MAINTENANCE row 310)
+
+- [x] `build.py`: keeps the `.git` file and `.github/` out of the zip. `build.sh`, which the releases use, was already clean and is unchanged.
+- [x] Built with build.py from a worktree before and after this change: development's zip had 184 entries, ten of them the worktree `.git` file and `.github/`; this branch's has 174, with exactly those ten removed, every other entry byte-identical (CRC), nothing added.
+- Build tooling only, no in-game check (TESTING row 572).
