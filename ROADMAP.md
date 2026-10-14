@@ -183,3 +183,8 @@ Issue #69 was the GitHub tracker for the v1.2.0 gaps. Every track is compared wi
 
 - [x] Toggle Moisture HUD moves from Right Shift + M (Soil's map-layer cycling) to Right Ctrl + M. Open Crop Stress Settings, Open Irrigation Manager and Open Crop Consultant are bound to Right Ctrl + B, R and C (they were unbound), and RWSM53_REEL_TOGGLE moves from N to Right Ctrl + G. The Esc settings header (refreshed on a binding change), the panel's close hint and the help dialog read the live key, and name no key when none is bound (`src/utils/CsLiveKeyLabel.lua`). The help strings that stated a factory key are corrected in all 26 languages, the Moisture System (Ozz) detection line states only this mod's own key, and the eight Reinke pivot defaults are unchanged. (Wizard's #227, merged at 6803fb52 on 2026-10-11, one PR of his keyboard-defaults wave.)
 - The in-game check is TESTING row 538. Docs by Fred's catch-up (R-51), on Tyson's word of 2026-10-14.
+
+## 2026-10-14 (Fred (via Desk)): the build script packs only the mod (MAINTENANCE row 310)
+
+- [x] `build.py` keeps the `.git` file and `.github/` out of the zip. `build.sh`, which the releases use, was already clean and is unchanged.
+- Build tooling only, no in-game check (TESTING row 572). Found by a fleet sweep that built every mod once from development in a throwaway worktree, on Tyson's word of 2026-10-14.
