@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-10-17T18:59:10Z
-**Days tracked:** 157 | **Download snapshots:** 945 (hourly)
+**Last updated:** 2026-10-18T12:22:07Z
+**Days tracked:** 158 | **Download snapshots:** 950 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 406 | 173 |
-| Git Clones | 977 | 344 |
+| Page Views | 396 | 164 |
+| Git Clones | 994 | 350 |
 
-> **Engagement:** 2.3 pages per visitor (14-day avg)
+> **Engagement:** 2.4 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 1741 of 173 visitors cloned or downloaded (**1006.3%**)
+> **14-day conversion:** 1757 of 164 visitors cloned or downloaded (**1071.3%**)
 >
-> Unique cloners: 344 | Release downloads: 1397
+> Unique cloners: 350 | Release downloads: 1407
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 1397 |
-| Git Clones (14-day) | 977 |
-| **Total Acquisitions** | **2374** |
+| Zip Downloads | 1407 |
+| Git Clones (14-day) | 994 |
+| **Total Acquisitions** | **2401** |
 
 ---
 
@@ -54,11 +54,11 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 68 | 54 |
-| Google | 67 | 47 |
-| kingmods.net | 21 | 14 |
-| Bing | 17 | 13 |
-| realisticfarming.com | 12 | 7 |
+| Google | 68 | 42 |
+| github.com | 64 | 49 |
+| realisticfarming.com | 18 | 12 |
+| kingmods.net | 15 | 13 |
+| Bing | 9 | 8 |
 | yandex.ru | 3 | 2 |
 | DuckDuckGo | 2 | 1 |
 | chatgpt.com | 1 | 1 |
@@ -82,15 +82,15 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_SeasonalCropStress` | 210 | 130 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases` | 66 | 42 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.5.0` | 33 | 30 |
+| `/Realistic-Farming/FS25_SeasonalCropStress` | 201 | 122 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases` | 64 | 43 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.5.0` | 28 | 24 |
 | `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.6.0` | 21 | 20 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.6.1` | 13 | 10 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.6.1` | 18 | 15 |
 | `/Realistic-Farming/FS25_SeasonalCropStress/issues/234` | 13 | 3 |
 | `/Realistic-Farming/FS25_SeasonalCropStress/issues` | 7 | 6 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/tree/development` | 4 | 2 |
 | `/Realistic-Farming/FS25_SeasonalCropStress/blob/main/IRRIGATION-HELP-DIALOG-DESIGN-BRIEF.md` | 3 | 3 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.5.95-pre` | 3 | 3 |
 | `/Realistic-Farming/FS25_SeasonalCropStress/tags` | 3 | 2 |
 
 ---
