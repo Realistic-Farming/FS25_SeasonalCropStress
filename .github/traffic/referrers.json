@@ -5369,5 +5369,52 @@
       "count": 1,
       "uniques": 1
     }
+  ],
+  "2026-10-19": [
+    {
+      "referrer": "Google",
+      "count": 68,
+      "uniques": 42
+    },
+    {
+      "referrer": "github.com",
+      "count": 64,
+      "uniques": 49
+    },
+    {
+      "referrer": "realisticfarming.com",
+      "count": 18,
+      "uniques": 12
+    },
+    {
+      "referrer": "kingmods.net",
+      "count": 15,
+      "uniques": 13
+    },
+    {
+      "referrer": "Bing",
+      "count": 9,
+      "uniques": 8
+    },
+    {
+      "referrer": "yandex.ru",
+      "count": 3,
+      "uniques": 2
+    },
+    {
+      "referrer": "DuckDuckGo",
+      "count": 2,
+      "uniques": 1
+    },
+    {
+      "referrer": "chatgpt.com",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "referrer": "patreon.com",
+      "count": 1,
+      "uniques": 1
+    }
   ]
 }
