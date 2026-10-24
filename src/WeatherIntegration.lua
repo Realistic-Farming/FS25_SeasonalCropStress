@@ -132,7 +132,7 @@ function WeatherIntegration:detectOptionalMods()
     -- g_realisticWeather (RealisticWeather.lua:109); whether that bare global is
     -- visible here depends on the engine's mod-environment scoping, so probe every
     -- surface the handle could live on (_rwHandle) and log which one matched, so a
-    -- csDebug session can confirm the real cross-mod path.
+    -- csDebugLog session can confirm the real cross-mod path.
     if self:_rwHandle() ~= nil then
         self.realisticWeatherActive = true
         csLog(string.format("FS25_RealisticWeather detected (%s) - using enhanced weather data", self._rwSurface))
