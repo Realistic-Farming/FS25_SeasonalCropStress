@@ -400,7 +400,7 @@ Type `csHelp` in the developer console (`~` key). Key debug commands:
 | `csSetMoisture <fieldId> <0.0-1.0>` | Force moisture on a field |
 | `csForceStress <fieldId>` | Force max stress on a field |
 | `csSimulateHeat <days>` | Simulate heat wave for N days |
-| `csDebug` | Toggle debug mode (verbose logging) |
+| `csDebugLog` | Toggle debug mode (verbose logging); `csDebug` belongs to Cultivator Settings |
 
 ---
 

@@ -192,7 +192,7 @@ Open the developer console with the **`~`** key:
 | `csSetMoisture` | `<fieldId> <0-1>` | Manually set a field's moisture level |
 | `csForceStress` | `<fieldId>` | Force maximum stress on a field |
 | `csSimulateHeat` | `[days]` | Simulate N days of extreme heat (no rain) |
-| `csDebug` | — | Toggle verbose debug logging to `log.txt` |
+| `csDebugLog` | — | Toggle verbose debug logging to `log.txt` |
 
 ---
 

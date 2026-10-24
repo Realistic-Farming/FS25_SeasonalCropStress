@@ -342,7 +342,8 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
         addConsoleCommand("csSetMoisture", "Set field moisture: csSetMoisture <fieldId> <0.0-1.0>",        "consoleSetMoisture", g_csManager)
         addConsoleCommand("csForceStress", "Force maximum stress: csForceStress <fieldId>",                "consoleForceStress", g_csManager)
         addConsoleCommand("csSimulateHeat","Simulate heat wave: csSimulateHeat <days>",                    "consoleSimulateHeat",g_csManager)
-        addConsoleCommand("csDebug",       "Toggle verbose debug logging",                                 "consoleToggleDebug", g_csManager)
+        -- Cultivator Settings owns csDebug; keep our toggle distinct and remove only our command on unload.
+        addConsoleCommand("csDebugLog",    "Toggle verbose debug logging",                                 "consoleToggleDebug", g_csManager)
         addConsoleCommand("csConsultant",  "Open the Crop Consultant dialog",                              "consoleConsultant",  g_csManager)
         addConsoleCommand("csRelease",     "Release gate: show STABLE vs experimental-LOCKED systems",     "consoleRelease",     g_csManager)
         addConsoleCommand("csMapStats",    "Moisture value map: grain, settle cost, sync progress",       "consoleMapStats",    g_csManager)
@@ -409,7 +410,7 @@ FSBaseMission.delete = Utils.appendedFunction(FSBaseMission.delete, function(sel
             removeConsoleCommand("csSetMoisture")
             removeConsoleCommand("csForceStress")
             removeConsoleCommand("csSimulateHeat")
-            removeConsoleCommand("csDebug")
+            removeConsoleCommand("csDebugLog")
             removeConsoleCommand("csConsultant")
             removeConsoleCommand("csRelease")
             removeConsoleCommand("csMapStats")
