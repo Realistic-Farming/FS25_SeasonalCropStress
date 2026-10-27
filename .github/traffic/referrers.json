@@ -5621,5 +5621,42 @@
       "count": 1,
       "uniques": 1
     }
+  ],
+  "2026-10-27": [
+    {
+      "referrer": "github.com",
+      "count": 77,
+      "uniques": 50
+    },
+    {
+      "referrer": "Google",
+      "count": 57,
+      "uniques": 26
+    },
+    {
+      "referrer": "realisticfarming.com",
+      "count": 31,
+      "uniques": 24
+    },
+    {
+      "referrer": "kingmods.net",
+      "count": 9,
+      "uniques": 9
+    },
+    {
+      "referrer": "Bing",
+      "count": 7,
+      "uniques": 5
+    },
+    {
+      "referrer": "forbidden-mods.de",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "referrer": "patreon.com",
+      "count": 1,
+      "uniques": 1
+    }
   ]
 }
