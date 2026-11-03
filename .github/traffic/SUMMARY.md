@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-11-02T00:07:01Z
-**Days tracked:** 168 | **Download snapshots:** 1012 (hourly)
+**Last updated:** 2026-11-03T00:19:07Z
+**Days tracked:** 169 | **Download snapshots:** 1014 (hourly)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 427 | 254 |
-| Git Clones | 407 | 162 |
+| Page Views | 437 | 262 |
+| Git Clones | 399 | 164 |
 
 > **Engagement:** 1.6 pages per visitor (14-day avg)
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 1682 of 254 visitors cloned or downloaded (**662.2%**)
+> **14-day conversion:** 1689 of 262 visitors cloned or downloaded (**644.6%**)
 >
-> Unique cloners: 162 | Release downloads: 1520
+> Unique cloners: 164 | Release downloads: 1525
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 1520 |
-| Git Clones (14-day) | 407 |
-| **Total Acquisitions** | **1927** |
+| Zip Downloads | 1525 |
+| Git Clones (14-day) | 399 |
+| **Total Acquisitions** | **1924** |
 
 ---
 
@@ -55,14 +55,15 @@
 | Source | Views | Unique |
 |--------|-------|--------|
 | aocr.org | 96 | 96 |
-| github.com | 89 | 60 |
-| Google | 54 | 27 |
-| realisticfarming.com | 27 | 23 |
-| Bing | 6 | 5 |
+| github.com | 93 | 64 |
+| Google | 57 | 26 |
+| realisticfarming.com | 21 | 20 |
+| Bing | 7 | 6 |
 | DuckDuckGo | 3 | 1 |
 | Yahoo | 1 | 1 |
 | forbidden-mods.de | 1 | 1 |
 | kingmods.net | 1 | 1 |
+| patreon.com | 1 | 1 |
 
 ---
 
@@ -82,9 +83,9 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_SeasonalCropStress` | 192 | 118 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases` | 60 | 50 |
-| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.6.1` | 51 | 41 |
+| `/Realistic-Farming/FS25_SeasonalCropStress` | 201 | 125 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases` | 59 | 50 |
+| `/Realistic-Farming/FS25_SeasonalCropStress/releases/tag/v1.2.6.1` | 54 | 39 |
 | `/Realistic-Farming/FS25_SeasonalCropStress/issues/92` | 10 | 10 |
 | `/Realistic-Farming/FS25_SeasonalCropStress/issues` | 9 | 8 |
 | `/Realistic-Farming/FS25_SeasonalCropStress/issues/83` | 5 | 5 |
