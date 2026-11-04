@@ -23,7 +23,15 @@
   </Dynamics>
 
   <Scene>
-    <Shape shapeId="1" name="AckerschieneCol" dynamic="true" compound="true" collisionMask="2105602" density="4" clipDistance="100" nodeId="7" materialIds="4" castsShadows="true" receiveShadows="true" nonRenderable="true">
+    <!-- #244: this compound's mask lacked CollisionFlag.VEHICLE (bit 16, value 65536)
+         that its sibling Aggregat.i3d's main shape carries (2171138 vs this shape's
+         2105602 - otherwise the same STATIC_OBJECT+TERRAIN+ROAD+ANIMAL_POSITIONING
+         bits). Aggregat is confirmed loadable onto a flatbed; this bar was not. Added
+         to match, so the bar presents as a vehicle body when resting on another
+         vehicle's deck instead of only against terrain/roads. The compound CHILD
+         shape below is unchanged: Aggregat's own child collision pieces (support legs)
+         carry the same mask this child already has, with no VEHICLE bit either. -->
+    <Shape shapeId="1" name="AckerschieneCol" dynamic="true" compound="true" collisionMask="2171138" density="4" clipDistance="100" nodeId="7" materialIds="4" castsShadows="true" receiveShadows="true" nonRenderable="true">
       <TransformGroup name="AttacherJoint" translation="0 0.06 0" rotation="0 90 0" nodeId="8"/>
       <TransformGroup name="LoadPoint" translation="0 0.062 0" nodeId="9"/>
       <TransformGroup name="AttacherJoint2" translation="0 0.06 0" rotation="0 -90 0" nodeId="10"/>
