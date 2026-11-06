@@ -312,6 +312,7 @@
     <text name="cs_rf_pda_cons_rec_title" text="[EN] Recommendations"/>
     <text name="cs_rf_pda_cons_relation" text="[EN] With Alex: %d / 100"/>
     <text name="cs_rf_pda_cons_empty" text="[EN] No field data yet - fields appear after the simulation runs."/>
+    <text name="cs_rf_pda_cons_top_allclear" text="[EN] All fields healthy. No action needed."/>
     <text name="cs_rf_pda_cons_rec_driest" text="[EN] Driest now: %s at %d%% moisture - water this one first."/>
     <text name="cs_rf_pda_cons_rec_forecast" text="[EN] 3-day outlook for %s: %d%% moisture."/>
     <text name="cs_rf_pda_cons_rec_systems" text="[EN] %d irrigation systems active."/>
@@ -419,6 +420,7 @@
     <text name="cs_rf_pda_agro_top_row" text="[EN] %s - risk %d%% - moisture %d%%"/>
     <text name="cs_rf_pda_agro_rec_header" text="[EN] Recommendations"/>
     <text name="cs_rf_pda_agro_empty" text="[EN] No field data yet - fields appear once the simulation runs."/>
+    <text name="cs_rf_pda_agro_top_allclear" text="[EN] All fields healthy. No action needed."/>
     <text name="Motorpump" text="[EN] Motor pump"/>
     <text name="warning_RAINSTAR_HOSE_EXTENDED" text="[EN] Move the sprinkler cart back to the reel before switching to transport mode."/>
     <text name="autoReel" text="[EN] Automatic reel"/>
