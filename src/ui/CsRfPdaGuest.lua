@@ -947,9 +947,14 @@ end
 
 --- Top owned fields by risk, highest first. Owned-only, same farmland filter as
 --- buildFieldRows so the consultant cannot advise on land the player does not have.
+--- Floored at risk 0.20: below that the "at risk" claim is not true. 0.20 is not a new
+--- number - it's this mod's own INFO-tier moisture boundary (CropConsultant.SEVERITY_INFO_MAX
+--- = 0.50, CropConsultant.lua:23) run through the formula below at zero stress.
+--- Second return is hasFields: true when the farm owns at least one tracked field, so a
+--- caller can tell "nothing at risk" apart from "no fields to report" when #out == 0.
 local function topRiskFields(mgr, limit)
     local out = {}
-    if mgr == nil then return out end
+    if mgr == nil then return out, false end
     local rows = CsRfPdaGuest.buildFieldRows() or {}
     for _, r in ipairs(rows) do
         -- buildFieldRows carries FORMATTED strings (moistureText / stressText), not
@@ -975,8 +980,15 @@ local function topRiskFields(mgr, limit)
         end
     end
     table.sort(out, function(a, b) return a.risk > b.risk end)
+    -- Floor after the sort, before the truncate: drop anything that never earned
+    -- the "at risk" header rather than let the top-N cut hide a healthy field.
+    for i = #out, 1, -1 do
+        if out[i].risk < 0.20 then
+            table.remove(out, i)
+        end
+    end
     while #out > (limit or 5) do table.remove(out) end
-    return out
+    return out, #rows > 0
 end
 
 --- Samantha sit lock: Field Detail + Schedule resolve follow the crowned field
@@ -1117,7 +1129,7 @@ function CsRfPdaGuest.onPaintConsultant(container)
     end
     if not relShown then consSetText(container, "csConsRelation", nil, false) end
 
-    local top = topRiskFields(mgr, 5)
+    local top, hasFields = topRiskFields(mgr, 5)
     local page = getHostPage()
     if page ~= nil then
         page._csConsultTop = top
@@ -1147,7 +1159,12 @@ function CsRfPdaGuest.onPaintConsultant(container)
     -- Honest empty: no owned field data at all.
     consSetText(container, "csConsEmpty",
         tr("cs_rf_pda_cons_empty", "No field data yet - fields appear after the simulation runs."),
-        #top == 0)
+        #top == 0 and not hasFields)
+
+    -- All clear: fields are tracked, none of them cleared the risk floor.
+    consSetText(container, "csConsAllClear",
+        tr("cs_rf_pda_cons_top_allclear", "All fields healthy. No action needed."),
+        #top == 0 and hasFields)
 
     -- Recommendations. Each line is omitted rather than guessed when its source
     -- has nothing usable to say.
@@ -2253,7 +2270,7 @@ local function updateAgronomistCard(container, fieldId)
         setPivotText(container, "csAgroRelationship", "", false)
     end
 
-    local top = topRiskFields(mgr, 5)
+    local top, hasFields = topRiskFields(mgr, 5)
     setPivotText(container, "csAgroTopHeader", tr("cs_rf_pda_agro_top_header", "Top 5 at risk"), #top > 0)
     for i = 1, 5 do
         local e = top[i]
@@ -2305,7 +2322,12 @@ local function updateAgronomistCard(container, fieldId)
     -- Honest empty: no owned field data at all, so say that rather than show blanks.
     setPivotText(container, "csAgroEmpty",
         tr("cs_rf_pda_agro_empty", "No field data yet - fields appear once the simulation runs."),
-        #top == 0)
+        #top == 0 and not hasFields)
+
+    -- All clear: fields are tracked, none of them cleared the risk floor.
+    setPivotText(container, "csAgroTopAllClear",
+        tr("cs_rf_pda_agro_top_allclear", "All fields healthy. No action needed."),
+        #top == 0 and hasFields)
 end
 
 --- Esc PIVOT remote: send CropStressPivotRemoteEvent (server authority).

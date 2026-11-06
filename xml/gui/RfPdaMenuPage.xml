@@ -1325,6 +1325,8 @@
                         <Text profile="RF_TreatTargetLine" id="csConsRec3"     position="16px -280px" size="1140px 22px" visible="false" text=""/>
                         <Text profile="RF_HintText" id="csConsEmpty" position="16px -140px" size="1000px 44px"
                               textMaxNumLines="2" visible="false" text=""/>
+                        <Text profile="RF_HintText" id="csConsAllClear" position="16px -140px" size="1000px 44px"
+                              textMaxNumLines="2" visible="false" text=""/>
                     </GuiElement>
 
                     <GuiElement profile="RF_TableRegionShell" id="rfHostTableRegion" position="0px 0px"
@@ -1402,6 +1404,8 @@
                             <Text profile="RF_ProductCellDense" id="csAgroRec2" position="10px -198px" size="490px 14px" text=""/>
                             <Text profile="RF_ProductCellDense" id="csAgroRec3" position="10px -214px" size="490px 14px" text=""/>
                             <Text profile="RF_HintText" id="csAgroEmpty" position="10px -68px" size="490px 80px"
+                                  textMaxNumLines="4" textVerticalAlignment="top" visible="false" text=""/>
+                            <Text profile="RF_HintText" id="csAgroTopAllClear" position="10px -68px" size="490px 80px"
                                   textMaxNumLines="4" textVerticalAlignment="top" visible="false" text=""/>
                         </GuiElement>
 
