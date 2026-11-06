@@ -500,7 +500,7 @@ function CropStressModifier.installHarvestHook()
 
                 -- The FIRST reduction of a session always logs, then it falls back to
                 -- debugMode. One line is enough to prove the feature is alive without
-                -- needing csDebug enabled at the right moment (that ordering cost three
+                -- needing csDebugLog enabled at the right moment (that ordering cost three
                 -- test runs), and without spamming a normal harvest afterwards.
                 if not CropStressModifier._loggedFirstReduction or g_cropStressManager.debugMode then
                     CropStressModifier._loggedFirstReduction = true

@@ -1566,7 +1566,7 @@ function CropStressManager:consoleHelp()
     print("  csSetMoisture <id> <v> — Set field moisture (0.0-1.0)")
     print("  csForceStress <id>     — Force max stress on a field")
     print("  csSimulateHeat <days>  — Simulate heat wave for N in-game days")
-    print("  csDebug                — Toggle verbose debug logging")
+    print("  csDebugLog             — Toggle verbose debug logging")
     print("  csConsultant           — Open the Crop Consultant dialog")
     print("==============================================")
 end

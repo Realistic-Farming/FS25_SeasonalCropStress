@@ -13,6 +13,9 @@ the repo's git history and README.
 
 ## [Unreleased]
 
+### Fixed
+- Give Crop Stress's verbose-log console toggle its own `csDebugLog` name so it does not collide with Cultivator Settings' `csDebug` command or remove that command on mission unload.
+
 ## [1.2.6.1] - 2026-10-14
 
 > **This is not a final release.** It gives everyone, testers and players, new or returning, everything we have built so far, so nobody has to wait on an old version any longer. The Realistic Farming suite is far from done: we are still building and expanding every mod, and completing it could take months, possibly a year. Expect changes and rough edges along the way, and please report anything that looks wrong.
