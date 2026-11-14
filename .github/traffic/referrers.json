@@ -6044,5 +6044,52 @@
       "count": 1,
       "uniques": 1
     }
+  ],
+  "2026-11-14": [
+    {
+      "referrer": "github.com",
+      "count": 101,
+      "uniques": 76
+    },
+    {
+      "referrer": "aocr.org",
+      "count": 98,
+      "uniques": 98
+    },
+    {
+      "referrer": "Google",
+      "count": 66,
+      "uniques": 45
+    },
+    {
+      "referrer": "realisticfarming.com",
+      "count": 10,
+      "uniques": 9
+    },
+    {
+      "referrer": "Bing",
+      "count": 7,
+      "uniques": 6
+    },
+    {
+      "referrer": "kingmods.net",
+      "count": 4,
+      "uniques": 4
+    },
+    {
+      "referrer": "patreon.com",
+      "count": 2,
+      "uniques": 2
+    },
+    {
+      "referrer": "yandex.by",
+      "count": 2,
+      "uniques": 1
+    },
+    {
+      "referrer": "search.brave.com",
+      "count": 1,
+      "uniques": 1
+    }
   ]
 }
